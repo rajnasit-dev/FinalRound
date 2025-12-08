@@ -1,0 +1,99 @@
+import { Schema, model } from "mongoose";
+
+const tournamentSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    sport: {
+      type: Schema.Types.ObjectId,
+      ref: "Sport",
+      required: true,
+    },
+    organizer: {
+      type: Schema.Types.ObjectId,
+      ref: "User", // Tournament Organizer
+      required: true,
+    },
+    format: {
+      type: String,
+      enum: ["League", "Knockout", "Round Robin"],
+      default: "League",
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    teamLimit: {
+      type: Number,
+      required: true,
+    },
+    playersPerTeam: {
+      type: Number,
+    },
+    registrationType: {
+      type: String,
+      enum: ["Team", "Player"],
+      default: "Team"
+    },
+    registrationStart: {
+      type: Date,
+      required: true,
+    },
+    registrationEnd: {
+      type: Date,
+      required: true,
+    },
+    startDate: {
+      type: Date,
+      required: true,
+    },
+    endDate: {
+      type: Date,
+      required: true,
+    },
+    entryFee: {
+      type: Number,
+      default: 0,
+    },
+    prizePool: {
+      type: String,
+    },
+    rules: {
+      type: String,
+    },
+    ground: {
+      type: String,
+    },
+    bannerUrl: {
+      type: String,
+    },
+    status: {
+      type: String,
+      enum: ["Draft", "Published", "Ongoing", "Completed", "Cancelled"],
+    },
+    registeredTeams: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Team",
+      },
+    ],
+    approvedTeams: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Team",
+      },
+    ],
+    isScheduleCreated: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const Tournament = model("Tournament", tournamentSchema);
