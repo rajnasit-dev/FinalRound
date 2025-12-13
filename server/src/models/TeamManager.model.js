@@ -8,10 +8,6 @@ const teamManagerSchema = new Schema({
       ref: "Team",
     },
   ],
-  gender: {
-    type: String,
-    enum: ["Male", "Female", "Other"],
-  },
   achievements: {
     title: String,
     year: Number,

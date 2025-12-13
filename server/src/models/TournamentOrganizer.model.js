@@ -17,7 +17,7 @@ const tournamentOrganizerSchema = new Schema({
   documents: String,
 });
 
-export const TournamentOrganizer = User.descriminator(
+export const TournamentOrganizer = User.discriminator(
   "TournamentOrganizer",
   tournamentOrganizerSchema
 );

@@ -16,13 +16,7 @@ const userSchema = new Schema(
       lowercase: true,
       required: true,
     },
-    role: {
-      type: String,
-      default: "Visitor",
-      enum: ["Admin", "Visitor", "Player", "Organizer", "TeamManager"],
-      required: true
-    },
-    profilePicture: {
+    avatar: {
       type: String,
     },
     password: {
@@ -36,7 +30,7 @@ const userSchema = new Schema(
     phone: {
       type: String,
     },
-    city:{
+    city: {
       type: String,
       trim: true,
     },
@@ -46,7 +40,7 @@ const userSchema = new Schema(
     },
     isActive: {
       type: Boolean,
-      default: false
+      default: true,
     },
 
     verifyEmailOtp: String,
@@ -54,9 +48,8 @@ const userSchema = new Schema(
 
     resetPasswordToken: String,
     resetPasswordTokenExpiry: Date,
-  
   },
-  { timestamps: true }
+  { discriminatorKey: "role", timestamps: true }
 );
 
 userSchema.pre("save", async function () {

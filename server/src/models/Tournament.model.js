@@ -65,7 +65,8 @@ const tournamentSchema = new Schema(
       type: String,
     },
     ground: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "Ground",
     },
     bannerUrl: {
       type: String,
