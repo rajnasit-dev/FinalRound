@@ -2,6 +2,7 @@ import { User } from "../models/User.model.js";
 import { Player } from "../models/Player.model.js";
 import { TeamManager } from "../models/TeamManager.model.js";
 import { TournamentOrganizer } from "../models/TournamentOrganizer.model.js";
+import { Sport } from "../models/Sport.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendEmail } from "../middlewares/sendEmail.js";
@@ -163,9 +164,10 @@ const generateAccessAndRefreshToken = async (userId) => {
 };
 
 export const registerPlayer = asyncHandler(async (req, res) => {
-  const { fullName, email, password, phone, city, sports, age, playingRole } =
+  const { fullName, email, password, phone, city, sports, age, gender } =
     req.body;
-  const avatarLocalPath = req.file?.path;
+  const avatarLocalPath = req.files?.avatar?.[0]?.path;
+  const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
 
   if ([fullName || email || password].some((field) => field?.trim() === "")) {
     throw new ApiError(
@@ -186,17 +188,50 @@ export const registerPlayer = asyncHandler(async (req, res) => {
       throw new ApiError(500, "Failed to upload avatar to Cloudinary.");
   }
 
+  let coverImageResponse = null;
+  if (coverImageLocalPath) {
+    coverImageResponse = await uploadOnCloudinary(coverImageLocalPath);
+    if (!coverImageResponse)
+      throw new ApiError(500, "Failed to upload cover image to Cloudinary.");
+  }
+
+  // Parse sports data from JSON string
+  let parsedSports = [];
+  if (sports) {
+    try {
+      const sportsData = JSON.parse(sports);
+      
+      // Process each sport to get the Sport ObjectId
+      for (const sportItem of sportsData) {
+        // Find sport by name (case-insensitive)
+        const sportDoc = await Sport.findOne({ 
+          name: { $regex: new RegExp(`^${sportItem.sport}$`, 'i') } 
+        });
+        
+        if (sportDoc) {
+          parsedSports.push({
+            sport: sportDoc._id,
+            role: sportItem.role,
+          });
+        }
+      }
+    } catch (error) {
+      throw new ApiError(400, "Invalid sports data format.");
+    }
+  }
+
   const player = new Player({
     fullName,
     email,
     password,
     avatar: avatarResponse?.url || null,
+    coverImage: coverImageResponse?.url || null,
     role: "Player",
     phone,
     city,
-    sports,
+    sports: parsedSports,
     age,
-    playingRole,
+    gender,
     verifyEmailOtp: otp,
     verifyEmailOtpExpiry,
   });
@@ -226,7 +261,7 @@ export const registerPlayer = asyncHandler(async (req, res) => {
 
 export const registerTeamManager = asyncHandler(async (req, res) => {
   const { fullName, email, password, phone, city } = req.body;
-  const avatarLocalPath = req.file?.path;
+  const avatarLocalPath = req.files?.avatar?.[0]?.path;
 
   if (!fullName || !email || !password)
     throw new ApiError(
@@ -246,15 +281,15 @@ export const registerTeamManager = asyncHandler(async (req, res) => {
       throw new ApiError(500, "Failed to upload avatar to Cloudinary.");
   }
 
-  const manager = new registerTeamManager({
+  const manager = new TeamManager({
     fullName,
     email,
     password,
     avatar: avatarResponse?.url || null,
-    role: "Team Manager",
+    role: "TeamManager",
     phone,
     city,
-    managedTeams: [],
+    teams: [],
     verifyEmailOtp: otp,
     verifyEmailOtpExpiry,
   });
@@ -293,8 +328,8 @@ export const registerTeamManager = asyncHandler(async (req, res) => {
 });
 
 export const registerTournamentOrganizer = asyncHandler(async (req, res) => {
-  const { fullName, orgName, email, password, phone, city, sports } = req.body;
-  const avatarLocalPath = req.file?.path;
+  const { fullName, orgName, email, password, phone, city } = req.body;
+  const avatarLocalPath = req.files?.avatar?.[0]?.path;
 
   if (!fullName || !orgName || !email || !password) {
     throw new ApiError(
@@ -320,11 +355,10 @@ export const registerTournamentOrganizer = asyncHandler(async (req, res) => {
     orgName,
     email,
     avatar: avatarResponse?.url || null,
-    role: "Tournament Organizer",
+    role: "TournamentOrganizer",
     password,
     phone,
     city,
-    sports,
     isVerifiedOrganizer: false,
     verifyEmailOtp: otp,
     verifyEmailOtpExpiry,
@@ -347,7 +381,7 @@ export const registerTournamentOrganizer = asyncHandler(async (req, res) => {
     email: createdOrganizer.email,
     subject: "Email Verification – SportsHub",
     message: ` Please use the following OTP to verify your email : ${otp}`,
-    html: verificationEmailHtml(createdPlayer.fullName, otp),
+    html: verificationEmailHtml(createdOrganizer.fullName, otp),
   };
 
   await sendEmail(emailData);
@@ -396,7 +430,7 @@ export const verifyEmail = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: true,
-    expiresIn: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 
   const safeUser = await User.findById(user._id).select(
@@ -412,6 +446,47 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     );
 });
 
+export const resendOtp = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    throw new ApiError(400, "Email is required");
+  }
+
+  const user = await User.findOne({ email });
+  
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (user.isVerified) {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, "Email already verified"));
+  }
+
+  // Generate new OTP
+  const { otp, verifyEmailOtpExpiry } = generateOtpAndExpiry();
+  
+  user.verifyEmailOtp = otp;
+  user.verifyEmailOtpExpiry = verifyEmailOtpExpiry;
+  await user.save({ validateBeforeSave: false });
+
+  // Send email
+  const emailData = {
+    email: user.email,
+    subject: "Email Verification – SportsHub",
+    message: `Please use the following OTP to verify your email: ${otp}`,
+    html: verificationEmailHtml(user.fullName, otp),
+  };
+
+  await sendEmail(emailData);
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, null, "OTP resent successfully"));
+});
+
 export const login = asyncHandler(async (req, res) => {
   const { email, password, role } = req.body;
 
@@ -419,6 +494,65 @@ export const login = asyncHandler(async (req, res) => {
     throw new ApiError(400, "email, password, and role are required.");
   }
 
+  // ========== HARDCODED ADMIN CREDENTIALS ==========
+  if (role === "Admin") {
+    const ADMIN_EMAIL = "admin@gmail.com";
+    const ADMIN_PASSWORD = "Admin123!";
+
+    if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+      throw new ApiError(400, "Invalid admin credentials.");
+    }
+
+    // Generate admin tokens (without database lookup)
+    const adminAccessToken = jwt.sign(
+      {
+        _id: "admin-hardcoded",
+        email: ADMIN_EMAIL,
+        fullName: "Admin User",
+        role: "Admin",
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      {
+        expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+      }
+    );
+
+    const adminRefreshToken = jwt.sign(
+      {
+        _id: "admin-hardcoded",
+        role: "Admin",
+      },
+      process.env.REFRESH_TOKEN_SECRET,
+      {
+        expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+      }
+    );
+
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+
+    const adminUser = {
+      _id: "admin-hardcoded",
+      fullName: "Admin User",
+      email: ADMIN_EMAIL,
+      role: "Admin",
+      isVerified: true,
+      isActive: true,
+    };
+
+    res
+      .status(200)
+      .cookie("accessToken", adminAccessToken, options)
+      .cookie("refreshToken", adminRefreshToken, options)
+      .json(new ApiResponse(200, adminUser, "Admin successfully loggedIn."));
+    return;
+  }
+
+  // ========== REGULAR USER LOGIN ==========
   const user = await User.findOne({ email });
   if (!user) throw new ApiError(404, "User not found");
 
@@ -426,6 +560,11 @@ export const login = asyncHandler(async (req, res) => {
   if (!isPasswordCorrect) throw new ApiError(400, "Invalid credentials.");
 
   if (user.role !== role) throw new ApiError(400, "Invalid credentials.");
+
+  // Prevent non-admin users from accessing admin panel
+  if (role === "Admin") {
+    throw new ApiError(403, "Unauthorized access to admin panel.");
+  }
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
     user._id
@@ -439,7 +578,7 @@ export const login = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    expiresIn: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 
   res
@@ -509,11 +648,20 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 });
 
 export const resetPassword = asyncHandler(async (req, res) => {
-  const { password } = req.body || req.body.email;
+  const { password } = req.body;
   const { token } = req.params;
 
+  if (!password) {
+    throw new ApiError(400, "Password is required.");
+  }
+
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
   const user = await User.findOne({
-    resetPasswordToken: token,
+    resetPasswordToken: hashedToken,
     resetPasswordTokenExpiry: { $gt: Date.now() },
   });
 
@@ -554,7 +702,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    expiresIn: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);

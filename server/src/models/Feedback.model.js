@@ -8,11 +8,6 @@ const feedbackSchema = new Schema(
       ref: "User",
       required: true,
     },
-    tournament: {
-      type: Schema.Types.ObjectId,
-      ref: "Tournament",
-      required: true,
-    },
     rating: {
       type: Number,
       min: 1,
@@ -22,6 +17,7 @@ const feedbackSchema = new Schema(
     comment: {
       type: String,
       trim: true,
+      required: true,
     },
   },
   { timestamps: true }

@@ -61,19 +61,31 @@ const tournamentSchema = new Schema(
     prizePool: {
       type: String,
     },
-    rules: {
-      type: String,
-    },
+    rules: [
+      {
+        type: String,
+      }
+    ],
     ground: {
-      type: Schema.Types.ObjectId,
-      ref: "Ground",
+      name: {
+        type: String,
+        trim: true,
+      },
+      city: {
+        type: String,
+        trim: true,
+      },
+      address: {
+        type: String,
+        trim: true,
+      },
     },
     bannerUrl: {
       type: String,
     },
     status: {
       type: String,
-      enum: ["Draft", "Published", "Ongoing", "Completed", "Cancelled"],
+      enum: ["Upcoming", "Live", "Completed", "Cancelled"],
     },
     registeredTeams: [
       {
@@ -97,4 +109,4 @@ const tournamentSchema = new Schema(
   }
 );
 
-const Tournament = model("Tournament", tournamentSchema);
+export const Tournament = model("Tournament", tournamentSchema);

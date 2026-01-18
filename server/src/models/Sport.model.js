@@ -8,11 +8,6 @@ const sportSchema = new Schema(
       unique: true,
       trim: true,
     },
-    category: {
-      type: String,
-      enum: ["Outdoor", "Indoor"],
-      required: true,
-    },
     teamBased: {
       type: Boolean,
       required: true, // true = Cricket, Football | false = Chess, Badminton
@@ -23,8 +18,9 @@ const sportSchema = new Schema(
     maxPlayers: {
       type: Number, // e.g. 11 for Cricket
     },
-    iconUrl: {
-      type: String, // for frontend icons
+    roles: {
+      type: [String],
+      default: ["Player"], // Available roles for this sport
     },
     isActive: {
       type: Boolean,

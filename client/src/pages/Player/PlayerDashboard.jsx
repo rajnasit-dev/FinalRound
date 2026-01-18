@@ -1,0 +1,239 @@
+import { Trophy, Users, Calendar, TrendingUp } from "lucide-react";
+import useDateFormat from "../../hooks/useDateFormat";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import DashboardCardState from "../../components/ui/DashboardCardState";
+import IconCard from "../../components/ui/IconCard";
+import Spinner from "../../components/ui/Spinner";
+import { fetchPlayerProfile } from "../../store/slices/playerSlice";
+import { fetchUpcomingMatches, fetchCompletedMatches } from "../../store/slices/matchSlice";
+import { fetchPlayerTeams } from "../../store/slices/teamSlice";
+
+const PlayerDashboard = () => {
+  const dispatch = useDispatch();
+  const { profile, loading: playerLoading } = useSelector((state) => state.player);
+  const { upcomingMatches, completedMatches, loading: matchLoading } = useSelector((state) => state.match);
+  const { playerTeams, loading: teamLoading } = useSelector((state) => state.team);
+  const { formatDate, formatTime } = useDateFormat();
+
+  useEffect(() => {
+    dispatch(fetchPlayerProfile());
+    dispatch(fetchUpcomingMatches());
+    dispatch(fetchCompletedMatches());
+    dispatch(fetchPlayerTeams());
+  }, [dispatch]);
+
+  // Calculate stats from real data
+  // Get unique tournaments from matches
+  const uniqueTournaments = new Set(
+    [...(upcomingMatches || []), ...(completedMatches || [])]
+      .map(match => match.tournament?._id)
+      .filter(Boolean)
+  );
+
+  const stats = {
+    tournaments: uniqueTournaments.size || 0,
+    teams: playerTeams?.length || 0,
+    upcomingMatches: upcomingMatches?.length || 0,
+    winRate: completedMatches?.length > 0 
+      ? Math.round((completedMatches.filter(m => m.result === "Won").length / completedMatches.length) * 100)
+      : 0,
+  };
+
+  const loading = playerLoading || matchLoading || teamLoading;
+
+  // Get recent activity from completedMatches
+  const recentActivity = completedMatches?.slice(0, 3).map(match => ({
+    id: match._id,
+    type: "match",
+    title: match.result === "Won" ? `Won against ${match.opponent}` : `${match.result} against ${match.opponent}`,
+    tournament: match.tournament?.name || "Tournament",
+    date: match.matchDate,
+  })) || [];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Page Header */}
+      <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
+        Player Dashboard
+      </h1>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <DashboardCardState
+          Icon={Trophy}
+          label="Active Tournaments"
+          value={stats.tournaments}
+          gradientFrom="from-amber-500/10"
+          gradientVia="via-amber-500/5"
+          borderColor="border-amber-500/20"
+          iconGradientFrom="from-amber-500"
+          iconGradientTo="to-amber-600"
+        />
+        <DashboardCardState
+          Icon={Users}
+          label="My Teams"
+          value={stats.teams}
+          gradientFrom="from-blue-500/10"
+          gradientVia="via-blue-500/5"
+          borderColor="border-blue-500/20"
+          iconGradientFrom="from-blue-500"
+          iconGradientTo="to-blue-600"
+        />
+        <DashboardCardState
+          Icon={Calendar}
+          label="Upcoming Matches"
+          value={stats.upcomingMatches}
+          gradientFrom="from-purple-500/10"
+          gradientVia="via-purple-500/5"
+          borderColor="border-purple-500/20"
+          iconGradientFrom="from-purple-500"
+          iconGradientTo="to-purple-600"
+        />
+        <DashboardCardState
+          Icon={TrendingUp}
+          label="Win Rate"
+          value={`${stats.winRate}%`}
+          gradientFrom="from-green-500/10"
+          gradientVia="via-green-500/5"
+          borderColor="border-green-500/20"
+          iconGradientFrom="from-green-500"
+          iconGradientTo="to-green-600"
+        />
+      </div>
+
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Upcoming Matches */}
+        <div className="bg-card-background dark:bg-card-background-dark rounded-xl p-6 shadow-md">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
+              Upcoming Matches
+            </h2>
+            <Calendar
+              className="text-secondary dark:text-secondary-dark"
+              size={24}
+            />
+          </div>
+
+          <div className="space-y-4">
+            {upcomingMatches && upcomingMatches.length > 0 ? (
+              upcomingMatches.slice(0, 3).map((match) => (
+                <IconCard
+                  key={match._id}
+                  Icon={Calendar}
+                  iconBgColor="bg-purple-500/10"
+                  iconColor="text-purple-500 dark:text-purple-400"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">
+                        {match.team1?.name} vs {match.team2?.name}
+                      </h3>
+                      <p className="text-sm text-base dark:text-base-dark mt-1">
+                        {match.tournament?.name || "Tournament"}
+                      </p>
+                      <p className="text-xs text-base dark:text-base-dark mt-2">
+                        📍 {match.venue || "Venue TBD"}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-secondary dark:text-secondary-dark">
+                        {formatDate(match.matchDate)}
+                      </p>
+                      <p className="text-xs text-base dark:text-base-dark mt-1">
+                        {formatTime(match.matchTime) || "TBD"}
+                      </p>
+                    </div>
+                  </div>
+                </IconCard>
+              ))
+            ) : (
+              <p className="text-center text-base dark:text-base-dark py-8">
+                No upcoming matches
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-card-background dark:bg-card-background-dark rounded-xl p-6 shadow-md">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
+              Recent Activity
+            </h2>
+            <TrendingUp
+              className="text-accent dark:text-accent-dark"
+              size={24}
+            />
+          </div>
+
+          <div className="space-y-4">
+            {recentActivity && recentActivity.length > 0 ? (
+              recentActivity.map((activity) => {
+                const getActivityIcon = () => {
+                  if (activity.type === "match") return Trophy;
+                  if (activity.type === "tournament") return Calendar;
+                  return Users;
+                };
+
+                const getActivityColors = () => {
+                  if (activity.type === "match")
+                    return {
+                      bg: "bg-green-500/10",
+                      text: "text-green-500 dark:text-green-400",
+                    };
+                  if (activity.type === "tournament")
+                    return {
+                      bg: "bg-amber-500/10",
+                      text: "text-amber-500 dark:text-amber-400",
+                    };
+                  return {
+                    bg: "bg-blue-500/10",
+                    text: "text-blue-500 dark:text-blue-400",
+                  };
+                };
+
+                const colors = getActivityColors();
+
+                return (
+                  <IconCard
+                    key={activity.id}
+                    Icon={getActivityIcon()}
+                    iconBgColor={colors.bg}
+                    iconColor={colors.text}
+                  >
+                    <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">
+                      {activity.title}
+                    </h3>
+                    <p className="text-sm text-base dark:text-base-dark mt-1">
+                      {activity.tournament}
+                    </p>
+                    <p className="text-xs text-base dark:text-base-dark mt-2">
+                      {formatDate(activity.date)}
+                    </p>
+                  </IconCard>
+                );
+              })
+            ) : (
+              <p className="text-center text-base dark:text-base-dark py-8">
+                No recent activity
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+export default PlayerDashboard;

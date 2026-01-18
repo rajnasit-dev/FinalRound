@@ -15,9 +15,18 @@ const matchSchema = new Schema(
     },
 
     ground: {
-      type: Schema.Types.ObjectId,
-      ref: "Ground",
-      required: true,
+      name: {
+        type: String,
+        trim: true,
+      },
+      city: {
+        type: String,
+        trim: true,
+      },
+      address: {
+        type: String,
+        trim: true,
+      },
     },
 
     teamA: {

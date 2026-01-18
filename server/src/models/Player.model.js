@@ -4,21 +4,27 @@ import { User } from "./User.model.js";
 const playerSchema = new Schema({
   sports: [
     {
-      type: Schema.Types.ObjectId,
-      ref: "Sport",
+      sport: {
+        type: Schema.Types.ObjectId,
+        ref: "Sport",
+        required: true,
+      },
+      role: {
+        type: String,
+        required: true, // e.g., "Batsman", "Bowler", "All-rounder" for Cricket; "Striker", "Midfielder", "Defender", "Goalkeeper" for Football
+      }
     },
   ],
-  playingRole: {
-    type: String, // e.g. "Bowler", "Striker", "Defender"
-  },
   gender: {
     type: String,
     enum: ["Male", "Female", "Other"],
   },
-  achievements: {
-    title: String,
-    year: Number,
-  },
+  achievements: [
+    {
+      title: String,
+      year: Number,
+    },
+  ],
   height: Number,
   weight: Number,
   age: Number,

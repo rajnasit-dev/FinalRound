@@ -36,12 +36,18 @@ const teamSchema = new Schema(
       type: String,
       trim: true,
     },
+    achievements: [
+      {
+        title: String,
+        year: Number,
+      },
+    ],
     openToJoin: {
       type: Boolean,
       default: true,
     },
     isActive: {
-      type: Booalean,
+      type: Boolean,
       default: true,
     },
   },

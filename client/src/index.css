@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-syne: 'Syne', sans-serif;
+}
+
+@theme {
+  --navbar-height: 72px;
+  --color-primary: #fff;
+  --color-primary-dark: #1d2132;
+
+  --color-secondary: #7758e2;
+  --color-secondary-dark: #7758e2;
+
+  --color-accent: #d7ff42;
+  --color-accent-dark: #d7ff42;
+
+  --color-card-background: #f4f6fb;
+  --color-card-background-dark: #22283d;
+
+  --color-text-primary: #000;
+  --color-text-primary-dark: #fff;
+
+  --color-text-secondary: #fff;
+  --color-text-secondary-dark: #000;
+  
+  --color-text-accent: #7758e2;
+  --color-text-accent-dark: #d7ff42;
+
+  --color-base: #3f3f46;
+  --color-base-dark: #d4d4d8;
+}
+
+body {
+  font-family: var(--font-syne);
+  background-color: var(--color-primary);
+  color: var(--color-text-primary);
+}
+
+body .dark {
+  font-family: var(--font-syne);
+  background-color: var(--color-primary-dark);
+  color: var(--color-text-primary-dark);
+}
+
+
+
+/* Autofill styles for inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-base) !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--color-card-background) inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-base-dark) !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--color-card-background-dark) inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Hide default browser password reveal button */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+input[type="password"]::-webkit-contacts-auto-fill-button,
+input[type="password"]::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+  height: 0;
+  width: 0;
+  margin: 0;
+}

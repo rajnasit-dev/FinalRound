@@ -5,6 +5,7 @@ import {
   logout,
   resetPassword,
   verifyEmail,
+  resendOtp,
   registerPlayer,
   registerTeamManager,
   registerTournamentOrganizer,
@@ -16,11 +17,19 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const authRouter = Router();
 
-authRouter.post("/player", upload.single("avatar"), registerPlayer);
-authRouter.post("/manager", upload.single("avatar"), registerTeamManager);
-authRouter.post("/organizer", upload.single("avatar"), registerTournamentOrganizer);
+authRouter.post("/player", upload.fields([
+  { name: "avatar", maxCount: 1 },
+  { name: "coverImage", maxCount: 1 }
+]), registerPlayer);
+authRouter.post("/manager", upload.fields([
+  { name: "avatar", maxCount: 1 }
+]), registerTeamManager);
+authRouter.post("/organizer", upload.fields([
+  { name: "avatar", maxCount: 1 }
+]), registerTournamentOrganizer);
 
 authRouter.post("/verify-email", verifyEmail);
+authRouter.post("/resend-otp", resendOtp);
 
 authRouter.post("/login", login);
 

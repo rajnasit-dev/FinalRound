@@ -6,13 +6,30 @@ const tournamentOrganizerSchema = new Schema({
     type: String,
     required: true,
   },
-  sports: {
-    type: Schema.Types.ObjectId,
-    ref: "Sport",
-  },
   isVerifiedOrganizer: {
     type: Boolean,
     default: false,
+  },
+  isAuthorized: {
+    type: Boolean,
+    default: false,
+  },
+  verificationDocumentUrl: {
+    type: String,
+  },
+  authorizationRequestDate: {
+    type: Date,
+    default: Date.now,
+  },
+  authorizedBy: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
+  authorizedAt: {
+    type: Date,
+  },
+  rejectionReason: {
+    type: String,
   },
   documents: String,
 });
