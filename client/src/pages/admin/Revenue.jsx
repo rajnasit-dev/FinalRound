@@ -9,7 +9,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
-import CardStat from "../../components/ui/CardStat";
+import DashboardCardState from "../../components/ui/DashboardCardState";
 
 const Revenue = () => {
   const dispatch = useDispatch();
@@ -53,30 +53,45 @@ const Revenue = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <CardStat
+        <DashboardCardState
           Icon={DollarSign}
-          iconColor="text-green-600"
           label="Total Revenue"
           value={`₹${revenue?.totalRevenue || 0}`}
+          gradientFrom="from-green-500/10"
+          gradientVia="via-green-500/5"
+          borderColor="border-green-500/20"
+          iconGradientFrom="from-green-500"
+          iconGradientTo="to-green-600"
         />
-        <CardStat
+        <DashboardCardState
           Icon={Trophy}
-          iconColor="text-purple-600"
           label="Tournament Revenue"
           value={`₹${revenue?.tournamentRevenue || 0}`}
-          description="₹100 per tournament"
+          gradientFrom="from-purple-500/10"
+          gradientVia="via-purple-500/5"
+          borderColor="border-purple-500/20"
+          iconGradientFrom="from-purple-500"
+          iconGradientTo="to-purple-600"
         />
-        <CardStat
+        <DashboardCardState
           Icon={CreditCard}
-          iconColor="text-blue-600"
           label="Total Payments"
           value={revenue?.totalPayments || 0}
+          gradientFrom="from-blue-500/10"
+          gradientVia="via-blue-500/5"
+          borderColor="border-blue-500/20"
+          iconGradientFrom="from-blue-500"
+          iconGradientTo="to-blue-600"
         />
-        <CardStat
+        <DashboardCardState
           Icon={TrendingUp}
-          iconColor="text-orange-600"
           label="This Month"
           value={`₹${revenue?.monthlyRevenue || 0}`}
+          gradientFrom="from-orange-500/10"
+          gradientVia="via-orange-500/5"
+          borderColor="border-orange-500/20"
+          iconGradientFrom="from-orange-500"
+          iconGradientTo="to-orange-600"
         />
       </div>
 

@@ -237,7 +237,7 @@ export const deleteCoverImage = asyncHandler(async (req, res) => {
 
 export const updateUserProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const { fullName, phone, city, bio, age, height, weight, gender } = req.body;
+  const { fullName, phone, city, bio, dateOfBirth, height, weight, gender } = req.body;
 
   const user = await User.findById(userId);
   if (!user) throw new ApiError(404, "User not found.");
@@ -250,7 +250,7 @@ export const updateUserProfile = asyncHandler(async (req, res) => {
   // Update Player-specific fields if the user is a Player
   if (user.role === "Player") {
     if (bio !== undefined) user.bio = bio;
-    if (age !== undefined) user.age = age;
+    if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth;
     if (height !== undefined) user.height = height;
     if (weight !== undefined) user.weight = weight;
     if (gender) user.gender = gender;

@@ -2,7 +2,9 @@ import { User } from "../models/User.model.js";
 import { Player } from "../models/Player.model.js";
 import { TeamManager } from "../models/TeamManager.model.js";
 import { TournamentOrganizer } from "../models/TournamentOrganizer.model.js";
+import { Admin } from "../models/Admin.model.js";
 import { Sport } from "../models/Sport.model.js";
+import mongoose from "mongoose";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { sendEmail } from "../middlewares/sendEmail.js";
@@ -164,7 +166,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 };
 
 export const registerPlayer = asyncHandler(async (req, res) => {
-  const { fullName, email, password, phone, city, sports, age, gender } =
+  const { fullName, email, password, phone, city, sports, dateOfBirth, gender } =
     req.body;
   const avatarLocalPath = req.files?.avatar?.[0]?.path;
   const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
@@ -230,7 +232,7 @@ export const registerPlayer = asyncHandler(async (req, res) => {
     phone,
     city,
     sports: parsedSports,
-    age,
+    dateOfBirth,
     gender,
     verifyEmailOtp: otp,
     verifyEmailOtpExpiry,
@@ -429,7 +431,8 @@ export const verifyEmail = asyncHandler(async (req, res) => {
 
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 
@@ -504,9 +507,10 @@ export const login = asyncHandler(async (req, res) => {
     }
 
     // Generate admin tokens (without database lookup)
+    const adminId = new mongoose.Types.ObjectId();
     const adminAccessToken = jwt.sign(
       {
-        _id: "admin-hardcoded",
+        _id: adminId.toString(),
         email: ADMIN_EMAIL,
         fullName: "Admin User",
         role: "Admin",
@@ -519,7 +523,7 @@ export const login = asyncHandler(async (req, res) => {
 
     const adminRefreshToken = jwt.sign(
       {
-        _id: "admin-hardcoded",
+        _id: adminId.toString(),
         role: "Admin",
       },
       process.env.REFRESH_TOKEN_SECRET,
@@ -531,12 +535,13 @@ export const login = asyncHandler(async (req, res) => {
     const options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     };
 
     const adminUser = {
-      _id: "admin-hardcoded",
+      _id: adminId,
       fullName: "Admin User",
       email: ADMIN_EMAIL,
       role: "Admin",
@@ -577,6 +582,7 @@ export const login = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
@@ -596,6 +602,7 @@ export const logout = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     path: "/",
   };
 
@@ -702,6 +709,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 

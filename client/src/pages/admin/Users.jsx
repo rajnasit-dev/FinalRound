@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllUsers } from "../../store/slices/adminSlice";
-import { Search, Filter } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
+import SearchBar from "../../components/ui/SearchBar";
+import Select from "../../components/ui/Select";
 import Table from "../../components/ui/Table";
 
 const Users = () => {
@@ -107,32 +108,26 @@ const Users = () => {
       <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-4">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base dark:text-base-dark" />
-            <input
-              type="text"
+          <div className="flex-1">
+            <SearchBar
               placeholder="Search by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-base-dark dark:border-base rounded-lg bg-base-dark dark:bg-base focus:outline-none focus:ring-2 focus:ring-secondary"
+              searchQuery={searchTerm}
+              setSearchQuery={setSearchTerm}
             />
           </div>
 
           {/* Role Filter */}
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-base dark:text-base-dark" />
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-4 py-2 border border-base-dark dark:border-base rounded-lg bg-base-dark dark:bg-base focus:outline-none focus:ring-2 focus:ring-secondary"
-            >
-              <option value="All">All Roles</option>
-              <option value="Player">Player</option>
-              <option value="Team Manager">Team Manager</option>
-              <option value="Tournament Organizer">Tournament Organizer</option>
-              <option value="Admin">Admin</option>
-            </select>
-          </div>
+          <Select
+            options={[
+              { value: "All", label: "All Roles" },
+              { value: "Player", label: "Player" },
+              { value: "Team Manager", label: "Team Manager" },
+              { value: "Tournament Organizer", label: "Tournament Organizer" },
+              { value: "Admin", label: "Admin" },
+            ]}
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+          />
         </div>
 
         {/* Stats */}

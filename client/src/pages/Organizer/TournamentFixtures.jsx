@@ -6,7 +6,7 @@ import Spinner from "../../components/ui/Spinner";
 import MatchCard from "../../components/ui/MatchCard";
 import Button from "../../components/ui/Button";
 import { fetchTournamentById } from "../../store/slices/tournamentSlice";
-import { fetchMatchesByTournament, deleteMatch } from "../../store/slices/matchSlice";
+import { fetchMatchesByTournament, deleteMatch, generateTournamentFixtures } from "../../store/slices/matchSlice";
 
 const TournamentFixtures = () => {
   const { tournamentId } = useParams();
@@ -27,6 +27,13 @@ const TournamentFixtures = () => {
 
   // Check if user is the organizer
   const isOrganizer = tournament?.organizer?._id === user?._id;
+
+  const canGenerate = isOrganizer && !tournament?.isScheduleCreated && (tournament?.approvedTeams?.length || 0) >= 2;
+
+  const handleGenerateFixtures = async () => {
+    await dispatch(generateTournamentFixtures(tournamentId));
+    dispatch(fetchMatchesByTournament(tournamentId));
+  };
 
   const handleDeleteMatch = async (matchId) => {
     if (window.confirm("Are you sure you want to delete this match?")) {
@@ -97,13 +104,23 @@ const TournamentFixtures = () => {
               Manage matches and schedules for this tournament
             </p>
           </div>
-          <Button
-            onClick={() => navigate(`/organizer/tournaments/${tournamentId}/fixtures/create`)}
-            className="inline-flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Schedule New Match
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              onClick={() => navigate(`/organizer/tournaments/${tournamentId}/fixtures/create`)}
+              className="inline-flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Schedule New Match
+            </Button>
+            <Button
+              onClick={handleGenerateFixtures}
+              disabled={!canGenerate}
+              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60"
+            >
+              <CheckCircle className="w-5 h-5" />
+              Generate Fixtures
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -220,13 +237,23 @@ const TournamentFixtures = () => {
           <p className="text-base dark:text-base-dark mb-6">
             Start by scheduling the first match for this tournament
           </p>
-          <Button
-            onClick={() => navigate(`/organizer/tournaments/${tournamentId}/fixtures/create`)}
-            className="inline-flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Schedule Match
-          </Button>
+          <div className="flex justify-center gap-3">
+            <Button
+              onClick={() => navigate(`/organizer/tournaments/${tournamentId}/fixtures/create`)}
+              className="inline-flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Schedule Match
+            </Button>
+            <Button
+              onClick={handleGenerateFixtures}
+              disabled={!canGenerate}
+              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60"
+            >
+              <CheckCircle className="w-5 h-5" />
+              Generate Fixtures
+            </Button>
+          </div>
         </div>
       )}
     </div>

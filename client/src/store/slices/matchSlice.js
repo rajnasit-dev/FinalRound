@@ -160,6 +160,23 @@ export const deleteMatch = createAsyncThunk(
   }
 );
 
+// Generate fixtures for a tournament
+export const generateTournamentFixtures = createAsyncThunk(
+  "match/generateFixtures",
+  async (tournamentId, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/tournaments/${tournamentId}/generate-fixtures`,
+        {},
+        { withCredentials: true, headers: { "Content-Type": "application/json" } }
+      );
+      return response.data.data; // list of created matches
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Request failed");
+    }
+  }
+);
+
 const initialState = {
   matches: [],
   upcomingMatches: [],
@@ -302,6 +319,19 @@ const matchSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
         state.createSuccess = false;
+      })
+      // Generate fixtures
+      .addCase(generateTournamentFixtures.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(generateTournamentFixtures.fulfilled, (state, action) => {
+        state.loading = false;
+        state.matches = action.payload || [];
+      })
+      .addCase(generateTournamentFixtures.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
       // Update match
       .addCase(updateMatch.pending, (state) => {

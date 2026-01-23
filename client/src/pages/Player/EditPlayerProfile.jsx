@@ -31,7 +31,7 @@ const EditPlayerProfile = () => {
       phone: user?.phone || "",
       city: user?.city || "",
       bio: user?.bio || "",
-      age: user?.age || "",
+      dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : "",
       gender: user?.gender || "",
       height: user?.height || "",
       weight: user?.weight || "",
@@ -53,7 +53,7 @@ const EditPlayerProfile = () => {
       phone: user?.phone || "",
       city: user?.city || "",
       bio: user?.bio || "",
-      age: user?.age || "",
+      dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : "",
       gender: user?.gender || "",
       height: user?.height || "",
       weight: user?.weight || "",
@@ -112,7 +112,7 @@ const EditPlayerProfile = () => {
         phone: data.phone || undefined,
         city: data.city || undefined,
         bio: data.bio || undefined,
-        age: data.age || undefined,
+        dateOfBirth: data.dateOfBirth || undefined,
         gender: data.gender || undefined,
         height: data.height || undefined,
         weight: data.weight || undefined,
@@ -281,19 +281,32 @@ const EditPlayerProfile = () => {
 
             <div>
               <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                Age
+                Date of Birth
               </label>
               <input
-                type="number"
-                {...register("age", {
-                  min: { value: 1, message: "Age must be positive" },
-                  max: { value: 120, message: "Age must be realistic" },
+                type="date"
+                {...register("dateOfBirth", {
+                  required: "Date of birth is required",
+                  validate: {
+                    notFuture: (value) => {
+                      if (!value) return true;
+                      const dob = new Date(value);
+                      const today = new Date();
+                      return dob <= today || "Date of birth cannot be in the future";
+                    },
+                    minAge: (value) => {
+                      if (!value) return true;
+                      const dob = new Date(value);
+                      const today = new Date();
+                      const age = today.getFullYear() - dob.getFullYear();
+                      return age >= 5 || "You must be at least 5 years old";
+                    },
+                  },
                 })}
                 className="w-full px-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark"
-                min="1"
               />
-              {errors.age && (
-                <p className="text-red-500 text-xs mt-1">{errors.age.message}</p>
+              {errors.dateOfBirth && (
+                <p className="text-red-500 text-xs mt-1">{errors.dateOfBirth.message}</p>
               )}
             </div>
 

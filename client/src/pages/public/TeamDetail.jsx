@@ -28,6 +28,56 @@ import defaultAvatar from "../../assets/defaultAvatar.png";
 import defaultTeamCoverImage from "../../assets/defaultTeamCoverImage.png";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import useDateFormat from "../../hooks/useDateFormat";
+import useAge from "../../hooks/useAge";
+
+// Helper component to display player with age calculated from DOB
+const PlayerListItem = ({ player, isCaptain }) => {
+  const age = useAge(player?.dateOfBirth);
+  
+  return (
+    <Link
+      to={`/players/${player._id}`}
+      className="group flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-750 transition-all border border-gray-200 dark:border-gray-700 hover:border-secondary dark:hover:border-secondary hover:shadow-md"
+    >
+      <div className="relative">
+        <div className="w-14 h-14 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0">
+          {player.avatar ? (
+            <img
+              src={player.avatar}
+              alt={player.fullName}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-white font-bold">
+              {player.fullName
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()}
+            </div>
+          )}
+        </div>
+        {isCaptain && (
+          <Crown className="absolute -top-1 -right-1 w-5 h-5 text-amber-500" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="font-semibold text-gray-900 dark:text-white truncate group-hover:text-secondary transition-colors">
+          {player.fullName}
+        </h4>
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <Target className="w-3 h-3" />
+          {player.playingRole}
+        </div>
+      </div>
+      {age && (
+        <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          {age} yrs
+        </div>
+      )}
+    </Link>
+  );
+};
 
 const TeamDetail = () => {
   const { id } = useParams();
@@ -261,46 +311,11 @@ const TeamDetail = () => {
 
               <div className="grid sm:grid-cols-2 gap-4">
                 {team.players.map((player) => (
-                  <Link
-                    key={player._id}
-                    to={`/players/${player._id}`}
-                    className="group flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-750 transition-all border border-gray-200 dark:border-gray-700 hover:border-secondary dark:hover:border-secondary hover:shadow-md"
-                  >
-                    <div className="relative">
-                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0">
-                        {player.avatar ? (
-                          <img
-                            src={player.avatar}
-                            alt={player.fullName}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-white font-bold">
-                            {player.fullName
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-                      {player._id === team.captain?._id && (
-                        <Crown className="absolute -top-1 -right-1 w-5 h-5 text-amber-500" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-gray-900 dark:text-white truncate group-hover:text-secondary transition-colors">
-                        {player.fullName}
-                      </h4>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                        <Target className="w-3 h-3" />
-                        {player.playingRole}
-                      </div>
-                    </div>
-                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      {player.age} yrs
-                    </div>
-                  </Link>
+                  <PlayerListItem 
+                    key={player._id} 
+                    player={player} 
+                    isCaptain={player._id === team.captain?._id}
+                  />
                 ))}
               </div>
             </Container>

@@ -9,12 +9,17 @@ import {
   registerTeam,
   approveTeamRegistration,
   rejectTeamRegistration,
+  registerPlayer,
+  approvePlayerRegistration,
+  rejectPlayerRegistration,
+  getTournamentParticipants,
   getTournamentsBySport,
   getUpcomingTournaments,
   getLiveTournaments,
   searchTournaments,
   updateTournamentStatus,
-  getTrendingTournaments
+  getTrendingTournaments,
+  generateFixtures
 } from "../controllers/tournament.controllers.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -35,11 +40,18 @@ tournamentRouter.post("/", authMiddleware, upload.single("banner"), createTourna
 tournamentRouter.put("/:id", authMiddleware, updateTournament);
 tournamentRouter.patch("/:id/banner", authMiddleware, upload.single("banner"), updateTournamentBanner);
 tournamentRouter.patch("/:id/status", authMiddleware, updateTournamentStatus);
+tournamentRouter.post("/:id/generate-fixtures", authMiddleware, generateFixtures);
+tournamentRouter.get("/:id/participants", authMiddleware, getTournamentParticipants);
 tournamentRouter.delete("/:id", authMiddleware, deleteTournament);
 
 // Team registration management
 tournamentRouter.post("/:id/register", authMiddleware, registerTeam);
 tournamentRouter.patch("/:id/approve/:teamId", authMiddleware, approveTeamRegistration);
 tournamentRouter.patch("/:id/reject/:teamId", authMiddleware, rejectTeamRegistration);
+
+// Player registration management (for single-player tournaments)
+tournamentRouter.post("/:id/register-player", authMiddleware, registerPlayer);
+tournamentRouter.patch("/:id/approve-player/:playerId", authMiddleware, approvePlayerRegistration);
+tournamentRouter.patch("/:id/reject-player/:playerId", authMiddleware, rejectPlayerRegistration);
 
 export default tournamentRouter;

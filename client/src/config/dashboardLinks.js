@@ -30,7 +30,6 @@ export const managerLinks = [
 export const organizerLinks = [
   { name: "Dashboard", icon: LayoutDashboard, url: "/organizer/dashboard" },
   { name: "Tournaments", icon: Trophy, url: "/organizer/tournaments" },
-  { name: "Venues", icon: MapPin, url: "/organizer/venues" },
   { name: "Matches", icon: Calendar, url: "/organizer/matches" },
 ];
 

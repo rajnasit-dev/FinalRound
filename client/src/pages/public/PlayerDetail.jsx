@@ -10,9 +10,6 @@ import {
   Phone,
   Ruler,
   Weight,
-  Calendar,
-  Target,
-  Activity,
   Award,
   Users,
   Shield,
@@ -30,6 +27,7 @@ import { sendPlayerRequest } from "../../store/slices/requestSlice";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 import defaultCoverImage from "../../assets/defaultCoverImage.png";
 import useDateFormat from "../../hooks/useDateFormat";
+import useAge from "../../hooks/useAge";
 
 const PlayerDetail = () => {
   const { id } = useParams();
@@ -39,6 +37,7 @@ const PlayerDetail = () => {
   const { managerTeams } = useSelector((state) => state.team);
   const { loading: requestLoading } = useSelector((state) => state.request);
   const { formatDate } = useDateFormat();
+  const age = useAge(player?.dateOfBirth);
   const [selectedTeam, setSelectedTeam] = useState("");
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
@@ -196,7 +195,7 @@ const PlayerDetail = () => {
                   Icon={User}
                   iconColor="text-blue-600"
                   label="Age"
-                  value={`${player.age} years`}
+                  value={age ? `${age} years` : "N/A"}
                 />
                 <CardStat
                   Icon={Ruler}
@@ -219,13 +218,40 @@ const PlayerDetail = () => {
               </div>
             </Container>
 
+            {/* Sports & Roles */}
+            <Container>
+              <h2 className="text-2xl font-bold mb-5">Sports & Roles</h2>
+              {player.sports && player.sports.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {player.sports.map((sportItem, index) => {
+                    const sportName =
+                      typeof sportItem === "string"
+                        ? sportItem
+                        : sportItem.sport?.name || sportItem.sport?.sportsName || sportItem.name || sportItem.sportsName || "Sport";
+                    const role = sportItem.role || player.playingRole || "Player";
+
+                    return (
+                      <span
+                        key={`${sportName}-${index}`}
+                        className="bg-secondary text-text-primary text-xs sm:text-sm px-4 py-1.5 rounded-full font-bold shadow-lg"
+                      >
+                        {sportName} • {role}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-base dark:text-base-dark">No sports added yet.</p>
+              )}
+            </Container>
+
             {/* Achievements */}
-            {player.achievements && player.achievements.length > 0 && (
-              <Container>
-                <h2 className="text-2xl font-bold mb-5 flex items-center gap-2">
-                  <Award className="w-6 h-6 text-amber-600" />
-                  Achievements
-                </h2>
+            <Container>
+              <h2 className="text-2xl font-bold mb-5 flex items-center gap-2">
+                <Award className="w-6 h-6 text-amber-600" />
+                Achievements
+              </h2>
+              {player.achievements && player.achievements.length > 0 ? (
                 <div className="space-y-3">
                   {player.achievements.map((achievement, index) => (
                     <div
@@ -237,15 +263,19 @@ const PlayerDetail = () => {
                         <h4 className="font-semibold mb-1">
                           {achievement.title}
                         </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {achievement.year}
-                        </p>
+                        {achievement.year && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {achievement.year}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
-              </Container>
-            )}
+              ) : (
+                <p className="text-base dark:text-base-dark">No achievements added yet.</p>
+              )}
+            </Container>
 
             {/* Teams */}
             {player.teams && player.teams.length > 0 && (

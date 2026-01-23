@@ -5,6 +5,8 @@ import { Tournament } from "../models/Tournament.model.js";
 import { Sport } from "../models/Sport.model.js";
 import { Team } from "../models/Team.model.js";
 import { TournamentOrganizer } from "../models/TournamentOrganizer.model.js";
+import { Match } from "../models/Match.model.js";
+import { User } from "../models/User.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
 // Create a new tournament
@@ -243,6 +245,139 @@ export const updateTournament = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedTournament, "Tournament updated successfully."));
 });
 
+// Generate fixtures (schedule) for a tournament - branched for player vs team
+export const generateFixtures = asyncHandler(async (req, res) => {
+  const organizerId = req.user._id;
+  const { id } = req.params; // tournament id
+
+  const tournament = await Tournament.findById(id)
+    .populate("sport", "_id name")
+    .populate("organizer", "_id")
+    .populate("approvedTeams", "_id name")
+    .populate("approvedPlayers", "_id fullName");
+
+  if (!tournament) {
+    throw new ApiError(404, "Tournament not found.");
+  }
+
+  // Verify user is the tournament organizer
+  if (tournament.organizer._id.toString() !== organizerId.toString()) {
+    throw new ApiError(403, "Only the tournament organizer can generate fixtures.");
+  }
+
+  // If schedule already created, prevent duplicate generation
+  if (tournament.isScheduleCreated) {
+    throw new ApiError(400, "Fixtures have already been generated for this tournament.");
+  }
+
+  let scheduledMatches = [];
+  const start = new Date(tournament.startDate);
+  const end = new Date(tournament.endDate);
+  
+  if (isNaN(start) || isNaN(end) || start > end) {
+    throw new ApiError(400, "Invalid tournament start/end dates.");
+  }
+
+  const totalDays = Math.max(1, Math.ceil((end - start) / (24 * 60 * 60 * 1000)) + 1);
+
+  // Branch based on tournament registration type
+  if (tournament.registrationType === "Team") {
+    // Team-based fixtures
+    const teams = tournament.approvedTeams?.map(t => t._id.toString()) || [];
+    if (teams.length < 2) {
+      throw new ApiError(400, "At least 2 approved teams are required to generate fixtures.");
+    }
+
+    const pairings = [];
+    for (let i = 0; i < teams.length; i++) {
+      for (let j = i + 1; j < teams.length; j++) {
+        pairings.push([teams[i], teams[j]]);
+      }
+    }
+
+    const matchesPerDay = Math.max(1, Math.ceil(pairings.length / totalDays));
+    let pairingIndex = 0;
+
+    for (let day = 0; day < totalDays && pairingIndex < pairings.length; day++) {
+      for (let k = 0; k < matchesPerDay && pairingIndex < pairings.length; k++) {
+        const scheduledAt = new Date(start.getTime() + day * 24 * 60 * 60 * 1000);
+        const baseHour = 10 + (k * 3);
+        scheduledAt.setHours(baseHour, 0, 0, 0);
+
+        const [teamA, teamB] = pairings[pairingIndex];
+        scheduledMatches.push({
+          tournament: tournament._id,
+          sport: tournament.sport._id || tournament.sport,
+          ground: tournament.ground || null,
+          teamA,
+          teamB,
+          scheduledAt,
+          status: "Scheduled",
+        });
+        pairingIndex++;
+      }
+    }
+  } else if (tournament.registrationType === "Player") {
+    // Player-based fixtures
+    const players = tournament.approvedPlayers?.map(p => p._id.toString()) || [];
+    if (players.length < 2) {
+      throw new ApiError(400, "At least 2 approved players are required to generate fixtures.");
+    }
+
+    const pairings = [];
+    for (let i = 0; i < players.length; i++) {
+      for (let j = i + 1; j < players.length; j++) {
+        pairings.push([players[i], players[j]]);
+      }
+    }
+
+    const matchesPerDay = Math.max(1, Math.ceil(pairings.length / totalDays));
+    let pairingIndex = 0;
+
+    for (let day = 0; day < totalDays && pairingIndex < pairings.length; day++) {
+      for (let k = 0; k < matchesPerDay && pairingIndex < pairings.length; k++) {
+        const scheduledAt = new Date(start.getTime() + day * 24 * 60 * 60 * 1000);
+        const baseHour = 10 + (k * 3);
+        scheduledAt.setHours(baseHour, 0, 0, 0);
+
+        const [playerA, playerB] = pairings[pairingIndex];
+        scheduledMatches.push({
+          tournament: tournament._id,
+          sport: tournament.sport._id || tournament.sport,
+          ground: tournament.ground || null,
+          playerA,
+          playerB,
+          scheduledAt,
+          status: "Scheduled",
+        });
+        pairingIndex++;
+      }
+    }
+  }
+
+  if (scheduledMatches.length === 0) {
+    throw new ApiError(400, "Could not generate any matches.");
+  }
+
+  // Persist matches
+  await Match.insertMany(scheduledMatches);
+
+  // Mark schedule created
+  tournament.isScheduleCreated = true;
+  await tournament.save();
+
+  // Return populated matches
+  const populated = await Match.find({ tournament: tournament._id })
+    .populate("tournament", "name format status")
+    .populate("sport", "name teamBased iconUrl")
+    .populate("teamA", "name logoUrl")
+    .populate("teamB", "name logoUrl")
+    .populate("playerA", "fullName avatar")
+    .populate("playerB", "fullName avatar");
+
+  return res.status(201).json(new ApiResponse(201, populated, "Fixtures generated successfully."));
+});
+
 // Update tournament banner
 export const updateTournamentBanner = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -459,7 +594,144 @@ export const rejectTeamRegistration = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedTournament, "Team registration rejected."));
 });
 
-// Get tournaments by sport
+// Register player for tournament (for single-player tournaments)
+export const registerPlayer = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user._id;
+
+  const tournament = await Tournament.findById(id);
+
+  if (!tournament) {
+    throw new ApiError(404, "Tournament not found.");
+  }
+
+  if (tournament.registrationType !== "Player") {
+    throw new ApiError(400, "This tournament accepts team registrations only.");
+  }
+
+  const now = new Date();
+  if (now < tournament.registrationStart || now > tournament.registrationEnd) {
+    throw new ApiError(400, "Registration is not open for this tournament.");
+  }
+
+  if (tournament.registeredPlayers.length >= tournament.teamLimit) {
+    throw new ApiError(400, "Tournament has reached its participant limit.");
+  }
+
+  const player = await User.findById(userId);
+  if (!player) {
+    throw new ApiError(404, "Player not found.");
+  }
+
+  if (tournament.registeredPlayers.includes(userId)) {
+    throw new ApiError(400, "Already registered for this tournament.");
+  }
+
+  tournament.registeredPlayers.push(userId);
+  await tournament.save();
+
+  const updated = await Tournament.findById(id)
+    .populate("sport", "name teamBased iconUrl")
+    .populate("organizer", "fullName email avatar orgName")
+    .populate("registeredPlayers", "fullName avatar email")
+    .populate("approvedPlayers", "fullName avatar email");
+
+  res.status(200).json(new ApiResponse(200, updated, "Player registered successfully."));
+});
+
+// Approve player registration
+export const approvePlayerRegistration = asyncHandler(async (req, res) => {
+  const { id, playerId } = req.params;
+  const organizerId = req.user._id;
+
+  const tournament = await Tournament.findById(id);
+
+  if (!tournament) {
+    throw new ApiError(404, "Tournament not found.");
+  }
+
+  if (tournament.registrationType !== "Player") {
+    throw new ApiError(400, "This tournament accepts team registrations only.");
+  }
+
+  if (tournament.organizer.toString() !== organizerId.toString()) {
+    throw new ApiError(403, "Only the tournament organizer can approve players.");
+  }
+
+  if (!tournament.registeredPlayers.includes(playerId)) {
+    throw new ApiError(400, "Player is not registered for this tournament.");
+  }
+
+  if (tournament.approvedPlayers.includes(playerId)) {
+    throw new ApiError(400, "Player already approved.");
+  }
+
+  tournament.approvedPlayers.push(playerId);
+  await tournament.save();
+
+  const updated = await Tournament.findById(id)
+    .populate("sport", "name teamBased iconUrl")
+    .populate("organizer", "fullName email avatar orgName")
+    .populate("registeredPlayers", "fullName avatar email")
+    .populate("approvedPlayers", "fullName avatar email");
+
+  res.status(200).json(new ApiResponse(200, updated, "Player approved successfully."));
+});
+
+// Reject player registration
+export const rejectPlayerRegistration = asyncHandler(async (req, res) => {
+  const { id, playerId } = req.params;
+  const organizerId = req.user._id;
+
+  const tournament = await Tournament.findById(id);
+
+  if (!tournament) {
+    throw new ApiError(404, "Tournament not found.");
+  }
+
+  if (tournament.registrationType !== "Player") {
+    throw new ApiError(400, "This tournament accepts team registrations only.");
+  }
+
+  if (tournament.organizer.toString() !== organizerId.toString()) {
+    throw new ApiError(403, "Only the tournament organizer can reject players.");
+  }
+
+  tournament.registeredPlayers = tournament.registeredPlayers.filter(
+    (p) => p.toString() !== playerId
+  );
+
+  tournament.approvedPlayers = tournament.approvedPlayers.filter(
+    (p) => p.toString() !== playerId
+  );
+
+  await tournament.save();
+
+  const updated = await Tournament.findById(id)
+    .populate("sport", "name teamBased iconUrl")
+    .populate("organizer", "fullName email avatar orgName")
+    .populate("registeredPlayers", "fullName avatar email")
+    .populate("approvedPlayers", "fullName avatar email");
+
+  res.status(200).json(new ApiResponse(200, updated, "Player registration rejected."));
+});
+
+// Get participants (teams or players) for organizer dashboard
+export const getTournamentParticipants = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const tournament = await Tournament.findById(id)
+    .populate("registeredTeams", "name logoUrl")
+    .populate("approvedTeams", "name logoUrl")
+    .populate("registeredPlayers", "fullName avatar email")
+    .populate("approvedPlayers", "fullName avatar email")
+    .populate("sport", "name registrationType teamBased");
+
+  if (!tournament) {
+    throw new ApiError(404, "Tournament not found.");
+  }
+
+  return res.status(200).json(new ApiResponse(200, tournament, "Participants retrieved."));
+});
 export const getTournamentsBySport = asyncHandler(async (req, res) => {
   const { sportId } = req.params;
 

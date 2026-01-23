@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { Users, MapPin, FileText, Upload, Globe } from "lucide-react";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
+import RadioGroup from "../../components/ui/RadioGroup";
 import { fetchAllSports } from "../../store/slices/sportSlice";
 import { clearError } from "../../store/slices/teamSlice";
 import axios from "axios";
@@ -26,7 +27,7 @@ const CreateTeam = () => {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
+    control,
     reset,
   } = useForm({
     defaultValues: {
@@ -255,12 +256,20 @@ const CreateTeam = () => {
               </div>
 
               {/* Open to Join */}
-              <Select
-                label="Open to Join Requests"
-                options={openToJoinOptions}
-                icon={<Globe size={18} />}
-                error={errors.openToJoin?.message}
-                {...register("openToJoin")}
+              <Controller
+                name="openToJoin"
+                control={control}
+                render={({ field: { value, onChange, ref } }) => (
+                  <RadioGroup
+                    ref={ref}
+                    label="Open to Join Requests"
+                    options={openToJoinOptions}
+                    name="openToJoin"
+                    value={value}
+                    onChange={onChange}
+                    error={errors.openToJoin?.message}
+                  />
+                )}
               />
             </div>
           </div>
@@ -303,9 +312,6 @@ const CreateTeam = () => {
                     onChange={handleLogoChange}
                     className="hidden"
                   />
-                  <p className="text-sm text-base dark:text-base-dark mt-2">
-                    Recommended: Square image, PNG or JPG, max 5MB
-                  </p>
                   {logoFile && (
                     <p className="text-sm text-secondary dark:text-secondary-dark mt-1">
                       Selected: {logoFile.name}

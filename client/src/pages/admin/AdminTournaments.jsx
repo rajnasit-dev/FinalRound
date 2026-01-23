@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllTournaments } from "../../store/slices/adminSlice";
-import { Trophy, Calendar, Users, Trash2, Edit2, Search } from "lucide-react";
+import { Trophy, Calendar, Users, Trash2, Edit2 } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
-import Input from "../../components/ui/Input";
+import SearchBar from "../../components/ui/SearchBar";
+import Select from "../../components/ui/Select";
 
 const AdminTournaments = () => {
   const dispatch = useDispatch();
@@ -85,23 +86,22 @@ const AdminTournaments = () => {
       {/* Filters */}
       <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Input
+          <SearchBar
             placeholder="Search by tournament name..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            icon={<Search size={20} />}
+            searchQuery={search}
+            setSearchQuery={setSearch}
           />
-          <select
+          <Select
+            options={[
+              { value: "", label: "All Status" },
+              { value: "Upcoming", label: "Upcoming" },
+              { value: "Live", label: "Live" },
+              { value: "Completed", label: "Completed" },
+              { value: "Cancelled", label: "Cancelled" },
+            ]}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-base-dark dark:border-base rounded-lg bg-primary dark:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary"
-          >
-            <option value="">All Status</option>
-            <option value="Upcoming">Upcoming</option>
-            <option value="Live">Live</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
+          />
           <div className="flex items-center justify-start">
             <span className="text-sm text-base dark:text-base-dark font-medium">
               Total: {filteredTournaments.length}

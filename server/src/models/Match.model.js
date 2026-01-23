@@ -32,13 +32,21 @@ const matchSchema = new Schema(
     teamA: {
       type: Schema.Types.ObjectId,
       ref: "Team",
-      required: true,
     },
 
     teamB: {
       type: Schema.Types.ObjectId,
       ref: "Team",
-      required: true,
+    },
+
+    playerA: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    playerB: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
 
     scheduledAt: {

@@ -27,7 +27,7 @@ const playerSchema = new Schema({
   ],
   height: Number,
   weight: Number,
-  age: Number,
+  dateOfBirth: Date,
   bio: String,
 });
 

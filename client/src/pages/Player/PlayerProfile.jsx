@@ -1,8 +1,9 @@
-import { User, Mail, Phone, MapPin, Calendar, Edit, Trophy, Ruler, Weight, Camera, Trash2 } from "lucide-react";
+import { User, Mail, Phone, MapPin, Calendar, Edit, Trophy, Ruler, Weight, Camera, Trash2, Activity } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import useDateFormat from "../../hooks/useDateFormat";
+import useAge from "../../hooks/useAge";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 import { fetchPlayerProfile, updatePlayerAvatar, deletePlayerAvatar } from "../../store/slices/playerSlice";
 import { updateUserAvatar } from "../../store/slices/authSlice";
@@ -77,6 +78,10 @@ const PlayerProfile = () => {
 
   // Use profile data if available, otherwise fall back to user data
   const playerData = profile || user || {};
+  
+  // Calculate age from dateOfBirth
+  const age = useAge(playerData?.dateOfBirth);
+  const sportsList = Array.isArray(playerData?.sports) ? playerData.sports : [];
 
   if (playerLoading) {
     return (
@@ -157,12 +162,12 @@ const PlayerProfile = () => {
                 {playerData?.fullName || "Player Name"}
               </h2>
               <div className="flex flex-wrap items-center gap-3 mt-2">
-                {playerData?.age && (
+                {age && (
                   <span className="text-sm text-base dark:text-base-dark">
-                    {playerData.age} years
+                    {age} years
                   </span>
                 )}
-                {playerData?.gender && playerData?.age && (
+                {playerData?.gender && age && (
                   <span className="text-base dark:text-base-dark">•</span>
                 )}
                 {playerData?.gender && (
@@ -221,22 +226,34 @@ const PlayerProfile = () => {
               </div>
             )}
 
-            {/* Sports Tags with Roles */}
-            {playerData?.sports && playerData.sports.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-2">
-                {playerData.sports.map((sportItem, index) => {
-                  const sportName = sportItem.sport.sportsName;
-                  
-                  return (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-secondary/10 dark:bg-secondary-dark/10 text-secondary dark:text-secondary-dark rounded-lg text-sm font-medium"
-                    >
-                      {sportName}
-                      {sportItem.role && ` - ${sportItem.role}`}
-                    </span>
-                  );
-                })}
+            {/* Sports & Roles */}
+            {sportsList.length > 0 && (
+              <div className="pt-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity size={16} className="text-secondary dark:text-secondary-dark" />
+                  <span className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">
+                    Sports & Roles
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {sportsList.map((sportItem, index) => {
+                    const sportName =
+                      typeof sportItem === "string"
+                        ? sportItem
+                        : sportItem.sport?.name || sportItem.sport?.sportsName || sportItem.name || sportItem.sportsName || "Sport";
+                    const role = sportItem.role || playerData.playingRole || "Player";
+
+                    return (
+                      <span
+                        key={`${sportName}-${index}`}
+                        className="px-3 py-1 bg-secondary/10 dark:bg-secondary-dark/10 text-secondary dark:text-secondary-dark rounded-lg text-sm font-medium"
+                      >
+                        {sportName}
+                        {role ? ` • ${role}` : ""}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

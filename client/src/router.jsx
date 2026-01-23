@@ -42,8 +42,13 @@ import PlayerRequests from "./pages/Player/PlayerRequests";
 // Organizer Dashboard Pages
 import OrganizerDashboard from "./pages/Organizer/OrganizerDashboard";
 import OrganizerTournaments from "./pages/Organizer/OrganizerTournaments";
+import CreateTournament from "./pages/Organizer/CreateTournament";
+import EditTournament from "./pages/Organizer/EditTournament";
 import OrganizerMatches from "./pages/Organizer/OrganizerMatches";
+import CreateMatch from "./pages/Organizer/CreateMatch";
+import EditMatch from "./pages/Organizer/EditMatch";
 import TournamentFixtures from "./pages/Organizer/TournamentFixtures";
+import OrganizerTournamentDashboard from "./pages/Organizer/OrganizerTournamentDashboard";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -52,6 +57,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminTournaments from "./pages/admin/AdminTournaments";
 import AdminTeams from "./pages/admin/AdminTeams";
 import Revenue from "./pages/admin/Revenue";
+import AdminFeedback from "./pages/admin/AdminFeedback";
 
 export const router = createBrowserRouter([
   {
@@ -109,10 +115,13 @@ export const router = createBrowserRouter([
         children: [
           { path: "dashboard", element: <OrganizerDashboard /> },
           { path: "tournaments", element: <OrganizerTournaments /> },
+          { path: "tournaments/create", element: <CreateTournament /> },
+          { path: "tournaments/:tournamentId", element: <OrganizerTournamentDashboard /> },
+          { path: "tournaments/:tournamentId/edit", element: <EditTournament /> },
           { path: "tournaments/:tournamentId/fixtures", element: <TournamentFixtures /> },
           { path: "matches", element: <OrganizerMatches /> },
-          { path: "venues", element: <div>Organizer Venues</div> },
-          { path: "settings", element: <div>Organizer Settings</div> },
+          { path: "matches/create", element: <CreateMatch /> },
+          { path: "matches/:matchId/edit", element: <EditMatch /> },
         ],
       },
       
@@ -131,6 +140,7 @@ export const router = createBrowserRouter([
       { path: "tournaments", element: <AdminTournaments /> },
       { path: "teams", element: <AdminTeams /> },
       { path: "revenue", element: <Revenue /> },
+      { path: "feedback", element: <AdminFeedback /> },
     ],
   },
 ]);

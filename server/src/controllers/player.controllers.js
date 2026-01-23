@@ -54,7 +54,7 @@ export const getPlayerProfile = asyncHandler(async (req, res) => {
 // Update player profile
 export const updatePlayerProfile = asyncHandler(async (req, res) => {
   const playerId = req.user._id;
-  const { fullName, phone, city, bio, age, height, weight, gender, sports, achievements } = req.body;
+  const { fullName, phone, city, bio, dateOfBirth, height, weight, gender, sports, achievements } = req.body;
 
   const player = await Player.findById(playerId);
   if (!player) {
@@ -66,7 +66,7 @@ export const updatePlayerProfile = asyncHandler(async (req, res) => {
   if (phone) player.phone = phone;
   if (city) player.city = city;
   if (bio !== undefined) player.bio = bio;
-  if (age !== undefined) player.age = age;
+  if (dateOfBirth !== undefined) player.dateOfBirth = dateOfBirth;
   if (height !== undefined) player.height = height;
   if (weight !== undefined) player.weight = weight;
   if (gender) player.gender = gender;

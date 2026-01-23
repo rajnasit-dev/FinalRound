@@ -62,31 +62,43 @@ const OrganizerDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <DashboardCardState
           Icon={Trophy}
-          iconColor="text-amber-600"
-          bgColor="bg-amber-50 dark:bg-amber-900/20"
-          title="Total Tournaments"
+          label="Total Tournaments"
           value={totalTournaments}
+          gradientFrom="from-amber-500/10"
+          gradientVia="via-amber-500/5"
+          borderColor="border-amber-500/30"
+          iconGradientFrom="from-amber-500"
+          iconGradientTo="to-amber-600"
         />
         <DashboardCardState
           Icon={TrendingUp}
-          iconColor="text-green-600"
-          bgColor="bg-green-50 dark:bg-green-900/20"
-          title="Active Tournaments"
+          label="Active Tournaments"
           value={activeTournaments}
+          gradientFrom="from-green-500/10"
+          gradientVia="via-green-500/5"
+          borderColor="border-green-500/30"
+          iconGradientFrom="from-green-500"
+          iconGradientTo="to-green-600"
         />
         <DashboardCardState
           Icon={Calendar}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50 dark:bg-blue-900/20"
-          title="Total Matches"
+          label="Total Matches"
           value={totalMatches}
+          gradientFrom="from-blue-500/10"
+          gradientVia="via-blue-500/5"
+          borderColor="border-blue-500/30"
+          iconGradientFrom="from-blue-500"
+          iconGradientTo="to-blue-600"
         />
         <DashboardCardState
           Icon={Users}
-          iconColor="text-purple-600"
-          bgColor="bg-purple-50 dark:bg-purple-900/20"
-          title="Registered Teams"
+          label="Registered Teams"
           value={totalTeams}
+          gradientFrom="from-purple-500/10"
+          gradientVia="via-purple-500/5"
+          borderColor="border-purple-500/30"
+          iconGradientFrom="from-purple-500"
+          iconGradientTo="to-purple-600"
         />
       </div>
 

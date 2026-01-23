@@ -14,6 +14,16 @@ import { Feedback } from './src/models/Feedback.model.js';
 import { Request } from './src/models/Request.model.js';
 import Booking from './src/models/Booking.model.js';
 
+// Helper function to generate date of birth from age
+const getDOBFromAge = (age) => {
+  const today = new Date();
+  const birthYear = today.getFullYear() - age;
+  // Set birthday to be sometime in the past year (random month and day)
+  const month = Math.floor(Math.random() * 12);
+  const day = Math.floor(Math.random() * 28) + 1; // Use 1-28 to avoid invalid dates
+  return new Date(birthYear, month, day);
+};
+
 const sports = [
   {
     name: "Cricket",
@@ -385,7 +395,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: cricket._id, role: "All-rounder" }],
         gender: "Male",
-        age: 25,
+        dateOfBirth: getDOBFromAge(25),
         height: 175,
         weight: 70,
         bio: "Dynamic all-rounder with explosive batting",
@@ -401,7 +411,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: cricket._id, role: "All-rounder" }],
         gender: "Male",
-        age: 27,
+        dateOfBirth: getDOBFromAge(27),
         height: 173,
         weight: 68,
         bio: "Brilliant fielder and handy all-rounder",
@@ -417,7 +427,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: cricket._id, role: "Bowler" }],
         gender: "Male",
-        age: 26,
+        dateOfBirth: getDOBFromAge(26),
         height: 180,
         weight: 74,
         bio: "Accurate left-arm spinner",
@@ -433,7 +443,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: cricket._id, role: "Batsman" }],
         gender: "Female",
-        age: 24,
+        dateOfBirth: getDOBFromAge(24),
         height: 165,
         weight: 58,
         bio: "Elegant left-handed opener",
@@ -449,7 +459,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: cricket._id, role: "All-rounder" }],
         gender: "Male",
-        age: 28,
+        dateOfBirth: getDOBFromAge(28),
         height: 178,
         weight: 75,
         bio: "Dynamic all-rounder and left-arm spinner",
@@ -466,7 +476,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: football._id, role: "Striker" }],
         gender: "Male",
-        age: 26,
+        dateOfBirth: getDOBFromAge(26),
         height: 172,
         weight: 67,
         bio: "Prolific goal scorer",
@@ -482,7 +492,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: football._id, role: "Defender" }],
         gender: "Male",
-        age: 27,
+        dateOfBirth: getDOBFromAge(27),
         height: 188,
         weight: 85,
         bio: "Strong and reliable defender",
@@ -498,7 +508,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: football._id, role: "Goalkeeper" }],
         gender: "Male",
-        age: 28,
+        dateOfBirth: getDOBFromAge(28),
         height: 191,
         weight: 82,
         bio: "Safe hands and great reflexes",
@@ -514,7 +524,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: football._id, role: "Midfielder" }],
         gender: "Male",
-        age: 25,
+        dateOfBirth: getDOBFromAge(25),
         height: 170,
         weight: 65,
         bio: "Speedy winger",
@@ -530,7 +540,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: football._id, role: "Midfielder" }],
         gender: "Male",
-        age: 24,
+        dateOfBirth: getDOBFromAge(24),
         height: 168,
         weight: 62,
         bio: "Creative midfielder",
@@ -547,7 +557,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: basketball._id, role: "Forward" }],
         gender: "Male",
-        age: 26,
+        dateOfBirth: getDOBFromAge(26),
         height: 201,
         weight: 95,
         bio: "Powerful forward",
@@ -563,7 +573,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: basketball._id, role: "Guard" }],
         gender: "Male",
-        age: 25,
+        dateOfBirth: getDOBFromAge(25),
         height: 193,
         weight: 88,
         bio: "Skilled guard",
@@ -579,7 +589,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: basketball._id, role: "Center" }],
         gender: "Male",
-        age: 23,
+        dateOfBirth: getDOBFromAge(23),
         height: 206,
         weight: 100,
         bio: "Dominant center",
@@ -595,7 +605,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: basketball._id, role: "Guard" }],
         gender: "Male",
-        age: 24,
+        dateOfBirth: getDOBFromAge(24),
         height: 188,
         weight: 85,
         bio: "Quick guard",
@@ -611,7 +621,7 @@ const seedDatabase = async () => {
         isActive: true,
         sports: [{ sport: basketball._id, role: "Forward" }],
         gender: "Male",
-        age: 25,
+        dateOfBirth: getDOBFromAge(25),
         height: 198,
         weight: 92,
         bio: "Versatile forward",
@@ -1657,9 +1667,83 @@ const seedDatabase = async () => {
         status: "PENDING",
         message: "We're building Gandhinagar Spikers and need talented players like you.",
         createdAt: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000)
+      },
+      // ORGANIZER_AUTHORIZATION requests
+      {
+        requestType: "ORGANIZER_AUTHORIZATION",
+        sender: admin._id,
+        receiver: organizers[0]._id,
+        status: "PENDING",
+        message: "Your organizer profile is under review. Please provide additional documentation if needed.",
+        createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
+      },
+      {
+        requestType: "ORGANIZER_AUTHORIZATION",
+        sender: admin._id,
+        receiver: organizers[1]._id,
+        status: "ACCEPTED",
+        message: "Your authorization has been approved. You can now create tournaments.",
+        createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000)
+      },
+      {
+        requestType: "ORGANIZER_AUTHORIZATION",
+        sender: admin._id,
+        receiver: organizers[2]._id,
+        status: "REJECTED",
+        message: "Your authorization request has been rejected. Please contact support for more details.",
+        createdAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)
+      },
+      // TOURNAMENT_BOOKING requests
+      {
+        requestType: "TOURNAMENT_BOOKING",
+        sender: managers[0]._id,
+        receiver: organizers[0]._id,
+        tournament: tournaments[0]._id,
+        bookingEntity: teams[0]._id,
+        status: "PENDING",
+        message: "We'd like to book Gujarat Warriors for the Gujarat Cricket Championship 2026.",
+        createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
+      },
+      {
+        requestType: "TOURNAMENT_BOOKING",
+        sender: managers[1]._id,
+        receiver: organizers[0]._id,
+        tournament: tournaments[0]._id,
+        bookingEntity: teams[1]._id,
+        status: "ACCEPTED",
+        message: "Surat Strikers would like to participate in the tournament.",
+        createdAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000)
+      },
+      {
+        requestType: "TOURNAMENT_BOOKING",
+        sender: players[0]._id,
+        receiver: organizers[1]._id,
+        tournament: tournaments[2]._id,
+        status: "PENDING",
+        message: "I would like to register as an individual player for Vadodara Football Carnival.",
+        createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)
+      },
+      {
+        requestType: "TOURNAMENT_BOOKING",
+        sender: managers[2]._id,
+        receiver: organizers[1]._id,
+        tournament: tournaments[2]._id,
+        bookingEntity: teams[4]._id,
+        status: "REJECTED",
+        message: "Baroda United wants to participate in Vadodara Football Carnival.",
+        createdAt: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000)
+      },
+      {
+        requestType: "TOURNAMENT_BOOKING",
+        sender: players[5]._id,
+        receiver: organizers[2]._id,
+        tournament: tournaments[4]._id,
+        status: "ACCEPTED",
+        message: "I'm interested in the Basketball Tournament 2026.",
+        createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)
       }
     ]);
-    console.log(`✅ Created ${requests.length} team/player requests (${requests.filter(r => r.status === "PENDING").length} pending, ${requests.filter(r => r.status === "ACCEPTED").length} accepted, ${requests.filter(r => r.status === "REJECTED").length} rejected)`);
+    console.log(`✅ Created ${requests.length} total requests`);
 
     // ========== SEED BOOKINGS (Tournament Registrations) ==========
     const bookings = await Booking.create([

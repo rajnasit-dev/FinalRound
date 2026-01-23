@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllTournaments } from "../../store/slices/adminSlice";
-import { Search, Trophy, Calendar, MapPin } from "lucide-react";
+import { Trophy, Calendar, MapPin } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
+import SearchBar from "../../components/ui/SearchBar";
+import Select from "../../components/ui/Select";
 import Table from "../../components/ui/Table";
 
 const Tournaments = () => {
@@ -140,29 +142,26 @@ const Tournaments = () => {
       <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-4">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base dark:text-base-dark" />
-            <input
-              type="text"
+          <div className="flex-1">
+            <SearchBar
               placeholder="Search tournaments..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-base-dark dark:border-base rounded-lg bg-base-dark dark:bg-base focus:outline-none focus:ring-2 focus:ring-secondary"
+              searchQuery={searchTerm}
+              setSearchQuery={setSearchTerm}
             />
           </div>
 
           {/* Status Filter */}
-          <select
+          <Select
+            options={[
+              { value: "All", label: "All Statuses" },
+              { value: "Upcoming", label: "Upcoming" },
+              { value: "Ongoing", label: "Ongoing" },
+              { value: "Completed", label: "Completed" },
+              { value: "Cancelled", label: "Cancelled" },
+            ]}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-base-dark dark:border-base rounded-lg bg-base-dark dark:bg-base focus:outline-none focus:ring-2 focus:ring-secondary"
-          >
-            <option value="All">All Statuses</option>
-            <option value="Upcoming">Upcoming</option>
-            <option value="Ongoing">Ongoing</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
+          />
         </div>
 
         {/* Stats */}

@@ -143,6 +143,7 @@ export const updateFeedback = asyncHandler(async (req, res) => {
 export const deleteFeedback = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const userId = req.user._id;
+  const userRole = req.user.role;
 
   const feedback = await Feedback.findById(id);
 
@@ -150,8 +151,8 @@ export const deleteFeedback = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Review not found.");
   }
 
-  // Verify user is the feedback owner
-  if (feedback.user.toString() !== userId.toString()) {
+  // Allow feedback owner or admin to delete
+  if (feedback.user.toString() !== userId.toString() && userRole !== "Admin") {
     throw new ApiError(403, "You can only delete your own review.");
   }
 

@@ -125,7 +125,7 @@ const Home = () => {
   return (
     <div className="relative overflow-hidden">
       {/* Hero Section - Video */}
-      <div className="absolute inset-0 w-full h-screen overflow-hidden pointer-events-none">
+      <div className="relative w-full h-screen overflow-hidden">
         <video
           autoPlay
           loop
@@ -136,42 +136,57 @@ const Home = () => {
           <source src={videoUrl} type="video/mp4" />
           Your browser does not support the video tag.
         </video>
-      </div>
 
-      {/* Hero Section - Content */}
-      <section className="relative z-10 container mx-auto px-4 py-3 flex items-center min-h-screen">
-        <motion.div
-          variants={fadeInUp}
-          initial="initial"
-          animate="animate"
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        >
-          <h1 className="text-5xl md:text-6xl text-text-secondary font-bold mb-6">
-            Organize & Join{" "}
-            <span className="text-accent">Sports Tournaments</span> Easily
-          </h1>
-          <motion.p
-            className="text-lg md:text-xl max-w-2xl mb-8 text-text-secondary"
+        {/* Hero Section - Content */}
+        <div className="absolute inset-0 z-10 container mx-auto px-4 py-3 flex items-center">
+          <motion.div
             variants={fadeInUp}
-            transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+            initial="initial"
+            animate="animate"
+            transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            SportsHub helps players, team managers, and organizers manage
-            tournaments, teams, and matches in one place.
-          </motion.p>
-          {!user && (
-            <div className="flex gap-4 flex-wrap">
-              <motion.button
-                onClick={() => navigate("/register")}
-                className="px-8 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg font-semibold transition-colors shadow-lg"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Get Started
-              </motion.button>
-            </div>
-          )}
-        </motion.div>
-      </section>
+            <h1 className="text-5xl md:text-6xl text-text-secondary font-bold mb-6">
+              Organize & Join{" "}
+              <span className="text-accent">Sports Tournaments</span> Easily
+            </h1>
+            <motion.p
+              className="text-lg md:text-xl max-w-2xl mb-8 text-text-secondary"
+              variants={fadeInUp}
+              transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+            >
+              SportsHub helps players, team managers, and organizers manage
+              tournaments, teams, and matches in one place.
+            </motion.p>
+            {!user && (
+              <div className="flex gap-4 flex-wrap">
+                <motion.button
+                  onClick={() => navigate("/register")}
+                  className="px-8 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg font-semibold transition-colors shadow-lg"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Get Started
+                </motion.button>
+              </div>
+            )}
+          </motion.div>
+        </div>
+
+        {/* Curved Divider at bottom of video */}
+        <div className="absolute bottom-0 w-full">
+          <svg
+            className="w-full h-64"
+            viewBox="0 0 1440 120"
+            preserveAspectRatio="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,48C1120,43,1280,53,1360,58.7L1440,64L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"
+              className="fill-primary dark:fill-primary-dark"
+            />
+          </svg>
+        </div>
+      </div>
 
       {/* Trending Live Tournament Section */}
       <section className="relative py-6">

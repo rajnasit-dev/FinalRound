@@ -99,6 +99,18 @@ const tournamentSchema = new Schema(
         ref: "Team",
       },
     ],
+    registeredPlayers: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    approvedPlayers: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     isScheduleCreated: {
       type: Boolean,
       default: false,

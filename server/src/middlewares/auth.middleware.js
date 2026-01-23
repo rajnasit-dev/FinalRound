@@ -12,12 +12,12 @@ export const authMiddleware = asyncHandler(async (req, res, next) => {
   try {
     const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
 
-    // Handle hardcoded admin user
-    if (decoded._id === "admin-hardcoded" && decoded.role === "Admin") {
+    // Handle admin user
+    if (decoded.role === "Admin") {
       req.user = {
-        _id: "admin-hardcoded",
-        fullName: "Admin User",
-        email: "admin@gmail.com",
+        _id: decoded._id,
+        fullName: decoded.fullName || "Admin User",
+        email: decoded.email || "admin@gmail.com",
         role: "Admin",
         isVerified: true,
         isActive: true,

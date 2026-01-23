@@ -10,7 +10,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
-import CardStat from "../../components/ui/CardStat";
+import DashboardCardState from "../../components/ui/DashboardCardState";
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
@@ -41,34 +41,45 @@ const AdminDashboard = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <CardStat
+        <DashboardCardState
           Icon={Users}
-          iconColor="text-blue-600"
           label="Total Users"
           value={dashboardStats?.users?.total || 0}
-          description={`${dashboardStats?.users?.players || 0} Players, ${
-            dashboardStats?.users?.managers || 0
-          } Managers, ${dashboardStats?.users?.organizers || 0} Organizers`}
+          gradientFrom="from-blue-500/10"
+          gradientVia="via-blue-500/5"
+          borderColor="border-blue-500/20"
+          iconGradientFrom="from-blue-500"
+          iconGradientTo="to-blue-600"
         />
-        <CardStat
+        <DashboardCardState
           Icon={Trophy}
-          iconColor="text-amber-600"
           label="Tournaments"
           value={dashboardStats?.tournaments?.total || 0}
-          description={`${dashboardStats?.tournaments?.active || 0} Active`}
+          gradientFrom="from-amber-500/10"
+          gradientVia="via-amber-500/5"
+          borderColor="border-amber-500/20"
+          iconGradientFrom="from-amber-500"
+          iconGradientTo="to-amber-600"
         />
-        <CardStat
+        <DashboardCardState
           Icon={Shield}
-          iconColor="text-green-600"
           label="Teams"
           value={dashboardStats?.teams?.total || 0}
+          gradientFrom="from-green-500/10"
+          gradientVia="via-green-500/5"
+          borderColor="border-green-500/20"
+          iconGradientFrom="from-green-500"
+          iconGradientTo="to-green-600"
         />
-        <CardStat
+        <DashboardCardState
           Icon={DollarSign}
-          iconColor="text-purple-600"
           label="Total Revenue"
           value={`₹${dashboardStats?.revenue?.total || 0}`}
-          description={`₹${dashboardStats?.revenue?.perTournament || 0} per tournament`}
+          gradientFrom="from-purple-500/10"
+          gradientVia="via-purple-500/5"
+          borderColor="border-purple-500/20"
+          iconGradientFrom="from-purple-500"
+          iconGradientTo="to-purple-600"
         />
       </div>
 

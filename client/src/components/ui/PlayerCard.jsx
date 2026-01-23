@@ -12,12 +12,31 @@ import {
 import defaultAvatar from "../../assets/defaultAvatar.png";
 import defaultCoverImage from "../../assets/defaultCoverImage.png";
 import CardStat from "./CardStat";
+import useAge from "../../hooks/useAge";
 
 const PlayerCard = ({ player }) => {
-  // Get first sport name only
-  const firstSport = player.sports?.[0];
-  const firstSportName = firstSport?.sport?.name || firstSport?.name || null;
-  
+  const firstSport = player?.sports?.[0];
+  const firstSportName =
+    typeof firstSport === "string"
+      ? firstSport
+      : firstSport?.sport?.name ||
+        firstSport?.sport?.sportsName ||
+        firstSport?.name ||
+        firstSport?.sportsName ||
+        null;
+
+  const displayRole =
+    player?.playingRole ||
+    firstSport?.role ||
+    (player?.sports || []).find((sport) => sport?.role)?.role ||
+    "Player";
+
+  const coverImage = player?.coverImageUrl || player?.banner || player?.coverImage || defaultCoverImage;
+  const avatarImage = player?.avatarUrl || player?.avatar || defaultAvatar;
+  const age = useAge(player?.dateOfBirth);
+  const achievementsList = Array.isArray(player?.achievements) ? player.achievements : [];
+  const primaryAchievement = achievementsList.find((a) => a?.title) || (!Array.isArray(player?.achievements) ? player?.achievements : null);
+
   return (
     <Link to={`/players/${player._id}`} className="group">
       <div className="relative bg-card-background dark:bg-card-background-dark rounded-xl overflow-hidden border border-base-dark dark:border-base transition-all duration-300 hover:shadow-2xl hover:border-secondary dark:hover:border-secondary hover:-translate-y-1">
@@ -25,8 +44,8 @@ const PlayerCard = ({ player }) => {
         <div className="relative h-32">
           {/* Player Banner */}
           <img
-            src={player.banner || defaultCoverImage}
-            alt={player.name}
+            src={coverImage}
+            alt={player?.fullName || "Player"}
             className="w-full h-full object-cover"
           />
           {/* Dark Overlay */}
@@ -35,21 +54,11 @@ const PlayerCard = ({ player }) => {
           {/* Player Avatar */}
           <div className="absolute -bottom-8 left-6 w-20 h-20 rounded-full bg-white dark:bg-gray-800 border-4 border-white dark:border-gray-900 shadow-xl overflow-hidden flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
             <img
-              src={player.avatarUrl || defaultAvatar}
-              alt={player.fullName}
+              src={avatarImage}
+              alt={player?.fullName || "Player"}
               className="w-full h-full object-cover"
             />
           </div>
-
-          {/* Achievement Badge - Top Left */}
-          {player.achievements && (
-            <div className="absolute top-4 left-4">
-              <p className="inline-flex items-center gap-1 px-3 py-1 bg-amber-500 text-white text-xs font-semibold rounded-full shadow-lg">
-                <Trophy className="w-3 h-3" />
-                {player.achievements.year}
-              </p>
-            </div>
-          )}
 
           {/* Gender Badge */}
           {player.gender && (
@@ -71,7 +80,7 @@ const PlayerCard = ({ player }) => {
             </h3>
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <Target className="w-4 h-4" />
-              <p>{player.playingRole || "Player"}</p>
+              <p>{displayRole}</p>
               {firstSportName && (
                 <>
                   <p className="text-gray-400 dark:text-gray-600">•</p>
@@ -84,13 +93,13 @@ const PlayerCard = ({ player }) => {
 
           {/* Player Stats */}
           <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-            {player.age && (
+            {age && (
               <CardStat
                 Icon={User}
                 iconColor="text-blue-600 dark:text-blue-400"
                 bgColor="bg-blue-50 dark:bg-blue-900/20"
                 label="Age"
-                value={`${player.age} yrs`}
+                value={`${age} yrs`}
               />
             )}
 
@@ -130,21 +139,6 @@ const PlayerCard = ({ player }) => {
             <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed mb-4">
               {player.bio}
             </p>
-          )}
-
-          {/* Achievement */}
-          {player.achievements && player.achievements.title && (
-            <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-900/30">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Achievement
-                </p>
-              </div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white mt-1 line-clamp-1">
-                {player.achievements.title}
-              </p>
-            </div>
           )}
 
           {/* View Details Button */}

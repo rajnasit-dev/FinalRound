@@ -1,6 +1,6 @@
 import React from "react";
 
-const Select = React.forwardRef(({ options, label, error, id, icon, ...rest }, ref) => {
+const Select = React.forwardRef(({ options, label, error, id, icon, required = false, ...rest }, ref) => {
   const inputId = id || `select-${label?.replace(/\s+/g, '-').toLowerCase()}`;
   
   return (
@@ -8,6 +8,7 @@ const Select = React.forwardRef(({ options, label, error, id, icon, ...rest }, r
       {label && (
         <label className="block text-sm font-medium mb-2" htmlFor={inputId}>
           {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       <div className="relative">

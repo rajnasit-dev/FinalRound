@@ -18,6 +18,7 @@ import {
 import Container from "../../components/container/Container";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
+import RadioGroup from "../../components/ui/RadioGroup";
 import Button from "../../components/ui/Button";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import SportsRolesInput from "../../components/ui/SportsRolesInput";
@@ -26,7 +27,12 @@ const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/jpg",
+];
 
 const Register = () => {
   const navigate = useNavigate();
@@ -49,7 +55,7 @@ const Register = () => {
       city: "",
       avatar: null,
       coverImage: null,
-      age: "",
+      dateOfBirth: "",
       gender: "",
       orgName: "",
       sports: [],
@@ -72,7 +78,6 @@ const Register = () => {
   ];
 
   const genderOptions = [
-    { value: "", label: "Select gender" },
     { value: "Male", label: "Male" },
     { value: "Female", label: "Female" },
     { value: "Other", label: "Other" },
@@ -101,7 +106,7 @@ const Register = () => {
 
       // Player-specific fields
       if (role === "player") {
-        if (data.age) fd.append("age", data.age);
+        if (data.dateOfBirth) fd.append("dateOfBirth", data.dateOfBirth);
         if (data.gender) fd.append("gender", data.gender);
         // Append selected sports with roles as JSON
         if (data.sports && data.sports.length > 0) {
@@ -118,9 +123,9 @@ const Register = () => {
         method: "POST",
         body: fd,
       });
-      
+
       const responseData = await res.json();
-      
+
       if (!res.ok) {
         throw new Error(responseData?.message || "Registration failed");
       }
@@ -152,7 +157,9 @@ const Register = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Account Type - Grid Layout */}
             <div>
-              <label className="block text-sm font-medium mb-3">Account Type</label>
+              <label className="block text-sm font-medium mb-3">
+                Account Type
+              </label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {roleOptions.map((option) => (
                   <button
@@ -161,13 +168,17 @@ const Register = () => {
                     onClick={() => setRole(option.value)}
                     className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                       role === option.value
-                        ? 'border-secondary bg-secondary/10 dark:bg-secondary/20'
-                        : 'border-base-dark dark:border-base hover:border-secondary/50'
+                        ? "border-secondary bg-secondary/10 dark:bg-secondary/20"
+                        : "border-base-dark dark:border-base hover:border-secondary/50"
                     }`}
                   >
                     <div className="flex flex-col items-center gap-2">
-                      <User className={`w-8 h-8 ${role === option.value ? 'text-secondary' : 'text-base dark:text-base-dark'}`} />
-                      <span className={`font-semibold ${role === option.value ? 'text-secondary' : 'text-text-primary dark:text-text-primary-dark'}`}>
+                      <User
+                        className={`w-8 h-8 ${role === option.value ? "text-secondary" : "text-base dark:text-base-dark"}`}
+                      />
+                      <span
+                        className={`font-semibold ${role === option.value ? "text-secondary" : "text-text-primary dark:text-text-primary-dark"}`}
+                      >
                         {option.label}
                       </span>
                     </div>
@@ -183,6 +194,7 @@ const Register = () => {
                 placeholder="Jane Doe"
                 icon={<User size={20} />}
                 error={errors.fullName?.message}
+                required={true}
                 {...register("fullName", {
                   required: "Full name is required",
                   minLength: {
@@ -202,6 +214,7 @@ const Register = () => {
                 placeholder="jane@example.com"
                 icon={<Mail size={20} />}
                 error={errors.email?.message}
+                required={true}
                 {...register("email", {
                   required: "Email is required",
                   pattern: {
@@ -221,15 +234,22 @@ const Register = () => {
                 placeholder="••••••••"
                 icon={<Lock size={20} />}
                 error={errors.password?.message}
+                required={true}
                 {...register("password", {
                   required: "Password is required",
                   minLength: {
-                    value: 6,
-                    message: "Password must be at least 6 characters",
+                    value: 8,
+                    message: "Password must be at least 8 characters",
                   },
                   maxLength: {
                     value: 64,
                     message: "Password must be under 64 characters",
+                  },
+                  pattern: {
+                    value:
+                      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]/,
+                    message:
+                      "Password must include uppercase, lowercase, number, and special character (@$!%*?&#)",
                   },
                 })}
               />
@@ -240,6 +260,7 @@ const Register = () => {
                 placeholder="••••••••"
                 icon={<Lock size={20} />}
                 error={errors.confirmPassword?.message}
+                required={true}
                 {...register("confirmPassword", {
                   required: "Please confirm your password",
                   validate: (value) =>
@@ -252,11 +273,14 @@ const Register = () => {
               />
 
               <Input
-                label="Phone (optional)"
+                label={role === "player" ? "Phone" : "Phone (optional)"}
                 placeholder="+1 555 555 1234"
                 icon={<Phone size={20} />}
                 error={errors.phone?.message}
+                required={role === "player"}
                 {...register("phone", {
+                  required:
+                    role === "player" ? "Phone is required for players" : false,
                   pattern: {
                     value: /^\+?[0-9]{7,15}$/,
                     message: "Enter a valid phone number",
@@ -265,11 +289,14 @@ const Register = () => {
               />
 
               <Input
-                label="City (optional)"
+                label={role === "player" ? "City" : "City (optional)"}
                 placeholder="New York"
                 icon={<MapPin size={20} />}
                 error={errors.city?.message}
+                required={role === "player"}
                 {...register("city", {
+                  required:
+                    role === "player" ? "City is required for players" : false,
                   minLength: {
                     value: 2,
                     message: "City must be at least 2 characters",
@@ -295,12 +322,64 @@ const Register = () => {
                 {...register("avatar", {
                   validate: {
                     fileSize: (files) =>
-                      !files?.length || files[0].size <= MAX_IMAGE_SIZE || "Avatar must be 5MB or smaller",
+                      !files?.length ||
+                      files[0].size <= MAX_IMAGE_SIZE ||
+                      "Avatar must be 5MB or smaller",
                     fileType: (files) =>
-                      !files?.length || ALLOWED_IMAGE_TYPES.includes(files[0].type) || "Avatar must be an image (jpg, png, webp)",
+                      !files?.length ||
+                      ALLOWED_IMAGE_TYPES.includes(files[0].type) ||
+                      "Avatar must be an image (jpg, png, webp)",
                   },
                 })}
               />
+
+              {/* Date of Birth - Required for all users */}
+              <div>
+                <Input
+                  label="Date of Birth"
+                  type="date"
+                  icon={<Calendar size={20} />}
+                  error={errors.dateOfBirth?.message}
+                  required={true}
+                  {...register("dateOfBirth", {
+                    required: "Date of birth is required",
+                    validate: {
+                      notFuture: (value) => {
+                        if (!value) return true;
+                        const dob = new Date(value);
+                        const today = new Date();
+                        return (
+                          dob <= today ||
+                          "Date of birth cannot be in the future"
+                        );
+                      },
+                      minAge: (value) => {
+                        if (!value) return true;
+                        const dob = new Date(value);
+                        const today = new Date();
+                        let age = today.getFullYear() - dob.getFullYear();
+                        const monthDiff = today.getMonth() - dob.getMonth();
+                        if (
+                          monthDiff < 0 ||
+                          (monthDiff === 0 && today.getDate() < dob.getDate())
+                        ) {
+                          age--;
+                        }
+                        return age >= 18 || "You must be at least 18 years old";
+                      },
+                      maxAge: (value) => {
+                        if (!value) return true;
+                        const dob = new Date(value);
+                        const today = new Date();
+                        const age = today.getFullYear() - dob.getFullYear();
+                        return (
+                          age <= 120 || "Please enter a valid date of birth"
+                        );
+                      },
+                    },
+                  })}
+                />
+              </div>
             </div>
 
             {/* Player-specific fields */}
@@ -317,43 +396,28 @@ const Register = () => {
                     {...register("coverImage", {
                       validate: {
                         fileSize: (files) =>
-                          !files?.length || files[0].size <= MAX_IMAGE_SIZE || "Cover image must be 5MB or smaller",
+                          !files?.length ||
+                          files[0].size <= MAX_IMAGE_SIZE ||
+                          "Cover image must be 5MB or smaller",
                         fileType: (files) =>
-                          !files?.length || ALLOWED_IMAGE_TYPES.includes(files[0].type) || "Cover image must be an image (jpg, png, webp)",
-                      },
-                    })}
-                  />
-                  <Input
-                    label="Age (optional)"
-                    type="number"
-                    placeholder="18"
-                    icon={<Calendar size={20} />}
-                    error={errors.age?.message}
-                    {...register("age", {
-                      min: {
-                        value: 1,
-                        message: "Age must be positive",
-                      },
-                      max: {
-                        value: 120,
-                        message: "Age must be realistic",
+                          !files?.length ||
+                          ALLOWED_IMAGE_TYPES.includes(files[0].type) ||
+                          "Cover image must be an image (jpg, png, webp)",
                       },
                     })}
                   />
                 </div>
 
                 {/* Gender Selection */}
-                <div>
-                  <Select
-                    label="Gender (optional)"
-                    options={genderOptions}
-                    error={errors.gender?.message}
-                    {...register("gender", {
-                      validate: (value) =>
-                        !value || ["Male", "Female", "Other"].includes(value) || "Select a valid gender option",
-                    })}
-                  />
-                </div>
+                <RadioGroup
+                  label="Gender"
+                  name="gender"
+                  options={genderOptions}
+                  error={errors.gender?.message}
+                  value={watch("gender")}
+                  onChange={(value) => setValue("gender", value)}
+                  required={true}
+                />
 
                 {/* Sports Selection with Tags */}
                 <div>
@@ -375,6 +439,7 @@ const Register = () => {
                 placeholder="SportsHub Organization"
                 icon={<Building2 size={20} />}
                 error={errors.orgName?.message}
+                required={true}
                 {...register("orgName", {
                   required:
                     role === "organizer"

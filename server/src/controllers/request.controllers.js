@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Request } from "../models/Request.model.js";
 import { Team } from "../models/Team.model.js";
 import { User } from "../models/User.model.js";
+import { Tournament } from "../models/Tournament.model.js";
 
 // Player sends a request to join a team
 export const sendTeamRequest = asyncHandler(async (req, res) => {
@@ -296,4 +297,153 @@ export const cancelRequest = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, null, "Request cancelled successfully"));
+});
+
+// Organizer Authorization Request (Admin sends to organizer)
+export const sendOrganizerAuthorizationRequest = asyncHandler(async (req, res) => {
+  const { organizerId, message } = req.body;
+  const adminId = req.user._id;
+
+  if (req.user.role !== "Admin") {
+    throw new ApiError(403, "Only admin can send authorization requests");
+  }
+
+  if (!organizerId) {
+    throw new ApiError(400, "Organizer ID is required");
+  }
+
+  // Check if organizer exists
+  const organizer = await User.findById(organizerId);
+  if (!organizer || organizer.role !== "TournamentOrganizer") {
+    throw new ApiError(404, "Organizer not found");
+  }
+
+  // Check if request already exists
+  const existingRequest = await Request.findOne({
+    sender: adminId,
+    receiver: organizerId,
+    requestType: "ORGANIZER_AUTHORIZATION",
+    status: "PENDING",
+  });
+
+  if (existingRequest) {
+    throw new ApiError(400, "Authorization request already sent to this organizer");
+  }
+
+  const request = await Request.create({
+    requestType: "ORGANIZER_AUTHORIZATION",
+    sender: adminId,
+    receiver: organizerId,
+    message: message || "",
+  });
+
+  const populatedRequest = await request.populate([
+    { path: "sender", select: "fullName email" },
+    { path: "receiver", select: "fullName email" },
+  ]);
+
+  res
+    .status(201)
+    .json(
+      new ApiResponse(201, populatedRequest, "Authorization request sent successfully")
+    );
+});
+
+// Tournament Booking Request (Team/Player to Organizer)
+export const sendTournamentBookingRequest = asyncHandler(async (req, res) => {
+  const { tournamentId, message } = req.body;
+  const senderId = req.user._id;
+
+  if (!tournamentId) {
+    throw new ApiError(400, "Tournament ID is required");
+  }
+
+  // Check if tournament exists
+  const tournament = await Tournament.findById(tournamentId);
+  if (!tournament) {
+    throw new ApiError(404, "Tournament not found");
+  }
+
+  // Check if tournament is for teams or players
+  let bookingEntity = null;
+  if (req.user.role === "Player") {
+    if (tournament.registrationType !== "Player") {
+      throw new ApiError(400, "This tournament is only for teams");
+    }
+  } else if (req.user.role === "TeamManager") {
+    if (tournament.registrationType !== "Team") {
+      throw new ApiError(400, "This tournament is only for players");
+    }
+    // Get the manager's team
+    const team = await Team.findOne({ manager: senderId });
+    if (!team) {
+      throw new ApiError(404, "Team not found for this manager");
+    }
+    bookingEntity = team._id;
+  } else {
+    throw new ApiError(403, "Only players and team managers can book tournaments");
+  }
+
+  // Check if request already exists
+  const existingRequest = await Request.findOne({
+    sender: senderId,
+    receiver: tournament.organizer,
+    tournament: tournamentId,
+    requestType: "TOURNAMENT_BOOKING",
+    status: "PENDING",
+  });
+
+  if (existingRequest) {
+    throw new ApiError(400, "Booking request already sent for this tournament");
+  }
+
+  const request = await Request.create({
+    requestType: "TOURNAMENT_BOOKING",
+    sender: senderId,
+    receiver: tournament.organizer,
+    tournament: tournamentId,
+    bookingEntity: bookingEntity,
+    message: message || "",
+  });
+
+  const populatedRequest = await request.populate([
+    { path: "sender", select: "fullName avatarUrl" },
+    { path: "receiver", select: "fullName" },
+    { path: "tournament", select: "name" },
+    { path: "bookingEntity", select: "name" },
+  ]);
+
+  res
+    .status(201)
+    .json(
+      new ApiResponse(201, populatedRequest, "Booking request sent successfully")
+    );
+});
+
+// Get all requests for user (organized by type)
+export const getAllUserRequests = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const requests = await Request.find({
+    $or: [{ sender: userId }, { receiver: userId }],
+  })
+    .populate("sender", "fullName avatarUrl role")
+    .populate("receiver", "fullName avatarUrl role")
+    .populate("team", "name logoUrl")
+    .populate("tournament", "name")
+    .sort({ createdAt: -1 });
+
+  // Organize requests by type
+  const organizedRequests = {
+    playerToTeam: requests.filter((r) => r.requestType === "PLAYER_TO_TEAM"),
+    teamToPlayer: requests.filter((r) => r.requestType === "TEAM_TO_PLAYER"),
+    organizerAuth: requests.filter((r) => r.requestType === "ORGANIZER_AUTHORIZATION"),
+    tournamentBooking: requests.filter((r) => r.requestType === "TOURNAMENT_BOOKING"),
+  };
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, organizedRequests, "All requests fetched successfully")
+    );
 });

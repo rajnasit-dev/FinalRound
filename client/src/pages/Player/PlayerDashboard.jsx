@@ -1,4 +1,4 @@
-import { Trophy, Users, Calendar, TrendingUp } from "lucide-react";
+import { Trophy, Users, Calendar, TrendingUp, Award, Activity } from "lucide-react";
 import useDateFormat from "../../hooks/useDateFormat";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -15,6 +15,10 @@ const PlayerDashboard = () => {
   const { upcomingMatches, completedMatches, loading: matchLoading } = useSelector((state) => state.match);
   const { playerTeams, loading: teamLoading } = useSelector((state) => state.team);
   const { formatDate, formatTime } = useDateFormat();
+  const achievements = Array.isArray(profile?.achievements)
+    ? profile.achievements.filter((item) => item?.title)
+    : [];
+  const sports = Array.isArray(profile?.sports) ? profile.sports : [];
 
   useEffect(() => {
     dispatch(fetchPlayerProfile());
@@ -229,6 +233,98 @@ const PlayerDashboard = () => {
               </p>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Achievements & Sports */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-card-background dark:bg-card-background-dark rounded-xl p-6 shadow-md">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark flex items-center gap-2">
+              <Award className="w-5 h-5 text-amber-600" />
+              Achievements
+            </h2>
+            <span className="text-sm text-base dark:text-base-dark">
+              {achievements.length} total
+            </span>
+          </div>
+
+          {achievements.length ? (
+            <div className="space-y-3">
+              {achievements.slice(0, 4).map((achievement, idx) => (
+                <div
+                  key={`${achievement.title}-${idx}`}
+                  className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-900/30"
+                >
+                  <Trophy className="w-4 h-4 text-amber-600 mt-1" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-text-primary dark:text-text-primary-dark line-clamp-1">
+                      {achievement.title}
+                    </p>
+                    {achievement.year && (
+                      <p className="text-xs text-base dark:text-base-dark mt-1">
+                        {achievement.year}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-base dark:text-base-dark py-6">
+              No achievements added yet
+            </p>
+          )}
+        </div>
+
+        <div className="bg-card-background dark:bg-card-background-dark rounded-xl p-6 shadow-md">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark flex items-center gap-2">
+              <Activity className="w-5 h-5 text-blue-600" />
+              Sports & Roles
+            </h2>
+            <span className="text-sm text-base dark:text-base-dark">
+              {sports.length} sports
+            </span>
+          </div>
+
+          {sports.length ? (
+            <div className="space-y-3">
+              {sports.map((sportItem, idx) => {
+                const sportName =
+                  typeof sportItem === "string"
+                    ? sportItem
+                    : sportItem.sport?.name || sportItem.sport?.sportsName || sportItem.name || sportItem.sportsName || "Sport";
+                const role = sportItem.role || sportItem.playingRole || profile?.playingRole;
+
+                return (
+                  <div
+                    key={`${sportName}-${idx}`}
+                    className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/40"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 font-semibold">
+                        {sportName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-text-primary dark:text-text-primary-dark">
+                          {sportName}
+                        </p>
+                        <p className="text-xs text-base dark:text-base-dark">Preferred role</p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 rounded-full bg-blue-600/10 text-blue-700 dark:text-blue-300 text-xs font-semibold">
+                      {role || "Player"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-center text-base dark:text-base-dark py-6">
+              No sports have been added yet
+            </p>
+          )}
         </div>
       </div>
 

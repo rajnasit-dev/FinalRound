@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
-import { Plus, Search } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Plus, Search, Edit } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import MatchCard from "../../components/ui/MatchCard";
 import SearchBar from "../../components/ui/SearchBar";
 import FilterDropdown from "../../components/ui/FilterDropdown";
+import Button from "../../components/ui/Button";
 import { fetchAllMatches } from "../../store/slices/matchSlice";
 import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
 
 const OrganizerMatches = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { matches, loading: matchesLoading } = useSelector((state) => state.match);
   const { tournaments } = useSelector((state) => state.tournament);
@@ -110,7 +112,18 @@ const OrganizerMatches = () => {
       {filteredMatches.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredMatches.map((match) => (
-            <MatchCard key={match._id} match={match} />
+            <div key={match._id}>
+              <MatchCard match={match} />
+              <div className="mt-3 flex gap-2">
+                <Button
+                  onClick={() => navigate(`/organizer/matches/${match._id}/edit`)}
+                  className="flex-1 bg-secondary hover:bg-secondary/90"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+              </div>
+            </div>
           ))}
         </div>
       ) : myMatches.length > 0 ? (

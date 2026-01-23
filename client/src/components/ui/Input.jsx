@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 const Input = React.forwardRef(
-  ({ label, type = "text", name, placeholder, error, icon, ...rest }, ref) => {
+  ({ label, type = "text", name, placeholder, error, icon, required = false, ...rest }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPasswordField = type === "password";
     const inputType = isPasswordField && showPassword ? "text" : type;
@@ -12,6 +12,7 @@ const Input = React.forwardRef(
         {label && (
           <label className="block text-sm font-medium mb-2" htmlFor={name}>
             {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
 

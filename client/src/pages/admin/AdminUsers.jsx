@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllUsers } from "../../store/slices/adminSlice";
-import { Users, Trash2, Edit2, Search } from "lucide-react";
+import { Users, Trash2, Edit2 } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
-import Input from "../../components/ui/Input";
+import SearchBar from "../../components/ui/SearchBar";
+import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
 
 const AdminUsers = () => {
@@ -80,23 +81,22 @@ const AdminUsers = () => {
       {/* Filters */}
       <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Input
+          <SearchBar
             placeholder="Search by name or email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            icon={<Search size={20} />}
+            searchQuery={search}
+            setSearchQuery={setSearch}
           />
-          <select
+          <Select
+            options={[
+              { value: "", label: "All Roles" },
+              { value: "Admin", label: "Admin" },
+              { value: "Player", label: "Player" },
+              { value: "TeamManager", label: "Team Manager" },
+              { value: "TournamentOrganizer", label: "Tournament Organizer" },
+            ]}
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-4 py-2 border border-base-dark dark:border-base rounded-lg bg-primary dark:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary"
-          >
-            <option value="">All Roles</option>
-            <option value="Admin">Admin</option>
-            <option value="Player">Player</option>
-            <option value="TeamManager">Team Manager</option>
-            <option value="TournamentOrganizer">Tournament Organizer</option>
-          </select>
+          />
           <div className="flex items-center justify-start">
             <span className="text-sm text-base dark:text-base-dark font-medium">
               Total: {filteredUsers.length}

@@ -16,12 +16,14 @@ export const createMatch = asyncHandler(async (req, res) => {
     ground,
     teamA,
     teamB,
+    playerA,
+    playerB,
     scheduledAt,
     status
   } = req.body;
 
-  if (!tournament || !sport || !teamA || !teamB || !scheduledAt) {
-    throw new ApiError(400, "All required fields must be provided.");
+  if (!tournament || !sport || !scheduledAt) {
+    throw new ApiError(400, "Tournament, sport, and scheduledAt are required.");
   }
 
   // Verify tournament exists and user is the organizer
@@ -34,19 +36,45 @@ export const createMatch = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only the tournament organizer can create matches.");
   }
 
-  // Verify teams exist
-  const [teamADoc, teamBDoc] = await Promise.all([
-    Team.findById(teamA),
-    Team.findById(teamB)
-  ]);
+  // Validate based on tournament type
+  if (tournamentDoc.registrationType === "Team") {
+    if (!teamA || !teamB) {
+      throw new ApiError(400, "Both teams are required for team-based matches.");
+    }
 
-  if (!teamADoc || !teamBDoc) {
-    throw new ApiError(404, "One or both teams not found.");
-  }
+    // Verify teams exist
+    const [teamADoc, teamBDoc] = await Promise.all([
+      Team.findById(teamA),
+      Team.findById(teamB)
+    ]);
 
-  // Verify teams are approved for tournament
-  if (!tournamentDoc.approvedTeams.includes(teamA) || !tournamentDoc.approvedTeams.includes(teamB)) {
-    throw new ApiError(400, "Both teams must be approved for the tournament.");
+    if (!teamADoc || !teamBDoc) {
+      throw new ApiError(404, "One or both teams not found.");
+    }
+
+    // Verify teams are approved for tournament
+    if (!tournamentDoc.approvedTeams.includes(teamA) || !tournamentDoc.approvedTeams.includes(teamB)) {
+      throw new ApiError(400, "Both teams must be approved for the tournament.");
+    }
+  } else if (tournamentDoc.registrationType === "Player") {
+    if (!playerA || !playerB) {
+      throw new ApiError(400, "Both players are required for player-based matches.");
+    }
+
+    // Verify players exist
+    const [playerADoc, playerBDoc] = await Promise.all([
+      Player.findById(playerA),
+      Player.findById(playerB)
+    ]);
+
+    if (!playerADoc || !playerBDoc) {
+      throw new ApiError(404, "One or both players not found.");
+    }
+
+    // Verify players are approved for tournament
+    if (!tournamentDoc.approvedPlayers.includes(playerA) || !tournamentDoc.approvedPlayers.includes(playerB)) {
+      throw new ApiError(400, "Both players must be approved for the tournament.");
+    }
   }
 
   // Parse ground if it's a JSON string
@@ -59,21 +87,32 @@ export const createMatch = asyncHandler(async (req, res) => {
     }
   }
 
-  const match = await Match.create({
+  const matchData = {
     tournament,
     sport,
     ground: parsedGround,
-    teamA,
-    teamB,
     scheduledAt: new Date(scheduledAt),
     status: status || "Scheduled"
-  });
+  };
+
+  // Add team or player fields based on tournament type
+  if (tournamentDoc.registrationType === "Team") {
+    matchData.teamA = teamA;
+    matchData.teamB = teamB;
+  } else if (tournamentDoc.registrationType === "Player") {
+    matchData.playerA = playerA;
+    matchData.playerB = playerB;
+  }
+
+  const match = await Match.create(matchData);
 
   const populatedMatch = await Match.findById(match._id)
-    .populate("tournament", "name format status")
+    .populate("tournament", "name format status registrationType")
     .populate("sport", "name teamBased iconUrl")
     .populate("teamA", "name logoUrl manager captain players")
     .populate("teamB", "name logoUrl manager captain players")
+    .populate("playerA", "fullName avatar email")
+    .populate("playerB", "fullName avatar email")
     .populate("manOfTheMatch", "fullName avatar");
 
   res

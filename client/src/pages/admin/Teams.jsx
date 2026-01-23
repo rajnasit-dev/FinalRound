@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllTeams } from "../../store/slices/adminSlice";
-import { Search, Users, Trophy } from "lucide-react";
+import { Users, Trophy } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
+import SearchBar from "../../components/ui/SearchBar";
 import Table from "../../components/ui/Table";
 
 const Teams = () => {
@@ -111,14 +112,11 @@ const Teams = () => {
       <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-4">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-base dark:text-base-dark" />
-            <input
-              type="text"
+          <div className="flex-1">
+            <SearchBar
               placeholder="Search teams..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-base-dark dark:border-base rounded-lg bg-base-dark dark:bg-base focus:outline-none focus:ring-2 focus:ring-secondary"
+              searchQuery={searchTerm}
+              setSearchQuery={setSearchTerm}
             />
           </div>
         </div>

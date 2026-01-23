@@ -9,6 +9,7 @@ import { CheckCircle, XCircle, FileText, Calendar, Mail } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
+import SearchBar from "../../components/ui/SearchBar";
 
 const OrganizerRequests = () => {
   const dispatch = useDispatch();
@@ -17,10 +18,16 @@ const OrganizerRequests = () => {
   const [showModal, setShowModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionType, setActionType] = useState(""); // 'approve' or 'reject'
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     dispatch(getPendingOrganizerRequests());
   }, [dispatch]);
+
+  const filteredOrganizers = pendingOrganizers?.filter((organizer) =>
+    organizer.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    organizer.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleApprove = (organizer) => {
     setSelectedOrganizer(organizer);
@@ -72,8 +79,15 @@ const OrganizerRequests = () => {
           <p className="text-base dark:text-base-dark">No pending organizer requests</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {pendingOrganizers?.map((organizer) => (
+        <>
+          <SearchBar
+            placeholder="Search by name or email..."
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {filteredOrganizers?.map((organizer) => (
             <div
               key={organizer._id}
               className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6 space-y-4"
@@ -141,7 +155,8 @@ const OrganizerRequests = () => {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        </>
       )}
 
       {/* Confirmation Modal */}

@@ -8,6 +8,7 @@ import {
   DollarSign,
   LogOut,
   UserCheck,
+  MessageSquare,
 } from "lucide-react";
 import { logoutUser } from "../store/slices/authSlice";
 import Logo from "../components/Logo";
@@ -28,6 +29,7 @@ const AdminLayout = () => {
     { to: "/admin/tournaments", icon: Trophy, label: "Tournaments" },
     { to: "/admin/teams", icon: Shield, label: "Teams" },
     { to: "/admin/revenue", icon: DollarSign, label: "Revenue" },
+    { to: "/admin/feedback", icon: MessageSquare, label: "Feedback" },
   ];
 
   return (

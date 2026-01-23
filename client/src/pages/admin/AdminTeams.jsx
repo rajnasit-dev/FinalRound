@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllTeams } from "../../store/slices/adminSlice";
-import { Users, Trophy, Trash2, Edit2, Search } from "lucide-react";
+import { Users, Trophy, Trash2, Edit2 } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
-import Input from "../../components/ui/Input";
+import SearchBar from "../../components/ui/SearchBar";
 
 const AdminTeams = () => {
   const dispatch = useDispatch();
@@ -62,11 +62,10 @@ const AdminTeams = () => {
       {/* Search Filter */}
       <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
+          <SearchBar
             placeholder="Search by team name or city..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            icon={<Search size={20} />}
+            searchQuery={search}
+            setSearchQuery={setSearch}
           />
           <div className="flex items-center justify-start">
             <span className="text-sm text-base dark:text-base-dark font-medium">

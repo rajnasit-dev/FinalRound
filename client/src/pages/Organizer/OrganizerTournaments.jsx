@@ -106,13 +106,18 @@ const OrganizerTournaments = () => {
           {filteredTournaments.map((tournament) => (
             <div key={tournament._id}>
               <TournamentCard tournament={tournament} />
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex gap-2 flex-wrap">
                 <Button
-                  onClick={() => navigate(`/organizer/tournaments/${tournament._id}/fixtures`)}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  onClick={() => navigate(`/organizer/tournaments/${tournament._id}`)}
+                  className="flex-1 bg-secondary hover:bg-secondary/90"
                 >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Manage Fixtures
+                  View Details
+                </Button>
+                <Button
+                  onClick={() => navigate(`/organizer/tournaments/${tournament._id}/edit`)}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700"
+                >
+                  Edit
                 </Button>
               </div>
             </div>

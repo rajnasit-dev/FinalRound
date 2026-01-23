@@ -9,6 +9,9 @@ import {
   acceptRequest,
   rejectRequest,
   cancelRequest,
+  sendOrganizerAuthorizationRequest,
+  sendTournamentBookingRequest,
+  getAllUserRequests,
 } from "../controllers/request.controllers.js";
 
 const router = Router();
@@ -16,11 +19,20 @@ const router = Router();
 // All routes require authentication
 router.use(authMiddleware);
 
+// Get all requests for current user (organized by type)
+router.get("/all", getAllUserRequests);
+
 // Player requests to join a team
 router.post("/send-team-request", sendTeamRequest);
 
 // Team sends request to a player
 router.post("/send-player-request", sendPlayerRequest);
+
+// Organizer Authorization request (Admin only)
+router.post("/send-authorization", sendOrganizerAuthorizationRequest);
+
+// Tournament Booking request
+router.post("/send-booking", sendTournamentBookingRequest);
 
 // Get received requests for current user
 router.get("/received", getReceivedRequests);
