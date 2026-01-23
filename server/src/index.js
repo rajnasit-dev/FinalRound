@@ -12,6 +12,34 @@ if (!fs.existsSync(tempDir)) {
     console.log('Created temp directory:', tempDir);
 }
 
+const MONGODB_URI = `${process.env.MONGODB_URI}/${process.env.DB_NAME}`;
+
+if (!MONGODB_URI) {
+  throw new Error("MONGODB_URI is not defined");
+}
+
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+async function connectDB() {
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI, {
+      bufferCommands: false,
+    }).then((mongoose) => mongoose);
+  }
+
+  cached.conn = await cached.promise;
+  console.log("✅ MongoDB connected");
+  return cached.conn;
+}
+
 // ( async () => {
 //     try {
 //         await mongoose.connect(`${process.env.MONGODB_URI}/${process.env.DB_NAME}`);
@@ -44,9 +72,11 @@ async function connectDB() {
 }
 
 // add Middleware
-app.use((req, res, next) => {
-    if (!isConencted) {
-        connectDB();
-    }
+app.use(async (req, res, next) => {
+    try {
+    await connectDB();
     next();
+  } catch (err) {
+    next(err);
+  }
 })
