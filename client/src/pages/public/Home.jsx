@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import videoUrl from "../../../../../vid1.mp4";
+// import videoUrl from "../../../../../vid1.mp4";
 import axios from "axios";
 import { motion } from "framer-motion";
 import TournamentCard from "../../components/ui/TournamentCard";
