@@ -126,7 +126,7 @@ const Home = () => {
     <div className="relative overflow-hidden">
       {/* Hero Section - Video */}
       <div className="relative w-full h-screen overflow-hidden">
-        <video
+        {/* <video
           autoPlay
           loop
           muted
@@ -135,7 +135,8 @@ const Home = () => {
         >
           <source src={videoUrl} type="video/mp4" />
           Your browser does not support the video tag.
-        </video>
+        </video> */}
+        <img src="https://chatgpt.com/backend-api/estuary/content?id=file_000000006ba07209ab726e52c1689451&ts=491434&p=fs&cid=1&sig=4fbd3871b581bf63c715450ee12eabe9037825c3114347a8f2bc6169032eb82b&v=0" alt="" />
 
         {/* Hero Section - Content */}
         <div className="absolute inset-0 z-10 container mx-auto px-4 py-3 flex items-center">
