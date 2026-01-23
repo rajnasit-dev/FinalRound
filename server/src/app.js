@@ -1,6 +1,7 @@
 import cors from 'cors'
 import cookieParser from 'cookie-parser';
 import express from 'express'
+import { connectDB } from './db.js';
 
 const app = express();
 
@@ -17,6 +18,21 @@ app.use(express.urlencoded({extended: true}));
 app.use(express.static('public'));
 
 app.use(cookieParser());
+
+// Connect to database before handling any routes
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        console.error('Database connection error:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Database connection failed',
+            errors: [err.message]
+        });
+    }
+});
 
 
 //Router imports
