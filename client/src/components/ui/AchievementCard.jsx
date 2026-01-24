@@ -1,39 +1,27 @@
-import { Trophy } from "lucide-react";
+import { Trophy, X } from "lucide-react";
 
 const AchievementCard = ({ title, year, onRemove, showRemove = false }) => {
   return (
-    <div className="flex items-start gap-4 p-4 bg-primary dark:bg-primary-dark rounded-lg border border-base-dark dark:border-base hover:border-secondary dark:hover:border-secondary-dark transition-colors">
-      <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500 dark:text-amber-400">
-        <Trophy size={20} />
-      </div>
-      <div className="flex-1">
-        <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">
+    <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-900/30 hover:shadow-md hover:border-amber-300 dark:hover:border-amber-900/50 transition-all duration-200">
+      <Trophy className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <h4 className="font-semibold text-text-primary dark:text-text-primary-dark leading-tight">
           {title}
-        </h3>
-        <p className="text-sm text-base dark:text-base-dark mt-1">
-          {year}
-        </p>
+        </h4>
+        {year && (
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            {year}
+          </p>
+        )}
       </div>
       {showRemove && onRemove && (
         <button
           type="button"
           onClick={onRemove}
-          className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-500 dark:text-red-400"
+          className="p-1.5 hover:bg-red-500/10 rounded-lg transition-colors text-red-500 dark:text-red-400 flex-shrink-0"
+          title="Remove achievement"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
+          <X size={16} />
         </button>
       )}
     </div>

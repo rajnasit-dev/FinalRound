@@ -113,16 +113,11 @@ const OrganizerMatches = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredMatches.map((match) => (
             <div key={match._id}>
-              <MatchCard match={match} />
-              <div className="mt-3 flex gap-2">
-                <Button
-                  onClick={() => navigate(`/organizer/matches/${match._id}/edit`)}
-                  className="flex-1 bg-secondary hover:bg-secondary/90"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit
-                </Button>
-              </div>
+              <MatchCard
+                match={match}
+                showEditButton={true}
+                onEdit={(matchId) => navigate(`/organizer/matches/${matchId}/edit`)}
+              />
             </div>
           ))}
         </div>

@@ -25,6 +25,7 @@ import ManagerTeams from "./pages/Manager/ManagerTeams";
 import CreateTeam from "./pages/Manager/CreateTeam";
 import EditTeam from "./pages/Manager/EditTeam";
 import ManagerPlayers from "./pages/Manager/ManagerPlayers";
+import ManagerTournaments from "./pages/Manager/ManagerTournaments";
 import ManagerProfile from "./pages/Manager/ManagerProfile";
 import EditManagerProfile from "./pages/Manager/EditManagerProfile";
 import ManagerRequests from "./pages/Manager/ManagerRequests";
@@ -49,6 +50,7 @@ import CreateMatch from "./pages/Organizer/CreateMatch";
 import EditMatch from "./pages/Organizer/EditMatch";
 import TournamentFixtures from "./pages/Organizer/TournamentFixtures";
 import OrganizerTournamentDashboard from "./pages/Organizer/OrganizerTournamentDashboard";
+import OrganizerRegistrations from "./pages/Organizer/OrganizerRegistrations";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -100,6 +102,7 @@ export const router = createBrowserRouter([
         element: <DashboardLayout />,
         children: [
           { path: "dashboard", element: <ManagerDashboard /> },
+          { path: "tournaments", element: <ManagerTournaments /> },
           { path: "teams", element: <ManagerTeams /> },
           { path: "teams/create", element: <CreateTeam /> },
           { path: "teams/:teamId/edit", element: <EditTeam /> },
@@ -115,6 +118,7 @@ export const router = createBrowserRouter([
         children: [
           { path: "dashboard", element: <OrganizerDashboard /> },
           { path: "tournaments", element: <OrganizerTournaments /> },
+          { path: "registrations", element: <OrganizerRegistrations /> },
           { path: "tournaments/create", element: <CreateTournament /> },
           { path: "tournaments/:tournamentId", element: <OrganizerTournamentDashboard /> },
           { path: "tournaments/:tournamentId/edit", element: <EditTournament /> },

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTournamentById } from "../../store/slices/tournamentSlice";
-import { fetchPlayerTeams } from "../../store/slices/teamSlice";
+import { fetchPlayerTeams, fetchManagerTeams } from "../../store/slices/teamSlice";
 import { createBooking, updateBookingPaymentStatus, fetchUserBookings } from "../../store/slices/bookingSlice";
 import { createPayment, updatePaymentStatus } from "../../store/slices/paymentSlice";
 import CardStat from "../../components/ui/CardStat";
@@ -28,9 +28,7 @@ const TournamentRegister = () => {
   const { selectedTournament: tournament, loading: tournamentLoading } = useSelector(
     (state) => state.tournament
   );
-  const { playerTeams: userTeams, loading: teamsLoading } = useSelector(
-    (state) => state.team
-  );
+  const { playerTeams, managerTeams, loading: teamsLoading } = useSelector((state) => state.team);
 
   const [processingPayment, setProcessingPayment] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState("");
@@ -42,11 +40,15 @@ const TournamentRegister = () => {
       return;
     }
 
-    // Fetch tournament, user teams, and bookings
+    // Fetch tournament, user teams/manager teams, and bookings
     dispatch(fetchTournamentById(id));
     dispatch(fetchUserBookings());
     if (user._id) {
-      dispatch(fetchPlayerTeams(user._id));
+      if (user.role === "TeamManager") {
+        dispatch(fetchManagerTeams(user._id));
+      } else {
+        dispatch(fetchPlayerTeams(user._id));
+      }
     }
   }, [user, navigate, id, dispatch]);
 
@@ -58,6 +60,48 @@ const TournamentRegister = () => {
 
   // Check if this is a team-based tournament (player can't register directly)
   const isTeamBasedTournament = tournament?.registrationType === "Team";
+  
+  // Check if this is a single-player tournament and user is a manager
+  const isSinglePlayerTournament = tournament?.registrationType === "Player";
+  const isManager = user?.role === "TeamManager";
+  const isManagerAndSinglePlayer = isManager && isSinglePlayerTournament;
+
+  const availableTeams = user?.role === "TeamManager" ? (managerTeams || []) : (playerTeams || []);
+
+  const getRequiredPlayers = () => {
+    if (tournament?.playersPerTeam && Number.isFinite(tournament.playersPerTeam)) {
+      return tournament.playersPerTeam;
+    }
+    // fall back to sport.minPlayers if available
+    const sportMin = tournament?.sport?.minPlayers;
+    return Number.isFinite(sportMin) ? sportMin : undefined;
+  };
+
+  const findSelectedTeam = () => availableTeams.find((t) => t._id === selectedTeam);
+
+  const validateSelection = () => {
+    if (tournament?.registrationType === "Team") {
+      const team = findSelectedTeam();
+      if (!team) return "Please select a team to register";
+      const tournamentSportId = tournament?.sport?._id || tournament?.sport;
+      const teamSportId = team?.sport?._id || team?.sport;
+      if (!tournamentSportId || !teamSportId || String(tournamentSportId) !== String(teamSportId)) {
+        return "Selected team sport does not match tournament sport";
+      }
+      const needed = getRequiredPlayers();
+      if (needed && (team.players?.length || 0) < needed) {
+        return `Team does not have the required ${needed} players`;
+      }
+    }
+    return null;
+  };
+
+  const [validationError, setValidationError] = useState(null);
+
+  useEffect(() => {
+    setValidationError(validateSelection());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTeam, tournament, managerTeams, playerTeams]);
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -70,8 +114,10 @@ const TournamentRegister = () => {
   };
 
   const handlePayment = async () => {
-    if (tournament.registrationType === "Team" && !selectedTeam) {
-      alert("Please select a team to register");
+    const selectionError = validateSelection();
+    if (selectionError) {
+      alert(selectionError);
+      setValidationError(selectionError);
       return;
     }
 
@@ -327,7 +373,7 @@ const TournamentRegister = () => {
 
                 <Button
                   onClick={handlePayment}
-                  disabled={processingPayment || paymentLoading || bookingLoading || isAlreadyRegistered}
+                  disabled={processingPayment || paymentLoading || bookingLoading || isAlreadyRegistered || isManagerAndSinglePlayer}
                   loading={processingPayment || paymentLoading}
                   variant="primary"
                 >
@@ -335,6 +381,11 @@ const TournamentRegister = () => {
                     <>
                       <CheckCircle className="w-6 h-6" />
                       Already Registered
+                    </>
+                  ) : isManagerAndSinglePlayer ? (
+                    <>
+                      <AlertCircle className="w-6 h-6" />
+                      Managers cannot register for single-player tournaments
                     </>
                   ) : (
                     <>
@@ -348,7 +399,7 @@ const TournamentRegister = () => {
                   Your payment is secure and encrypted. By proceeding, you agree to our terms and conditions.
                 </p>
               </>
-            ) : !userTeams || userTeams.length === 0 ? (
+            ) : !availableTeams || availableTeams.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-base dark:text-base-dark mb-4">You don't have any teams yet.</p>
                 <Button
@@ -361,7 +412,7 @@ const TournamentRegister = () => {
             ) : (
               <>
                 <div className="space-y-3 mb-6">
-                  {userTeams.map((team) => (
+                  {availableTeams.map((team) => (
                     <label
                       key={team._id}
                       className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
@@ -387,15 +438,15 @@ const TournamentRegister = () => {
                   ))}
                 </div>
 
-                {(bookingError || paymentError) && (
+                {(validationError || bookingError || paymentError) && (
                   <div className="mb-4">
-                    <ErrorMessage message={bookingError || paymentError} type="error" />
+                    <ErrorMessage message={validationError || bookingError || paymentError} type="error" />
                   </div>
                 )}
 
                 <Button
                   onClick={handlePayment}
-                  disabled={!selectedTeam || processingPayment || paymentLoading || bookingLoading || isAlreadyRegistered}
+                  disabled={!selectedTeam || !!validationError || processingPayment || paymentLoading || bookingLoading || isAlreadyRegistered}
                   loading={processingPayment || paymentLoading}
                   variant="primary"
                 >

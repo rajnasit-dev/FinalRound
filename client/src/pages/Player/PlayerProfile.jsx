@@ -1,13 +1,33 @@
-import { User, Mail, Phone, MapPin, Calendar, Edit, Trophy, Ruler, Weight, Camera, Trash2, Activity } from "lucide-react";
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Edit,
+  Trophy,
+  Ruler,
+  Weight,
+  Camera,
+  Trash2,
+  Activity,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import useDateFormat from "../../hooks/useDateFormat";
 import useAge from "../../hooks/useAge";
 import defaultAvatar from "../../assets/defaultAvatar.png";
-import { fetchPlayerProfile, updatePlayerAvatar, deletePlayerAvatar } from "../../store/slices/playerSlice";
+import {
+  fetchPlayerProfile,
+  updatePlayerAvatar,
+  deletePlayerAvatar,
+} from "../../store/slices/playerSlice";
 import { updateUserAvatar } from "../../store/slices/authSlice";
 import Spinner from "../../components/ui/Spinner";
+import AchievementCard from "../../components/ui/AchievementCard";
+import Container from "../../components/container/Container";
+import GridContainer from "../../components/ui/GridContainer";
 
 const PlayerProfile = () => {
   const dispatch = useDispatch();
@@ -15,7 +35,9 @@ const PlayerProfile = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [deletingAvatar, setDeletingAvatar] = useState(false);
   const { user } = useSelector((state) => state.auth);
-  const { profile, loading: playerLoading } = useSelector((state) => state.player);
+  const { profile, loading: playerLoading } = useSelector(
+    (state) => state.player,
+  );
 
   useEffect(() => {
     dispatch(fetchPlayerProfile());
@@ -57,7 +79,7 @@ const PlayerProfile = () => {
 
   const handleAvatarDelete = async () => {
     if (!user?.avatar) return;
-    
+
     if (!confirm("Are you sure you want to delete your avatar?")) {
       return;
     }
@@ -78,7 +100,7 @@ const PlayerProfile = () => {
 
   // Use profile data if available, otherwise fall back to user data
   const playerData = profile || user || {};
-  
+
   // Calculate age from dateOfBirth
   const age = useAge(playerData?.dateOfBirth);
   const sportsList = Array.isArray(playerData?.sports) ? playerData.sports : [];
@@ -108,7 +130,7 @@ const PlayerProfile = () => {
       </div>
 
       {/* Profile Card */}
-      <div className="bg-card-background dark:bg-card-background-dark rounded-2xl p-8 shadow-md">
+      <Container>
         <div className="flex flex-col md:flex-row gap-6 items-start">
           {/* Avatar */}
           <div className="flex-shrink-0 relative">
@@ -129,7 +151,7 @@ const PlayerProfile = () => {
                 <Camera size={16} />
               )}
             </button>
-            
+
             {/* Delete avatar button - only show if avatar exists */}
             {user?.avatar && (
               <button
@@ -145,7 +167,7 @@ const PlayerProfile = () => {
                 )}
               </button>
             )}
-            
+
             <input
               ref={fileInputRef}
               type="file"
@@ -185,21 +207,36 @@ const PlayerProfile = () => {
             {/* Contact Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
               <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
-                <Mail size={16} className="text-secondary dark:text-secondary-dark" />
+                <Mail
+                  size={16}
+                  className="text-secondary dark:text-secondary-dark"
+                />
                 <span>{playerData?.email || "N/A"}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
-                <Phone size={16} className="text-secondary dark:text-secondary-dark" />
+                <Phone
+                  size={16}
+                  className="text-secondary dark:text-secondary-dark"
+                />
                 <span>{playerData?.phone || "N/A"}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
-                <MapPin size={16} className="text-secondary dark:text-secondary-dark" />
+                <MapPin
+                  size={16}
+                  className="text-secondary dark:text-secondary-dark"
+                />
                 <span>{playerData?.city || "N/A"}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
-                <Calendar size={16} className="text-secondary dark:text-secondary-dark" />
+                <Calendar
+                  size={16}
+                  className="text-secondary dark:text-secondary-dark"
+                />
                 <span>
-                  Joined {playerData?.createdAt ? formatDate(playerData.createdAt) : "N/A"}
+                  Joined{" "}
+                  {playerData?.createdAt
+                    ? formatDate(playerData.createdAt)
+                    : "N/A"}
                 </span>
               </div>
             </div>
@@ -209,7 +246,10 @@ const PlayerProfile = () => {
               <div className="flex flex-wrap gap-4 pt-2">
                 {playerData.height && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Ruler size={16} className="text-secondary dark:text-secondary-dark" />
+                    <Ruler
+                      size={16}
+                      className="text-secondary dark:text-secondary-dark"
+                    />
                     <span className="text-base dark:text-base-dark">
                       {playerData.height} cm
                     </span>
@@ -217,7 +257,10 @@ const PlayerProfile = () => {
                 )}
                 {playerData.weight && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Weight size={16} className="text-secondary dark:text-secondary-dark" />
+                    <Weight
+                      size={16}
+                      className="text-secondary dark:text-secondary-dark"
+                    />
                     <span className="text-base dark:text-base-dark">
                       {playerData.weight} kg
                     </span>
@@ -225,67 +268,97 @@ const PlayerProfile = () => {
                 )}
               </div>
             )}
+          </div>
 
-            {/* Sports & Roles */}
+         
+        </div>
+      </Container>
+       <GridContainer cols={2} gap="gap-4">
+            {/* Achievements */}
+            {playerData?.achievements &&
+              Array.isArray(playerData.achievements) &&
+              playerData.achievements.length > 0 &&
+              playerData.achievements.some((a) => a.title) && (
+                <Container>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Trophy size={18} className="text-amber-600" />
+                    <span className="text-base font-semibold text-text-primary dark:text-text-primary-dark">
+                      Achievements
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    {playerData.achievements
+                      .filter((a) => a.title)
+                      .map((achievement, index) => (
+                        <AchievementCard
+                          key={index}
+                          title={achievement.title}
+                          year={achievement.year}
+                        />
+                      ))}
+                  </div>
+                </Container>
+              )}
+              {/* Sports & Roles */}
             {sportsList.length > 0 && (
-              <div className="pt-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <Activity size={16} className="text-secondary dark:text-secondary-dark" />
-                  <span className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">
+              <Container>
+              <div className="pt-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Activity
+                    size={18}
+                    className="text-secondary dark:text-secondary-dark"
+                  />
+                  <span className="text-base font-semibold text-text-primary dark:text-text-primary-dark">
                     Sports & Roles
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {sportsList.map((sportItem, index) => {
-                    const sportName =
-                      typeof sportItem === "string"
-                        ? sportItem
-                        : sportItem.sport?.name || sportItem.sport?.sportsName || sportItem.name || sportItem.sportsName || "Sport";
-                    const role = sportItem.role || playerData.playingRole || "Player";
+                    // Normalize sport name; avoid showing raw ObjectId strings
+                    const isObjectIdString =
+                      typeof sportItem === "string" && /^[a-f\d]{24}$/i.test(sportItem);
+
+                    let sportName = "Sport";
+
+                    if (typeof sportItem === "string") {
+                      sportName = isObjectIdString ? "Sport" : sportItem;
+                    } else if (sportItem.sport) {
+                      if (
+                        typeof sportItem.sport === "object" &&
+                        sportItem.sport.name
+                      ) {
+                        sportName = sportItem.sport.name;
+                      } else if (
+                        typeof sportItem.sport === "string" &&
+                        !/^[a-f\d]{24}$/i.test(sportItem.sport)
+                      ) {
+                        sportName = sportItem.sport;
+                      }
+                    } else if (sportItem.name) {
+                      sportName = sportItem.name;
+                    } else if (sportItem.sportsName) {
+                      sportName = sportItem.sportsName;
+                    } else if (sportItem.sportName) {
+                      sportName = sportItem.sportName;
+                    }
+
+                    const role =
+                      sportItem.role || playerData.playingRole || "Player";
 
                     return (
                       <span
                         key={`${sportName}-${index}`}
-                        className="px-3 py-1 bg-secondary/10 dark:bg-secondary-dark/10 text-secondary dark:text-secondary-dark rounded-lg text-sm font-medium"
+                        className="px-4 py-2 bg-secondary dark:bg-secondary-dark text-white rounded-full text-sm font-bold shadow-md hover:shadow-lg transition-shadow"
                       >
-                        {sportName}
-                        {role ? ` • ${role}` : ""}
+                        {sportName} • {role}
                       </span>
                     );
                   })}
                 </div>
               </div>
+              </Container>
             )}
-
-            {/* Achievements */}
-            {playerData?.achievements && 
-             Array.isArray(playerData.achievements) && 
-             playerData.achievements.length > 0 && 
-             playerData.achievements.some(a => a.title) && (
-              <div className="pt-2">
-                <div className="flex items-center gap-2 mb-2">
-                  <Trophy size={16} className="text-accent dark:text-accent-dark" />
-                  <span className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">
-                    Achievements
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {playerData.achievements
-                    .filter(a => a.title)
-                    .map((achievement, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-accent/10 dark:bg-accent-dark/10 text-accent dark:text-accent-dark rounded-lg text-sm"
-                      >
-                        {achievement.title}{achievement.year ? ` (${achievement.year})` : ''}
-                      </span>
-                    ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+          </GridContainer>
     </div>
   );
 };

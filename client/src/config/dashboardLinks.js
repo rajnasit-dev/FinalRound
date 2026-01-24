@@ -20,6 +20,7 @@ export const playerLinks = [
 
 // Team Manager dashboard menu links
 export const managerLinks = [
+  { name: "My Tournaments", icon: Trophy, url: "/manager/tournaments" },
   { name: "My Teams", icon: Users, url: "/manager/teams" },
   { name: "Team Players", icon: Zap, url: "/manager/players" },
   { name: "Requests", icon: Inbox, url: "/manager/requests" },
@@ -30,6 +31,7 @@ export const managerLinks = [
 export const organizerLinks = [
   { name: "Dashboard", icon: LayoutDashboard, url: "/organizer/dashboard" },
   { name: "Tournaments", icon: Trophy, url: "/organizer/tournaments" },
+  { name: "Registrations", icon: Target, url: "/organizer/registrations" },
   { name: "Matches", icon: Calendar, url: "/organizer/matches" },
 ];
 

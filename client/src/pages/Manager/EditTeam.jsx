@@ -132,24 +132,33 @@ const EditTeam = () => {
     setIsSubmitting(true);
 
     try {
-      const formData = new FormData();
-      formData.append("name", data.name);
-      formData.append("sport", data.sport);
-      if (data.city) formData.append("city", data.city);
-      if (data.description) formData.append("description", data.description);
-      formData.append("openToJoin", data.openToJoin === "true");
-      formData.append("achievements", JSON.stringify(achievements));
-      
-      if (logoFile) {
-        formData.append("logo", logoFile);
-      }
+      // First update team details (JSON)
+      const payload = {
+        name: data.name,
+        city: data.city || undefined,
+        description: data.description || "",
+        openToJoin: data.openToJoin === "true",
+        achievements,
+      };
 
-      const response = await axios.put(`${API_BASE_URL}/teams/${teamId}`, formData, {
+      await axios.put(`${API_BASE_URL}/teams/${teamId}`, payload, {
         withCredentials: true,
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type": "application/json",
         },
       });
+
+      // Then update logo if provided (multipart to /:id/logo)
+      if (logoFile) {
+        const logoForm = new FormData();
+        logoForm.append("logo", logoFile);
+        await axios.patch(`${API_BASE_URL}/teams/${teamId}/logo`, logoForm, {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
 
       setSuccess(true);
       setTimeout(() => {

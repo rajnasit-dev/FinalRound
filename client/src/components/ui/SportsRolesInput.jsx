@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus, X, Trophy } from "lucide-react";
-import axios from "axios";
 import Button from "./Button";
+import GridContainer from "./GridContainer";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 

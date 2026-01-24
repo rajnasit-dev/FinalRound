@@ -21,6 +21,7 @@ import Container from "../../components/container/Container";
 import Spinner from "../../components/ui/Spinner";
 import Button from "../../components/ui/Button";
 import Select from "../../components/ui/Select";
+import AchievementCard from "../../components/ui/AchievementCard";
 import { fetchPlayerById } from "../../store/slices/playerSlice";
 import { fetchManagerTeams } from "../../store/slices/teamSlice";
 import { sendPlayerRequest } from "../../store/slices/requestSlice";
@@ -28,6 +29,7 @@ import defaultAvatar from "../../assets/defaultAvatar.png";
 import defaultCoverImage from "../../assets/defaultCoverImage.png";
 import useDateFormat from "../../hooks/useDateFormat";
 import useAge from "../../hooks/useAge";
+import { showToast } from "../../utils/toast";
 
 const PlayerDetail = () => {
   const { id } = useParams();
@@ -57,22 +59,26 @@ const PlayerDetail = () => {
 
   const handleSendRequest = async () => {
     if (!selectedTeam) {
-      alert("Please select a team");
+      showToast("Please select a team", "warning");
       return;
     }
 
-    await dispatch(
-      sendPlayerRequest({
-        playerId: id,
-        teamId: selectedTeam,
-        message: requestMessage,
-      })
-    );
+    try {
+      const result = await dispatch(
+        sendPlayerRequest({
+          playerId: id,
+          teamId: selectedTeam,
+          message: requestMessage,
+        })
+      ).unwrap();
 
-    setShowRequestModal(false);
-    setSelectedTeam("");
-    setRequestMessage("");
-    alert("Request sent successfully!");
+      setShowRequestModal(false);
+      setSelectedTeam("");
+      setRequestMessage("");
+      showToast("Request sent successfully!", "success");
+    } catch (error) {
+      showToast(error || "Failed to send request", "error");
+    }
   };
 
   const isTeamManager = user?.role === "TeamManager";

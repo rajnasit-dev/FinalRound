@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
-import { Calendar, MapPin, Trophy, Clock } from "lucide-react";
+import { Calendar, MapPin, Trophy, Clock, Edit } from "lucide-react";
 import useStatusColor from "../../hooks/useStatusColor";
 import useDateFormat from "../../hooks/useDateFormat";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 
-const MatchCard = ({ match }) => {
+const MatchCard = ({ match, showEditButton = false, onEdit }) => {
   const { getStatusColor } = useStatusColor();
   const { formatDate, formatTime } = useDateFormat();
 
@@ -23,6 +23,20 @@ const MatchCard = ({ match }) => {
               <Trophy className="w-4 h-4" />
               <span className="font-medium">{match.tournament?.name || "Tournament"}</span>
             </div>
+            <div className="flex items-center gap-2">
+            {showEditButton && onEdit && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  onEdit(match._id);
+                }}
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-secondary/10 hover:bg-secondary/20 dark:bg-secondary-dark/10 dark:hover:bg-secondary-dark/20 text-secondary dark:text-secondary-dark transition-colors"
+                title="Edit Match"
+              >
+                <Edit className="w-3.5 h-3.5" />
+                Edit
+              </button>
+            )}
             <span
               className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(
                 match.status
@@ -33,6 +47,7 @@ const MatchCard = ({ match }) => {
               )}
               {match.status}
             </span>
+            </div>
           </div>
           
           <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500">

@@ -27,6 +27,7 @@ import { sendTeamRequest } from "../../store/slices/requestSlice";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 import defaultTeamCoverImage from "../../assets/defaultTeamCoverImage.png";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
+import AchievementCard from "../../components/ui/AchievementCard";
 import useDateFormat from "../../hooks/useDateFormat";
 import useAge from "../../hooks/useAge";
 
@@ -40,7 +41,7 @@ const PlayerListItem = ({ player, isCaptain }) => {
       className="group flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-750 transition-all border border-gray-200 dark:border-gray-700 hover:border-secondary dark:hover:border-secondary hover:shadow-md"
     >
       <div className="relative">
-        <div className="w-14 h-14 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0">
+        <div className="w-14 h-14 rounded-xl overflow-hidden bg-linear-to-br from-blue-500 to-purple-600 shrink-0">
           {player.avatar ? (
             <img
               src={player.avatar}
@@ -141,7 +142,7 @@ const TeamDetail = () => {
   return (
     <div className="min-h-screen pb-16">
       {/* Banner */}
-      <div className="relative h-screen sm:h-[450px] overflow-hidden">
+      <div className="relative h-screen sm:h-112 overflow-hidden">
         <img
           src={team.bannerUrl || defaultTeamCoverImage}
           alt={team.name}
@@ -279,21 +280,24 @@ const TeamDetail = () => {
             {/* Team Achievements */}
             {team.achievements && team.achievements.length > 0 && (
               <Container>
-                <h2 className="text-2xl font-bold mb-5 flex items-center gap-2">
-                  <Award className="w-6 h-6 text-amber-600" />
-                  Achievements
-                </h2>
-                <ul className="space-y-3">
-                  {team.achievements.map((achievement, index) => (
-                    <li
-                      key={index}
-                      className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-900/30"
-                    >
-                      <Trophy className="w-5 h-5 text-amber-600 flex-shrink-0" />
-                      <span className="font-medium">{achievement}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <Award className="w-6 h-6 text-amber-600" />
+                    <h2 className="text-2xl font-bold">Achievements</h2>
+                  </div>
+                  <p className="text-sm text-base dark:text-base-dark">
+                    {team.achievements.length} accomplishment{team.achievements.length > 1 ? "s" : ""}
+                  </p>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {team.achievements.map((achievement, index) => {
+                    const title = achievement?.title || achievement || "Achievement";
+                    const year = achievement?.year;
+                    return (
+                      <AchievementCard key={index} title={title} year={year} />
+                    );
+                  })}
+                </div>
               </Container>
             )}
 
@@ -325,14 +329,14 @@ const TeamDetail = () => {
           <div className="lg:col-span-1 space-y-6">
             {/* Team Captain Card */}
             {team.captain && (
-              <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-xl border-2 border-amber-200 dark:border-amber-800 p-6">
+              <div className="bg-linear-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-xl border-2 border-amber-200 dark:border-amber-800 p-6">
                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                   <Crown className="w-5 h-5 text-amber-600" />
                   Team Captain
                 </h3>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-amber-500 to-yellow-600 flex-shrink-0">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-linear-to-br from-amber-500 to-yellow-600 shrink-0">
                       {team.captain.avatar ? (
                         <img
                           src={team.captain.avatar}
@@ -377,7 +381,7 @@ const TeamDetail = () => {
                 Team Manager
               </h3>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0">
+                <div className="w-16 h-16 rounded-xl overflow-hidden bg-linear-to-br from-blue-500 to-purple-600 shrink-0">
                   {team.manager.avatar ? (
                     <img
                       src={team.manager.avatar}
@@ -447,7 +451,7 @@ const TeamDetail = () => {
                   setJoinMessage("");
                 }}
                 variant="primary"
-                className="!w-auto flex-1"
+                className="flex-1"
               >
                 Cancel
               </Button>
@@ -456,7 +460,7 @@ const TeamDetail = () => {
                 disabled={requestLoading || !joinMessage.trim()}
                 loading={requestLoading}
                 variant="primary"
-                className="!w-auto flex-1"
+                className="flex-1"
               >
                 <Send className="w-4 h-4" />
                 Send Request
