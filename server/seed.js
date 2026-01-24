@@ -136,6 +136,7 @@ const seedDatabase = async () => {
     const volleyball = createdSports.find(s => s.name === "Volleyball");
     const tennis = createdSports.find(s => s.name === "Tennis");
     const badminton = createdSports.find(s => s.name === "Badminton");
+    const hockey = createdSports.find(s => s.name === "Hockey");
     const chess = createdSports.find(s => s.name === "Chess");
 
     // ========== SEED USERS ==========
@@ -164,6 +165,20 @@ const seedDatabase = async () => {
 
     // Tournament Organizers
     const organizers = await TournamentOrganizer.create([
+      // Test Organizer
+      {
+        fullName: "Test Organizer",
+        email: "testorganizer@gmail.com",
+        password: "Password123!",
+        phone: "+91-9876543200",
+        city: "Ahmedabad",
+        isVerified: true,
+        isActive: true,
+        orgName: "Test Organization",
+        isVerifiedOrganizer: true,
+        isAuthorized: true,
+        avatar: "https://randomuser.me/api/portraits/men/100.jpg"
+      },
       {
         fullName: "Gujarat Sports Authority",
         email: "gujaratsports2025@gmail.com",
@@ -267,6 +282,21 @@ const seedDatabase = async () => {
 
     // Team Managers with detailed profiles
     const managers = await TeamManager.create([
+      // Test Manager
+      {
+        fullName: "Test Manager",
+        email: "testmanager@gmail.com",
+        password: "Password123!",
+        phone: "+91-9876543202",
+        city: "Ahmedabad",
+        isVerified: true,
+        isActive: true,
+        avatar: "https://randomuser.me/api/portraits/men/101.jpg",
+        achievements: {
+          title: "Test Account for Development",
+          year: 2026
+        }
+      },
       {
         fullName: "Aryan Sharma",
         email: "aryansharma890@gmail.com",
@@ -384,6 +414,29 @@ const seedDatabase = async () => {
 
     // Players
     const players = await Player.create([
+      // Test Player
+      {
+        fullName: "Test Player",
+        email: "testplayer@gmail.com",
+        password: "Password123!",
+        phone: "+91-9876543201",
+        city: "Ahmedabad",
+        isVerified: true,
+        isActive: true,
+        sports: [
+          { sport: cricket._id, role: "All-rounder" },
+          { sport: football._id, role: "Midfielder" }
+        ],
+        achievements: [
+          { title: "Test Account for Development", year: 2026 }
+        ],
+        gender: "Male",
+        dateOfBirth: getDOBFromAge(25),
+        height: 175,
+        weight: 70,
+        bio: "Test player account for application testing",
+        avatar: "https://randomuser.me/api/portraits/men/99.jpg"
+      },
       // Cricket Players
       {
         fullName: "Harshil Patel",
@@ -393,7 +446,14 @@ const seedDatabase = async () => {
         city: "Ahmedabad",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: cricket._id, role: "All-rounder" }],
+        sports: [
+          { sport: cricket._id, role: "All-rounder" },
+          { sport: football._id, role: "Midfielder" }
+        ],
+        achievements: [
+          { title: "Man of the Tournament - Gujarat T20 League", year: 2023 },
+          { title: "State Football Cup - Best Playmaker", year: 2024 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(25),
         height: 175,
@@ -409,7 +469,14 @@ const seedDatabase = async () => {
         city: "Rajkot",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: cricket._id, role: "All-rounder" }],
+        sports: [
+          { sport: cricket._id, role: "All-rounder" },
+          { sport: basketball._id, role: "Guard" }
+        ],
+        achievements: [
+          { title: "West Zone All-Rounder Award", year: 2024 },
+          { title: "Intercity Hoops Defensive Leader", year: 2023 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(27),
         height: 173,
@@ -425,7 +492,14 @@ const seedDatabase = async () => {
         city: "Anand",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: cricket._id, role: "Bowler" }],
+        sports: [
+          { sport: cricket._id, role: "Bowler" },
+          { sport: volleyball._id, role: "Middle Blocker" }
+        ],
+        achievements: [
+          { title: "Best Spinner - State Championship", year: 2024 },
+          { title: "Volleyball Blocker of the Year", year: 2023 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(26),
         height: 180,
@@ -441,7 +515,14 @@ const seedDatabase = async () => {
         city: "Ahmedabad",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: cricket._id, role: "Batsman" }],
+        sports: [
+          { sport: cricket._id, role: "Batsman" },
+          { sport: tennis._id, role: "Singles Player" }
+        ],
+        achievements: [
+          { title: "Women's Premier Opener of the Season", year: 2025 },
+          { title: "State Tennis Quarterfinalist", year: 2023 }
+        ],
         gender: "Female",
         dateOfBirth: getDOBFromAge(24),
         height: 165,
@@ -457,7 +538,14 @@ const seedDatabase = async () => {
         city: "Surat",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: cricket._id, role: "All-rounder" }],
+        sports: [
+          { sport: cricket._id, role: "All-rounder" },
+          { sport: hockey._id, role: "Forward" }
+        ],
+        achievements: [
+          { title: "Player of the Series - Ranji Regional", year: 2023 },
+          { title: "Hockey Western Zone Top Scorer", year: 2024 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(28),
         height: 178,
@@ -474,7 +562,14 @@ const seedDatabase = async () => {
         city: "Vadodara",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: football._id, role: "Striker" }],
+        sports: [
+          { sport: football._id, role: "Striker" },
+          { sport: cricket._id, role: "Batsman" }
+        ],
+        achievements: [
+          { title: "Golden Boot - Gujarat Super League", year: 2024 },
+          { title: "District T20 Clean Hitter Award", year: 2023 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(26),
         height: 172,
@@ -490,7 +585,14 @@ const seedDatabase = async () => {
         city: "Surat",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: football._id, role: "Defender" }],
+        sports: [
+          { sport: football._id, role: "Defender" },
+          { sport: basketball._id, role: "Forward" }
+        ],
+        achievements: [
+          { title: "Best Defender - State League", year: 2025 },
+          { title: "All-India College Hoops MVP", year: 2023 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(27),
         height: 188,
@@ -506,7 +608,14 @@ const seedDatabase = async () => {
         city: "Ahmedabad",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: football._id, role: "Goalkeeper" }],
+        sports: [
+          { sport: football._id, role: "Goalkeeper" },
+          { sport: badminton._id, role: "Singles Player" }
+        ],
+        achievements: [
+          { title: "Golden Gloves - City League", year: 2024 },
+          { title: "State Badminton Quarterfinalist", year: 2023 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(28),
         height: 191,
@@ -522,7 +631,14 @@ const seedDatabase = async () => {
         city: "Rajkot",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: football._id, role: "Midfielder" }],
+        sports: [
+          { sport: football._id, role: "Midfielder" },
+          { sport: cricket._id, role: "Wicket Keeper" }
+        ],
+        achievements: [
+          { title: "Assist Leader - Rajkot Premier League", year: 2025 },
+          { title: "Best Gloves - District T20", year: 2023 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(25),
         height: 170,
@@ -538,7 +654,14 @@ const seedDatabase = async () => {
         city: "Surat",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: football._id, role: "Midfielder" }],
+        sports: [
+          { sport: football._id, role: "Midfielder" },
+          { sport: volleyball._id, role: "Setter" }
+        ],
+        achievements: [
+          { title: "Creative Midfield Maestro - City Cup", year: 2024 },
+          { title: "Setter of the Tournament - State Volleyball", year: 2023 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(24),
         height: 168,
@@ -555,7 +678,14 @@ const seedDatabase = async () => {
         city: "Vadodara",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: basketball._id, role: "Forward" }],
+        sports: [
+          { sport: basketball._id, role: "Forward" },
+          { sport: football._id, role: "Defender" }
+        ],
+        achievements: [
+          { title: "Basketball State Finals MVP", year: 2024 },
+          { title: "Fair Play Defender - City League", year: 2023 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(26),
         height: 201,
@@ -571,7 +701,14 @@ const seedDatabase = async () => {
         city: "Ahmedabad",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: basketball._id, role: "Guard" }],
+        sports: [
+          { sport: basketball._id, role: "Guard" },
+          { sport: cricket._id, role: "Batsman" }
+        ],
+        achievements: [
+          { title: "Clutch Guard Award - Hoops League", year: 2025 },
+          { title: "City T20 Power Hitter", year: 2023 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(25),
         height: 193,
@@ -587,7 +724,14 @@ const seedDatabase = async () => {
         city: "Rajkot",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: basketball._id, role: "Center" }],
+        sports: [
+          { sport: basketball._id, role: "Center" },
+          { sport: football._id, role: "Defender" }
+        ],
+        achievements: [
+          { title: "Defensive Anchor - State Hoops", year: 2024 },
+          { title: "Clean Sheet Leader - District League", year: 2023 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(23),
         height: 206,
@@ -603,7 +747,14 @@ const seedDatabase = async () => {
         city: "Gandhinagar",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: basketball._id, role: "Guard" }],
+        sports: [
+          { sport: basketball._id, role: "Guard" },
+          { sport: volleyball._id, role: "Libero" }
+        ],
+        achievements: [
+          { title: "Sixth Man of the Year - City League", year: 2024 },
+          { title: "Best Libero - University Nationals", year: 2023 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(24),
         height: 188,
@@ -619,7 +770,14 @@ const seedDatabase = async () => {
         city: "Surat",
         isVerified: true,
         isActive: true,
-        sports: [{ sport: basketball._id, role: "Forward" }],
+        sports: [
+          { sport: basketball._id, role: "Forward" },
+          { sport: tennis._id, role: "Singles Player" }
+        ],
+        achievements: [
+          { title: "Versatile Forward - State Super League", year: 2025 },
+          { title: "District Tennis Champion", year: 2023 }
+        ],
         gender: "Male",
         dateOfBirth: getDOBFromAge(25),
         height: 198,
@@ -642,6 +800,11 @@ const seedDatabase = async () => {
         city: "Ahmedabad",
         description: "Premier cricket team from Ahmedabad with a legacy of excellence",
         logoUrl: "https://img.icons8.com/color/96/cricket.png",
+        achievements: [
+          { title: "Ranji Trophy Qualifiers", year: 2024 },
+          { title: "West Zone Champions", year: 2023 },
+          { title: "State Super League Finalists", year: 2022 }
+        ],
         openToJoin: false,
         isActive: true
       },
@@ -654,6 +817,10 @@ const seedDatabase = async () => {
         city: "Surat",
         description: "Surat's premier cricket team known for aggressive batting",
         logoUrl: "https://img.icons8.com/color/96/cricket-ball.png",
+        achievements: [
+          { title: "Coastal Cup Winners", year: 2024 },
+          { title: "City T20 Champions", year: 2023 }
+        ],
         openToJoin: true,
         isActive: true
       },
@@ -666,6 +833,10 @@ const seedDatabase = async () => {
         city: "Rajkot",
         description: "Cricket champions from Rajkot focusing on all-round performance",
         logoUrl: "https://img.icons8.com/fluency/96/cricket.png",
+        achievements: [
+          { title: "Rajkot Premier League Winners", year: 2024 },
+          { title: "Inter-District Cup Finalists", year: 2022 }
+        ],
         openToJoin: true,
         isActive: true
       },
@@ -679,6 +850,10 @@ const seedDatabase = async () => {
         city: "Ahmedabad",
         description: "Ahmedabad's professional football club with modern playing style",
         logoUrl: "https://img.icons8.com/color/96/football.png",
+        achievements: [
+          { title: "League Shield Winners", year: 2024 },
+          { title: "Super Cup Finalists", year: 2023 }
+        ],
         openToJoin: false,
         isActive: true
       },
@@ -691,6 +866,10 @@ const seedDatabase = async () => {
         city: "Vadodara",
         description: "Vadodara's united football team with strong defensive lineup",
         logoUrl: "https://img.icons8.com/fluency/96/football2.png",
+        achievements: [
+          { title: "Defenders Cup Winners", year: 2024 },
+          { title: "Vadodara City League Champions", year: 2022 }
+        ],
         openToJoin: true,
         isActive: true
       },
@@ -703,6 +882,10 @@ const seedDatabase = async () => {
         city: "Surat",
         description: "Dynamic football team from Surat specializing in counter-attacks",
         logoUrl: "https://img.icons8.com/emoji/96/soccer-ball-emoji.png",
+        achievements: [
+          { title: "Counter Attack Masters", year: 2023 },
+          { title: "Surat Invitational Winners", year: 2022 }
+        ],
         openToJoin: true,
         isActive: true
       },
@@ -716,6 +899,10 @@ const seedDatabase = async () => {
         city: "Rajkot",
         description: "Elite basketball team from Rajkot with fast-paced gameplay",
         logoUrl: "https://img.icons8.com/color/96/basketball.png",
+        achievements: [
+          { title: "Rajkot Slam Champions", year: 2024 },
+          { title: "Fast Break Cup Winners", year: 2023 }
+        ],
         openToJoin: false,
         isActive: true
       },
@@ -728,6 +915,10 @@ const seedDatabase = async () => {
         city: "Gandhinagar",
         description: "Gandhinagar's premier basketball squad focusing on teamwork",
         logoUrl: "https://img.icons8.com/fluency/96/basketball.png",
+        achievements: [
+          { title: "Teamwork Trophy Winners", year: 2023 },
+          { title: "Capital City League Champions", year: 2022 }
+        ],
         openToJoin: true,
         isActive: true
       },
@@ -740,6 +931,10 @@ const seedDatabase = async () => {
         city: "Ahmedabad",
         description: "Top-tier basketball team from Ahmedabad",
         logoUrl: "https://img.icons8.com/emoji/96/basketball-emoji.png",
+        achievements: [
+          { title: "Aces Invitational Winners", year: 2024 },
+          { title: "City Hoops Finalists", year: 2022 }
+        ],
         openToJoin: true,
         isActive: true
       },
@@ -753,6 +948,10 @@ const seedDatabase = async () => {
         city: "Vadodara",
         description: "Dominant volleyball team from Vadodara known for spike attacks",
         logoUrl: "https://img.icons8.com/color/96/volleyball.png",
+        achievements: [
+          { title: "Spike Masters", year: 2024 },
+          { title: "Western Circuit Champions", year: 2023 }
+        ],
         openToJoin: true,
         isActive: true
       },
@@ -765,6 +964,10 @@ const seedDatabase = async () => {
         city: "Gandhinagar",
         description: "Professional volleyball team with excellent blocking skills",
         logoUrl: "https://img.icons8.com/fluency/96/volleyball.png",
+        achievements: [
+          { title: "Block Wall Award", year: 2023 },
+          { title: "Capital Cup Finalists", year: 2022 }
+        ],
         openToJoin: true,
         isActive: true
       },
@@ -778,6 +981,10 @@ const seedDatabase = async () => {
         city: "Bhavnagar",
         description: "Fierce kabaddi team from Bhavnagar with strong raiders",
         logoUrl: "https://img.icons8.com/color/96/kabaddi.png",
+        achievements: [
+          { title: "Raiders Cup Winners", year: 2024 },
+          { title: "State Kabaddi Finalists", year: 2023 }
+        ],
         openToJoin: true,
         isActive: true
       },
@@ -790,6 +997,10 @@ const seedDatabase = async () => {
         city: "Rajkot",
         description: "Kabaddi champions from Rajkot specializing in defensive tactics",
         logoUrl: "https://img.icons8.com/fluency/96/sport.png",
+        achievements: [
+          { title: "Defense Wall Champions", year: 2023 },
+          { title: "Rajkot Pro Kabaddi Finalists", year: 2022 }
+        ],
         openToJoin: true,
         isActive: true
       },
@@ -803,6 +1014,10 @@ const seedDatabase = async () => {
         city: "Jamnagar",
         description: "Elite hockey team from Jamnagar with precision passing",
         logoUrl: "https://img.icons8.com/color/96/hockey.png",
+        achievements: [
+          { title: "Stick Masters Cup", year: 2024 },
+          { title: "Coastal Hockey League Winners", year: 2023 }
+        ],
         openToJoin: false,
         isActive: true
       },
@@ -815,6 +1030,10 @@ const seedDatabase = async () => {
         city: "Ahmedabad",
         description: "Premier hockey team from Ahmedabad known for aggressive play",
         logoUrl: "https://img.icons8.com/fluency/96/hockey.png",
+        achievements: [
+          { title: "Ahmedabad Open Winners", year: 2024 },
+          { title: "Offense Blitz Trophy", year: 2022 }
+        ],
         openToJoin: true,
         isActive: true
       }
@@ -1937,10 +2156,10 @@ const seedDatabase = async () => {
     console.log(`   Bookings: ${bookings.length}`);
     console.log(`   Feedback: ${feedbacks.length}`);
     console.log('\n📝 Sample Login Credentials:');
-    console.log('   👤 Admin (Hardcoded): admin@gmail.com / Admin123!');
-    console.log('   🏢 Organizer: gujaratsports2025@gmail.com / Password123!');
-    console.log('   👨‍💼 Manager: aryansharma890@gmail.com / Password123!');
-    console.log('   🏃 Player: harshilpatel527@gmail.com / Password123!');
+    console.log('   👤 Admin: admin@gmail.com / Admin123!');
+    console.log('   🏢 Organizer: testorganizer@gmail.com / Password123!');
+    console.log('   👨‍💼 Manager: testmanager@gmail.com / Password123!');
+    console.log('   🏃 Player: testplayer@gmail.com / Password123!');
     console.log('\n🚀 Next steps:');
     console.log('   1. Start the server: npm run dev');
     console.log('   2. Login with any of the above credentials');

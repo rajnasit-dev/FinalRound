@@ -7,6 +7,7 @@ import { Team } from "../models/Team.model.js";
 import { TournamentOrganizer } from "../models/TournamentOrganizer.model.js";
 import { Match } from "../models/Match.model.js";
 import { User } from "../models/User.model.js";
+import { Request } from "../models/Request.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
 // Create a new tournament
@@ -850,4 +851,34 @@ export const getTrendingTournaments = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, sortedTournaments, "Trending tournaments retrieved successfully."));
+});
+
+// Get all pending requests for a tournament (team/player join requests)
+export const getTournamentRequests = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const organizerId = req.user._id;
+
+  // Verify tournament exists and user is organizer
+  const tournament = await Tournament.findById(id);
+  if (!tournament) {
+    throw new ApiError(404, "Tournament not found.");
+  }
+
+  if (tournament.organizer.toString() !== organizerId.toString()) {
+    throw new ApiError(403, "Only the tournament organizer can view tournament requests.");
+  }
+
+  // Get all requests related to this tournament
+  const requests = await Request.find({
+    tournament: id,
+    status: "PENDING",
+  })
+    .populate("sender", "fullName avatar email")
+    .populate("receiver", "fullName")
+    .populate("team", "name logoUrl")
+    .sort({ createdAt: -1 });
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, requests, "Tournament requests retrieved successfully."));
 });

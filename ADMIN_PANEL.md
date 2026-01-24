@@ -7,8 +7,8 @@ The SportsHub Admin Panel provides comprehensive management capabilities for the
 ## Access
 
 ### Login Credentials
-- **Email:** admin@sportshub.com
-- **Password:** Admin@123
+- **Email:** admin@gmail.com
+- **Password:** Admin123!
 
 ### Access URL
 - Development: `http://localhost:5173/admin/dashboard`

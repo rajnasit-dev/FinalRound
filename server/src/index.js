@@ -10,5 +10,14 @@ if (!fs.existsSync(tempDir)) {
     console.log('Created temp directory:', tempDir);
 }
 
+const PORT = process.env.PORT || 3000;
+
+// Start server locally
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`✅ Server running on http://localhost:${PORT}`);
+    });
+}
+
 // For Vercel serverless
 export default app;

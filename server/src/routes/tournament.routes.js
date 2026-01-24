@@ -19,7 +19,8 @@ import {
   searchTournaments,
   updateTournamentStatus,
   getTrendingTournaments,
-  generateFixtures
+  generateFixtures,
+  getTournamentRequests,
 } from "../controllers/tournament.controllers.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -48,6 +49,9 @@ tournamentRouter.delete("/:id", authMiddleware, deleteTournament);
 tournamentRouter.post("/:id/register", authMiddleware, registerTeam);
 tournamentRouter.patch("/:id/approve/:teamId", authMiddleware, approveTeamRegistration);
 tournamentRouter.patch("/:id/reject/:teamId", authMiddleware, rejectTeamRegistration);
+
+// Get requests for a tournament
+tournamentRouter.get("/:id/requests", authMiddleware, getTournamentRequests);
 
 // Player registration management (for single-player tournaments)
 tournamentRouter.post("/:id/register-player", authMiddleware, registerPlayer);

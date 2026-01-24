@@ -429,12 +429,13 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     user._id
   );
 
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  };
+  const isProd = process.env.NODE_ENV === "production";
+    const options = {
+      httpOnly: true,
+      secure: true, // required when SameSite=None; allowed on localhost in modern browsers
+      sameSite: "None",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
 
   const safeUser = await User.findById(user._id).select(
     "-password -refreshToken -verifyEmailOtp -verifyEmailOtpExpiry"
@@ -599,12 +600,14 @@ export const logout = asyncHandler(async (req, res) => {
     $set: { refreshToken: undefined },
   });
 
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-    path: "/",
-  };
+    const isProd = process.env.NODE_ENV === "production";
+    const options = {
+      httpOnly: true,
+      secure: true, // required when SameSite=None; allowed on localhost in modern browsers
+      sameSite: "None",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
 
   res
     .status(200)
@@ -708,8 +711,8 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
 
   const options = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    secure: true, // required when SameSite=None; allowed on localhost in modern browsers
+    sameSite: "None",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 
