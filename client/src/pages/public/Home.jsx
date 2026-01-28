@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import videoUrl from "../../../../../vid1.mp4";
 import axios from "axios";
 import { motion } from "framer-motion";
 import TournamentCard from "../../components/ui/TournamentCard";
@@ -134,21 +133,13 @@ const Home = () => {
         url="https://finalround.online"
         type="website"
       />
-      {/* Hero Section - Video */}
+      {/* Hero Section - Gradient Background */}
       <div className="relative w-full h-screen overflow-hidden">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-full h-full object-cover brightness-50"
-        >
-          <source src={videoUrl} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-        {/* <img src="https://chatgpt.com/backend-api/estuary/content?id=file_000000006ba07209ab726e52c1689451&ts=491434&p=fs&cid=1&sig=4fbd3871b581bf63c715450ee12eabe9037825c3114347a8f2bc6169032eb82b&v=0" alt="" 
-        className="w-full h-full object-cover brightness-50"
-        /> */}
+        {/* Modern Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-secondary to-accent dark:from-primary-dark dark:via-secondary-dark dark:to-accent-dark">
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1920')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+        </div>
 
         {/* Hero Section - Content */}
         <div className="absolute inset-0 z-10 container mx-auto px-4 py-3 flex items-center">
