@@ -8,11 +8,14 @@ import {
   Trophy,
   CreditCard,
 } from "lucide-react";
+import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
 import DashboardCardState from "../../components/ui/DashboardCardState";
+import useDateFormat from "../../hooks/useDateFormat";
 
 const Revenue = () => {
   const dispatch = useDispatch();
+  const { formatDate, formatTime } = useDateFormat();
   const { revenue, loading } = useSelector((state) => state.admin);
 
   useEffect(() => {
@@ -42,6 +45,7 @@ const Revenue = () => {
 
   return (
     <div className="space-y-8">
+      <BackButton className="mb-6" />
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Revenue Management
@@ -113,8 +117,9 @@ const Revenue = () => {
                   <p className="text-sm text-base dark:text-base-dark">
                     {payment.team?.name || "Unknown Team"}
                   </p>
-                  <p className="text-xs text-base dark:text-base-dark mt-1">
-                    {new Date(payment.createdAt).toLocaleString()}
+                  <p className="text-xs text-base dark:text-base-dark mt-1 font-num">
+                    <span>{formatDate(payment.createdAt)}</span>
+                    <span className="ml-2">{formatTime(payment.createdAt)}</span>
                   </p>
                 </div>
                 <div className="text-right">

@@ -18,6 +18,10 @@ import { useDispatch, useSelector } from "react-redux";
 import useDateFormat from "../../hooks/useDateFormat";
 import useAge from "../../hooks/useAge";
 import defaultAvatar from "../../assets/defaultAvatar.png";
+import defaultCoverImage from "../../assets/defaultCoverImage.png";
+import BackButton from "../../components/ui/BackButton";
+import AvatarUpload from "../../components/ui/AvatarUpload";
+import BannerUpload from "../../components/ui/BannerUpload";
 import {
   fetchPlayerProfile,
   updatePlayerAvatar,
@@ -31,9 +35,10 @@ import GridContainer from "../../components/ui/GridContainer";
 
 const PlayerProfile = () => {
   const dispatch = useDispatch();
-  const fileInputRef = useRef(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [deletingAvatar, setDeletingAvatar] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [deletingBanner, setDeletingBanner] = useState(false);
   const { user } = useSelector((state) => state.auth);
   const { profile, loading: playerLoading } = useSelector(
     (state) => state.player,
@@ -43,12 +48,7 @@ const PlayerProfile = () => {
     dispatch(fetchPlayerProfile());
   }, [dispatch]);
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files?.[0];
+  const handleAvatarChange = async (file) => {
     if (!file) return;
 
     // Validate file type
@@ -96,6 +96,44 @@ const PlayerProfile = () => {
     }
   };
 
+  const handleBannerUpload = async (file) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size should be less than 5MB");
+      return;
+    }
+
+    setUploadingBanner(true);
+    try {
+      alert("Banner upload functionality will be added soon");
+      // TODO: Implement banner upload when API endpoint is available
+    } catch (error) {
+      alert(error || "Failed to upload banner");
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
+  const handleBannerDelete = async () => {
+    setDeletingBanner(true);
+    try {
+      alert("Banner delete functionality will be added soon");
+      // TODO: Implement banner delete when API endpoint is available
+    } catch (error) {
+      alert(error || "Failed to delete banner");
+    } finally {
+      setDeletingBanner(false);
+    }
+  };
+
   const { formatDate } = useDateFormat();
 
   // Use profile data if available, otherwise fall back to user data
@@ -115,6 +153,7 @@ const PlayerProfile = () => {
 
   return (
     <div className="space-y-8">
+      <BackButton className="mb-4" />
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
@@ -131,81 +170,75 @@ const PlayerProfile = () => {
 
       {/* Profile Card */}
       <Container>
-        <div className="flex flex-col md:flex-row gap-6 items-start">
-          {/* Avatar */}
-          <div className="flex-shrink-0 relative">
-            <img
-              src={playerData?.avatar || defaultAvatar}
+        {/* Media Section - Avatar and Banner side by side */}
+        <div className="flex flex-col md:flex-row gap-6 mb-8">
+          {/* Left - Avatar */}
+          <div className="flex flex-col items-center gap-3">
+            <h3 className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">Profile Picture</h3>
+            <AvatarUpload
+              avatarUrl={playerData?.avatar}
+              defaultAvatar={defaultAvatar}
+              onUpload={handleAvatarChange}
+              onDelete={handleAvatarDelete}
+              uploading={uploadingAvatar}
+              deleting={deletingAvatar}
+              showDelete={!!user?.avatar}
+              size="lg"
+              shape="circle"
               alt={playerData?.fullName || "Player"}
-              className="w-28 h-28 rounded-full object-cover shadow-md"
-            />
-            <button
-              onClick={handleAvatarClick}
-              disabled={uploadingAvatar || deletingAvatar}
-              className="absolute bottom-0 right-0 bg-secondary dark:bg-secondary-dark text-white p-2 rounded-full shadow-lg hover:bg-secondary/90 dark:hover:bg-secondary-dark/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Update avatar"
-            >
-              {uploadingAvatar ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Camera size={16} />
-              )}
-            </button>
-
-            {/* Delete avatar button - only show if avatar exists */}
-            {user?.avatar && (
-              <button
-                onClick={handleAvatarDelete}
-                disabled={uploadingAvatar || deletingAvatar}
-                className="absolute top-0 right-0 bg-red-500 text-white p-2 rounded-full shadow-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Delete avatar"
-              >
-                {deletingAvatar ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Trash2 size={16} />
-                )}
-              </button>
-            )}
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              className="hidden"
             />
           </div>
 
-          {/* Profile Info */}
-          <div className="flex-1 space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-                {playerData?.fullName || "Player Name"}
-              </h2>
-              <div className="flex flex-wrap items-center gap-3 mt-2">
-                {age && (
-                  <span className="text-sm text-base dark:text-base-dark">
-                    {age} years
-                  </span>
-                )}
-                {playerData?.gender && age && (
-                  <span className="text-base dark:text-base-dark">•</span>
-                )}
-                {playerData?.gender && (
-                  <span className="text-sm text-base dark:text-base-dark">
-                    {playerData.gender}
-                  </span>
-                )}
-              </div>
+          {/* Right - Banner */}
+          <div className="flex-1 flex flex-col gap-3">
+            <h3 className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">Banner</h3>
+            <BannerUpload
+              bannerUrl={null}
+              defaultBanner={defaultCoverImage}
+              onUpload={handleBannerUpload}
+              onDelete={handleBannerDelete}
+              uploading={uploadingBanner}
+              deleting={deletingBanner}
+              showDelete={false}
+              height="h-40"
+              alt="Player Banner"
+            />
+          </div>
+        </div>
+
+        {/* Profile Info Section */}
+        <div className="space-y-6">
+
+          {/* Name and Bio */}
+          <div>
+            <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
+              {playerData?.fullName || "Player Name"}
+            </h2>
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+              {age && (
+                <span className="text-sm text-base dark:text-base-dark">
+                  {age} years
+                </span>
+              )}
+              {playerData?.gender && age && (
+                <span className="text-base dark:text-base-dark">•</span>
+              )}
+              {playerData?.gender && (
+                <span className="text-sm text-base dark:text-base-dark">
+                  {playerData.gender}
+                </span>
+              )}
             </div>
 
-            <p className="text-base dark:text-base-dark">
+            <p className="text-base dark:text-base-dark mt-3">
               {playerData?.bio || "No bio added yet."}
             </p>
+          </div>
 
-            {/* Contact Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+          {/* Contact Info */}
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-4">Contact Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
                 <Mail
                   size={16}
@@ -243,7 +276,7 @@ const PlayerProfile = () => {
 
             {/* Physical Stats */}
             {(playerData?.height || playerData?.weight) && (
-              <div className="flex flex-wrap gap-4 pt-2">
+              <div className="flex flex-wrap gap-4 pt-4">
                 {playerData.height && (
                   <div className="flex items-center gap-2 text-sm">
                     <Ruler
@@ -251,7 +284,7 @@ const PlayerProfile = () => {
                       className="text-secondary dark:text-secondary-dark"
                     />
                     <span className="text-base dark:text-base-dark">
-                      {playerData.height} cm
+                      {playerData.height} ft
                     </span>
                   </div>
                 )}
@@ -269,8 +302,6 @@ const PlayerProfile = () => {
               </div>
             )}
           </div>
-
-         
         </div>
       </Container>
        <GridContainer cols={2} gap="gap-4">
@@ -282,7 +313,7 @@ const PlayerProfile = () => {
                 <Container>
                   <div className="flex items-center gap-2 mb-4">
                     <Trophy size={18} className="text-amber-600" />
-                    <span className="text-base font-semibold text-text-primary dark:text-text-primary-dark">
+                    <span className="font-semibold text-text-primary dark:text-text-primary-dark">
                       Achievements
                     </span>
                   </div>
@@ -308,49 +339,24 @@ const PlayerProfile = () => {
                     size={18}
                     className="text-secondary dark:text-secondary-dark"
                   />
-                  <span className="text-base font-semibold text-text-primary dark:text-text-primary-dark">
+                  <span className="font-semibold text-text-primary dark:text-text-primary-dark">
                     Sports & Roles
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {sportsList.map((sportItem, index) => {
-                    // Normalize sport name; avoid showing raw ObjectId strings
-                    const isObjectIdString =
-                      typeof sportItem === "string" && /^[a-f\d]{24}$/i.test(sportItem);
-
-                    let sportName = "Sport";
-
-                    if (typeof sportItem === "string") {
-                      sportName = isObjectIdString ? "Sport" : sportItem;
-                    } else if (sportItem.sport) {
-                      if (
-                        typeof sportItem.sport === "object" &&
-                        sportItem.sport.name
-                      ) {
-                        sportName = sportItem.sport.name;
-                      } else if (
-                        typeof sportItem.sport === "string" &&
-                        !/^[a-f\d]{24}$/i.test(sportItem.sport)
-                      ) {
-                        sportName = sportItem.sport;
-                      }
-                    } else if (sportItem.name) {
-                      sportName = sportItem.name;
-                    } else if (sportItem.sportsName) {
-                      sportName = sportItem.sportsName;
-                    } else if (sportItem.sportName) {
-                      sportName = sportItem.sportName;
-                    }
-
-                    const role =
-                      sportItem.role || playerData.playingRole || "Player";
+                    const sportName =
+                      typeof sportItem === "string"
+                        ? sportItem
+                        : sportItem.sport?.name || sportItem.sport?.sportsName || sportItem.name || sportItem.sportsName || "Sport";
+                    const role = sportItem.role || playerData.playingRole;
 
                     return (
                       <span
-                        key={`${sportName}-${index}`}
+                        key={`${sportName}-${role || "no-role"}-${index}`}
                         className="px-4 py-2 bg-secondary dark:bg-secondary-dark text-white rounded-full text-sm font-bold shadow-md hover:shadow-lg transition-shadow"
                       >
-                        {sportName} • {role}
+                        {role ? `${sportName} • ${role}` : sportName}
                       </span>
                     );
                   })}

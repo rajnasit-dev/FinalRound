@@ -2,8 +2,12 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser';
 import express from 'express'
 import { connectDB } from './db.js';
+import helmet from 'helmet';
 
 const app = express();
+
+// Security and SEO headers middleware
+app.use(helmet());
 
 app.use(cors({
     origin: true,
@@ -12,6 +16,28 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization'],
     maxAge: 86400
 }));
+
+// Additional SEO and security headers
+app.use((req, res, next) => {
+  // SEO Headers
+  res.setHeader('X-Robots-Tag', 'index, follow');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Enable compression
+  res.setHeader('Accept-Encoding', 'gzip, deflate, br');
+  
+  // Cache control
+  if (req.url.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  } else {
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+  }
+  
+  next();
+});
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));

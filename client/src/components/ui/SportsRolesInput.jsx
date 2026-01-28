@@ -37,8 +37,8 @@ const SportsRolesInput = ({
   const isTeamBased = selectedSportData?.teamBased || false;
 
   const handleAddSport = () => {
-    // For team-based sports, role is required. For non team-based, role is optional
-    if (currentSport && (currentRole || !isTeamBased)) {
+    // Role is optional for all sports
+    if (currentSport) {
       // Check if sport already exists
       const sportExists = value.some((s) => {
         const existingSportId = typeof s.sport === 'string' ? s.sport : s.sport?._id;
@@ -70,12 +70,12 @@ const SportsRolesInput = ({
   return (
     <div className="space-y-4">
       {/* Add Sport Section */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <select
           value={currentSport}
           onChange={handleSportChange}
           disabled={loading}
-          className="flex-1 px-4 py-3 bg-card-background dark:bg-card-background-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark disabled:opacity-50"
+          className="flex-3 px-4 py-3 bg-card-background dark:bg-card-background-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark disabled:opacity-50"
         >
           <option value="">{loading ? "Loading sports..." : "Select Sport"}</option>
           {availableSports.map((sport) => (
@@ -89,7 +89,7 @@ const SportsRolesInput = ({
             value={currentRole}
             onChange={(e) => setCurrentRole(e.target.value)}
             disabled={!currentSport || loading}
-            className="flex-1 px-4 py-3 bg-card-background dark:bg-card-background-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark disabled:opacity-50"
+            className="flex-3 px-4 py-3 bg-card-background dark:bg-card-background-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark disabled:opacity-50"
           >
             <option value="">Select Role (optional)</option>
             {availableRoles.map((role) => (
@@ -104,7 +104,7 @@ const SportsRolesInput = ({
           onClick={handleAddSport}
           disabled={!currentSport || loading}
           variant="primary"
-          className="whitespace-nowrap"
+          className="px-4 py-3 flex-1 items-center gap-2"
         >
           <Plus size={18} />
           Add

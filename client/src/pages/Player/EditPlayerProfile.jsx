@@ -8,14 +8,20 @@ import SportsRolesInput from "../../components/ui/SportsRolesInput";
 import { updatePlayerProfile, fetchPlayerProfile, clearError } from "../../store/slices/playerSlice";
 import Spinner from "../../components/ui/Spinner";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/ui/BackButton";
 
 const EditPlayerProfile = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { loading } = useSelector((state) => state.player);
+  const { profile, loading } = useSelector((state) => state.player);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  // Fetch latest player profile on mount
+  useEffect(() => {
+    dispatch(fetchPlayerProfile());
+  }, [dispatch]);
 
   const {
     register,
@@ -26,41 +32,43 @@ const EditPlayerProfile = () => {
     reset,
   } = useForm({
     defaultValues: {
-      fullName: user?.fullName || "",
-      email: user?.email || "",
-      phone: user?.phone || "",
-      city: user?.city || "",
-      bio: user?.bio || "",
-      dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : "",
-      gender: user?.gender || "",
-      height: user?.height || "",
-      weight: user?.weight || "",
-      sports: user?.sports || [],
+      fullName: "",
+      email: "",
+      phone: "",
+      city: "",
+      bio: "",
+      dateOfBirth: "",
+      gender: "",
+      height: "",
+      weight: "",
+      sports: [],
     },
   });
 
   const selectedSports = watch("sports");
   
-  const [achievements, setAchievements] = useState(user?.achievements || []);
+  const [achievements, setAchievements] = useState([]);
   const [currentAchievement, setCurrentAchievement] = useState({ title: "", year: "" });
   const [achievementError, setAchievementError] = useState("");
 
-  // Clear form on mount (page refresh) - reset to user data
+  // Update form when profile data is loaded from database
   useEffect(() => {
-    reset({
-      fullName: user?.fullName || "",
-      email: user?.email || "",
-      phone: user?.phone || "",
-      city: user?.city || "",
-      bio: user?.bio || "",
-      dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : "",
-      gender: user?.gender || "",
-      height: user?.height || "",
-      weight: user?.weight || "",
-      sports: user?.sports || [],
-    });
-    setAchievements(user?.achievements || []);
-  }, [user, reset]);
+    if (profile) {
+      reset({
+        fullName: profile.fullName || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        city: profile.city || "",
+        bio: profile.bio || "",
+        dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth).toISOString().split('T')[0] : "",
+        gender: profile.gender || "",
+        height: profile.height || "",
+        weight: profile.weight || "",
+        sports: profile.sports || [],
+      });
+      setAchievements(profile.achievements || []);
+    }
+  }, [profile, reset]);
 
   // Clear error on unmount
   useEffect(() => {
@@ -136,9 +144,19 @@ const EditPlayerProfile = () => {
     navigate("/player/profile");
   };
 
+  // Show loading spinner while fetching profile
+  if (loading && !profile) {
+    return (
+      <div className="min-h-screen bg-primary dark:bg-primary-dark flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-primary dark:bg-primary-dark py-8">
       <div className="max-w-4xl mx-auto px-4">
+        <BackButton className="mb-6" />
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
             Edit Profile
@@ -335,7 +353,7 @@ const EditPlayerProfile = () => {
 
             <div>
               <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                Height (cm)
+                Height (ft)
               </label>
               <div className="relative">
                 <Ruler
@@ -344,9 +362,11 @@ const EditPlayerProfile = () => {
                 />
                 <input
                   type="number"
+                  step="0.1"
+                  placeholder="e.g., 5.8, 6.2"
                   {...register("height", {
-                    min: { value: 1, message: "Height must be positive" },
-                    max: { value: 300, message: "Height must be realistic" },
+                    min: { value: 3, message: "Height must be at least 3 ft" },
+                    max: { value: 8, message: "Height must be at most 8 ft" },
                   })}
                   className="w-full pl-10 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark"
                 />
@@ -424,12 +444,11 @@ const EditPlayerProfile = () => {
         />
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-4 justify-end">
+        <div className="flex flex-col sm:flex-row gap-4 justify-end">
           <Button
             type="button"
             onClick={handleCancel}
-            variant="primary"
-            className="w-auto!"
+            className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 px-6 py-3 flex items-center justify-center gap-2"
           >
             <X size={18} />
             Cancel
@@ -437,12 +456,16 @@ const EditPlayerProfile = () => {
           <Button
             type="submit"
             disabled={isSubmitting || loading}
-            loading={isSubmitting || loading}
-            variant="primary"
-            className="w-auto!"
+            className="bg-secondary dark:bg-secondary-dark hover:opacity-90 px-6 py-3 flex items-center justify-center gap-2"
           >
-            <Save size={18} />
-            Save Changes
+            {isSubmitting || loading ? (
+              <Spinner size="sm" />
+            ) : (
+              <>
+                <Save size={18} />
+                Save Changes
+              </>
+            )}
           </Button>
         </div>
       </form>

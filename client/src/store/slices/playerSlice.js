@@ -190,6 +190,7 @@ export const fetchPlayersByCity = createAsyncThunk(
 
 const initialState = {
   currentPlayer: null,
+  profile: null,
   players: [],
   loading: false,
   error: null,
@@ -219,6 +220,7 @@ const playerSlice = createSlice({
       })
       .addCase(fetchPlayerProfile.fulfilled, (state, action) => {
         state.loading = false;
+        state.profile = action.payload;
         state.currentPlayer = action.payload;
       })
       .addCase(fetchPlayerProfile.rejected, (state, action) => {
@@ -259,6 +261,7 @@ const playerSlice = createSlice({
       })
       .addCase(updatePlayerProfile.fulfilled, (state, action) => {
         state.loading = false;
+        state.profile = action.payload;
         state.currentPlayer = action.payload;
         state.updateSuccess = true;
       })

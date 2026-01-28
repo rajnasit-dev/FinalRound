@@ -8,6 +8,7 @@ import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import Spinner from "../../components/ui/Spinner";
 import ErrorMessage from "../../components/ui/ErrorMessage";
+import BackButton from "../../components/ui/BackButton";
 import { verifyEmail, resendOTP, clearError } from "../../store/slices/authSlice";
 
 const VerifyEmail = () => {
@@ -110,6 +111,7 @@ const VerifyEmail = () => {
     <div className="min-h-screen flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
         <Container>
+          <BackButton className="mb-6" />
           {/* Header */}
           <div className="text-center mb-8">
             <div className="mb-4 flex justify-center">

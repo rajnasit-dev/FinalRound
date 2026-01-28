@@ -8,6 +8,7 @@ import { createPayment, updatePaymentStatus } from "../../store/slices/paymentSl
 import CardStat from "../../components/ui/CardStat";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/ui/BackButton";
 import { CreditCard, CheckCircle, XCircle, Loader2, IndianRupee, Users, Trophy, Calendar, AlertCircle } from "lucide-react";
 import Container from "../../components/container/Container";
 import Spinner from "../../components/ui/Spinner";
@@ -264,6 +265,7 @@ const TournamentRegister = () => {
   return (
     <div className="min-h-screen py-12 px-4 bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto">
+        <BackButton className="mb-6" />
         <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">Tournament Registration</h1>
 
         <div className="grid md:grid-cols-2 gap-8">
@@ -390,13 +392,12 @@ const TournamentRegister = () => {
                   ) : (
                     <>
                       <CreditCard className="w-6 h-6" />
-                      Pay ₹{tournament.entryFee?.toLocaleString()}
+                      Pay <span className="font-num">₹{tournament.entryFee?.toLocaleString()}</span>
                     </>
                   )}
                 </Button>
 
-                <p className="text-xs text-center text-base dark:text-base-dark mt-4">
-                  Your payment is secure and encrypted. By proceeding, you agree to our terms and conditions.
+                <p className="text-xs text-center text-base dark:text-base-dark mt-4">\n                  Your payment is secure and encrypted. By proceeding, you agree to our terms and conditions.
                 </p>
               </>
             ) : !availableTeams || availableTeams.length === 0 ? (
@@ -458,13 +459,12 @@ const TournamentRegister = () => {
                   ) : (
                     <>
                       <CreditCard className="w-6 h-6" />
-                      Pay ₹{tournament.entryFee?.toLocaleString()}
+                      Pay <span className="font-num">₹{tournament.entryFee?.toLocaleString()}</span>
                     </>
                   )}
                 </Button>
 
-                <p className="text-xs text-center text-gray-600 dark:text-gray-400 mt-4">
-                  Your payment is secure and encrypted. By proceeding, you agree to our terms and conditions.
+                <p className="text-xs text-center text-gray-600 dark:text-gray-400 mt-4">\n                  Your payment is secure and encrypted. By proceeding, you agree to our terms and conditions.
                 </p>
               </>
             )}

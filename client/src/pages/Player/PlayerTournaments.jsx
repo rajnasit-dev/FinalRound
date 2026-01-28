@@ -7,6 +7,7 @@ import Spinner from "../../components/ui/Spinner";
 import TournamentCard from "../../components/ui/TournamentCard";
 import GridContainer from "../../components/ui/GridContainer";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/ui/BackButton";
 import { Trophy, CheckCircle, Clock, XCircle, X, AlertTriangle } from "lucide-react";
 
 const PlayerTournaments = () => {
@@ -41,28 +42,21 @@ const PlayerTournaments = () => {
     return bookings?.find((b) => b.tournament?._id === tournamentId && b.status !== "Cancelled");
   };
 
-  const getPaymentStatusBadge = (booking) => {
+  const getRegistrationStatusBadge = (booking) => {
     if (!booking) return null;
 
-    if (booking.paymentStatus === "Success") {
+    if (booking.status === "Confirmed") {
       return (
-        <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">
-          <CheckCircle className="w-3 h-3" />
-          <span>Paid</span>
+        <div className="flex items-center justify-center gap-2 py-2 px-3 bg-green-500 dark:bg-green-600 text-white text-sm font-semibold rounded-lg shadow-md">
+          <CheckCircle className="w-4 h-4" />
+          <span>Registration Approved</span>
         </div>
       );
-    } else if (booking.paymentStatus === "Pending") {
+    } else if (booking.status === "Pending") {
       return (
-        <div className="flex items-center gap-1 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 px-2 py-1 rounded-full">
-          <Clock className="w-3 h-3" />
-          <span>Payment Pending</span>
-        </div>
-      );
-    } else if (booking.paymentStatus === "Failed") {
-      return (
-        <div className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-full">
-          <XCircle className="w-3 h-3" />
-          <span>Payment Failed</span>
+        <div className="flex items-center justify-center gap-2 py-2 px-3 bg-yellow-500 dark:bg-yellow-600 text-white text-sm font-semibold rounded-lg shadow-md">
+          <Clock className="w-4 h-4" />
+          <span>Registration Pending</span>
         </div>
       );
     }
@@ -105,6 +99,7 @@ const PlayerTournaments = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
+      <BackButton className="mb-4" />
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
           My Tournaments
@@ -137,26 +132,24 @@ const PlayerTournaments = () => {
 
       {/* Tournaments Grid */}
       {!loading && !bookingsLoading && myTournaments.length > 0 && (
-        <GridContainer cols={3}>
+        <GridContainer cols={2}>
           {myTournaments.map((tournament) => {
             const booking = getBooking(tournament._id);
             return (
-              <div key={tournament._id} className="relative">
-                {/* Booking Status Overlay */}
-                <div className="absolute top-2 left-2 z-10 flex gap-2">
-                  {getPaymentStatusBadge(booking)}
-                </div>
-                
-                {/* Tournament Card */}
-                <TournamentCard tournament={tournament} />
+              <div key={tournament._id} className="relative space-y-3">
+                {/* Tournament Card with Registration Status */}
+                <TournamentCard 
+                  tournament={tournament} 
+                  registrationStatusBadge={getRegistrationStatusBadge(booking)}
+                />
                 
                 {/* Cancel Button */}
                 {booking && canCancelBooking(booking) && (
                   <button
                     onClick={(e) => handleCancelClick(e, booking)}
-                    className="absolute bottom-4 right-4 z-10 flex items-center gap-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition-colors shadow-lg"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors shadow-md"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-4 h-4" />
                     Cancel Registration
                   </button>
                 )}

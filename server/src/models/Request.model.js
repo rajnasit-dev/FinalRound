@@ -43,10 +43,6 @@ const requestSchema = new Schema(
       enum: ["PENDING", "ACCEPTED", "REJECTED"],
       default: "PENDING",
     },
-    message: {
-      type: String,
-      trim: true,
-    },
   },
   {
     timestamps: true,

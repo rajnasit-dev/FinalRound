@@ -2,17 +2,21 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
+import axios from "axios";
+import { toast } from "react-hot-toast";
 import Spinner from "../../components/ui/Spinner";
 import TeamCard from "../../components/ui/TeamCard";
-import SearchBar from "../../components/ui/SearchBar";
+import BackButton from "../../components/ui/BackButton";
 import { fetchManagerTeams } from "../../store/slices/teamSlice";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
 const ManagerTeams = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { managerTeams, loading } = useSelector((state) => state.team);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [deletingTeamId, setDeletingTeamId] = useState(null);
 
   useEffect(() => {
     if (user?._id) {
@@ -23,22 +27,48 @@ const ManagerTeams = () => {
   const handleEditTeam = (teamId) => {
     navigate(`/manager/teams/${teamId}/edit`);
   };
-  const filteredTeams = (managerTeams || []).filter((team) =>
-    team.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    team.sport?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    team.city?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+
+  const handleManagePlayers = (teamId) => {
+    navigate(`/manager/teams/${teamId}/players`);
+  };
+
+  const handleAddPlayer = (teamId) => {
+    navigate(`/manager/teams/${teamId}/add-player`);
+  };
+
+  const handleDeleteTeam = async (teamId) => {
+    if (!confirm("Are you sure you want to delete this team? This action cannot be undone and will remove all associated data.")) {
+      return;
+    }
+
+    setDeletingTeamId(teamId);
+
+    try {
+      await axios.delete(`${API_BASE_URL}/teams/${teamId}`, {
+        withCredentials: true,
+      });
+
+      toast.success("Team deleted successfully!");
+      // Refresh the teams list
+      dispatch(fetchManagerTeams(user._id));
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete team");
+    } finally {
+      setDeletingTeamId(null);
+    }
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Spinner size="lg" text="Loading teams..." />
+        <Spinner size="lg" />
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
+      <BackButton className="mb-4" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -58,45 +88,20 @@ const ManagerTeams = () => {
         </Link>
       </div>
 
-      {/* Search Bar */}
-      {managerTeams && managerTeams.length > 0 && (
-        <div className="max-w-md">
-          <SearchBar
-            placeholder="Search teams by name, sport, or city..."
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-          />
-        </div>
-      )}
-
-      {/* Results Count */}
-      {managerTeams && managerTeams.length > 0 && (
-        <p className="text-base dark:text-base-dark">
-          Showing {filteredTeams.length} of {managerTeams.length} teams
-        </p>
-      )}
-
       {/* Teams Grid */}
-      {filteredTeams.length > 0 ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTeams.map((team) => (
+      {managerTeams && managerTeams.length > 0 ? (
+        <div className="grid md:grid-cols-2 gap-6">
+          {managerTeams.map((team) => (
             <TeamCard 
               key={team._id} 
               team={team} 
               showEditButton={true}
               onEdit={handleEditTeam}
+              onManagePlayers={handleManagePlayers}
+              onAddPlayer={handleAddPlayer}
+              onDeleteTeam={handleDeleteTeam}
             />
           ))}
-        </div>
-      ) : managerTeams && managerTeams.length > 0 ? (
-        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
-          <Search className="w-16 h-16 mx-auto mb-4 text-base dark:text-base-dark" />
-          <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
-            No teams found
-          </h3>
-          <p className="text-base dark:text-base-dark">
-            Try adjusting your search query
-          </p>
         </div>
       ) : (
         <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">

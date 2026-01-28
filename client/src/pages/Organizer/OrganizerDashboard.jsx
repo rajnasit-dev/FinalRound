@@ -12,7 +12,7 @@ import {
 import Spinner from "../../components/ui/Spinner";
 import DashboardCardState from "../../components/ui/DashboardCardState";
 import TournamentCard from "../../components/ui/TournamentCard";
-import MatchCard from "../../components/ui/MatchCard";
+import FixturesTable from "../../components/ui/FixturesTable";
 import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
 import { fetchAllMatches } from "../../store/slices/matchSlice";
 
@@ -41,7 +41,7 @@ const OrganizerDashboard = () => {
   if (tournamentsLoading || matchesLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Spinner size="lg" text="Loading dashboard..." />
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -196,11 +196,7 @@ const OrganizerDashboard = () => {
             </Link>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {myMatches.slice(0, 3).map((match) => (
-              <MatchCard key={match._id} match={match} />
-            ))}
-          </div>
+          <FixturesTable matches={myMatches.slice(0, 3)} />
         </div>
       )}
     </div>

@@ -7,6 +7,7 @@ import { updateUserProfile, clearError } from "../../store/slices/authSlice";
 import Spinner from "../../components/ui/Spinner";
 import Container from "../../components/container/Container";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/ui/BackButton";
 
 const EditManagerProfile = () => {
   const navigate = useNavigate();
@@ -14,6 +15,20 @@ const EditManagerProfile = () => {
   const { user, loading } = useSelector((state) => state.auth);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm({
+    defaultValues: {
+      fullName: user?.fullName || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      city: user?.city || "",
+    },
+  });
 
   // Clear form on mount (page refresh) - reset to user data
   useEffect(() => {
@@ -30,23 +45,8 @@ const EditManagerProfile = () => {
     return () => {
       dispatch(clearError());
       setError(null);
-      reset();
     };
-  }, [dispatch, reset]);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    reset,
-  } = useForm({
-    defaultValues: {
-      fullName: user?.fullName || "",
-      email: user?.email || "",
-      phone: user?.phone || "",
-      city: user?.city || "",
-    },
-  });
+  }, [dispatch]);
 
   const onSubmit = async (data) => {
     setError(null);
@@ -85,6 +85,7 @@ const EditManagerProfile = () => {
 
   return (
     <div className="space-y-8">
+      <BackButton className="mb-4" />
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">

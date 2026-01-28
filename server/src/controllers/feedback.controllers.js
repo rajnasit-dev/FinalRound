@@ -16,13 +16,6 @@ export const createFeedback = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Rating must be between 1 and 5.");
   }
 
-  // Check if user already submitted feedback
-  const existingFeedback = await Feedback.findOne({ user: userId });
-
-  if (existingFeedback) {
-    throw new ApiError(400, "You have already submitted a review. Please update your existing review instead.");
-  }
-
   const feedback = await Feedback.create({
     user: userId,
     rating,
@@ -30,7 +23,7 @@ export const createFeedback = asyncHandler(async (req, res) => {
   });
 
   const populatedFeedback = await Feedback.findById(feedback._id)
-    .populate("user", "fullName email avatar");
+    .populate("user", "fullName email avatar role");
 
   res
     .status(201)
@@ -48,7 +41,7 @@ export const getAllFeedback = asyncHandler(async (req, res) => {
   if (maxRating) filter.rating = { ...filter.rating, $lte: parseInt(maxRating) };
 
   let query = Feedback.find(filter)
-    .populate("user", "fullName email avatar")
+    .populate("user", "fullName email avatar role")
     .sort({ createdAt: -1 });
 
   if (limit) {

@@ -6,6 +6,7 @@ import { Tournament } from "../models/Tournament.model.js";
 import { Team } from "../models/Team.model.js";
 import { Sport } from "../models/Sport.model.js";
 import { Player } from "../models/Player.model.js";
+import { addMatchStatus, addMatchStatuses, getMatchStatus } from "../utils/statusHelpers.js";
 
 // Create a new match
 export const createMatch = asyncHandler(async (req, res) => {
@@ -18,8 +19,7 @@ export const createMatch = asyncHandler(async (req, res) => {
     teamB,
     playerA,
     playerB,
-    scheduledAt,
-    status
+    scheduledAt
   } = req.body;
 
   if (!tournament || !sport || !scheduledAt) {
@@ -91,8 +91,7 @@ export const createMatch = asyncHandler(async (req, res) => {
     tournament,
     sport,
     ground: parsedGround,
-    scheduledAt: new Date(scheduledAt),
-    status: status || "Scheduled"
+    scheduledAt: new Date(scheduledAt)
   };
 
   // Add team or player fields based on tournament type
@@ -107,17 +106,18 @@ export const createMatch = asyncHandler(async (req, res) => {
   const match = await Match.create(matchData);
 
   const populatedMatch = await Match.findById(match._id)
-    .populate("tournament", "name format status registrationType")
+    .populate("tournament", "name format registrationType")
     .populate("sport", "name teamBased iconUrl")
-    .populate("teamA", "name logoUrl manager captain players")
-    .populate("teamB", "name logoUrl manager captain players")
+    .populate("teamA", "name logoUrl manager players")
+    .populate("teamB", "name logoUrl manager players")
     .populate("playerA", "fullName avatar email")
-    .populate("playerB", "fullName avatar email")
-    .populate("manOfTheMatch", "fullName avatar");
+    .populate("playerB", "fullName avatar email");
+
+  const matchWithStatus = addMatchStatus(populatedMatch);
 
   res
     .status(201)
-    .json(new ApiResponse(201, populatedMatch, "Match created successfully."));
+    .json(new ApiResponse(201, matchWithStatus, "Match created successfully."));
 });
 
 // Get all matches
@@ -128,22 +128,30 @@ export const getAllMatches = asyncHandler(async (req, res) => {
 
   if (tournament) filter.tournament = tournament;
   if (sport) filter.sport = sport;
-  if (status) filter.status = status;
   if (team) {
     filter.$or = [{ teamA: team }, { teamB: team }];
   }
 
   const matches = await Match.find(filter)
-    .populate("tournament", "name format status")
+    .populate("tournament", "name format")
     .populate("sport", "name teamBased iconUrl")
     .populate("teamA", "name logoUrl")
     .populate("teamB", "name logoUrl")
-    .populate("manOfTheMatch", "fullName avatar")
     .sort({ scheduledAt: -1 });
+
+  // Add computed status
+  let matchesWithStatus = addMatchStatuses(matches);
+
+  // Filter by status if provided
+  if (status) {
+    matchesWithStatus = matchesWithStatus.filter(m => 
+      m.status && m.status.toLowerCase() === status.toLowerCase()
+    );
+  }
 
   res
     .status(200)
-    .json(new ApiResponse(200, matches, "Matches retrieved successfully."));
+    .json(new ApiResponse(200, matchesWithStatus, "Matches retrieved successfully."));
 });
 
 // Get match by ID
@@ -151,31 +159,32 @@ export const getMatchById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const match = await Match.findById(id)
-    .populate("tournament", "name format status organizer")
+    .populate("tournament", "name format organizer")
     .populate("sport", "name teamBased iconUrl")
     .populate({
       path: "teamA",
       populate: {
-        path: "manager captain players sport",
+        path: "manager players sport",
         select: "fullName email avatar name teamBased iconUrl"
       }
     })
     .populate({
       path: "teamB",
       populate: {
-        path: "manager captain players sport",
+        path: "manager players sport",
         select: "fullName email avatar name teamBased iconUrl"
       }
-    })
-    .populate("manOfTheMatch", "fullName avatar email sports");
+    });
 
   if (!match) {
     throw new ApiError(404, "Match not found.");
   }
 
+  const matchWithStatus = addMatchStatus(match);
+
   res
     .status(200)
-    .json(new ApiResponse(200, match, "Match retrieved successfully."));
+    .json(new ApiResponse(200, matchWithStatus, "Match retrieved successfully."));
 });
 
 // Update match
@@ -184,12 +193,7 @@ export const updateMatch = asyncHandler(async (req, res) => {
   const organizerId = req.user._id;
   const {
     ground,
-    scheduledAt,
-    status,
-    scoreA,
-    scoreB,
-    resultText,
-    manOfTheMatch
+    scheduledAt
   } = req.body;
 
   const match = await Match.findById(id).populate("tournament");
@@ -213,31 +217,20 @@ export const updateMatch = asyncHandler(async (req, res) => {
   }
 
   if (scheduledAt) match.scheduledAt = new Date(scheduledAt);
-  if (status) match.status = status;
-  if (scoreA !== undefined) match.scoreA = scoreA;
-  if (scoreB !== undefined) match.scoreB = scoreB;
-  if (resultText !== undefined) match.resultText = resultText;
-
-  if (manOfTheMatch) {
-    const player = await Player.findById(manOfTheMatch);
-    if (!player) {
-      throw new ApiError(404, "Player not found for Man of the Match.");
-    }
-    match.manOfTheMatch = manOfTheMatch;
-  }
 
   await match.save();
 
   const updatedMatch = await Match.findById(id)
-    .populate("tournament", "name format status")
+    .populate("tournament", "name format")
     .populate("sport", "name teamBased iconUrl")
     .populate("teamA", "name logoUrl")
-    .populate("teamB", "name logoUrl")
-    .populate("manOfTheMatch", "fullName avatar");
+    .populate("teamB", "name logoUrl");
+
+  const matchWithStatus = addMatchStatus(updatedMatch);
 
   res
     .status(200)
-    .json(new ApiResponse(200, updatedMatch, "Match updated successfully."));
+    .json(new ApiResponse(200, matchWithStatus, "Match updated successfully."));
 });
 
 // Delete match
@@ -256,8 +249,9 @@ export const deleteMatch = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only the tournament organizer can delete this match.");
   }
 
-  // Can't delete if match is Live or Completed
-  if (match.status === "Live" || match.status === "Completed") {
+  // Can't delete if match is Live or Completed (compute status dynamically)
+  const currentStatus = getMatchStatus(match);
+  if (currentStatus === "Live" || currentStatus === "Completed") {
     throw new ApiError(400, "Cannot delete a live or completed match.");
   }
 
@@ -268,45 +262,33 @@ export const deleteMatch = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Match deleted successfully."));
 });
 
-// Update match score
+// Update match result - DEPRECATED (Scores removed from system)
+// This endpoint is kept for backward compatibility but does nothing
 export const updateMatchScore = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const organizerId = req.user._id;
-  const { scoreA, scoreB } = req.body;
-
-  const match = await Match.findById(id).populate("tournament");
+  
+  const match = await Match.findById(id)
+    .populate("tournament", "name format")
+    .populate("sport", "name teamBased iconUrl")
+    .populate("teamA", "name logoUrl")
+    .populate("teamB", "name logoUrl");
 
   if (!match) {
     throw new ApiError(404, "Match not found.");
   }
 
-  // Verify user is the tournament organizer
-  if (match.tournament.organizer.toString() !== organizerId.toString()) {
-    throw new ApiError(403, "Only the tournament organizer can update the score.");
-  }
-
-  if (scoreA !== undefined) match.scoreA = scoreA;
-  if (scoreB !== undefined) match.scoreB = scoreB;
-
-  await match.save();
-
-  const updatedMatch = await Match.findById(id)
-    .populate("tournament", "name format status")
-    .populate("sport", "name teamBased iconUrl")
-    .populate("teamA", "name logoUrl")
-    .populate("teamB", "name logoUrl")
-    .populate("manOfTheMatch", "fullName avatar");
+  const matchWithStatus = addMatchStatus(match);
 
   res
     .status(200)
-    .json(new ApiResponse(200, updatedMatch, "Match score updated successfully."));
+    .json(new ApiResponse(200, matchWithStatus, "Score updates are no longer supported."));
 });
 
-// Update match result
+// Update match result - DEPRECATED (Results removed from system)
+// This endpoint is kept for backward compatibility but does nothing
 export const updateMatchResult = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const organizerId = req.user._id;
-  const { resultText, manOfTheMatch, status } = req.body;
 
   const match = await Match.findById(id).populate("tournament");
 
@@ -316,32 +298,20 @@ export const updateMatchResult = asyncHandler(async (req, res) => {
 
   // Verify user is the tournament organizer
   if (match.tournament.organizer.toString() !== organizerId.toString()) {
-    throw new ApiError(403, "Only the tournament organizer can update the result.");
+    throw new ApiError(403, "Only the tournament organizer can update the match.");
   }
-
-  if (resultText !== undefined) match.resultText = resultText;
-  if (status) match.status = status;
-
-  if (manOfTheMatch) {
-    const player = await Player.findById(manOfTheMatch);
-    if (!player) {
-      throw new ApiError(404, "Player not found for Man of the Match.");
-    }
-    match.manOfTheMatch = manOfTheMatch;
-  }
-
-  await match.save();
 
   const updatedMatch = await Match.findById(id)
-    .populate("tournament", "name format status")
+    .populate("tournament", "name format")
     .populate("sport", "name teamBased iconUrl")
     .populate("teamA", "name logoUrl")
-    .populate("teamB", "name logoUrl")
-    .populate("manOfTheMatch", "fullName avatar");
+    .populate("teamB", "name logoUrl");
+
+  const matchWithStatus = addMatchStatus(updatedMatch);
 
   res
     .status(200)
-    .json(new ApiResponse(200, updatedMatch, "Match result updated successfully."));
+    .json(new ApiResponse(200, matchWithStatus, "Match status updated successfully."));
 });
 
 // Get matches by tournament
@@ -349,16 +319,17 @@ export const getMatchesByTournament = asyncHandler(async (req, res) => {
   const { tournamentId } = req.params;
 
   const matches = await Match.find({ tournament: tournamentId })
-    .populate("tournament", "name format status")
+    .populate("tournament", "name format")
     .populate("sport", "name teamBased iconUrl")
     .populate("teamA", "name logoUrl")
     .populate("teamB", "name logoUrl")
-    .populate("manOfTheMatch", "fullName avatar")
     .sort({ scheduledAt: 1 });
+
+  const matchesWithStatus = addMatchStatuses(matches);
 
   res
     .status(200)
-    .json(new ApiResponse(200, matches, "Matches retrieved successfully."));
+    .json(new ApiResponse(200, matchesWithStatus, "Matches retrieved successfully."));
 });
 
 // Get matches by team
@@ -368,77 +339,95 @@ export const getMatchesByTeam = asyncHandler(async (req, res) => {
   const matches = await Match.find({
     $or: [{ teamA: teamId }, { teamB: teamId }]
   })
-    .populate("tournament", "name format status")
+    .populate("tournament", "name format")
     .populate("sport", "name teamBased iconUrl")
     .populate("teamA", "name logoUrl")
     .populate("teamB", "name logoUrl")
-    .populate("manOfTheMatch", "fullName avatar")
     .sort({ scheduledAt: -1 });
+
+  const matchesWithStatus = addMatchStatuses(matches);
 
   res
     .status(200)
-    .json(new ApiResponse(200, matches, "Matches retrieved successfully."));
+    .json(new ApiResponse(200, matchesWithStatus, "Matches retrieved successfully."));
 });
 
 // Get upcoming matches
 export const getUpcomingMatches = asyncHandler(async (req, res) => {
+  const now = new Date();
   const matches = await Match.find({
-    status: "Scheduled",
-    scheduledAt: { $gte: new Date() }
+    scheduledAt: { $gte: now },
+    isCancelled: false
   })
-    .populate("tournament", "name format status")
+    .populate("tournament", "name format")
     .populate("sport", "name teamBased iconUrl")
     .populate("teamA", "name logoUrl")
     .populate("teamB", "name logoUrl")
     .sort({ scheduledAt: 1 })
     .limit(20);
 
+  const matchesWithStatus = addMatchStatuses(matches);
+
   res
     .status(200)
-    .json(new ApiResponse(200, matches, "Upcoming matches retrieved successfully."));
+    .json(new ApiResponse(200, matchesWithStatus, "Upcoming matches retrieved successfully."));
 });
 
 // Get live matches
 export const getLiveMatches = asyncHandler(async (req, res) => {
-  const matches = await Match.find({ status: "Live" })
-    .populate("tournament", "name format status")
+  const now = new Date();
+  const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  
+  const matches = await Match.find({ 
+    scheduledAt: { $gte: threeHoursAgo, $lte: now },
+    isCancelled: false
+  })
+    .populate("tournament", "name format")
     .populate("sport", "name teamBased iconUrl")
     .populate("teamA", "name logoUrl")
     .populate("teamB", "name logoUrl")
-    .populate("manOfTheMatch", "fullName avatar")
     .sort({ scheduledAt: -1 });
+
+  const matchesWithStatus = addMatchStatuses(matches);
 
   res
     .status(200)
-    .json(new ApiResponse(200, matches, "Live matches retrieved successfully."));
+    .json(new ApiResponse(200, matchesWithStatus, "Live matches retrieved successfully."));
 });
 
 // Get completed matches
 export const getCompletedMatches = asyncHandler(async (req, res) => {
   const { limit = 20 } = req.query;
 
-  const matches = await Match.find({ status: "Completed" })
-    .populate("tournament", "name format status")
+  const now = new Date();
+  const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+
+  const matches = await Match.find({ 
+    scheduledAt: { $lt: threeHoursAgo },
+    isCancelled: false
+  })
+    .populate("tournament", "name format")
     .populate("sport", "name teamBased iconUrl")
     .populate("teamA", "name logoUrl")
     .populate("teamB", "name logoUrl")
-    .populate("manOfTheMatch", "fullName avatar")
     .sort({ scheduledAt: -1 })
     .limit(parseInt(limit));
 
+  const matchesWithStatus = addMatchStatuses(matches);
+
   res
     .status(200)
-    .json(new ApiResponse(200, matches, "Completed matches retrieved successfully."));
+    .json(new ApiResponse(200, matchesWithStatus, "Completed matches retrieved successfully."));
 });
 
-// Update match status
+// Cancel/uncancel match
 export const updateMatchStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const organizerId = req.user._id;
-  const { status } = req.body;
+  const { isCancelled } = req.body;
 
-  if (!status || !["Scheduled", "Live", "Completed", "Cancelled"].includes(status)) {
-    throw new ApiError(400, "Invalid status value.");
+  if (typeof isCancelled !== 'boolean') {
+    throw new ApiError(400, "isCancelled must be a boolean value.");
   }
 
   const match = await Match.findById(id).populate("tournament");
@@ -452,17 +441,18 @@ export const updateMatchStatus = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only the tournament organizer can update the status.");
   }
 
-  match.status = status;
+  match.isCancelled = isCancelled;
   await match.save();
 
   const updatedMatch = await Match.findById(id)
-    .populate("tournament", "name format status")
+    .populate("tournament", "name format")
     .populate("sport", "name teamBased iconUrl")
     .populate("teamA", "name logoUrl")
-    .populate("teamB", "name logoUrl")
-    .populate("manOfTheMatch", "fullName avatar");
+    .populate("teamB", "name logoUrl");
+
+  const matchWithStatus = addMatchStatus(updatedMatch);
 
   res
     .status(200)
-    .json(new ApiResponse(200, updatedMatch, "Match status updated successfully."));
+    .json(new ApiResponse(200, matchWithStatus, "Match status updated successfully."));
 });

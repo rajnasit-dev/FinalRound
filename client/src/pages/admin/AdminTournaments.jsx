@@ -1,32 +1,74 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { getAllTournaments } from "../../store/slices/adminSlice";
-import { Trophy, Calendar, Users, Trash2, Edit2 } from "lucide-react";
+import { Trophy, Trash2, Mail, Phone } from "lucide-react";
+import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
 import SearchBar from "../../components/ui/SearchBar";
 import Select from "../../components/ui/Select";
+import DataTable from "../../components/ui/DataTable";
+import Button from "../../components/ui/Button";
+import axios from "axios";
+import { toast } from "react-hot-toast";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
 const AdminTournaments = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { tournaments, loading, error } = useSelector((state) => state.admin);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [filteredTournaments, setFilteredTournaments] = useState([]);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     dispatch(getAllTournaments({ status: "", search: "", page: 1, limit: 100 }));
   }, [dispatch]);
 
-  useEffect(() => {
-    let filtered = tournaments || [];
-
-    if (statusFilter) {
-      filtered = filtered.filter((t) => t.status === statusFilter);
+  // Helper function to calculate tournament status (not a hook)
+  const calculateTournamentStatus = (tournament) => {
+    if (!tournament) return "Upcoming";
+    
+    if (tournament.isCancelled) {
+      return "Cancelled";
     }
 
-    if (search) {
+    const now = new Date();
+    const startDate = new Date(tournament.startDate);
+    const endDate = new Date(tournament.endDate);
+
+    if (now > endDate) {
+      return "Completed";
+    }
+
+    if (now >= startDate && now <= endDate) {
+      return "Live";
+    }
+
+    return "Upcoming";
+  };
+
+  useEffect(() => {
+    if (!tournaments) {
+      setFilteredTournaments([]);
+      return;
+    }
+
+    let filtered = [...tournaments];
+
+    // Filter by calculated status
+    if (statusFilter) {
+      filtered = filtered.filter((t) => {
+        const calculatedStatus = calculateTournamentStatus(t);
+        return calculatedStatus === statusFilter;
+      });
+    }
+
+    if (search.trim()) {
       filtered = filtered.filter((t) =>
-        t.name?.toLowerCase().includes(search.toLowerCase())
+        t.name?.toLowerCase().includes(search.toLowerCase().trim())
       );
     }
 
@@ -53,6 +95,108 @@ const AdminTournaments = () => {
     });
   };
 
+  const handleRowClick = (tournament) => {
+    navigate(`/tournaments/${tournament._id}`);
+  };
+
+  const handleDelete = async (e, tournament) => {
+    e.stopPropagation();
+
+    if (!window.confirm(`Are you sure you want to delete ${tournament.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingId(tournament._id);
+    try {
+      await axios.delete(`${API_BASE_URL}/tournaments/${tournament._id}`, {
+        withCredentials: true,
+      });
+      toast.success(`Tournament ${tournament.name} deleted successfully`);
+      dispatch(getAllTournaments({ status: "", search: "", page: 1, limit: 100 }));
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete tournament");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const columns = [
+    {
+      header: "Tournament",
+      width: "30%",
+      render: (tournament) => (
+        <div>
+          <p className="font-semibold text-text-primary dark:text-text-primary-dark">
+            {tournament.name}
+          </p>
+          <p className="text-sm text-base dark:text-base-dark mt-1">
+            {tournament.sport?.name || "N/A"}
+          </p>
+        </div>
+      ),
+    },
+    {
+      header: "Status",
+      width: "15%",
+      render: (tournament) => {
+        const status = calculateTournamentStatus(tournament);
+        return (
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+            {status}
+          </span>
+        );
+      },
+    },
+    {
+      header: "Dates",
+      width: "25%",
+      render: (tournament) => (
+        <div className="text-sm text-base dark:text-base-dark">
+          {formatDate(tournament.startDate)} - {formatDate(tournament.endDate)}
+        </div>
+      ),
+    },
+    {
+      header: "Organizer",
+      width: "25%",
+      render: (tournament) => (
+        <div className="space-y-1 min-w-0">
+          <p className="text-sm font-medium text-text-primary dark:text-text-primary-dark truncate">
+            {tournament.organizer?.fullName || tournament.organizer?.orgName || "N/A"}
+          </p>
+          <div className="flex items-center gap-2 text-xs text-base dark:text-base-dark">
+            <Mail className="w-4 h-4 shrink-0" />
+            <span className="truncate">{tournament.organizer?.email || "N/A"}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-base dark:text-base-dark">
+            <Phone className="w-4 h-4 shrink-0" />
+            <span className="truncate">{tournament.organizer?.phone || "N/A"}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Actions",
+      width: "15%",
+      render: (tournament) => (
+        <Button
+          onClick={(e) => handleDelete(e, tournament)}
+          disabled={deletingId === tournament._id}
+          className="!bg-red-600 hover:!bg-red-700 !text-white !px-4 !py-2 text-sm flex items-center justify-center gap-2"
+        >
+          {deletingId === tournament._id ? (
+            <Spinner size="sm" />
+          ) : (
+            <>
+              <Trash2 className="w-4 h-4" />
+              <span>Delete</span>
+            </>
+          )}
+        </Button>
+      ),
+    },
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -73,8 +217,9 @@ const AdminTournaments = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="min-h-screen pb-16 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
+      <BackButton className="mb-6" />
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Tournament Management
         </h1>
@@ -84,110 +229,50 @@ const AdminTournaments = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <SearchBar
-            placeholder="Search by tournament name..."
-            searchQuery={search}
-            setSearchQuery={setSearch}
-          />
-          <Select
-            options={[
-              { value: "", label: "All Status" },
-              { value: "Upcoming", label: "Upcoming" },
-              { value: "Live", label: "Live" },
-              { value: "Completed", label: "Completed" },
-              { value: "Cancelled", label: "Cancelled" },
-            ]}
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          />
-          <div className="flex items-center justify-start">
-            <span className="text-sm text-base dark:text-base-dark font-medium">
-              Total: {filteredTournaments.length}
-            </span>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <SearchBar
+          placeholder="Search by tournament name..."
+          searchQuery={search}
+          setSearchQuery={setSearch}
+        />
+        <Select
+          options={[
+            { value: "", label: "All Status" },
+            { value: "Upcoming", label: "Upcoming" },
+            { value: "Live", label: "Live" },
+            { value: "Completed", label: "Completed" },
+            { value: "Cancelled", label: "Cancelled" },
+          ]}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        />
+        <div className="flex items-center justify-end">
+          <span className="text-sm text-base dark:text-base-dark font-medium">
+            Total: {filteredTournaments.length}
+          </span>
         </div>
       </div>
 
       {/* Tournaments Table */}
-      <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base overflow-hidden">
-        {filteredTournaments.length === 0 ? (
-          <div className="p-8 text-center">
-            <Trophy className="w-12 h-12 mx-auto text-base dark:text-base-dark opacity-50 mb-4" />
-            <p className="text-base dark:text-base-dark">No tournaments found</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-base-dark dark:bg-base">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Tournament Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Sport</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Dates</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Teams</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Format</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-base-dark dark:divide-base">
-                {filteredTournaments.map((tournament) => (
-                  <tr
-                    key={tournament._id}
-                    className="hover:bg-base-dark/50 dark:hover:bg-base/50 transition"
-                  >
-                    <td className="px-6 py-4">
-                      <span className="font-medium">{tournament.name}</span>
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      {tournament.sport?.name || "-"}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(tournament.status)}`}>
-                        {tournament.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          {formatDate(tournament.startDate)} -{" "}
-                          {formatDate(tournament.endDate)}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        <span>
-                          {tournament.approvedTeams?.length || 0} /{" "}
-                          {tournament.teamLimit}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <span className="bg-secondary/20 text-secondary px-2 py-1 rounded text-xs font-medium">
-                        {tournament.format}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-2">
-                        <button className="p-2 text-secondary hover:bg-base-dark/20 dark:hover:bg-base/20 rounded-lg transition">
-                          <Edit2 size={16} />
-                        </button>
-                        <button className="p-2 text-red-600 hover:bg-red-100/20 dark:hover:bg-red-900/20 rounded-lg transition">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {filteredTournaments.length === 0 ? (
+        <div className="text-center py-12">
+          <Trophy className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            No Tournaments Found
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            No tournaments match your search criteria.
+          </p>
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={filteredTournaments}
+          onRowClick={handleRowClick}
+          itemsPerPage={10}
+          emptyMessage="No tournaments found"
+        />
+      )}
     </div>
   );
 };

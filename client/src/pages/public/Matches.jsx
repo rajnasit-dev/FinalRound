@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import MatchCard from "../../components/ui/MatchCard";
+import FixturesTable from "../../components/ui/FixturesTable";
 import SearchBar from "../../components/ui/SearchBar";
 import FilterDropdown from "../../components/ui/FilterDropdown";
 import Spinner from "../../components/ui/Spinner";
@@ -39,7 +39,7 @@ const Matches = () => {
     return (
       <section className="container mx-auto px-6 py-16">
         <div className="flex items-center justify-center h-96">
-          <Spinner size="lg" text="Loading matches..." />
+          <Spinner size="lg" />
         </div>
       </section>
     );
@@ -67,11 +67,7 @@ const Matches = () => {
               {liveMatches.length}
             </span>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {liveMatches.slice(0, 6).map((match) => (
-              <MatchCard key={match._id} match={match} />
-            ))}
-          </div>
+          <FixturesTable matches={liveMatches.slice(0, 6)} />
           <div className="border-t border-gray-200 dark:border-gray-700 my-8"></div>
         </div>
       )}
@@ -82,11 +78,7 @@ const Matches = () => {
           <h2 className="text-2xl font-bold mb-6 text-text-primary dark:text-text-primary-dark">
             ⏰ Coming Up Next
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {upcomingMatches.slice(0, 3).map((match) => (
-              <MatchCard key={match._id} match={match} />
-            ))}
-          </div>
+          <FixturesTable matches={upcomingMatches.slice(0, 3)} />
           <div className="border-t border-gray-200 dark:border-gray-700 my-8"></div>
         </div>
       )}
@@ -129,11 +121,7 @@ const Matches = () => {
 
       {/* Matches Grid */}
       {filteredMatches.length > 0 ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMatches.map((match) => (
-            <MatchCard key={match._id} match={match} />
-          ))}
-        </div>
+        <FixturesTable matches={filteredMatches} />
       ) : (
         <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-16 text-center">
           <p className="text-xl text-base dark:text-base-dark">

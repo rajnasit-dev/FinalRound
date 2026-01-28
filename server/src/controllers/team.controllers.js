@@ -10,11 +10,18 @@ import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js
 // Create a new team
 export const createTeam = asyncHandler(async (req, res) => {
   const managerId = req.user._id;
-  const { name, sport, city, description, openToJoin, achievements } = req.body;
-  const logoLocalPath = req.file?.path;
+  const { name, sport, city, description, gender, openToJoin, achievements } = req.body;
+  const files = req.files || {};
+  const logoLocalPath = files.logo?.[0]?.path;
+  const bannerLocalPath = files.banner?.[0]?.path;
 
-  if (!name || !sport) {
-    throw new ApiError(400, "Team name and sport are required.");
+  if (!name || !sport || !gender) {
+    throw new ApiError(400, "Team name, sport, and gender are required.");
+  }
+
+  // Verify gender is valid
+  if (!["Male", "Female", "Mixed"].includes(gender)) {
+    throw new ApiError(400, "Gender must be 'Male', 'Female', or 'Mixed'.");
   }
 
   // Verify sport exists
@@ -31,9 +38,27 @@ export const createTeam = asyncHandler(async (req, res) => {
 
   let logoResponse = null;
   if (logoLocalPath) {
-    logoResponse = await uploadOnCloudinary(logoLocalPath);
-    if (!logoResponse) {
-      throw new ApiError(500, "Failed to upload logo to Cloudinary.");
+    try {
+      logoResponse = await uploadOnCloudinary(logoLocalPath);
+      if (!logoResponse) {
+        console.log("Logo upload returned null, continuing without logo");
+      }
+    } catch (error) {
+      console.log("Logo upload failed, continuing without logo:", error.message);
+      // Continue without logo - it's optional
+    }
+  }
+
+  let bannerResponse = null;
+  if (bannerLocalPath) {
+    try {
+      bannerResponse = await uploadOnCloudinary(bannerLocalPath);
+      if (!bannerResponse) {
+        console.log("Banner upload returned null, continuing without banner");
+      }
+    } catch (error) {
+      console.log("Banner upload failed, continuing without banner:", error.message);
+      // Continue without banner - it's optional
     }
   }
 
@@ -53,9 +78,11 @@ export const createTeam = asyncHandler(async (req, res) => {
     manager: managerId,
     city,
     description,
+    gender,
     achievements: parsedAchievements,
     openToJoin: openToJoin !== undefined ? openToJoin : true,
     logoUrl: logoResponse?.url || null,
+    bannerUrl: bannerResponse?.url || null,
     players: [],
   });
 
@@ -66,7 +93,6 @@ export const createTeam = asyncHandler(async (req, res) => {
   const populatedTeam = await Team.findById(team._id)
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
-    .populate("captain", "fullName email avatar")
     .populate("players", "fullName email avatar");
 
   res
@@ -87,7 +113,6 @@ export const getAllTeams = asyncHandler(async (req, res) => {
   const teams = await Team.find(filter)
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
-    .populate("captain", "fullName email avatar")
     .populate("players", "fullName email avatar")
     .sort({ createdAt: -1 });
 
@@ -101,10 +126,9 @@ export const getTeamById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const team = await Team.findOne({ _id: id, isActive: true })
-    .populate("sport", "name teamBased iconUrl minPlayers maxPlayers")
+    .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar phone city")
-    .populate("captain", "fullName email avatar phone city sports achievements")
-    .populate("players", "fullName email avatar phone city sports achievements");
+    .populate("players", "fullName email avatar phone city sports achievements gender dateOfBirth");
 
   if (!team) {
     throw new ApiError(404, "Team not found.");
@@ -119,7 +143,7 @@ export const getTeamById = asyncHandler(async (req, res) => {
 export const updateTeam = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const managerId = req.user._id;
-  const { name, city, description, openToJoin, achievements } = req.body;
+  const { name, city, description, gender, openToJoin, achievements } = req.body;
 
   const team = await Team.findById(id);
 
@@ -135,6 +159,12 @@ export const updateTeam = asyncHandler(async (req, res) => {
   if (name) team.name = name;
   if (city) team.city = city;
   if (description !== undefined) team.description = description;
+  if (gender) {
+    if (!["Male", "Female", "Mixed"].includes(gender)) {
+      throw new ApiError(400, "Gender must be 'Male', 'Female', or 'Mixed'.");
+    }
+    team.gender = gender;
+  }
   if (openToJoin !== undefined) team.openToJoin = openToJoin;
   if (achievements !== undefined) {
     // Parse achievements if provided as string
@@ -154,7 +184,6 @@ export const updateTeam = asyncHandler(async (req, res) => {
   const updatedTeam = await Team.findById(id)
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
-    .populate("captain", "fullName email avatar")
     .populate("players", "fullName email avatar");
 
   res
@@ -185,16 +214,22 @@ export const updateTeamLogo = asyncHandler(async (req, res) => {
 
   // Delete old logo from Cloudinary if exists
   if (team.logoUrl) {
-    const urlParts = team.logoUrl.split('/');
-    const publicIdWithExtension = urlParts.at(-1);
-    const publicId = publicIdWithExtension.split('.')[0];
-    await deleteFromCloudinary(publicId);
+    try {
+      const urlParts = team.logoUrl.split('/');
+      const folder = urlParts.slice(-2, -1)[0];
+      const publicIdWithExtension = urlParts.at(-1);
+      const fileName = publicIdWithExtension.split('.')[0];
+      const publicId = `${folder}/${fileName}`;
+      await deleteFromCloudinary(publicId);
+    } catch (error) {
+      console.log("Failed to delete old logo from Cloudinary:", error.message);
+    }
   }
 
   const logoResponse = await uploadOnCloudinary(logoLocalPath);
 
   if (!logoResponse) {
-    throw new ApiError(500, "Failed to upload logo to Cloudinary.");
+    throw new ApiError(500, "Failed to upload logo to Cloudinary. Please try again.");
   }
 
   team.logoUrl = logoResponse.url;
@@ -203,12 +238,139 @@ export const updateTeamLogo = asyncHandler(async (req, res) => {
   const updatedTeam = await Team.findById(id)
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
-    .populate("captain", "fullName email avatar")
     .populate("players", "fullName email avatar");
 
   res
     .status(200)
     .json(new ApiResponse(200, updatedTeam, "Team logo updated successfully."));
+});
+
+// Update team banner
+export const updateTeamBanner = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const managerId = req.user._id;
+  const bannerLocalPath = req.file?.path;
+
+  if (!bannerLocalPath) {
+    throw new ApiError(400, "Banner file is required.");
+  }
+
+  const team = await Team.findById(id);
+
+  if (!team) {
+    throw new ApiError(404, "Team not found.");
+  }
+
+  // Verify user is the team manager
+  if (team.manager.toString() !== managerId.toString()) {
+    throw new ApiError(403, "Only the team manager can update the team banner.");
+  }
+
+  // Delete old banner from Cloudinary if exists
+  if (team.bannerUrl) {
+    try {
+      const urlParts = team.bannerUrl.split('/');
+      const folder = urlParts.slice(-2, -1)[0];
+      const publicIdWithExtension = urlParts.at(-1);
+      const fileName = publicIdWithExtension.split('.')[0];
+      const publicId = `${folder}/${fileName}`;
+      await deleteFromCloudinary(publicId);
+    } catch (error) {
+      console.log("Failed to delete old banner from Cloudinary:", error.message);
+    }
+  }
+
+  const bannerResponse = await uploadOnCloudinary(bannerLocalPath);
+
+  if (!bannerResponse) {
+    throw new ApiError(500, "Failed to upload banner to Cloudinary. Please try again.");
+  }
+
+  team.bannerUrl = bannerResponse.url;
+  await team.save();
+
+  const updatedTeam = await Team.findById(id)
+    .populate("sport", "name teamBased iconUrl")
+    .populate("manager", "fullName email avatar")
+    .populate("players", "fullName email avatar");
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, updatedTeam, "Team banner updated successfully."));
+});
+
+// Delete team logo
+export const deleteTeamLogo = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const managerId = req.user._id;
+
+  const team = await Team.findById(id);
+
+  if (!team) {
+    throw new ApiError(404, "Team not found.");
+  }
+
+  // Verify user is the team manager
+  if (team.manager.toString() !== managerId.toString()) {
+    throw new ApiError(403, "Only the team manager can delete the team logo.");
+  }
+
+  // Delete logo from Cloudinary if exists
+  if (team.logoUrl) {
+    const urlParts = team.logoUrl.split('/');
+    const publicIdWithExtension = urlParts.at(-1);
+    const publicId = publicIdWithExtension.split('.')[0];
+    await deleteFromCloudinary(publicId);
+  }
+
+  team.logoUrl = null;
+  await team.save();
+
+  const updatedTeam = await Team.findById(id)
+    .populate("sport", "name teamBased iconUrl")
+    .populate("manager", "fullName email avatar")
+    .populate("players", "fullName email avatar");
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, updatedTeam, "Team logo deleted successfully."));
+});
+
+// Delete team banner
+export const deleteTeamBanner = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const managerId = req.user._id;
+
+  const team = await Team.findById(id);
+
+  if (!team) {
+    throw new ApiError(404, "Team not found.");
+  }
+
+  // Verify user is the team manager
+  if (team.manager.toString() !== managerId.toString()) {
+    throw new ApiError(403, "Only the team manager can delete the team banner.");
+  }
+
+  // Delete banner from Cloudinary if exists
+  if (team.bannerUrl) {
+    const urlParts = team.bannerUrl.split('/');
+    const publicIdWithExtension = urlParts.at(-1);
+    const publicId = publicIdWithExtension.split('.')[0];
+    await deleteFromCloudinary(publicId);
+  }
+
+  team.bannerUrl = null;
+  await team.save();
+
+  const updatedTeam = await Team.findById(id)
+    .populate("sport", "name teamBased iconUrl")
+    .populate("manager", "fullName email avatar")
+    .populate("players", "fullName email avatar");
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, updatedTeam, "Team banner deleted successfully."));
 });
 
 // Delete team
@@ -225,6 +387,34 @@ export const deleteTeam = asyncHandler(async (req, res) => {
   // Verify user is the team manager
   if (team.manager.toString() !== managerId.toString()) {
     throw new ApiError(403, "Only the team manager can delete this team.");
+  }
+
+  // Delete logo from Cloudinary if exists
+  if (team.logoUrl) {
+    try {
+      const urlParts = team.logoUrl.split('/');
+      const folder = urlParts.slice(-2, -1)[0]; // Get folder name
+      const publicIdWithExtension = urlParts.at(-1);
+      const fileName = publicIdWithExtension.split('.')[0];
+      const publicId = `${folder}/${fileName}`;
+      await deleteFromCloudinary(publicId);
+    } catch (error) {
+      console.log("Failed to delete logo from Cloudinary:", error.message);
+    }
+  }
+
+  // Delete banner from Cloudinary if exists
+  if (team.bannerUrl) {
+    try {
+      const urlParts = team.bannerUrl.split('/');
+      const folder = urlParts.slice(-2, -1)[0];
+      const publicIdWithExtension = urlParts.at(-1);
+      const fileName = publicIdWithExtension.split('.')[0];
+      const publicId = `${folder}/${fileName}`;
+      await deleteFromCloudinary(publicId);
+    } catch (error) {
+      console.log("Failed to delete banner from Cloudinary:", error.message);
+    }
   }
 
   // Soft delete
@@ -279,7 +469,6 @@ export const addPlayerToTeam = asyncHandler(async (req, res) => {
   const updatedTeam = await Team.findById(id)
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
-    .populate("captain", "fullName email avatar")
     .populate("players", "fullName email avatar");
 
   res
@@ -308,18 +497,12 @@ export const removePlayerFromTeam = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Player not in the team.");
   }
 
-  // If player is captain, remove captain designation
-  if (team.captain && team.captain.toString() === playerId) {
-    team.captain = null;
-  }
-
   team.players = team.players.filter(p => p.toString() !== playerId);
   await team.save();
 
   const updatedTeam = await Team.findById(id)
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
-    .populate("captain", "fullName email avatar")
     .populate("players", "fullName email avatar");
 
   res
@@ -327,45 +510,7 @@ export const removePlayerFromTeam = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedTeam, "Player removed from team successfully."));
 });
 
-// Set team captain
-export const setTeamCaptain = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const managerId = req.user._id;
-  const { playerId } = req.body;
 
-  if (!playerId) {
-    throw new ApiError(400, "Player ID is required.");
-  }
-
-  const team = await Team.findById(id);
-
-  if (!team) {
-    throw new ApiError(404, "Team not found.");
-  }
-
-  // Verify user is the team manager
-  if (team.manager.toString() !== managerId.toString()) {
-    throw new ApiError(403, "Only the team manager can set captain.");
-  }
-
-  // Verify player is in team
-  if (!team.players.includes(playerId)) {
-    throw new ApiError(400, "Player must be in the team to be captain.");
-  }
-
-  team.captain = playerId;
-  await team.save();
-
-  const updatedTeam = await Team.findById(id)
-    .populate("sport", "name teamBased iconUrl")
-    .populate("manager", "fullName email avatar")
-    .populate("captain", "fullName email avatar")
-    .populate("players", "fullName email avatar");
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, updatedTeam, "Team captain set successfully."));
-});
 
 // Get teams by sport
 export const getTeamsBySport = asyncHandler(async (req, res) => {
@@ -374,7 +519,6 @@ export const getTeamsBySport = asyncHandler(async (req, res) => {
   const teams = await Team.find({ sport: sportId, isActive: true })
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
-    .populate("captain", "fullName email avatar")
     .populate("players", "fullName email avatar")
     .sort({ createdAt: -1 });
 
@@ -393,7 +537,6 @@ export const getTeamsByCity = asyncHandler(async (req, res) => {
   })
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
-    .populate("captain", "fullName email avatar")
     .populate("players", "fullName email avatar")
     .sort({ createdAt: -1 });
 
@@ -416,7 +559,6 @@ export const searchTeams = asyncHandler(async (req, res) => {
   })
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
-    .populate("captain", "fullName email avatar")
     .populate("players", "fullName email avatar")
     .sort({ createdAt: -1 })
     .limit(20);
@@ -442,7 +584,6 @@ export const getPlayerTeams = asyncHandler(async (req, res) => {
   })
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
-    .populate("captain", "fullName email avatar")
     .populate("players", "fullName email avatar")
     .sort({ createdAt: -1 });
 
@@ -467,7 +608,6 @@ export const getManagerTeams = asyncHandler(async (req, res) => {
   })
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
-    .populate("captain", "fullName email avatar")
     .populate("players", "fullName email avatar")
     .sort({ createdAt: -1 });
 

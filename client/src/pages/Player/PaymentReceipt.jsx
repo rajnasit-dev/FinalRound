@@ -14,6 +14,7 @@ import {
 import { useReactToPrint } from "react-to-print";
 import Spinner from "../../components/ui/Spinner";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/ui/BackButton";
 
 const PaymentReceipt = () => {
   const { paymentId } = useParams();
@@ -84,6 +85,7 @@ const PaymentReceipt = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-4xl mx-auto">
+        <BackButton className="mb-6" />
         {/* Success Message */}
         <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6 text-center">
           <CheckCircle className="w-16 h-16 mx-auto text-green-600 mb-4" />
@@ -232,17 +234,17 @@ const PaymentReceipt = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-700">Entry Fee:</span>
-                <span className="font-medium text-gray-800">
+                <span className="font-medium text-gray-800 font-num">
                   ₹{receipt.amount.toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-700">Processing Fee:</span>
-                <span className="font-medium text-gray-800">₹0</span>
+                <span className="font-medium text-gray-800 font-num">₹0</span>
               </div>
               <div className="flex justify-between text-xl">
                 <span className="font-bold text-gray-800">Total Paid:</span>
-                <span className="font-bold text-black">
+                <span className="font-bold text-black font-num">
                   ₹{receipt.amount.toLocaleString()}
                 </span>
               </div>

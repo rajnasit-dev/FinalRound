@@ -18,90 +18,85 @@ import Booking from './src/models/Booking.model.js';
 const getDOBFromAge = (age) => {
   const today = new Date();
   const birthYear = today.getFullYear() - age;
-  // Set birthday to be sometime in the past year (random month and day)
   const month = Math.floor(Math.random() * 12);
-  const day = Math.floor(Math.random() * 28) + 1; // Use 1-28 to avoid invalid dates
+  const day = Math.floor(Math.random() * 28) + 1;
   return new Date(birthYear, month, day);
+};
+
+// First names for realistic data generation
+const firstNamesM = ["Arjun", "Aryan", "Aditya", "Akshay", "Rajesh", "Rohan", "Rahul", "Ravi", "Sanjay", "Sandeep", "Karan", "Kamal", "Kaushik", "Vikram", "Viraj", "Vinod", "Vishal", "Harshil", "Hrithik", "Hemant", "Hardik", "Imran", "Ishant", "Jatin", "Jasprit", "Kunal", "Mahesh", "Manish", "Mayank", "Mohan", "Naveen", "Nikhil", "Nitesh", "Pankaj", "Parth", "Pawan", "Rishi", "Rishabh"];
+
+const firstNamesF = ["Priya", "Priti", "Preeti", "Poonam", "Pooja", "Nikita", "Neha", "Nisha", "Nidhi", "Kanika", "Kavya", "Kalpana", "Kriti", "Isha", "Ila", "Indu", "Jaya", "Jasmine", "Megha", "Meera", "Mansi", "Harshita", "Hema", "Divya", "Deepa", "Deepika", "Archita", "Anuradha", "Anushka", "Ananya", "Anjali"];
+
+const lastNames = ["Patel", "Shah", "Sharma", "Singh", "Kumar", "Gupta", "Verma", "Reddy", "Rao", "Menon", "Iyer", "Desai", "Joshi", "Bhat", "Srivastava", "Chopra", "Kapoor", "Malhotra", "Arora", "Saxena"];
+
+const cities = ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar", "Bhavnagar", "Jamnagar", "Junagadh", "Porbandar", "Anand"];
+
+const getRandomGender = () => ["Male", "Female"][Math.floor(Math.random() * 2)];
+const getRandomCity = () => cities[Math.floor(Math.random() * cities.length)];
+const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const generateEmail = (firstName, lastName, index) => {
+  return `${firstName.toLowerCase()}${lastName.toLowerCase()}${index}@gmail.com`;
 };
 
 const sports = [
   {
     name: "Cricket",
     teamBased: true,
-    minPlayers: 11,
-    maxPlayers: 11,
-    roles: ["Batsman", "Bowler", "All-Rounder", "Wicket Keeper", "Captain"],
+    roles: ["Batsman", "Bowler", "All-Rounder", "Wicket Keeper"],
     isActive: true
   },
   {
     name: "Football",
     teamBased: true,
-    minPlayers: 11,
-    maxPlayers: 11,
-    roles: ["Goalkeeper", "Defender", "Midfielder", "Forward", "Striker", "Winger", "Captain"],
+    roles: ["Goalkeeper", "Defender", "Midfielder", "Forward", "Striker", "Winger"],
     isActive: true
   },
   {
     name: "Basketball",
     teamBased: true,
-    minPlayers: 5,
-    maxPlayers: 5,
-    roles: ["Point Guard", "Shooting Guard", "Small Forward", "Power Forward", "Center", "Captain"],
+    roles: ["Point Guard", "Shooting Guard", "Small Forward", "Power Forward", "Center"],
     isActive: true
   },
   {
     name: "Volleyball",
     teamBased: true,
-    minPlayers: 6,
-    maxPlayers: 6,
-    roles: ["Setter", "Outside Hitter", "Middle Blocker", "Opposite Hitter", "Libero", "Captain"],
+    roles: ["Setter", "Outside Hitter", "Middle Blocker", "Opposite Hitter", "Libero"],
     isActive: true
   },
   {
     name: "Tennis",
     teamBased: false,
-    minPlayers: 1,
-    maxPlayers: 2,
     roles: ["Singles Player", "Doubles Player"],
     isActive: true
   },
   {
     name: "Badminton",
     teamBased: false,
-    minPlayers: 1,
-    maxPlayers: 2,
     roles: ["Singles Player", "Doubles Player"],
     isActive: true
   },
   {
     name: "Table Tennis",
     teamBased: false,
-    minPlayers: 1,
-    maxPlayers: 2,
     roles: ["Singles Player", "Doubles Player"],
     isActive: true
   },
   {
     name: "Kabaddi",
     teamBased: true,
-    minPlayers: 7,
-    maxPlayers: 7,
-    roles: ["Raider", "Defender", "All-Rounder", "Captain"],
+    roles: ["Raider", "Defender", "All-Rounder"],
     isActive: true
   },
   {
     name: "Hockey",
     teamBased: true,
-    minPlayers: 11,
-    maxPlayers: 11,
-    roles: ["Goalkeeper", "Defender", "Midfielder", "Forward", "Striker", "Captain"],
+    roles: ["Goalkeeper", "Defender", "Midfielder", "Forward", "Striker"],
     isActive: true
   },
   {
     name: "Chess",
     teamBased: false,
-    minPlayers: 1,
-    maxPlayers: 1,
     roles: ["Player"],
     isActive: true
   }
@@ -129,18 +124,7 @@ const seedDatabase = async () => {
     const createdSports = await Sport.insertMany(sports);
     console.log(`✅ Created ${createdSports.length} sports`);
 
-    // Get sport IDs for reference
-    const cricket = createdSports.find(s => s.name === "Cricket");
-    const football = createdSports.find(s => s.name === "Football");
-    const basketball = createdSports.find(s => s.name === "Basketball");
-    const volleyball = createdSports.find(s => s.name === "Volleyball");
-    const tennis = createdSports.find(s => s.name === "Tennis");
-    const badminton = createdSports.find(s => s.name === "Badminton");
-    const hockey = createdSports.find(s => s.name === "Hockey");
-    const chess = createdSports.find(s => s.name === "Chess");
-
-    // ========== SEED USERS ==========
-    // Admin User - seeded to database
+    // ========== SEED ADMIN ==========
     const admin = await Admin.create({
       fullName: "Admin User",
       email: "admin@gmail.com",
@@ -163,2008 +147,852 @@ const seedDatabase = async () => {
     });
     console.log(`✅ Created 1 admin user (admin@gmail.com / Admin123!)`);
 
-    // Tournament Organizers
-    const organizers = await TournamentOrganizer.create([
-      // Test Organizer
-      {
-        fullName: "Test Organizer",
-        email: "testorganizer@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543200",
-        city: "Ahmedabad",
-        isVerified: true,
-        isActive: true,
-        orgName: "Test Organization",
-        isVerifiedOrganizer: true,
-        isAuthorized: true,
-        avatar: "https://randomuser.me/api/portraits/men/100.jpg"
-      },
-      {
-        fullName: "Gujarat Sports Authority",
-        email: "gujaratsports2025@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543210",
-        city: "Ahmedabad",
-        isVerified: true,
-        isActive: true,
-        orgName: "Gujarat Sports Authority",
-        isVerifiedOrganizer: true,
-        isAuthorized: true,
-        avatar: "https://randomuser.me/api/portraits/men/1.jpg"
-      },
-      {
-        fullName: "Ketan Mehta",
-        email: "ketanmehta789@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543211",
-        city: "Surat",
-        isVerified: true,
-        isActive: true,
-        orgName: "Gujarat Sports Federation",
-        isVerifiedOrganizer: true,
-        isAuthorized: true,
-        avatar: "https://randomuser.me/api/portraits/men/2.jpg"
-      },
-      {
-        fullName: "Priti Shah",
-        email: "pritishah456@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543212",
-        city: "Vadodara",
-        isVerified: true,
-        isActive: true,
-        orgName: "Baroda Sports Complex",
-        isVerifiedOrganizer: true,
-        isAuthorized: true,
-        avatar: "https://randomuser.me/api/portraits/women/1.jpg"
-      },
-      {
-        fullName: "Ketan Patel",
-        email: "ketanpatel321@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543213",
-        city: "Rajkot",
-        isVerified: true,
-        isActive: true,
-        orgName: "Rajkot Sports Council",
-        isVerifiedOrganizer: true,
-        isAuthorized: true,
-        avatar: "https://randomuser.me/api/portraits/men/3.jpg"
-      },
-      // Pending authorization requests
-      {
-        fullName: "Rajesh Kumar Sports Inc",
-        email: "rajeshkumar@sportsinc.com",
-        password: "Password123!",
-        phone: "+91-9876543214",
-        city: "Mumbai",
-        isVerified: true,
-        isActive: true,
-        orgName: "Mumbai Sports Center",
-        isVerifiedOrganizer: false,
-        isAuthorized: false,
-        authorizationRequestDate: new Date(),
-        verificationDocumentUrl: "https://example.com/docs/rajesh-verification.pdf",
-        avatar: "https://randomuser.me/api/portraits/men/4.jpg"
-      },
-      {
-        fullName: "Sneha Reddy Events",
-        email: "sneha@reddyevents.com",
-        password: "Password123!",
-        phone: "+91-9876543215",
-        city: "Bangalore",
-        isVerified: true,
-        isActive: true,
-        orgName: "Reddy Sports Events",
-        isVerifiedOrganizer: false,
-        isAuthorized: false,
-        authorizationRequestDate: new Date(Date.now() - 86400000), // 1 day ago
-        verificationDocumentUrl: "https://example.com/docs/sneha-verification.pdf",
-        avatar: "https://randomuser.me/api/portraits/women/4.jpg"
-      },
-      {
-        fullName: "Vikram Singh Tournament Co",
-        email: "vikram@tournamentco.in",
-        password: "Password123!",
-        phone: "+91-9876543216",
-        city: "Delhi",
-        isVerified: true,
-        isActive: true,
-        orgName: "Delhi Sports Hub",
-        isVerifiedOrganizer: false,
-        isAuthorized: false,
-        authorizationRequestDate: new Date(Date.now() - 172800000), // 2 days ago
-        verificationDocumentUrl: "https://example.com/docs/vikram-verification.pdf",
-        avatar: "https://randomuser.me/api/portraits/men/5.jpg"
-      }
-    ]);
-    console.log(`✅ Created ${organizers.length} tournament organizers (${organizers.filter(o => !o.isAuthorized).length} pending authorization)`);
+    // ========== SEED ORGANIZERS (20) ==========
+    const fixedOrganizers = [
+      { firstName: "Arjun", lastName: "Patel", city: "Ahmedabad" },
+      { firstName: "Rohan", lastName: "Shah", city: "Surat" },
+      { firstName: "Vikram", lastName: "Sharma", city: "Vadodara" },
+      { firstName: "Karan", lastName: "Singh", city: "Rajkot" },
+      { firstName: "Rahul", lastName: "Kumar", city: "Gandhinagar" },
+      { firstName: "Ravi", lastName: "Gupta", city: "Bhavnagar" },
+      { firstName: "Sanjay", lastName: "Verma", city: "Jamnagar" },
+      { firstName: "Aditya", lastName: "Reddy", city: "Junagadh" },
+      { firstName: "Rajesh", lastName: "Rao", city: "Porbandar" },
+      { firstName: "Manish", lastName: "Menon", city: "Anand" },
+      { firstName: "Vishal", lastName: "Iyer", city: "Ahmedabad" },
+      { firstName: "Nikhil", lastName: "Desai", city: "Surat" },
+      { firstName: "Akshay", lastName: "Joshi", city: "Vadodara" },
+      { firstName: "Hemant", lastName: "Bhat", city: "Rajkot" },
+      { firstName: "Pankaj", lastName: "Chopra", city: "Gandhinagar" },
+      { firstName: "Mohan", lastName: "Kapoor", city: "Bhavnagar" },
+      { firstName: "Kunal", lastName: "Malhotra", city: "Jamnagar" },
+      { firstName: "Harshil", lastName: "Arora", city: "Junagadh" },
+      { firstName: "Mayank", lastName: "Saxena", city: "Porbandar" },
+      { firstName: "Vinod", lastName: "Srivastava", city: "Anand" }
+    ];
+    
+    const organizerPromises = fixedOrganizers.map((org, i) => ({
+      fullName: `${org.firstName} ${org.lastName}`,
+      email: `${org.firstName.toLowerCase()}${org.lastName.toLowerCase()}${i}@gmail.com`,
+      password: "Password123!",
+      phone: `+91-${String(9876543300 + i).slice(-10)}`,
+      city: org.city,
+      isVerified: true,
+      isActive: true,
+      orgName: `${org.firstName} ${org.lastName} Sports Organization`,
+      isVerifiedOrganizer: true,
+      isAuthorized: true
+    }));
+    const organizers = await TournamentOrganizer.create(organizerPromises);
+    console.log(`✅ Created 20 tournament organizers`);
 
-    // Team Managers with detailed profiles
-    const managers = await TeamManager.create([
-      // Test Manager
-      {
-        fullName: "Test Manager",
-        email: "testmanager@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543202",
-        city: "Ahmedabad",
-        isVerified: true,
-        isActive: true,
-        avatar: "https://randomuser.me/api/portraits/men/101.jpg",
-        achievements: {
-          title: "Test Account for Development",
-          year: 2026
-        }
-      },
-      {
-        fullName: "Aryan Sharma",
-        email: "aryansharma890@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543220",
-        city: "Ahmedabad",
-        isVerified: true,
-        isActive: true,
-        avatar: "https://randomuser.me/api/portraits/men/10.jpg",
-        achievements: {
-          title: "Best Cricket Team Manager Award - Gujarat State Championship",
-          year: 2024
-        }
-      },
-      {
-        fullName: "Priya Patel",
-        email: "priyapatel567@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543221",
-        city: "Surat",
-        isVerified: true,
-        isActive: true,
-        avatar: "https://randomuser.me/api/portraits/women/10.jpg",
-        achievements: {
-          title: "Football Team Excellence Award - Surat Sports Federation",
-          year: 2023
-        }
-      },
-      {
-        fullName: "Amit Desai",
-        email: "amitdesai234@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543222",
-        city: "Vadodara",
-        isVerified: true,
-        isActive: true,
-        avatar: "https://randomuser.me/api/portraits/men/11.jpg",
-        achievements: {
-          title: "Basketball Team of the Year - Vadodara District",
-          year: 2024
-        }
-      },
-      {
-        fullName: "Sneha Shah",
-        email: "snehashah789@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543223",
-        city: "Rajkot",
-        isVerified: true,
-        isActive: true,
-        avatar: "https://randomuser.me/api/portraits/women/11.jpg",
-        achievements: {
-          title: "Outstanding Team Management - Rajkot Sports Council",
-          year: 2025
-        }
-      },
-      {
-        fullName: "Vikram Modi",
-        email: "vikrammodi456@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543224",
-        city: "Ahmedabad",
-        isVerified: true,
-        isActive: true,
-        avatar: "https://randomuser.me/api/portraits/men/12.jpg",
-        achievements: {
-          title: "Volleyball Team Championship Winner - Gujarat State",
-          year: 2023
-        }
-      },
-      {
-        fullName: "Disha Thakkar",
-        email: "dishathakkar123@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543225",
-        city: "Gandhinagar",
-        isVerified: true,
-        isActive: true,
-        avatar: "https://randomuser.me/api/portraits/women/12.jpg",
-        achievements: {
-          title: "Best Sports Team Developer Award - Gandhinagar Municipality",
-          year: 2024
-        }
-      },
-      {
-        fullName: "Rahul Joshi",
-        email: "rahuljoshi345@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543226",
-        city: "Bhavnagar",
-        isVerified: true,
-        isActive: true,
-        avatar: "https://randomuser.me/api/portraits/men/13.jpg",
-        achievements: {
-          title: "Kabaddi Team Excellence Award - Regional Championship",
-          year: 2024
-        }
-      },
-      {
-        fullName: "Neha Vora",
-        email: "nehavora678@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543227",
-        city: "Jamnagar",
-        isVerified: true,
-        isActive: true,
-        avatar: "https://randomuser.me/api/portraits/women/13.jpg",
-        achievements: {
-          title: "Hockey Team Best Performance - Western Zone",
-          year: 2025
-        }
+    // ========== SEED TEAM MANAGERS (20) ==========
+    const fixedManagers = [
+      { firstName: "Priya", lastName: "Patel", city: "Ahmedabad" },
+      { firstName: "Aryan", lastName: "Shah", city: "Surat" },
+      { firstName: "Neha", lastName: "Sharma", city: "Vadodara" },
+      { firstName: "Ishant", lastName: "Singh", city: "Rajkot" },
+      { firstName: "Kavya", lastName: "Kumar", city: "Gandhinagar" },
+      { firstName: "Jatin", lastName: "Gupta", city: "Bhavnagar" },
+      { firstName: "Megha", lastName: "Verma", city: "Jamnagar" },
+      { firstName: "Parth", lastName: "Reddy", city: "Junagadh" },
+      { firstName: "Divya", lastName: "Rao", city: "Porbandar" },
+      { firstName: "Hrithik", lastName: "Menon", city: "Anand" },
+      { firstName: "Ananya", lastName: "Iyer", city: "Ahmedabad" },
+      { firstName: "Jasprit", lastName: "Desai", city: "Surat" },
+      { firstName: "Isha", lastName: "Joshi", city: "Vadodara" },
+      { firstName: "Rishabh", lastName: "Bhat", city: "Rajkot" },
+      { firstName: "Kriti", lastName: "Chopra", city: "Gandhinagar" },
+      { firstName: "Naveen", lastName: "Kapoor", city: "Bhavnagar" },
+      { firstName: "Pooja", lastName: "Malhotra", city: "Jamnagar" },
+      { firstName: "Kaushik", lastName: "Arora", city: "Junagadh" },
+      { firstName: "Nisha", lastName: "Saxena", city: "Porbandar" },
+      { firstName: "Rishi", lastName: "Srivastava", city: "Anand" }
+    ];
+    
+    const managerPromises = fixedManagers.map((mgr, i) => ({
+      fullName: `${mgr.firstName} ${mgr.lastName}`,
+      email: `${mgr.firstName.toLowerCase()}${mgr.lastName.toLowerCase()}${100 + i}@gmail.com`,
+      password: "Password123!",
+      phone: `+91-${String(9876543400 + i).slice(-10)}`,
+      city: mgr.city,
+      isVerified: true,
+      isActive: true,
+      achievements: {
+        title: `Team Manager of the Year - ${mgr.city} District`,
+        year: 2024
       }
-    ]);
-    console.log(`✅ Created ${managers.length} team managers`);
+    }));
+    const managers = await TeamManager.create(managerPromises);
+    console.log(`✅ Created 20 team managers`);
 
-    // Players
-    const players = await Player.create([
-      // Test Player
-      {
-        fullName: "Test Player",
-        email: "testplayer@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543201",
-        city: "Ahmedabad",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: cricket._id, role: "All-rounder" },
-          { sport: football._id, role: "Midfielder" }
-        ],
-        achievements: [
-          { title: "Test Account for Development", year: 2026 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(25),
-        height: 175,
-        weight: 70,
-        bio: "Test player account for application testing",
-        avatar: "https://randomuser.me/api/portraits/men/99.jpg"
-      },
-      // Cricket Players
-      {
-        fullName: "Harshil Patel",
-        email: "harshilpatel527@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543230",
-        city: "Ahmedabad",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: cricket._id, role: "All-rounder" },
-          { sport: football._id, role: "Midfielder" }
-        ],
-        achievements: [
-          { title: "Man of the Tournament - Gujarat T20 League", year: 2023 },
-          { title: "State Football Cup - Best Playmaker", year: 2024 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(25),
-        height: 175,
-        weight: 70,
-        bio: "Dynamic all-rounder with explosive batting",
-        avatar: "https://randomuser.me/api/portraits/men/20.jpg"
-      },
-      {
-        fullName: "Karan Shah",
-        email: "karanshah890@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543231",
-        city: "Rajkot",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: cricket._id, role: "All-rounder" },
-          { sport: basketball._id, role: "Guard" }
-        ],
-        achievements: [
-          { title: "West Zone All-Rounder Award", year: 2024 },
-          { title: "Intercity Hoops Defensive Leader", year: 2023 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(27),
-        height: 173,
-        weight: 68,
-        bio: "Brilliant fielder and handy all-rounder",
-        avatar: "https://randomuser.me/api/portraits/men/21.jpg"
-      },
-      {
-        fullName: "Dhruv Modi",
-        email: "dhruvmodi456@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543232",
-        city: "Anand",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: cricket._id, role: "Bowler" },
-          { sport: volleyball._id, role: "Middle Blocker" }
-        ],
-        achievements: [
-          { title: "Best Spinner - State Championship", year: 2024 },
-          { title: "Volleyball Blocker of the Year", year: 2023 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(26),
-        height: 180,
-        weight: 74,
-        bio: "Accurate left-arm spinner",
-        avatar: "https://randomuser.me/api/portraits/men/22.jpg"
-      },
-      {
-        fullName: "Priya Desai",
-        email: "priyadesai789@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543233",
-        city: "Ahmedabad",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: cricket._id, role: "Batsman" },
-          { sport: tennis._id, role: "Singles Player" }
-        ],
-        achievements: [
-          { title: "Women's Premier Opener of the Season", year: 2025 },
-          { title: "State Tennis Quarterfinalist", year: 2023 }
-        ],
-        gender: "Female",
-        dateOfBirth: getDOBFromAge(24),
-        height: 165,
-        weight: 58,
-        bio: "Elegant left-handed opener",
-        avatar: "https://randomuser.me/api/portraits/women/20.jpg"
-      },
-      {
-        fullName: "Nirav Mehta",
-        email: "niravmehta234@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543234",
-        city: "Surat",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: cricket._id, role: "All-rounder" },
-          { sport: hockey._id, role: "Forward" }
-        ],
-        achievements: [
-          { title: "Player of the Series - Ranji Regional", year: 2023 },
-          { title: "Hockey Western Zone Top Scorer", year: 2024 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(28),
-        height: 178,
-        weight: 75,
-        bio: "Dynamic all-rounder and left-arm spinner",
-        avatar: "https://randomuser.me/api/portraits/men/23.jpg"
-      },
-      // Football Players
-      {
-        fullName: "Arjun Thakkar",
-        email: "arjunthakkar567@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543235",
-        city: "Vadodara",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: football._id, role: "Striker" },
-          { sport: cricket._id, role: "Batsman" }
-        ],
-        achievements: [
-          { title: "Golden Boot - Gujarat Super League", year: 2024 },
-          { title: "District T20 Clean Hitter Award", year: 2023 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(26),
-        height: 172,
-        weight: 67,
-        bio: "Prolific goal scorer",
-        avatar: "https://randomuser.me/api/portraits/men/24.jpg"
-      },
-      {
-        fullName: "Vishal Pandya",
-        email: "vishalpandya890@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543236",
-        city: "Surat",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: football._id, role: "Defender" },
-          { sport: basketball._id, role: "Forward" }
-        ],
-        achievements: [
-          { title: "Best Defender - State League", year: 2025 },
-          { title: "All-India College Hoops MVP", year: 2023 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(27),
-        height: 188,
-        weight: 85,
-        bio: "Strong and reliable defender",
-        avatar: "https://randomuser.me/api/portraits/men/25.jpg"
-      },
-      {
-        fullName: "Parth Joshi",
-        email: "parthjoshi321@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543237",
-        city: "Ahmedabad",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: football._id, role: "Goalkeeper" },
-          { sport: badminton._id, role: "Singles Player" }
-        ],
-        achievements: [
-          { title: "Golden Gloves - City League", year: 2024 },
-          { title: "State Badminton Quarterfinalist", year: 2023 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(28),
-        height: 191,
-        weight: 82,
-        bio: "Safe hands and great reflexes",
-        avatar: "https://randomuser.me/api/portraits/men/26.jpg"
-      },
-      {
-        fullName: "Yash Shah",
-        email: "yashshah654@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543238",
-        city: "Rajkot",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: football._id, role: "Midfielder" },
-          { sport: cricket._id, role: "Wicket Keeper" }
-        ],
-        achievements: [
-          { title: "Assist Leader - Rajkot Premier League", year: 2025 },
-          { title: "Best Gloves - District T20", year: 2023 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(25),
-        height: 170,
-        weight: 65,
-        bio: "Speedy winger",
-        avatar: "https://randomuser.me/api/portraits/men/27.jpg"
-      },
-      {
-        fullName: "Ronak Mehta",
-        email: "ronakmehta789@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543239",
-        city: "Surat",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: football._id, role: "Midfielder" },
-          { sport: volleyball._id, role: "Setter" }
-        ],
-        achievements: [
-          { title: "Creative Midfield Maestro - City Cup", year: 2024 },
-          { title: "Setter of the Tournament - State Volleyball", year: 2023 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(24),
-        height: 168,
-        weight: 62,
-        bio: "Creative midfielder",
-        avatar: "https://randomuser.me/api/portraits/men/28.jpg"
-      },
-      // Basketball Players
-      {
-        fullName: "Harsh Patel",
-        email: "harshpatel456@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543240",
-        city: "Vadodara",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: basketball._id, role: "Forward" },
-          { sport: football._id, role: "Defender" }
-        ],
-        achievements: [
-          { title: "Basketball State Finals MVP", year: 2024 },
-          { title: "Fair Play Defender - City League", year: 2023 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(26),
-        height: 201,
-        weight: 95,
-        bio: "Powerful forward",
-        avatar: "https://randomuser.me/api/portraits/men/29.jpg"
-      },
-      {
-        fullName: "Jay Thakkar",
-        email: "jaythakkar321@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543241",
-        city: "Ahmedabad",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: basketball._id, role: "Guard" },
-          { sport: cricket._id, role: "Batsman" }
-        ],
-        achievements: [
-          { title: "Clutch Guard Award - Hoops League", year: 2025 },
-          { title: "City T20 Power Hitter", year: 2023 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(25),
-        height: 193,
-        weight: 88,
-        bio: "Skilled guard",
-        avatar: "https://randomuser.me/api/portraits/men/30.jpg"
-      },
-      {
-        fullName: "Darshan Shah",
-        email: "darshanshah987@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543242",
-        city: "Rajkot",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: basketball._id, role: "Center" },
-          { sport: football._id, role: "Defender" }
-        ],
-        achievements: [
-          { title: "Defensive Anchor - State Hoops", year: 2024 },
-          { title: "Clean Sheet Leader - District League", year: 2023 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(23),
-        height: 206,
-        weight: 100,
-        bio: "Dominant center",
-        avatar: "https://randomuser.me/api/portraits/men/31.jpg"
-      },
-      {
-        fullName: "Meet Modi",
-        email: "meetmodi654@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543243",
-        city: "Gandhinagar",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: basketball._id, role: "Guard" },
-          { sport: volleyball._id, role: "Libero" }
-        ],
-        achievements: [
-          { title: "Sixth Man of the Year - City League", year: 2024 },
-          { title: "Best Libero - University Nationals", year: 2023 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(24),
-        height: 188,
-        weight: 85,
-        bio: "Quick guard",
-        avatar: "https://randomuser.me/api/portraits/men/32.jpg"
-      },
-      {
-        fullName: "Dev Desai",
-        email: "devdesai321@gmail.com",
-        password: "Password123!",
-        phone: "+91-9876543244",
-        city: "Surat",
-        isVerified: true,
-        isActive: true,
-        sports: [
-          { sport: basketball._id, role: "Forward" },
-          { sport: tennis._id, role: "Singles Player" }
-        ],
-        achievements: [
-          { title: "Versatile Forward - State Super League", year: 2025 },
-          { title: "District Tennis Champion", year: 2023 }
-        ],
-        gender: "Male",
-        dateOfBirth: getDOBFromAge(25),
-        height: 198,
-        weight: 92,
-        bio: "Versatile forward",
-        avatar: "https://randomuser.me/api/portraits/men/33.jpg"
+    // ========== SEED PLAYERS (100 - 10 per sport) ==========
+    const playerPromises = [];
+    const playersPerSport = 10;
+    
+    const fixedPlayerNames = [
+      { firstName: "Arjun", lastName: "Patel", gender: "Male", city: "Ahmedabad" },
+      { firstName: "Priya", lastName: "Shah", gender: "Female", city: "Surat" },
+      { firstName: "Rahul", lastName: "Sharma", gender: "Male", city: "Vadodara" },
+      { firstName: "Neha", lastName: "Singh", gender: "Female", city: "Rajkot" },
+      { firstName: "Karan", lastName: "Kumar", gender: "Male", city: "Gandhinagar" },
+      { firstName: "Kavya", lastName: "Gupta", gender: "Female", city: "Bhavnagar" },
+      { firstName: "Rohan", lastName: "Verma", gender: "Male", city: "Jamnagar" },
+      { firstName: "Isha", lastName: "Reddy", gender: "Female", city: "Junagadh" },
+      { firstName: "Vikram", lastName: "Rao", gender: "Male", city: "Porbandar" },
+      { firstName: "Ananya", lastName: "Menon", gender: "Female", city: "Anand" }
+    ];
+
+    for (let sportIdx = 0; sportIdx < createdSports.length; sportIdx++) {
+      const sport = createdSports[sportIdx];
+      const roles = sport.roles;
+
+      for (let i = 0; i < playersPerSport; i++) {
+        const playerData = fixedPlayerNames[i];
+        const firstName = playerData.firstName;
+        const lastName = playerData.lastName;
+        const gender = playerData.gender;
+        const city = playerData.city;
+        
+        const sportData = [
+          {
+            sport: sport._id,
+            role: roles[i % roles.length] // Use deterministic role selection
+          }
+        ];
+        
+        // Every 3rd player plays multiple sports (deterministic)
+        if (i % 3 === 0 && createdSports.length > 1) {
+          const secondSportIdx = (sportIdx + 1) % createdSports.length;
+          const secondSport = createdSports[secondSportIdx];
+          sportData.push({
+            sport: secondSport._id,
+            role: secondSport.roles[0]
+          });
+        }
+
+        playerPromises.push({
+          fullName: `${firstName} ${lastName}`,
+          email: `${firstName.toLowerCase()}${lastName.toLowerCase()}${200 + (sportIdx * 10) + i}@gmail.com`,
+          password: "Password123!",
+          phone: `+91-${String(9876543500 + (sportIdx * 10) + i).slice(-10)}`,
+          city: city,
+          isVerified: true,
+          isActive: true,
+          sports: sportData,
+          achievements: [
+            { title: `${sport.name} State Championship Winner`, year: 2024 },
+            { title: `Best Player Award - ${city} District`, year: 2023 }
+          ],
+          gender: gender,
+          dateOfBirth: getDOBFromAge(18 + (i % 10)), // Deterministic ages 18-27
+          height: 5.0 + (i % 15) * 0.1, // Height in feet.inches format (5.0 - 6.4 ft range)
+          weight: 60 + (i * 2), // Deterministic weights
+          bio: `Professional ${sport.name} player with ${2 + (i % 10)} years experience`
+        });
       }
-    ]);
-    console.log(`✅ Created ${players.length} players`);
+    }
+
+    const players = await Player.create(playerPromises);
+    console.log(`✅ Created 100 players (10 per sport)`);
+    
+    // Build a map of sport ID to player IDs for easier team creation
+    const playersBySpport = new Map();
+    players.forEach((player, index) => {
+      // Each player is created with 10 players per sport across createdSports
+      // We need to map them back based on the sportData structure
+      const sportsArray = player.sports || [];
+      sportsArray.forEach(sportItem => {
+        const sportId = sportItem.sport.toString();
+        if (!playersBySpport.has(sportId)) {
+          playersBySpport.set(sportId, []);
+        }
+        playersBySpport.get(sportId).push(player._id);
+      });
+    });
+    
 
     // ========== SEED TEAMS ==========
-    const teams = await Team.create([
-      // Cricket Teams
-      {
-        name: "Gujarat Warriors",
-        sport: cricket._id,
-        manager: managers[0]._id,
-        captain: players[0]._id,
-        players: [players[0]._id, players[1]._id, players[2]._id, players[3]._id, players[4]._id],
-        city: "Ahmedabad",
-        description: "Premier cricket team from Ahmedabad with a legacy of excellence",
-        logoUrl: "https://img.icons8.com/color/96/cricket.png",
-        achievements: [
-          { title: "Ranji Trophy Qualifiers", year: 2024 },
-          { title: "West Zone Champions", year: 2023 },
-          { title: "State Super League Finalists", year: 2022 }
-        ],
-        openToJoin: false,
-        isActive: true
-      },
-      {
-        name: "Surat Strikers",
-        sport: cricket._id,
-        manager: managers[1]._id,
-        captain: players[1]._id,
-        players: [players[1]._id, players[2]._id, players[3]._id, players[4]._id],
-        city: "Surat",
-        description: "Surat's premier cricket team known for aggressive batting",
-        logoUrl: "https://img.icons8.com/color/96/cricket-ball.png",
-        achievements: [
-          { title: "Coastal Cup Winners", year: 2024 },
-          { title: "City T20 Champions", year: 2023 }
-        ],
-        openToJoin: true,
-        isActive: true
-      },
-      {
-        name: "Rajkot Royals",
-        sport: cricket._id,
-        manager: managers[3]._id,
-        captain: players[2]._id,
-        players: [players[2]._id, players[3]._id, players[4]._id],
-        city: "Rajkot",
-        description: "Cricket champions from Rajkot focusing on all-round performance",
-        logoUrl: "https://img.icons8.com/fluency/96/cricket.png",
-        achievements: [
-          { title: "Rajkot Premier League Winners", year: 2024 },
-          { title: "Inter-District Cup Finalists", year: 2022 }
-        ],
-        openToJoin: true,
-        isActive: true
-      },
-      // Football Teams
-      {
-        name: "Ahmedabad FC",
-        sport: football._id,
-        manager: managers[1]._id,
-        captain: players[5]._id,
-        players: [players[5]._id, players[6]._id, players[7]._id, players[8]._id, players[9]._id],
-        city: "Ahmedabad",
-        description: "Ahmedabad's professional football club with modern playing style",
-        logoUrl: "https://img.icons8.com/color/96/football.png",
-        achievements: [
-          { title: "League Shield Winners", year: 2024 },
-          { title: "Super Cup Finalists", year: 2023 }
-        ],
-        openToJoin: false,
-        isActive: true
-      },
-      {
-        name: "Baroda United",
-        sport: football._id,
-        manager: managers[2]._id,
-        captain: players[6]._id,
-        players: [players[6]._id, players[7]._id, players[8]._id, players[9]._id],
-        city: "Vadodara",
-        description: "Vadodara's united football team with strong defensive lineup",
-        logoUrl: "https://img.icons8.com/fluency/96/football2.png",
-        achievements: [
-          { title: "Defenders Cup Winners", year: 2024 },
-          { title: "Vadodara City League Champions", year: 2022 }
-        ],
-        openToJoin: true,
-        isActive: true
-      },
-      {
-        name: "Surat Scorchers",
-        sport: football._id,
-        manager: managers[4]._id,
-        captain: players[7]._id,
-        players: [players[7]._id, players[8]._id, players[9]._id],
-        city: "Surat",
-        description: "Dynamic football team from Surat specializing in counter-attacks",
-        logoUrl: "https://img.icons8.com/emoji/96/soccer-ball-emoji.png",
-        achievements: [
-          { title: "Counter Attack Masters", year: 2023 },
-          { title: "Surat Invitational Winners", year: 2022 }
-        ],
-        openToJoin: true,
-        isActive: true
-      },
-      // Basketball Teams
-      {
-        name: "Rajkot Riders",
-        sport: basketball._id,
-        manager: managers[2]._id,
-        captain: players[10]._id,
-        players: [players[10]._id, players[11]._id, players[12]._id, players[13]._id, players[14]._id],
-        city: "Rajkot",
-        description: "Elite basketball team from Rajkot with fast-paced gameplay",
-        logoUrl: "https://img.icons8.com/color/96/basketball.png",
-        achievements: [
-          { title: "Rajkot Slam Champions", year: 2024 },
-          { title: "Fast Break Cup Winners", year: 2023 }
-        ],
-        openToJoin: false,
-        isActive: true
-      },
-      {
-        name: "Gandhinagar Giants",
-        sport: basketball._id,
-        manager: managers[3]._id,
-        captain: players[11]._id,
-        players: [players[11]._id, players[12]._id, players[13]._id, players[14]._id],
-        city: "Gandhinagar",
-        description: "Gandhinagar's premier basketball squad focusing on teamwork",
-        logoUrl: "https://img.icons8.com/fluency/96/basketball.png",
-        achievements: [
-          { title: "Teamwork Trophy Winners", year: 2023 },
-          { title: "Capital City League Champions", year: 2022 }
-        ],
-        openToJoin: true,
-        isActive: true
-      },
-      {
-        name: "Ahmedabad Aces",
-        sport: basketball._id,
-        manager: managers[5]._id,
-        captain: players[12]._id,
-        players: [players[12]._id, players[13]._id, players[14]._id],
-        city: "Ahmedabad",
-        description: "Top-tier basketball team from Ahmedabad",
-        logoUrl: "https://img.icons8.com/emoji/96/basketball-emoji.png",
-        achievements: [
-          { title: "Aces Invitational Winners", year: 2024 },
-          { title: "City Hoops Finalists", year: 2022 }
-        ],
-        openToJoin: true,
-        isActive: true
-      },
-      // Volleyball Teams
-      {
-        name: "Vadodara Volley Kings",
-        sport: volleyball._id,
-        manager: managers[4]._id,
-        captain: players[5]._id,
-        players: [players[5]._id, players[6]._id, players[7]._id, players[8]._id],
-        city: "Vadodara",
-        description: "Dominant volleyball team from Vadodara known for spike attacks",
-        logoUrl: "https://img.icons8.com/color/96/volleyball.png",
-        achievements: [
-          { title: "Spike Masters", year: 2024 },
-          { title: "Western Circuit Champions", year: 2023 }
-        ],
-        openToJoin: true,
-        isActive: true
-      },
-      {
-        name: "Gandhinagar Spikers",
-        sport: volleyball._id,
-        manager: managers[5]._id,
-        captain: players[6]._id,
-        players: [players[6]._id, players[7]._id, players[8]._id],
-        city: "Gandhinagar",
-        description: "Professional volleyball team with excellent blocking skills",
-        logoUrl: "https://img.icons8.com/fluency/96/volleyball.png",
-        achievements: [
-          { title: "Block Wall Award", year: 2023 },
-          { title: "Capital Cup Finalists", year: 2022 }
-        ],
-        openToJoin: true,
-        isActive: true
-      },
-      // Kabaddi Teams
-      {
-        name: "Bhavnagar Bulls",
-        sport: createdSports.find(s => s.name === "Kabaddi")._id,
-        manager: managers[6]._id,
-        captain: players[0]._id,
-        players: [players[0]._id, players[1]._id, players[2]._id, players[3]._id],
-        city: "Bhavnagar",
-        description: "Fierce kabaddi team from Bhavnagar with strong raiders",
-        logoUrl: "https://img.icons8.com/color/96/kabaddi.png",
-        achievements: [
-          { title: "Raiders Cup Winners", year: 2024 },
-          { title: "State Kabaddi Finalists", year: 2023 }
-        ],
-        openToJoin: true,
-        isActive: true
-      },
-      {
-        name: "Rajkot Raiders",
-        sport: createdSports.find(s => s.name === "Kabaddi")._id,
-        manager: managers[3]._id,
-        captain: players[1]._id,
-        players: [players[1]._id, players[2]._id, players[3]._id],
-        city: "Rajkot",
-        description: "Kabaddi champions from Rajkot specializing in defensive tactics",
-        logoUrl: "https://img.icons8.com/fluency/96/sport.png",
-        achievements: [
-          { title: "Defense Wall Champions", year: 2023 },
-          { title: "Rajkot Pro Kabaddi Finalists", year: 2022 }
-        ],
-        openToJoin: true,
-        isActive: true
-      },
-      // Hockey Teams
-      {
-        name: "Jamnagar Hawks",
-        sport: createdSports.find(s => s.name === "Hockey")._id,
-        manager: managers[7]._id,
-        captain: players[5]._id,
-        players: [players[5]._id, players[6]._id, players[7]._id, players[8]._id, players[9]._id],
-        city: "Jamnagar",
-        description: "Elite hockey team from Jamnagar with precision passing",
-        logoUrl: "https://img.icons8.com/color/96/hockey.png",
-        achievements: [
-          { title: "Stick Masters Cup", year: 2024 },
-          { title: "Coastal Hockey League Winners", year: 2023 }
-        ],
-        openToJoin: false,
-        isActive: true
-      },
-      {
-        name: "Ahmedabad Strikers Hockey",
-        sport: createdSports.find(s => s.name === "Hockey")._id,
-        manager: managers[0]._id,
-        captain: players[6]._id,
-        players: [players[6]._id, players[7]._id, players[8]._id, players[9]._id],
-        city: "Ahmedabad",
-        description: "Premier hockey team from Ahmedabad known for aggressive play",
-        logoUrl: "https://img.icons8.com/fluency/96/hockey.png",
-        achievements: [
-          { title: "Ahmedabad Open Winners", year: 2024 },
-          { title: "Offense Blitz Trophy", year: 2022 }
-        ],
-        openToJoin: true,
-        isActive: true
+    const teamPromises = [];
+    const teamPlayerMap = new Map(); // Track players per team
+    
+    for (let i = 0; i < managers.length; i++) {
+      const manager = managers[i];
+      const numTeams = Math.random() > 0.5 ? 2 : 1;
+
+      for (let t = 0; t < numTeams; t++) {
+        const sport = getRandomElement(createdSports);
+        const sportIdStr = sport._id.toString();
+        
+        // Get players for this sport using our pre-built mapping
+        const availablePlayerIds = playersBySpport.get(sportIdStr) || [];
+        
+        // Allocate 60-100% of sport's max players per team
+        // Choose team size without relying on sport.maxPlayers
+        const baseMin = sport.teamBased ? 5 : 1;
+        const baseMax = sport.teamBased ? 12 : 2;
+        const randomCount = Math.floor(Math.random() * (baseMax - baseMin + 1)) + baseMin;
+        const teamPlayerCount = Math.min(randomCount, availablePlayerIds.length);
+        
+        // Shuffle available players and select team players
+        const shuffledPlayerIds = availablePlayerIds.sort(() => Math.random() - 0.5);
+        const teamPlayerIds = shuffledPlayerIds.slice(0, teamPlayerCount);
+        
+        const openToJoin = Math.random() > 0.4;
+        const teamGender = ["Male", "Female", "Mixed"][Math.floor(Math.random() * 3)];
+        const teamCity = getRandomCity();
+        
+        const teamData = {
+          name: `${getRandomElement(firstNamesM)} ${sport.name} Warriors - ${teamCity}`,
+          sport: sport._id,
+          manager: manager._id,
+          gender: teamGender,
+          players: teamPlayerIds,
+          city: teamCity,
+          bannerUrl: `https://images.unsplash.com/photo-${['1517649763962-0c623066013b', '1461896836934-ffe607ba8211', '1519861155730-972f87d2b8f1'][Math.floor(Math.random() * 3)]}?w=1200&h=400&fit=crop`,
+          description: `Professional ${sport.name} team. ${openToJoin ? 'Open to recruitment' : 'Not currently recruiting'}`,
+          achievements: [
+            { title: `${sport.name} District Champion 2024`, year: 2024 },
+            { title: "Best Team Performance Award 2023", year: 2023 }
+          ],
+          openToJoin,
+          isActive: true
+        };
+        
+        teamPromises.push(teamData);
       }
-    ]);
+    }
+
+    const teams = await Team.create(teamPromises);
+    // Build team player map for reference
+    teams.forEach(team => {
+      teamPlayerMap.set(team._id.toString(), team.players.length);
+    });
+    
     console.log(`✅ Created ${teams.length} teams`);
+    console.log(`   Team player distribution:`);
+    teams.forEach(team => {
+      const playerCount = team.players ? team.players.length : 0;
+      console.log(`   - ${team.name}: ${playerCount} players`);
+    });
 
     // ========== SEED TOURNAMENTS ==========
     const now = new Date();
-    const tournaments = await Tournament.create([
-      // LIVE TOURNAMENTS - Team Based
-      {
-        name: "Gujarat Premier Cricket League LIVE",
-        sport: cricket._id,
-        organizer: organizers[0]._id,
-        format: "League",
-        description: "Live cricket championship currently underway",
-        teamLimit: 8,
-        playersPerTeam: 15,
-        registrationType: "Team",
-        registrationStart: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() + 25 * 24 * 60 * 60 * 1000),
-        entryFee: 50000,
-        prizePool: 1000000,
-        rules: ["ICC regulations apply", "Each team must have 11 players", "No substitutions during play"],
-        ground: {
-          name: "Narendra Modi Stadium",
-          city: "Ahmedabad",
-          address: "Sardar Patel Stadium, Motera, Ahmedabad, Gujarat 380005"
-        },
-        status: "Live",
-        registeredTeams: [teams[0]._id, teams[1]._id],
-        approvedTeams: [teams[0]._id, teams[1]._id]
-      },
-      {
-        name: "All Gujarat Football Championship LIVE",
-        sport: football._id,
-        organizer: organizers[1]._id,
-        format: "Knockout",
-        description: "Live football tournament happening now",
-        teamLimit: 16,
-        playersPerTeam: 18,
-        registrationType: "Team",
-        registrationStart: new Date(now.getTime() - 50 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000),
-        entryFee: 30000,
-        prizePool: 500000,
-        rules: ["FIFA regulations apply", "11 players per side", "Substitutions allowed"],
-        ground: {
-          name: "EKA Arena",
-          city: "Ahmedabad",
-          address: "EKA Arena, Tragad, Ahmedabad, Gujarat 382421"
-        },
-        status: "Live",
-        registeredTeams: [teams[2]._id, teams[3]._id],
-        approvedTeams: [teams[2]._id, teams[3]._id]
-      },
-      // LIVE TOURNAMENTS - Individual
-      {
-        name: "Gujarat State Tennis Open LIVE",
-        sport: tennis._id,
-        organizer: organizers[2]._id,
-        format: "Knockout",
-        description: "Live tennis singles championship",
-        teamLimit: 32,
-        playersPerTeam: 1,
-        registrationType: "Player",
-        registrationStart: new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
-        entryFee: 2000,
-        prizePool: 200000,
-        rules: ["ITF rules apply", "Best of 3 sets", "Singles format"],
-        ground: {
-          name: "Ahmedabad Racquet Club",
-          city: "Ahmedabad",
-          address: "Satellite, Ahmedabad, Gujarat 380015"
-        },
-        status: "Live",
-        registeredTeams: [],
-        approvedTeams: []
-      },
-      // UPCOMING TOURNAMENTS - Team Based
-      {
-        name: "Gujarat Inter-City Cricket Cup 2026",
-        sport: cricket._id,
-        organizer: organizers[0]._id,
-        format: "League",
-        description: "Upcoming cricket championship featuring teams from all Gujarat cities",
-        teamLimit: 8,
-        playersPerTeam: 15,
-        registrationType: "Team",
-        registrationStart: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000),
-        entryFee: 50000,
-        prizePool: 800000,
-        rules: ["ICC regulations apply", "Each team must have 11 players", "No substitutions during play"],
-        ground: {
-          name: "Saurashtra Cricket Association Stadium",
-          city: "Rajkot",
-          address: "Khandheri Road, Rajkot, Gujarat 360005"
-        },
-        status: "Upcoming",
-        registeredTeams: [teams[0]._id, teams[1]._id],
-        approvedTeams: [teams[0]._id, teams[1]._id]
-      },
-      {
-        name: "Surat Football League 2026",
-        sport: football._id,
-        organizer: organizers[1]._id,
-        format: "League",
-        description: "Upcoming professional football league in Surat",
-        teamLimit: 12,
-        playersPerTeam: 18,
-        registrationType: "Team",
-        registrationStart: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() + 35 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() + 65 * 24 * 60 * 60 * 1000),
-        entryFee: 35000,
-        prizePool: 600000,
-        rules: ["FIFA regulations apply", "11 players per side", "Substitutions allowed"],
-        ground: {
-          name: "Lalubhai Nayakwadi Stadium",
-          city: "Surat",
-          address: "Chowk Bazar, Surat, Gujarat 395003"
-        },
-        status: "Upcoming",
-        registeredTeams: [teams[2]._id],
-        approvedTeams: [teams[2]._id]
-      },
-      {
-        name: "Rajkot Basketball Championship 2026",
-        sport: basketball._id,
-        organizer: organizers[2]._id,
-        format: "Knockout",
-        description: "Upcoming basketball tournament in Rajkot",
-        teamLimit: 10,
-        playersPerTeam: 12,
-        registrationType: "Team",
-        registrationStart: new Date(now.getTime()),
-        registrationEnd: new Date(now.getTime() + 25 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() + 40 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() + 55 * 24 * 60 * 60 * 1000),
-        entryFee: 40000,
-        prizePool: 500000,
-        rules: ["FIBA rules apply", "5 players on court", "4 quarters of 10 minutes each"],
-        ground: {
-          name: "Rajkot Sports Complex",
-          city: "Rajkot",
-          address: "University Road, Rajkot, Gujarat 360005"
-        },
-        status: "Upcoming",
-        registeredTeams: [teams[4]._id, teams[5]._id],
-        approvedTeams: [teams[4]._id]
-      },
-      {
-        name: "Gujarat Volleyball Cup 2026",
-        sport: volleyball._id,
-        organizer: organizers[3]._id,
-        format: "Round Robin",
-        description: "State level volleyball championship",
-        teamLimit: 8,
-        playersPerTeam: 10,
-        registrationType: "Team",
-        registrationStart: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() + 50 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() + 65 * 24 * 60 * 60 * 1000),
-        entryFee: 25000,
-        prizePool: 400000,
-        rules: ["FIVB rules apply", "6 players on court", "Best of 5 sets"],
-        ground: {
-          name: "Vadodara Sports Arena",
-          city: "Vadodara",
-          address: "Alkapuri, Vadodara, Gujarat 390007"
-        },
-        status: "Upcoming",
-        registeredTeams: [],
-        approvedTeams: []
-      },
-      // UPCOMING TOURNAMENTS - Individual
-      {
-        name: "Ahmedabad Badminton Masters 2026",
-        sport: badminton._id,
-        organizer: organizers[0]._id,
-        format: "Knockout",
-        description: "Elite badminton singles tournament",
-        teamLimit: 64,
-        playersPerTeam: 1,
-        registrationType: "Player",
-        registrationStart: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() + 35 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() + 42 * 24 * 60 * 60 * 1000),
-        entryFee: 1500,
-        prizePool: 250000,
-        rules: ["BWF rules apply", "Singles format", "Best of 3 games"],
-        ground: {
-          name: "Ahmedabad Indoor Sports Complex",
-          city: "Ahmedabad",
-          address: "Maninagar, Ahmedabad, Gujarat 380008"
-        },
-        status: "Upcoming",
-        registeredTeams: [],
-        approvedTeams: []
-      },
-      {
-        name: "Gujarat State Chess Championship 2026",
-        sport: chess._id,
-        organizer: organizers[1]._id,
-        format: "Round Robin",
-        description: "State level chess championship with rapid and blitz formats",
-        teamLimit: 20,
-        playersPerTeam: 1,
-        registrationType: "Player",
-        registrationStart: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() + 25 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() + 40 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() + 45 * 24 * 60 * 60 * 1000),
-        entryFee: 1000,
-        prizePool: 100000,
-        rules: ["FIDE rules apply", "Rapid time control: 15+10", "Swiss system"],
-        ground: {
-          name: "Rajkot Chess Academy",
-          city: "Rajkot",
-          address: "Kalawad Road, Rajkot, Gujarat 360005"
-        },
-        status: "Upcoming",
-        registeredTeams: [],
-        approvedTeams: []
-      },
-      // COMPLETED TOURNAMENTS - Team Based
-      {
-        name: "Gujarat Premier Cricket League 2025",
-        sport: cricket._id,
-        organizer: organizers[0]._id,
-        format: "League",
-        description: "Completed cricket championship 2025",
-        teamLimit: 8,
-        playersPerTeam: 15,
-        registrationType: "Team",
-        registrationStart: new Date(now.getTime() - 150 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() - 120 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000),
-        entryFee: 45000,
-        prizePool: 800000,
-        rules: ["ICC regulations apply", "Each team must have 11 players"],
-        ground: {
-          name: "Narendra Modi Stadium",
-          city: "Ahmedabad",
-          address: "Sardar Patel Stadium, Motera, Ahmedabad, Gujarat 380005"
-        },
-        status: "Completed",
-        registeredTeams: [teams[0]._id, teams[1]._id],
-        approvedTeams: [teams[0]._id, teams[1]._id]
-      },
-      {
-        name: "Surat Football Cup 2025",
-        sport: football._id,
-        organizer: organizers[1]._id,
-        format: "Knockout",
-        description: "Completed football championship",
-        teamLimit: 12,
-        playersPerTeam: 18,
-        registrationType: "Team",
-        registrationStart: new Date(now.getTime() - 140 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() - 110 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() - 80 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() - 50 * 24 * 60 * 60 * 1000),
-        entryFee: 30000,
-        prizePool: 500000,
-        rules: ["FIFA regulations apply", "11 players per side"],
-        ground: {
-          name: "Lalubhai Nayakwadi Stadium",
-          city: "Surat",
-          address: "Chowk Bazar, Surat, Gujarat 395003"
-        },
-        status: "Completed",
-        registeredTeams: [teams[2]._id, teams[3]._id],
-        approvedTeams: [teams[2]._id, teams[3]._id]
-      },
-      {
-        name: "Rajkot Basketball League 2025",
-        sport: basketball._id,
-        organizer: organizers[2]._id,
-        format: "League",
-        description: "Completed basketball tournament",
-        teamLimit: 8,
-        playersPerTeam: 12,
-        registrationType: "Team",
-        registrationStart: new Date(now.getTime() - 130 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() - 100 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() - 70 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000),
-        entryFee: 35000,
-        prizePool: 400000,
-        rules: ["FIBA rules apply", "5 players on court"],
-        ground: {
-          name: "Rajkot Sports Complex",
-          city: "Rajkot",
-          address: "University Road, Rajkot, Gujarat 360005"
-        },
-        status: "Completed",
-        registeredTeams: [teams[4]._id, teams[5]._id],
-        approvedTeams: [teams[4]._id, teams[5]._id]
-      },
-      // COMPLETED TOURNAMENTS - Individual
-      {
-        name: "Gujarat Tennis Open 2025",
-        sport: tennis._id,
-        organizer: organizers[3]._id,
-        format: "Knockout",
-        description: "Completed tennis singles championship",
-        teamLimit: 32,
-        playersPerTeam: 1,
-        registrationType: "Player",
-        registrationStart: new Date(now.getTime() - 120 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() - 95 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() - 75 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() - 68 * 24 * 60 * 60 * 1000),
-        entryFee: 1800,
-        prizePool: 180000,
-        rules: ["ITF rules apply", "Best of 3 sets"],
-        ground: {
-          name: "Ahmedabad Racquet Club",
-          city: "Ahmedabad",
-          address: "Satellite, Ahmedabad, Gujarat 380015"
-        },
-        status: "Completed",
-        registeredTeams: [],
-        approvedTeams: []
-      },
-      {
-        name: "All Gujarat Badminton Championship 2025",
-        sport: badminton._id,
-        organizer: organizers[0]._id,
-        format: "League",
-        description: "Completed state badminton tournament",
-        teamLimit: 48,
-        playersPerTeam: 1,
-        registrationType: "Player",
-        registrationStart: new Date(now.getTime() - 110 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() - 85 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() - 65 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() - 58 * 24 * 60 * 60 * 1000),
-        entryFee: 1200,
-        prizePool: 150000,
-        rules: ["BWF rules apply", "Singles format"],
-        ground: {
-          name: "Ahmedabad Indoor Sports Complex",
-          city: "Ahmedabad",
-          address: "Maninagar, Ahmedabad, Gujarat 380008"
-        },
-        status: "Completed",
-        registeredTeams: [],
-        approvedTeams: []
-      },
-      // CANCELLED TOURNAMENTS - Team Based
-      {
-        name: "Vadodara Cricket Premier League 2026",
-        sport: cricket._id,
-        organizer: organizers[2]._id,
-        format: "League",
-        description: "Cancelled due to venue issues",
-        teamLimit: 8,
-        playersPerTeam: 15,
-        registrationType: "Team",
-        registrationStart: new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-        entryFee: 40000,
-        prizePool: 600000,
-        rules: ["ICC regulations apply"],
-        ground: {
-          name: "Moti Bagh Stadium",
-          city: "Vadodara",
-          address: "Moti Bagh, Vadodara, Gujarat 390001"
-        },
-        status: "Cancelled",
-        registeredTeams: [teams[0]._id],
-        approvedTeams: []
-      },
-      {
-        name: "Gujarat State Football Cup 2026",
-        sport: football._id,
-        organizer: organizers[1]._id,
-        format: "Knockout",
-        description: "Cancelled due to insufficient registrations",
-        teamLimit: 16,
-        playersPerTeam: 18,
-        registrationType: "Team",
-        registrationStart: new Date(now.getTime() - 35 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() + 25 * 24 * 60 * 60 * 1000),
-        entryFee: 28000,
-        prizePool: 450000,
-        rules: ["FIFA regulations apply"],
-        ground: {
-          name: "TransStadia Arena",
-          city: "Ahmedabad",
-          address: "Bhat, Ahmedabad, Gujarat 382428"
-        },
-        status: "Cancelled",
-        registeredTeams: [],
-        approvedTeams: []
-      },
-      // CANCELLED TOURNAMENTS - Individual
-      {
-        name: "Surat Tennis Masters 2026",
-        sport: tennis._id,
-        organizer: organizers[0]._id,
-        format: "Knockout",
-        description: "Cancelled due to weather conditions",
-        teamLimit: 24,
-        playersPerTeam: 1,
-        registrationType: "Player",
-        registrationStart: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
-        registrationEnd: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000),
-        startDate: new Date(now.getTime() + 12 * 24 * 60 * 60 * 1000),
-        endDate: new Date(now.getTime() + 18 * 24 * 60 * 60 * 1000),
-        entryFee: 1500,
-        prizePool: 120000,
-        rules: ["ITF rules apply"],
-        ground: {
-          name: "Surat Racquet Club",
-          city: "Surat",
-          address: "Vesu, Surat, Gujarat 395007"
-        },
-        status: "Cancelled",
-        registeredTeams: [],
-        approvedTeams: []
+    const tournamentPromises = [];
+    const tournamentStatusMap = new Map(); // Track which tournaments are Live/Completed
+    
+    for (let i = 0; i < organizers.length; i++) {
+      const organizer = organizers[i];
+      const numTournaments = Math.random() > 0.6 ? 2 : 1;
+
+      for (let t = 0; t < numTournaments; t++) {
+        const sport = getRandomElement(createdSports);
+        const format = ["League", "Knockout", "Round Robin"][Math.floor(Math.random() * 3)];
+        
+        // Create tournaments with different statuses
+        const tournamentStatusChance = Math.random();
+        let registrationStart, registrationEnd, startDate, endDate, status;
+        
+        if (tournamentStatusChance > 0.7) {
+          // 30% Live tournaments - already started, matches ongoing
+          registrationStart = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+          registrationEnd = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          startDate = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+          endDate = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+          status = "Live";
+        } else if (tournamentStatusChance > 0.4) {
+          // 30% Completed tournaments - already finished
+          registrationStart = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+          registrationEnd = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+          startDate = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000);
+          endDate = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
+          status = "Completed";
+        } else {
+          // 40% Upcoming tournaments - registration open
+          registrationStart = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+          registrationEnd = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000);
+          startDate = new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000);
+          endDate = new Date(startDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+          status = "Upcoming";
+        }
+        
+        const city = getRandomCity();
+        
+        // Determine if this tournament is team-based or individual
+        const isTeamBased = sport.teamBased;
+        const registrationType = isTeamBased ? "Team" : "Player";
+        const tournamentType = isTeamBased ? "Championship" : "Individual";
+        const tournamentGender = ["Male", "Female", "Mixed"][Math.floor(Math.random() * 3)];
+
+        // Set sport-specific min players per team for team-based tournaments
+        let playersPerTeam = 1;
+        if (isTeamBased) {
+          const sportPlayersMap = {
+            "Cricket": 11,
+            "Football": 11,
+            "Basketball": 5,
+            "Volleyball": 6,
+            "Kabaddi": 7,
+            "Hockey": 11
+          };
+          playersPerTeam = sportPlayersMap[sport.name] || 11;
+        }
+        
+        // Generate sport-specific rules
+        const sportRulesMap = {
+          "Cricket": [
+            "Each team must have 11 players on the field",
+            "Matches will follow standard ICC cricket rules",
+            "Each team gets 2 innings (Test) or 1 innings (Limited Overs)",
+            "DRS (Decision Review System) will be available",
+            "No-ball and wide rules apply as per ICC guidelines"
+          ],
+          "Football": [
+            "Each team must have 11 players on the field",
+            "Matches follow FIFA standard rules",
+            "90 minutes of play (45 minutes each half)",
+            "Extra time and penalties in knockout stages",
+            "Yellow and red card rules apply"
+          ],
+          "Basketball": [
+            "Each team must have 5 players on the court",
+            "Four quarters of 10 minutes each (FIBA rules)",
+            "24-second shot clock applies",
+            "6 team fouls per quarter allowed",
+            "Overtime periods of 5 minutes if scores are tied"
+          ],
+          "Volleyball": [
+            "Each team must have 6 players on the court",
+            "Best of 5 sets format (first to 3 sets wins)",
+            "First 4 sets played to 25 points, 5th set to 15 points",
+            "Teams must win by 2 points",
+            "Maximum 3 hits per side allowed"
+          ],
+          "Kabaddi": [
+            "Each team must have 7 players on the mat",
+            "Matches consist of two halves of 20 minutes each",
+            "Raiders must chant 'Kabaddi' continuously",
+            "Pro Kabaddi League rules apply",
+            "Super tackles and bonus points applicable"
+          ],
+          "Hockey": [
+            "Each team must have 11 players on the field",
+            "Four quarters of 15 minutes each",
+            "Penalty corners and penalty strokes as per FIH rules",
+            "Unlimited substitutions allowed",
+            "Video umpire available for goal decisions"
+          ],
+          "Tennis": [
+            "Singles or doubles format",
+            "Best of 3 or 5 sets format",
+            "Tiebreakers at 6-6 in each set",
+            "Lets and faults as per ITF rules",
+            "Hawkeye technology available for line calls"
+          ],
+          "Badminton": [
+            "Singles or doubles format",
+            "Best of 3 games to 21 points",
+            "Rally point system (point on every serve)",
+            "Service rules as per BWF regulations",
+            "2-point lead required to win a game"
+          ],
+          "Table Tennis": [
+            "Singles or doubles format",
+            "Best of 5 or 7 games to 11 points",
+            "Service alternates every 2 points",
+            "Let serves do not count",
+            "2-point lead required to win a game"
+          ],
+          "Chess": [
+            "FIDE standard rules apply",
+            "Time control as specified by organizer",
+            "Touch-move rule applies",
+            "Draw offers allowed",
+            "Arbiter decisions are final"
+          ]
+        };
+        
+        const rules = sportRulesMap[sport.name] || [
+          "All participants must follow tournament guidelines",
+          "Punctuality is mandatory for all matches",
+          "Fair play and sportsmanship expected",
+          "Organizer decisions are final"
+        ];
+
+        const tournamentData = {
+          name: `${sport.name} ${tournamentType} ${new Date().getFullYear()} - ${city}`,
+          sport: sport._id,
+          organizer: organizer._id,
+          format,
+          description: isTeamBased 
+            ? `Prestigious ${sport.name} team tournament featuring the best teams from the region`
+            : `Individual ${sport.name} tournament featuring talented players from the region`,
+          teamLimit: isTeamBased ? (Math.floor(Math.random() * 8) + 8) : Math.floor(Math.random() * 16) + 16,
+          playersPerTeam,
+          rules,
+          registrationType,
+          gender: tournamentGender,
+          registrationStart,
+          registrationEnd,
+          startDate,
+          endDate,
+          entryFee: Math.floor(Math.random() * 50) * 1000,
+          prizePool: `${Math.floor(Math.random() * 50) * 10000}`,
+          ground: {
+            name: `${city} Sports Complex`,
+            city: city,
+            address: `${city} Main Road, ${city}, Gujarat`
+          },
+          bannerUrl: `https://images.unsplash.com/photo-${['1517649763962-0c623066013b', '1461896836934-ffe607ba8211', '1519861155730-972f87d2b8f1', '1574629810360-7efbbe195018', '1546608235-3a3099921008'][Math.floor(Math.random() * 5)]}?w=1200&h=400&fit=crop`,
+          isActive: true,
+          registeredTeams: [],
+          approvedTeams: [],
+          registeredPlayers: [],
+          approvedPlayers: []
+        };
+        
+        tournamentPromises.push(tournamentData);
+        tournamentStatusMap.set(tournamentData.name, { status, isTeamBased, sport });
       }
-    ]);
+    }
+
+    const tournaments = await Tournament.create(tournamentPromises);
     console.log(`✅ Created ${tournaments.length} tournaments`);
 
-    // ========== SEED MATCHES ==========
-    const matches = await Match.create([
-      // Live Matches
-      {
-        tournament: tournaments[0]._id,
-        sport: cricket._id,
-        ground: {
-          name: "Narendra Modi Stadium",
-          city: "Ahmedabad",
-          address: "Sardar Patel Stadium, Motera, Ahmedabad, Gujarat 380005"
-        },
-        teamA: teams[0]._id,
-        teamB: teams[1]._id,
-        scheduledAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
-        status: "Live",
-        teamAScore: 145,
-        teamBScore: 98,
-        scoreA: "145/3 (15.2 overs)",
-        scoreB: "98/5 (12 overs)",
-        resultText: "Match in progress"
-      },
-      {
-        tournament: tournaments[1]._id,
-        sport: football._id,
-        ground: {
-          name: "EKA Arena",
-          city: "Ahmedabad",
-          address: "EKA Arena, Tragad, Ahmedabad, Gujarat 382421"
-        },
-        teamA: teams[2]._id,
-        teamB: teams[3]._id,
-        scheduledAt: new Date(now.getTime() - 1 * 60 * 60 * 1000),
-        status: "Live",
-        teamAScore: 2,
-        teamBScore: 1,
-        scoreA: "2 goals",
-        scoreB: "1 goal",
-        resultText: "2nd Half - 65'"
-      },
-      // Scheduled Upcoming Matches
-      {
-        tournament: tournaments[0]._id,
-        sport: cricket._id,
-        ground: {
-          name: "Narendra Modi Stadium",
-          city: "Ahmedabad",
-          address: "Sardar Patel Stadium, Motera, Ahmedabad, Gujarat 380005"
-        },
-        teamA: teams[0]._id,
-        teamB: teams[1]._id,
-        scheduledAt: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000),
-        status: "Scheduled"
-      },
-      {
-        tournament: tournaments[0]._id,
-        sport: cricket._id,
-        ground: {
-          name: "Saurashtra Cricket Association Stadium",
-          city: "Rajkot",
-          address: "Khandheri Road, Rajkot, Gujarat 360005"
-        },
-        teamA: teams[0]._id,
-        teamB: teams[1]._id,
-        scheduledAt: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000),
-        status: "Scheduled"
-      },
-      {
-        tournament: tournaments[0]._id,
-        sport: cricket._id,
-        ground: {
-          name: "Narendra Modi Stadium",
-          city: "Ahmedabad",
-          address: "Sardar Patel Stadium, Motera, Ahmedabad, Gujarat 380005"
-        },
-        teamA: teams[0]._id,
-        teamB: teams[1]._id,
-        scheduledAt: new Date(now.getTime() + 8 * 24 * 60 * 60 * 1000),
-        status: "Scheduled"
-      },
-      {
-        tournament: tournaments[1]._id,
-        sport: football._id,
-        ground: {
-          name: "TransStadia Arena",
-          city: "Ahmedabad",
-          address: "Bhat, Ahmedabad, Gujarat 382428"
-        },
-        teamA: teams[2]._id,
-        teamB: teams[3]._id,
-        scheduledAt: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
-        status: "Scheduled"
-      },
-      {
-        tournament: tournaments[1]._id,
-        sport: football._id,
-        ground: {
-          name: "EKA Arena",
-          city: "Ahmedabad",
-          address: "EKA Arena, Tragad, Ahmedabad, Gujarat 382421"
-        },
-        teamA: teams[2]._id,
-        teamB: teams[3]._id,
-        scheduledAt: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
-        status: "Scheduled"
-      },
-      {
-        tournament: tournaments[1]._id,
-        sport: football._id,
-        ground: {
-          name: "Rajkot Municipal Corporation Stadium",
-          city: "Rajkot",
-          address: "Race Course Ring Road, Rajkot, Gujarat 360001"
-        },
-        teamA: teams[2]._id,
-        teamB: teams[3]._id,
-        scheduledAt: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000),
-        status: "Scheduled"
-      },
-      {
-        tournament: tournaments[2]._id,
-        sport: basketball._id,
-        ground: {
-          name: "Ahmedabad Indoor Sports Complex",
-          city: "Ahmedabad",
-          address: "Maninagar, Ahmedabad, Gujarat 380008"
-        },
-        teamA: teams[4]._id,
-        teamB: teams[5]._id,
-        scheduledAt: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000),
-        status: "Scheduled"
-      },
-      {
-        tournament: tournaments[2]._id,
-        sport: basketball._id,
-        ground: {
-          name: "Rajkot Sports Complex",
-          city: "Rajkot",
-          address: "University Road, Rajkot, Gujarat 360005"
-        },
-        teamA: teams[4]._id,
-        teamB: teams[5]._id,
-        scheduledAt: new Date(now.getTime() + 18 * 24 * 60 * 60 * 1000),
-        status: "Scheduled"
-      },
-      {
-        tournament: tournaments[2]._id,
-        sport: basketball._id,
-        ground: {
-          name: "Vadodara Sports Arena",
-          city: "Vadodara",
-          address: "Alkapuri, Vadodara, Gujarat 390007"
-        },
-        teamA: teams[4]._id,
-        teamB: teams[5]._id,
-        scheduledAt: new Date(now.getTime() + 22 * 24 * 60 * 60 * 1000),
-        status: "Scheduled"
-      },
-      // Completed Matches with scores
-      {
-        tournament: tournaments[3]._id,
-        sport: cricket._id,
-        ground: {
-          name: "Narendra Modi Stadium",
-          city: "Ahmedabad",
-          address: "Sardar Patel Stadium, Motera, Ahmedabad, Gujarat 380005"
-        },
-        teamA: teams[0]._id,
-        teamB: teams[1]._id,
-        scheduledAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
-        status: "Completed",
-        teamAScore: 185,
-        teamBScore: 178,
-        scoreA: "185/7 (20 overs)",
-        scoreB: "178/9 (20 overs)",
-        resultText: "Team Gujarat Warriors won by 7 runs",
-        manOfTheMatch: players[0]._id
-      },
-      {
-        tournament: tournaments[3]._id,
-        sport: cricket._id,
-        ground: {
-          name: "Saurashtra Cricket Association Stadium",
-          city: "Rajkot",
-          address: "Khandheri Road, Rajkot, Gujarat 360005"
-        },
-        teamA: teams[0]._id,
-        teamB: teams[1]._id,
-        scheduledAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000),
-        status: "Completed",
-        teamAScore: 210,
-        teamBScore: 195,
-        scoreA: "210/5 (20 overs)",
-        scoreB: "195/8 (20 overs)",
-        resultText: "Team Gujarat Warriors won by 15 runs",
-        manOfTheMatch: players[1]._id
-      },
-      {
-        tournament: tournaments[3]._id,
-        sport: cricket._id,
-        ground: {
-          name: "Moti Bagh Stadium",
-          city: "Vadodara",
-          address: "Moti Bagh, Vadodara, Gujarat 390001"
-        },
-        teamA: teams[0]._id,
-        teamB: teams[1]._id,
-        scheduledAt: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000),
-        status: "Completed",
-        teamAScore: 175,
-        teamBScore: 180,
-        scoreA: "175/9 (20 overs)",
-        scoreB: "180/6 (19.3 overs)",
-        resultText: "Team Surat Strikers won by 4 wickets",
-        manOfTheMatch: players[2]._id
+    // ========== REGISTER AND APPROVE TEAMS IN TOURNAMENTS ==========
+    console.log(`\n📋 Tournament Registration Details:`);
+    for (let i = 0; i < tournaments.length; i++) {
+      const tournament = tournaments[i];
+      const tournamentInfo = tournamentStatusMap.get(tournament.name);
+      
+      // Only register teams if tournament is team-based
+      if (tournamentInfo && tournamentInfo.isTeamBased) {
+        const relatedTeams = teams.filter(t => t.sport.toString() === tournament.sport.toString());
+        
+        if (relatedTeams.length > 0) {
+          // Register 40-60% of related teams (no qualifying filter)
+          const numTeamsToRegister = Math.ceil(relatedTeams.length * (0.4 + Math.random() * 0.2));
+          const registeredTeams = relatedTeams.slice(0, numTeamsToRegister);
+          
+          // For Live and Completed tournaments, approve all registered teams
+          const approvedTeams = (tournamentInfo.status === "Live" || tournamentInfo.status === "Completed") 
+            ? registeredTeams 
+            : registeredTeams.slice(0, Math.ceil(registeredTeams.length * 0.5)); // For Upcoming, approve 50%
+          
+          // Update tournament with registered and approved teams
+          await Tournament.findByIdAndUpdate(tournament._id, {
+            registeredTeams: registeredTeams.map(t => t._id),
+            approvedTeams: approvedTeams.map(t => t._id),
+            status: tournamentInfo.status
+          });
+          
+          console.log(`   📍 ${tournament.name}`);
+          console.log(`      - Status: ${tournamentInfo.status}`);
+          console.log(`      - Players Required/Team: ${tournament.playersPerTeam}`);
+          console.log(`      - Total Teams for Sport: ${relatedTeams.length}`);
+          console.log(`      - Registered Teams: ${registeredTeams.length}`);
+          console.log(`      - Approved Teams: ${approvedTeams.length}`);
+        }
       }
-    ]);
-    console.log(`✅ Created ${matches.length} matches`);
+      
+      // Register and approve players for individual player tournaments
+      if (tournamentInfo && !tournamentInfo.isTeamBased) {
+        const relatedPlayers = players.filter(p => 
+          p.sports.some(s => s.sport.toString() === tournament.sport.toString())
+        );
+        
+        if (relatedPlayers.length > 0) {
+          // Register 40-60% of related players
+          const numPlayersToRegister = Math.floor(relatedPlayers.length * (0.4 + Math.random() * 0.2));
+          const registeredPlayers = relatedPlayers.slice(0, numPlayersToRegister);
+          
+          // For Live and Completed tournaments, approve all registered players
+          const approvedPlayers = (tournamentInfo.status === "Live" || tournamentInfo.status === "Completed") 
+            ? registeredPlayers 
+            : registeredPlayers.slice(0, Math.ceil(registeredPlayers.length * 0.5)); // For Upcoming, approve 50%
+          
+          // Update tournament with registered and approved players
+          await Tournament.findByIdAndUpdate(tournament._id, {
+            registeredPlayers: registeredPlayers.map(p => p._id),
+            approvedPlayers: approvedPlayers.map(p => p._id),
+            status: tournamentInfo.status
+          });
+          
+          console.log(`   📍 ${tournament.name}`);
+          console.log(`      - Status: ${tournamentInfo.status}`);
+          console.log(`      - Total Players for Sport: ${relatedPlayers.length}`);
+          console.log(`      - Registered Players: ${registeredPlayers.length}`);
+          console.log(`      - Approved Players: ${approvedPlayers.length}`);
+        }
+      }
+    }
+    console.log(`✅ Registered and approved teams/players in tournaments`);
+
+    // Reload tournaments to get updated registrations/approvals for match creation
+    const refreshedTournaments = await Tournament.find({}).lean();
+
+    // ========== SEED MATCHES (Only for Live/Completed tournaments with approved teams) ==========
+    const matchPromises = [];
+    
+    for (let i = 0; i < refreshedTournaments.length; i++) {
+      const tournament = refreshedTournaments[i];
+      const tournamentInfo = tournamentStatusMap.get(tournament.name);
+      
+      // Only create matches for Live and Completed tournaments
+      if (tournamentInfo && (tournamentInfo.status === "Live" || tournamentInfo.status === "Completed")) {
+        let matchTeams = [];
+        
+        if (tournamentInfo.isTeamBased) {
+          // Create matches between approved teams
+          matchTeams = teams.filter(t => 
+            tournament.approvedTeams.some(at => at.toString() === t._id.toString())
+          );
+        }
+        
+        // Only create matches if there are enough approved teams (at least 2)
+        if (matchTeams.length >= 2) {
+          const numMatches = Math.floor(Math.random() * 6) + 3; // 3-8 matches
+          
+          for (let m = 0; m < numMatches; m++) {
+            const team1Index = Math.floor(Math.random() * matchTeams.length);
+            let team2Index = Math.floor(Math.random() * matchTeams.length);
+            while (team2Index === team1Index && matchTeams.length > 1) {
+              team2Index = Math.floor(Math.random() * matchTeams.length);
+            }
+            
+            const matchDate = new Date(tournament.startDate.getTime() + Math.random() * (tournament.endDate.getTime() - tournament.startDate.getTime()));
+            const matchStatus = matchDate < now ? (Math.random() > 0.3 ? "Completed" : "Live") : "Scheduled";
+
+            matchPromises.push({
+              tournament: tournament._id,
+              sport: tournament.sport,
+              teamA: matchTeams[team1Index]._id,
+              teamB: matchTeams[team2Index]._id,
+              scheduledAt: matchDate,
+              ground: tournament.ground,
+              status: matchStatus
+            });
+          }
+        }
+      }
+    }
+
+    if (matchPromises.length > 0) {
+      await Match.create(matchPromises);
+      console.log(`✅ Created ${matchPromises.length} matches (fixtures)`);
+    }
 
     // ========== SEED PAYMENTS ==========
-    const payments = await Payment.create([
-      {
-        tournament: tournaments[0]._id,
-        team: teams[0]._id,
-        payerType: "Team",
-        organizer: organizers[0]._id,
-        amount: 50000,
-        currency: "INR",
-        status: "Success",
-        provider: "Razorpay",
-        transactionId: "pay_" + Math.random().toString(36).substr(2, 9)
-      },
-      {
-        tournament: tournaments[0]._id,
-        team: teams[1]._id,
-        payerType: "Team",
-        organizer: organizers[0]._id,
-        amount: 50000,
-        currency: "INR",
-        status: "Success",
-        provider: "Razorpay",
-        transactionId: "pay_" + Math.random().toString(36).substr(2, 9)
-      },
-      {
-        tournament: tournaments[1]._id,
-        team: teams[2]._id,
-        payerType: "Team",
-        organizer: organizers[1]._id,
-        amount: 30000,
-        currency: "INR",
-        status: "Success",
-        provider: "Razorpay",
-        transactionId: "pay_" + Math.random().toString(36).substr(2, 9)
-      },
-      {
-        tournament: tournaments[1]._id,
-        team: teams[3]._id,
-        payerType: "Team",
-        organizer: organizers[1]._id,
-        amount: 30000,
-        currency: "INR",
-        status: "Pending",
-        provider: "Razorpay"
+    const paymentPromises = [];
+    const paymentStatuses = ["Success", "Pending", "Failed", "Refunded"];
+    const paymentProviders = ["Razorpay", "PayPal", "Stripe", "Google Pay"];
+    
+    // Team payments
+    for (let i = 0; i < Math.min(15, tournaments.length); i++) {
+      const randomTournament = tournaments[Math.floor(Math.random() * tournaments.length)];
+      const randomTeam = teams.filter(t => t.sport.toString() === randomTournament.sport.toString())[0];
+      const randomOrganizer = organizers[Math.floor(Math.random() * organizers.length)];
+      
+      if (randomTeam) {
+        paymentPromises.push({
+          tournament: randomTournament._id,
+          team: randomTeam._id,
+          payerType: "Team",
+          organizer: randomOrganizer._id,
+          amount: Math.floor(Math.random() * 40) * 1000 + 10000,
+          currency: "INR",
+          status: getRandomElement(paymentStatuses),
+          provider: getRandomElement(paymentProviders),
+          providerPaymentId: "pay_" + Math.random().toString(36).substr(2, 12)
+        });
       }
-    ]);
+    }
+    
+    // Player payments
+    for (let i = 0; i < Math.min(10, tournaments.length); i++) {
+      const randomTournament = tournaments[Math.floor(Math.random() * tournaments.length)];
+      const randomPlayer = players[Math.floor(Math.random() * players.length)];
+      const randomOrganizer = organizers[Math.floor(Math.random() * organizers.length)];
+      
+      paymentPromises.push({
+        tournament: randomTournament._id,
+        player: randomPlayer._id,
+        payerType: "Player",
+        organizer: randomOrganizer._id,
+        amount: Math.floor(Math.random() * 10) * 1000 + 1000,
+        currency: "INR",
+        status: getRandomElement(paymentStatuses),
+        provider: getRandomElement(paymentProviders),
+        providerPaymentId: "pay_" + Math.random().toString(36).substr(2, 12)
+      });
+    }
+    
+    const payments = await Payment.create(paymentPromises);
     console.log(`✅ Created ${payments.length} payments`);
 
-    // ========== SEED FEEDBACK (Website Reviews) ==========
+    // ========== SEED FEEDBACK ==========
     const feedbacks = await Feedback.create([
       {
         user: players[0]._id,
         rating: 5,
-        comment: "Amazing platform! Makes organizing and joining tournaments so easy. The interface is intuitive and the features are exactly what we needed."
-      },
-      {
-        user: players[1]._id,
-        rating: 4,
-        comment: "Great experience using SportsHub. Love how I can track all my matches and tournaments in one place. Highly recommend!"
+        comment: "Amazing platform! Makes organizing and joining tournaments so easy."
       },
       {
         user: managers[0]._id,
         rating: 5,
-        comment: "As a team manager, this platform has been a game-changer. Managing my team and tournament registrations has never been easier!"
-      },
-      {
-        user: players[5]._id,
-        rating: 5,
-        comment: "Excellent platform for sports enthusiasts! The live match updates and tournament tracking features are phenomenal."
+        comment: "As a team manager, this platform has been a game-changer!"
       },
       {
         user: organizers[0]._id,
         rating: 5,
-        comment: "SportsHub has revolutionized how we organize tournaments. The scheduling, team management, and match tracking features are top-notch!"
+        comment: "SportsHub has revolutionized how we organize tournaments."
       }
     ]);
     console.log(`✅ Created ${feedbacks.length} feedback entries`);
 
-    // ========== SEED REQUESTS (Player/Team Requests) ==========
-    const requests = await Request.create([
-      // PLAYER_TO_TEAM requests
-      {
+    // ========== SEED REQUESTS ==========
+    const requestPromises = [];
+    
+    // Specific requests for Arjun Patel organizer (first organizer - arjunpatel0@gmail.com)
+    // Authorization request to admin
+    requestPromises.push({
+      requestType: "ORGANIZER_AUTHORIZATION",
+      sender: organizers[0]._id,
+      receiver: admin._id,
+      status: "PENDING",
+      message: `Authorization request for organizing tournaments from ${organizers[0].fullName}`
+    });
+    
+    // Specific requests for Arjun Patel player (first player - arjunpatel200@gmail.com)
+    // Player to Team requests (sent by Arjun the player)
+    if (teams.length > 0) {
+      requestPromises.push({
         requestType: "PLAYER_TO_TEAM",
         sender: players[0]._id,
         receiver: managers[0]._id,
         team: teams[0]._id,
         status: "PENDING",
-        message: "I am interested in joining Gujarat Warriors. I have 8 years of cricket experience and am a great all-rounder.",
-        createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "PLAYER_TO_TEAM",
-        sender: players[4]._id,
-        receiver: managers[1]._id,
-        team: teams[1]._id,
-        status: "PENDING",
-        message: "Looking to play for Surat Strikers. I'm a dedicated all-rounder with tournament experience.",
-        createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "PLAYER_TO_TEAM",
-        sender: players[5]._id,
-        receiver: managers[1]._id,
-        team: teams[3]._id,
-        status: "ACCEPTED",
-        message: "I'd like to join Ahmedabad FC. I'm a striker with 6 years of professional experience.",
-        createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "PLAYER_TO_TEAM",
-        sender: players[8]._id,
-        receiver: managers[2]._id,
-        team: teams[4]._id,
-        status: "REJECTED",
-        message: "I'm interested in playing for Baroda United. I'm a experienced defender.",
-        createdAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "PLAYER_TO_TEAM",
-        sender: players[10]._id,
-        receiver: managers[2]._id,
-        team: teams[5]._id,
-        status: "ACCEPTED",
-        message: "Interested in joining Rajkot Riders basketball team as a forward.",
-        createdAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "PLAYER_TO_TEAM",
-        sender: players[13]._id,
-        receiver: managers[3]._id,
-        team: teams[6]._id,
-        status: "PENDING",
-        message: "Would love to be a part of Gandhinagar Giants. I'm a skilled center.",
-        createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
-      },
-      // TEAM_TO_PLAYER requests
-      {
-        requestType: "TEAM_TO_PLAYER",
-        sender: managers[0]._id,
-        receiver: players[2]._id,
-        team: teams[0]._id,
-        status: "PENDING",
-        message: "We've been impressed by your performance. Would you like to join Gujarat Warriors?",
-        createdAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "TEAM_TO_PLAYER",
-        sender: managers[1]._id,
-        receiver: players[3]._id,
-        team: teams[1]._id,
-        status: "ACCEPTED",
-        message: "Your batting skills are exceptional. We'd like to have you in Surat Strikers.",
-        createdAt: new Date(now.getTime() - 9 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "TEAM_TO_PLAYER",
-        sender: managers[2]._id,
-        receiver: players[6]._id,
-        team: teams[4]._id,
-        status: "PENDING",
-        message: "We're looking for an experienced defender. Your profile caught our attention.",
-        createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "TEAM_TO_PLAYER",
-        sender: managers[3]._id,
-        receiver: players[12]._id,
-        team: teams[6]._id,
-        status: "REJECTED",
-        message: "We'd like you to join our basketball team.",
-        createdAt: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "TEAM_TO_PLAYER",
-        sender: managers[4]._id,
-        receiver: players[9]._id,
-        team: teams[8]._id,
-        status: "ACCEPTED",
-        message: "You're exactly what we need for Vadodara Volley Kings. Please join us!",
-        createdAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "TEAM_TO_PLAYER",
-        sender: managers[5]._id,
-        receiver: players[14]._id,
-        team: teams[9]._id,
-        status: "PENDING",
-        message: "We're building Gandhinagar Spikers and need talented players like you.",
-        createdAt: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000)
-      },
-      // ORGANIZER_AUTHORIZATION requests
-      {
-        requestType: "ORGANIZER_AUTHORIZATION",
-        sender: admin._id,
-        receiver: organizers[0]._id,
-        status: "PENDING",
-        message: "Your organizer profile is under review. Please provide additional documentation if needed.",
-        createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "ORGANIZER_AUTHORIZATION",
-        sender: admin._id,
-        receiver: organizers[1]._id,
-        status: "ACCEPTED",
-        message: "Your authorization has been approved. You can now create tournaments.",
-        createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "ORGANIZER_AUTHORIZATION",
-        sender: admin._id,
-        receiver: organizers[2]._id,
-        status: "REJECTED",
-        message: "Your authorization request has been rejected. Please contact support for more details.",
-        createdAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)
-      },
-      // TOURNAMENT_BOOKING requests
-      {
-        requestType: "TOURNAMENT_BOOKING",
-        sender: managers[0]._id,
-        receiver: organizers[0]._id,
-        tournament: tournaments[0]._id,
-        bookingEntity: teams[0]._id,
-        status: "PENDING",
-        message: "We'd like to book Gujarat Warriors for the Gujarat Cricket Championship 2026.",
-        createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "TOURNAMENT_BOOKING",
-        sender: managers[1]._id,
-        receiver: organizers[0]._id,
-        tournament: tournaments[0]._id,
-        bookingEntity: teams[1]._id,
-        status: "ACCEPTED",
-        message: "Surat Strikers would like to participate in the tournament.",
-        createdAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "TOURNAMENT_BOOKING",
-        sender: players[0]._id,
-        receiver: organizers[1]._id,
-        tournament: tournaments[2]._id,
-        status: "PENDING",
-        message: "I would like to register as an individual player for Vadodara Football Carnival.",
-        createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "TOURNAMENT_BOOKING",
-        sender: managers[2]._id,
-        receiver: organizers[1]._id,
-        tournament: tournaments[2]._id,
-        bookingEntity: teams[4]._id,
-        status: "REJECTED",
-        message: "Baroda United wants to participate in Vadodara Football Carnival.",
-        createdAt: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000)
-      },
-      {
-        requestType: "TOURNAMENT_BOOKING",
-        sender: players[5]._id,
-        receiver: organizers[2]._id,
-        tournament: tournaments[4]._id,
-        status: "ACCEPTED",
-        message: "I'm interested in the Basketball Tournament 2026.",
-        createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)
+        message: `I'm interested in joining your team - ${players[0].fullName}`
+      });
+      
+      if (teams.length > 1) {
+        requestPromises.push({
+          requestType: "PLAYER_TO_TEAM",
+          sender: players[0]._id,
+          receiver: managers[1]._id,
+          team: teams[1]._id,
+          status: "ACCEPTED",
+          message: `I would like to be part of your team - ${players[0].fullName}`
+        });
       }
-    ]);
-    console.log(`✅ Created ${requests.length} total requests`);
-
-    // ========== SEED BOOKINGS (Tournament Registrations) ==========
-    const bookings = await Booking.create([
-      // Team Bookings - Successful
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: managers[0]._id,
-        tournament: tournaments[0]._id,
-        team: teams[0]._id,
-        registrationType: "Team",
-        amount: 50000,
-        status: "Confirmed",
-        paymentStatus: "Success",
-        createdAt: new Date(now.getTime() - 25 * 24 * 60 * 60 * 1000)
-      },
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: managers[1]._id,
-        tournament: tournaments[0]._id,
-        team: teams[1]._id,
-        registrationType: "Team",
-        amount: 50000,
-        status: "Confirmed",
-        paymentStatus: "Success",
-        createdAt: new Date(now.getTime() - 23 * 24 * 60 * 60 * 1000)
-      },
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: managers[1]._id,
-        tournament: tournaments[1]._id,
+    }
+    
+    // Team to Player requests (received by Arjun the player)
+    if (teams.length > 2) {
+      requestPromises.push({
+        requestType: "TEAM_TO_PLAYER",
+        sender: managers[2]._id,
+        receiver: players[0]._id,
         team: teams[2]._id,
-        registrationType: "Team",
-        amount: 30000,
-        status: "Confirmed",
-        paymentStatus: "Success",
-        createdAt: new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000)
-      },
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: managers[2]._id,
-        tournament: tournaments[1]._id,
-        team: teams[3]._id,
-        registrationType: "Team",
-        amount: 30000,
-        status: "Confirmed",
-        paymentStatus: "Success",
-        createdAt: new Date(now.getTime() - 18 * 24 * 60 * 60 * 1000)
-      },
-      // Team Bookings - Pending Payment
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: managers[2]._id,
-        tournament: tournaments[3]._id,
-        team: teams[4]._id,
-        registrationType: "Team",
-        amount: 40000,
-        status: "Pending",
-        paymentStatus: "Pending",
-        createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)
-      },
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: managers[3]._id,
-        tournament: tournaments[3]._id,
-        team: teams[5]._id,
-        registrationType: "Team",
-        amount: 40000,
-        status: "Pending",
-        paymentStatus: "Pending",
-        createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000)
-      },
-      // Team Bookings - Cancelled
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: managers[4]._id,
-        tournament: tournaments[4]._id,
-        team: teams[6]._id,
-        registrationType: "Team",
-        amount: 35000,
-        status: "Cancelled",
-        paymentStatus: "Refunded",
-        createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000)
-      },
-      // Player Bookings - Successful (Individual Tournaments)
-      {
+        status: "PENDING",
+        message: `We'd like to invite you to join our team!`
+      });
+    }
+    
+    // Player to Team requests
+    for (let i = 1; i < Math.min(15, players.length); i++) {
+      const randomPlayer = players[i];
+      const randomManager = managers[Math.floor(Math.random() * managers.length)];
+      const randomTeam = teams.filter(t => t.manager.toString() === randomManager._id.toString())[0];
+      
+      if (randomTeam) {
+        requestPromises.push({
+          requestType: "PLAYER_TO_TEAM",
+          sender: randomPlayer._id,
+          receiver: randomManager._id,
+          team: randomTeam._id,
+          status: getRandomElement(["PENDING", "ACCEPTED", "REJECTED"]),
+          message: `I'm interested in joining your team as a ${randomTeam.name}`
+        });
+      }
+    }
+    
+    // Team to Player requests
+    for (let i = 0; i < Math.min(10, managers.length); i++) {
+      const randomManager = managers[i];
+      const randomPlayer = players[Math.floor(Math.random() * players.length)];
+      const randomTeam = teams.filter(t => t.manager.toString() === randomManager._id.toString())[0];
+      
+      if (randomTeam) {
+        requestPromises.push({
+          requestType: "TEAM_TO_PLAYER",
+          sender: randomManager._id,
+          receiver: randomPlayer._id,
+          team: randomTeam._id,
+          status: getRandomElement(["PENDING", "ACCEPTED", "REJECTED"]),
+          message: `We'd like to invite you to join our team!`
+        });
+      }
+    }
+    
+    // Tournament Booking requests
+    for (let i = 0; i < Math.min(8, tournaments.length); i++) {
+      const randomTournament = tournaments[i];
+      const randomTeam = teams.filter(t => t.sport.toString() === randomTournament.sport.toString())[0];
+      const randomManager = managers.find(m => m._id.toString() === randomTeam?.manager.toString());
+      
+      if (randomManager && randomTeam) {
+        requestPromises.push({
+          requestType: "TOURNAMENT_BOOKING",
+          sender: randomManager._id,
+          receiver: organizers[Math.floor(Math.random() * organizers.length)]._id,
+          tournament: randomTournament._id,
+          bookingEntity: randomTeam._id,
+          status: getRandomElement(["PENDING", "ACCEPTED", "REJECTED"]),
+          message: `Team booking request for ${randomTournament.name}`
+        });
+      }
+    }
+    
+    // Organizer Authorization requests (skip first organizer as we already added specific request)
+    for (let i = 1; i < 5 && i < organizers.length; i++) {
+      const randomOrganizer = organizers[i];
+      requestPromises.push({
+        requestType: "ORGANIZER_AUTHORIZATION",
+        sender: randomOrganizer._id,
+        receiver: admin._id,
+        status: getRandomElement(["PENDING", "ACCEPTED", "REJECTED"]),
+        message: `Authorization request for organizing tournaments`
+      });
+    }
+    
+    const requests = await Request.create(requestPromises);
+    console.log(`✅ Created ${requests.length} requests`);
+
+    // ========== SEED BOOKINGS ==========
+    const bookingPromises = [];
+    const bookingStatuses = ["Pending", "Confirmed", "Cancelled"];
+    const bookingPaymentStatuses = ["Pending", "Success", "Failed"];
+    
+    // Specific bookings for Arjun Patel player (first player - arjunpatel200@gmail.com)
+    if (tournaments.length > 0) {
+      bookingPromises.push({
         bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
         user: players[0]._id,
-        tournament: tournaments[2]._id,
+        tournament: tournaments[0]._id,
         player: players[0]._id,
         registrationType: "Player",
-        amount: 2000,
+        amount: tournaments[0].entryFee || 2000,
         status: "Confirmed",
-        paymentStatus: "Success",
-        createdAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000)
-      },
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: players[5]._id,
-        tournament: tournaments[2]._id,
-        player: players[5]._id,
-        registrationType: "Player",
-        amount: 2000,
-        status: "Confirmed",
-        paymentStatus: "Success",
-        createdAt: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
-      },
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: players[10]._id,
-        tournament: tournaments[6]._id,
-        player: players[10]._id,
-        registrationType: "Player",
-        amount: 1500,
-        status: "Confirmed",
-        paymentStatus: "Success",
-        createdAt: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000)
-      },
-      // Player Bookings - Pending Payment
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: players[1]._id,
-        tournament: tournaments[6]._id,
-        player: players[1]._id,
-        registrationType: "Player",
-        amount: 1500,
-        status: "Pending",
-        paymentStatus: "Pending",
-        createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
-      },
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: players[11]._id,
-        tournament: tournaments[7]._id,
-        player: players[11]._id,
-        registrationType: "Player",
-        amount: 1000,
-        status: "Pending",
-        paymentStatus: "Pending",
-        createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000)
-      },
-      // Player Bookings - Payment Failed
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: players[3]._id,
-        tournament: tournaments[6]._id,
-        player: players[3]._id,
-        registrationType: "Player",
-        amount: 1500,
-        status: "Confirmed",
-        paymentStatus: "Failed",
-        createdAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000)
-      },
-      // Team Bookings for Completed Tournaments
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: managers[0]._id,
-        tournament: tournaments[9]._id,
-        team: teams[0]._id,
-        registrationType: "Team",
-        amount: 45000,
-        status: "Confirmed",
-        paymentStatus: "Success",
-        createdAt: new Date(now.getTime() - 150 * 24 * 60 * 60 * 1000)
-      },
-      {
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: managers[1]._id,
-        tournament: tournaments[9]._id,
-        team: teams[1]._id,
-        registrationType: "Team",
-        amount: 45000,
-        status: "Confirmed",
-        paymentStatus: "Success",
-        createdAt: new Date(now.getTime() - 148 * 24 * 60 * 60 * 1000)
+        paymentStatus: "Success"
+      });
+      
+      if (tournaments.length > 1) {
+        bookingPromises.push({
+          bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
+          user: players[0]._id,
+          tournament: tournaments[1]._id,
+          player: players[0]._id,
+          registrationType: "Player",
+          amount: tournaments[1].entryFee || 1500,
+          status: "Pending",
+          paymentStatus: "Pending"
+        });
       }
-    ]);
-    console.log(`✅ Created ${bookings.length} tournament bookings (${bookings.filter(b => b.status === "Confirmed").length} confirmed, ${bookings.filter(b => b.status === "Pending").length} pending, ${bookings.filter(b => b.status === "Cancelled").length} cancelled)`);
-
-    // ========== SUMMARY ==========
-    console.log('\n🎉 Database seeded successfully!\n');
-    console.log('📊 Summary:');
-    console.log(`   Sports: ${createdSports.length}`);
-    console.log(`   Tournament Organizers: ${organizers.length}`);
-    console.log(`   Team Managers: ${managers.length}`);
-    console.log(`   Players: ${players.length}`);
-    console.log(`   Teams: ${teams.length}`);
-    console.log(`   Tournaments: ${tournaments.length}`);
-    console.log(`   Matches: ${matches.length}`);
-    console.log(`   Payments: ${payments.length}`);
-    console.log(`   Requests: ${requests.length}`);
-    console.log(`   Bookings: ${bookings.length}`);
-    console.log(`   Feedback: ${feedbacks.length}`);
-    console.log('\n📝 Sample Login Credentials:');
-    console.log('   👤 Admin: admin@gmail.com / Admin123!');
-    console.log('   🏢 Organizer: testorganizer@gmail.com / Password123!');
-    console.log('   👨‍💼 Manager: testmanager@gmail.com / Password123!');
-    console.log('   🏃 Player: testplayer@gmail.com / Password123!');
-    console.log('\n🚀 Next steps:');
-    console.log('   1. Start the server: npm run dev');
-    console.log('   2. Login with any of the above credentials');
-    console.log('   3. Explore the application!');
+    }
     
+    // Team bookings
+    for (let i = 0; i < Math.min(15, teams.length); i++) {
+      const randomTeam = teams[i];
+      const relatedTournaments = tournaments.filter(t => t.sport.toString() === randomTeam.sport.toString());
+      
+      if (relatedTournaments.length > 0) {
+        const randomTournament = relatedTournaments[Math.floor(Math.random() * relatedTournaments.length)];
+        const manager = managers.find(m => m._id.toString() === randomTeam.manager.toString());
+        
+        if (manager) {
+          bookingPromises.push({
+            bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
+            user: manager._id,
+            tournament: randomTournament._id,
+            team: randomTeam._id,
+            registrationType: "Team",
+            amount: randomTournament.entryFee || 50000,
+            status: getRandomElement(bookingStatuses),
+            paymentStatus: getRandomElement(bookingPaymentStatuses)
+          });
+        }
+      }
+    }
+    
+    // Player bookings (skip first player as we already added specific bookings)
+    for (let i = 1; i < Math.min(15, players.length); i++) {
+      const randomPlayer = players[i];
+      const randomTournament = tournaments[Math.floor(Math.random() * tournaments.length)];
+      
+      bookingPromises.push({
+        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
+        user: randomPlayer._id,
+        tournament: randomTournament._id,
+        player: randomPlayer._id,
+        registrationType: "Player",
+        amount: Math.floor(Math.random() * 5) * 1000 + 500,
+        status: getRandomElement(bookingStatuses),
+        paymentStatus: getRandomElement(bookingPaymentStatuses)
+      });
+    }
+    
+    const bookings = await Booking.create(bookingPromises);
+    console.log(`✅ Created ${bookings.length} bookings`);
+
+    // ========== FINAL SUMMARY & CREDENTIALS ==========
+    console.log('\n🎉 DATABASE SEEDING COMPLETED SUCCESSFULLY!\n');
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('📋 LOGIN CREDENTIALS FOR TESTING');
+    console.log('═══════════════════════════════════════════════════════════════\n');
+
+    // Sample Player
+    console.log('👤 SAMPLE PLAYER:');
+    console.log(`   Email: ${players[0].email}`);
+    console.log(`   Password: Password123!`);
+    console.log(`   Sports: ${players[0].sports.map(s => {
+      const sportName = createdSports.find(sp => sp._id.toString() === s.sport.toString())?.name;
+      return `${sportName} (${s.role})`;
+    }).join(', ')}`);
+    console.log(`   City: ${players[0].city}\n`);
+
+    // Sample Organizer
+    console.log('🏢 SAMPLE ORGANIZER:');
+    console.log(`   Email: ${organizers[0].email}`);
+    console.log(`   Password: Password123!`);
+    console.log(`   Organization: ${organizers[0].orgName}`);
+    console.log(`   City: ${organizers[0].city}\n`);
+
+    // Sample Team Manager
+    console.log('👔 SAMPLE TEAM MANAGER:');
+    console.log(`   Email: ${managers[0].email}`);
+    console.log(`   Password: Password123!`);
+    console.log(`   City: ${managers[0].city}`);
+    console.log(`   Teams Managed: ${teams.filter(t => t.manager.toString() === managers[0]._id.toString()).length}\n`);
+
+    console.log('═══════════════════════════════════════════════════════════════\n');
+    
+    console.log('📊 COMPLETE SUMMARY:');
+    console.log(`   ✅ Sports: ${createdSports.length}`);
+    console.log(`   ✅ Admin: 1`);
+    console.log(`   ✅ Tournament Organizers: ${organizers.length}`);
+    console.log(`   ✅ Team Managers: ${managers.length}`);
+    console.log(`   ✅ Players: ${players.length}`);
+    console.log(`   ✅ Teams: ${teams.length}`);
+    console.log(`   ✅ Tournaments: ${tournaments.length}`);
+    console.log(`   ✅ Matches: ${matchPromises.length}`);
+    console.log(`   ✅ Payments: ${payments.length}`);
+    console.log(`   ✅ Requests: ${requests.length}`);
+    console.log(`   ✅ Bookings: ${bookings.length}`);
+    console.log(`   ✅ Feedback: ${feedbacks.length}\n`);
+    
+    console.log('═══════════════════════════════════════════════════════════════\n');
+
     process.exit(0);
   } catch (error) {
     console.error('❌ Error seeding database:', error);

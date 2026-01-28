@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-// import videoUrl from "../../../../../vid1.mp4";
+import videoUrl from "../../../../../vid1.mp4";
 import axios from "axios";
 import { motion } from "framer-motion";
 import TournamentCard from "../../components/ui/TournamentCard";
@@ -10,8 +10,10 @@ import FeedbackForm from "../../components/ui/FeedbackForm";
 import Button from "../../components/ui/Button";
 import Spinner from "../../components/ui/Spinner";
 import ErrorMessage from "../../components/ui/ErrorMessage";
+import Modal from "../../components/ui/Modal";
 import GridContainer from "../../components/ui/GridContainer";
 import useDateFormat from "../../hooks/useDateFormat";
+import SEO from "../../components/SEO";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
@@ -124,9 +126,17 @@ const Home = () => {
 
   return (
     <div className="relative overflow-hidden">
+      <SEO
+        title="FinalRound.Online - Sports Tournament Management Platform"
+        description="Join FinalRound.Online - the ultimate sports tournament and team management platform. Organize tournaments, manage teams, connect with athletes, and participate in sports events online."
+        keywords="sports tournaments, tournament management, team management, sports events, athlete platform, online sports, finalround.online"
+        image="https://finalround.online/og-image.jpg"
+        url="https://finalround.online"
+        type="website"
+      />
       {/* Hero Section - Video */}
       <div className="relative w-full h-screen overflow-hidden">
-        {/* <video
+        <video
           autoPlay
           loop
           muted
@@ -135,10 +145,10 @@ const Home = () => {
         >
           <source src={videoUrl} type="video/mp4" />
           Your browser does not support the video tag.
-        </video> */}
-        <img src="https://chatgpt.com/backend-api/estuary/content?id=file_000000006ba07209ab726e52c1689451&ts=491434&p=fs&cid=1&sig=4fbd3871b581bf63c715450ee12eabe9037825c3114347a8f2bc6169032eb82b&v=0" alt="" 
+        </video>
+        {/* <img src="https://chatgpt.com/backend-api/estuary/content?id=file_000000006ba07209ab726e52c1689451&ts=491434&p=fs&cid=1&sig=4fbd3871b581bf63c715450ee12eabe9037825c3114347a8f2bc6169032eb82b&v=0" alt="" 
         className="w-full h-full object-cover brightness-50"
-        />
+        /> */}
 
         {/* Hero Section - Content */}
         <div className="absolute inset-0 z-10 container mx-auto px-4 py-3 flex items-center">
@@ -162,14 +172,12 @@ const Home = () => {
             </motion.p>
             {!user && (
               <div className="flex gap-4 flex-wrap">
-                <motion.button
+                <Button
                   onClick={() => navigate("/register")}
-                  className="px-8 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg font-semibold transition-colors shadow-lg"
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.98 }}
+                  className="!w-auto px-8 shadow-lg"
                 >
                   Get Started
-                </motion.button>
+                </Button>
               </div>
             )}
           </motion.div>
@@ -220,16 +228,9 @@ const Home = () => {
             >
               <GridContainer cols={3}>
                 {upcomingTournaments.slice(0, 3).map((tournament) => {
-                  // Map backend data to TournamentCard format
-                  const tournamentData = {
-                    ...tournament,
-                    image: tournament.bannerUrl,
-                    type: tournament.registrationType,
-                    ground: tournament.ground || { city: "TBA" },
-                  };
                   return (
                     <motion.div key={tournament._id} variants={staggerItem}>
-                      <TournamentCard tournament={tournamentData} />
+                      <TournamentCard tournament={tournament} />
                     </motion.div>
                   );
                 })}
@@ -280,16 +281,14 @@ const Home = () => {
           </div>
 
           {showReviewForm && (
-            <div className="mb-8 max-w-2xl mx-auto">
-              <FeedbackForm onSuccess={handleReviewSuccess} />
-              <Button
-                onClick={() => setShowReviewForm(false)}
-                variant="primary"
-                className="w-auto mt-4"
-              >
-                Cancel
-              </Button>
-            </div>
+            <Modal onClose={() => setShowReviewForm(false)}>
+              <div className="p-6">
+                <h3 className="text-2xl font-bold mb-4 text-text-primary dark:text-text-primary-dark">
+                  Write a Review
+                </h3>
+                <FeedbackForm onSuccess={handleReviewSuccess} />
+              </div>
+            </Modal>
           )}
 
           {reviews.length === 0 ? (
@@ -351,14 +350,12 @@ const Home = () => {
               SportsHub has everything you need to succeed.
             </motion.p>
             <div className="flex justify-center">
-              <motion.button
+              <Button
                 onClick={() => navigate("/register")}
-                className="px-10 py-4 bg-secondary hover:bg-secondary/90 text-white rounded-lg font-bold transition-colors shadow-lg text-lg"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.98 }}
+                className="!w-auto px-10 py-4 shadow-lg text-lg"
               >
                 Get Started
-              </motion.button>
+              </Button>
             </div>
           </div>
         </section>

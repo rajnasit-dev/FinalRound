@@ -1,8 +1,7 @@
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  ArrowLeft,
   MapPin,
   Trophy,
   User,
@@ -13,36 +12,25 @@ import {
   Award,
   Users,
   Shield,
-  UserPlus,
-  Send,
 } from "lucide-react";
 import CardStat from "../../components/ui/CardStat";
 import Container from "../../components/container/Container";
 import Spinner from "../../components/ui/Spinner";
-import Button from "../../components/ui/Button";
-import Select from "../../components/ui/Select";
 import AchievementCard from "../../components/ui/AchievementCard";
+import BackButton from "../../components/ui/BackButton";
 import { fetchPlayerById } from "../../store/slices/playerSlice";
-import { fetchManagerTeams } from "../../store/slices/teamSlice";
-import { sendPlayerRequest } from "../../store/slices/requestSlice";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 import defaultCoverImage from "../../assets/defaultCoverImage.png";
 import useDateFormat from "../../hooks/useDateFormat";
 import useAge from "../../hooks/useAge";
-import { showToast } from "../../utils/toast";
 
 const PlayerDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { currentPlayer: player, loading } = useSelector((state) => state.player);
   const { user } = useSelector((state) => state.auth);
-  const { managerTeams } = useSelector((state) => state.team);
-  const { loading: requestLoading } = useSelector((state) => state.request);
   const { formatDate } = useDateFormat();
   const age = useAge(player?.dateOfBirth);
-  const [selectedTeam, setSelectedTeam] = useState("");
-  const [showRequestModal, setShowRequestModal] = useState(false);
-  const [requestMessage, setRequestMessage] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -50,39 +38,6 @@ const PlayerDetail = () => {
       dispatch(fetchPlayerById(id));
     }
   }, [id, dispatch]);
-
-  useEffect(() => {
-    if (user?.role === "TeamManager" && user?._id) {
-      dispatch(fetchManagerTeams(user._id));
-    }
-  }, [user, dispatch]);
-
-  const handleSendRequest = async () => {
-    if (!selectedTeam) {
-      showToast("Please select a team", "warning");
-      return;
-    }
-
-    try {
-      const result = await dispatch(
-        sendPlayerRequest({
-          playerId: id,
-          teamId: selectedTeam,
-          message: requestMessage,
-        })
-      ).unwrap();
-
-      setShowRequestModal(false);
-      setSelectedTeam("");
-      setRequestMessage("");
-      showToast("Request sent successfully!", "success");
-    } catch (error) {
-      showToast(error || "Failed to send request", "error");
-    }
-  };
-
-  const isTeamManager = user?.role === "TeamManager";
-  const isOwnProfile = user?._id === id;
 
   if (loading) {
     return (
@@ -107,8 +62,6 @@ const PlayerDetail = () => {
     );
   }
 
-  const memberSince = formatDate(player.createdAt);
-
   return (
     <div className="min-h-screen pb-16">
       {/* Banner */}
@@ -119,6 +72,11 @@ const PlayerDetail = () => {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-linear-to-t from-black via-black/70 to-black/30"></div>
+
+        {/* Back Button */}
+        <div className="absolute top-6 left-6">
+          <BackButton className="bg-black/50 dark:bg-black/70 border-white/20 text-white hover:bg-black/70 dark:hover:bg-black/90" />
+        </div>
 
         {/* Player Info Overlay */}
         <div className="absolute bottom-0 left-0 right-0 container mx-auto px-6 pb-8">
@@ -148,22 +106,6 @@ const PlayerDetail = () => {
 
               {/* Badges */}
               <div className="flex items-center gap-3 mb-4 flex-wrap">
-                {player.sports &&
-                  player.sports.map((sportItem, index) => {
-                    const sportName = typeof sportItem.sport === 'string' 
-                      ? sportItem.sport 
-                      : sportItem.sport?.name || sportItem.name;
-                    
-                    return (
-                      <span
-                        key={index}
-                        className="bg-accent text-text-primary text-xs sm:text-sm px-4 py-1.5 rounded-full font-bold shadow-lg"
-                      >
-                        {sportName}
-                        {sportItem.role && ` - ${sportItem.role}`}
-                      </span>
-                    );
-                  })}
                 <span className="bg-white/20 backdrop-blur-sm text-white text-xs sm:text-sm px-4 py-1.5 rounded-full font-medium flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
                   {player.city}
@@ -193,9 +135,9 @@ const PlayerDetail = () => {
                 </p>
               </Container>
             )}
-            {/* Player Statistics */}
+            {/* Player Details */}
             <Container>
-              <h2 className="text-2xl font-bold mb-5">Player Information</h2>
+              <h2 className="text-2xl font-bold mb-5">Player Details</h2>
               <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
                 <CardStat
                   Icon={User}
@@ -204,53 +146,37 @@ const PlayerDetail = () => {
                   value={age ? `${age} years` : "N/A"}
                 />
                 <CardStat
-                  Icon={Ruler}
-                  iconColor="text-green-600"
-                  label="Height"
-                  value={`${player.height} cm`}
+                  Icon={User}
+                  iconColor="text-purple-600"
+                  label="Gender"
+                  value={player.gender || "N/A"}
                 />
+                {player.height && (
+                  <CardStat
+                    Icon={Ruler}
+                    iconColor="text-green-600"
+                    label="Height"
+                    value={`${player.height} ft`}
+                  />
+                )}
+                {player.weight && (
                 <CardStat
                   Icon={Weight}
                   iconColor="text-amber-600"
                   label="Weight"
                   value={`${player.weight} kg`}
                 />
+                )}
                 <CardStat
                   Icon={MapPin}
                   iconColor="text-red-600"
-                  label="Location"
+                  label="City"
                   value={player.city}
                 />
               </div>
             </Container>
 
-            {/* Sports & Roles */}
-            <Container>
-              <h2 className="text-2xl font-bold mb-5">Sports & Roles</h2>
-              {player.sports && player.sports.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {player.sports.map((sportItem, index) => {
-                    const sportName =
-                      typeof sportItem === "string"
-                        ? sportItem
-                        : sportItem.sport?.name || sportItem.sport?.sportsName || sportItem.name || sportItem.sportsName || "Sport";
-                    const role = sportItem.role || player.playingRole || "Player";
-
-                    return (
-                      <span
-                        key={`${sportName}-${index}`}
-                        className="bg-secondary text-text-primary text-xs sm:text-sm px-4 py-1.5 rounded-full font-bold shadow-lg"
-                      >
-                        {sportName} • {role}
-                      </span>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-base dark:text-base-dark">No sports added yet.</p>
-              )}
-            </Container>
-
+          
             {/* Achievements */}
             <Container>
               <h2 className="text-2xl font-bold mb-5 flex items-center gap-2">
@@ -260,22 +186,11 @@ const PlayerDetail = () => {
               {player.achievements && player.achievements.length > 0 ? (
                 <div className="space-y-3">
                   {player.achievements.map((achievement, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-900/30"
-                    >
-                      <Trophy className="w-5 h-5 text-amber-600 shrink-0 mt-1" />
-                      <div className="flex-1">
-                        <h4 className="font-semibold mb-1">
-                          {achievement.title}
-                        </h4>
-                        {achievement.year && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {achievement.year}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    <AchievementCard
+                      key={`${achievement.title}-${achievement.year || index}`}
+                      title={achievement.title}
+                      year={achievement.year}
+                    />
                   ))}
                 </div>
               ) : (
@@ -334,113 +249,69 @@ const PlayerDetail = () => {
 
           {/* Right Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Contact Information */}
+            {/* Sports & Roles */}
+            <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-secondary dark:text-secondary-dark" />
+                Sports & Roles
+              </h3>
+              
+              {player.sports && player.sports.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {player.sports.map((sportItem, index) => {
+                    const sportName =
+                      typeof sportItem === "string"
+                        ? sportItem
+                        : sportItem.sport?.name || sportItem.sport?.sportsName || sportItem.name || sportItem.sportsName || "Sport";
+                    const role = sportItem.role || player.playingRole;
+
+                    return (
+                      <span
+                        key={`${sportName}-${role || "no-role"}-${index}`}
+                        className="inline-flex items-center bg-secondary text-text-secondary text-xs sm:text-sm px-4 py-1.5 rounded-full font-bold shadow-lg"
+                      >
+                        {role ? `${sportName} • ${role}` : sportName}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-text-primary/70 dark:text-text-primary-dark/70">
+                  No sports added yet.
+                </p>
+              )}
+            </div>
+
+            {/* Contact Details */}
             <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
               <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-600" />
-                Contact Information
+                Contact Details
               </h3>
               <div className="space-y-3">
                 <a
                   href={`mailto:${player.email}`}
-                  className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+                  className="flex items-center gap-2 text-sm text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors"
                 >
-                  <Mail className="w-5 h-5 text-secondary" />
-                  <span className="text-sm truncate">{player.email}</span>
+                  <Mail className="w-4 h-4 text-secondary dark:text-secondary-dark shrink-0" />
+                  <span className="truncate">{player.email}</span>
                 </a>
                 <a
                   href={`tel:${player.phone}`}
-                  className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+                  className="flex items-center gap-2 text-sm text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors"
                 >
-                  <Phone className="w-5 h-5 text-secondary" />
-                  <span className="text-sm">{player.phone}</span>
+                  <Phone className="w-4 h-4 text-secondary dark:text-secondary-dark shrink-0" />
+                  <span className="font-num">{player.phone}</span>
                 </a>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <MapPin className="w-5 h-5 text-secondary" />
-                  <span className="text-sm">{player.city}</span>
+                <div className="flex items-center gap-2 text-sm text-text-primary/70 dark:text-text-primary-dark/70">
+                  <MapPin className="w-4 h-4 text-secondary dark:text-secondary-dark shrink-0" />
+                  <span>{player.city}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Team Manager Request Button */}
-      {isTeamManager && !isOwnProfile && (
-        <div className="fixed bottom-8 right-8 z-50">
-          <Button
-            onClick={() => setShowRequestModal(true)}
-            className="flex items-center gap-2 shadow-lg"
-          >
-            <UserPlus className="w-5 h-5" />
-            Invite to Team
-          </Button>
-        </div>
-      )}
-
-      {/* Request Modal */}
-      {showRequestModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-xl font-bold mb-4">Invite Player to Team</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Select Team
-                </label>
-                <Select
-                  value={selectedTeam}
-                  onChange={(e) => setSelectedTeam(e.target.value)}
-                  className="w-full"
-                >
-                  <option value="">-- Select a Team --</option>
-                  {managerTeams?.map((team) => (
-                    <option key={team._id} value={team._id}>
-                      {team.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Message (Optional)
-                </label>
-                <textarea
-                  value={requestMessage}
-                  onChange={(e) => setRequestMessage(e.target.value)}
-                  placeholder="Add a message for the player..."
-                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-secondary focus:border-transparent"
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleSendRequest}
-                  disabled={requestLoading || !selectedTeam}
-                  className="flex-1 flex items-center justify-center gap-2"
-                >
-                  <Send className="w-4 h-4" />
-                  Send Request
-                </Button>
-                <Button
-                  onClick={() => {
-                    setShowRequestModal(false);
-                    setSelectedTeam("");
-                    setRequestMessage("");
-                  }}
-                  variant="primary"
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

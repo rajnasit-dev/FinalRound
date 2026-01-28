@@ -33,7 +33,9 @@ export const uploadAvatar = asyncHandler(async (req, res) => {
 
   const avatarResponse = await uploadOnCloudinary(avatarLocalPath);
   
-  if (!avatarResponse) throw new ApiError(500, "Failed to upload avatar to Cloudinary.");
+  if (!avatarResponse) {
+    throw new ApiError(500, "Failed to upload avatar to Cloudinary. Please check your internet connection and try again.");
+  }
 
   const updatedUser = await User.findByIdAndUpdate(
     userId,
@@ -60,11 +62,16 @@ export const deleteAvatar = asyncHandler(async (req, res) => {
   const avatarUrl = user?.avatar;
   if(!avatarUrl) throw new ApiError(404, "Avatar not found.");
 
-  const urlParts = avatarUrl.split('/');
-  const publicIdWithExtension = urlParts.at(-1);
-  const publicId = publicIdWithExtension.split('.')[0];
-
-  await deleteFromCloudinary(publicId);
+  try {
+    const urlParts = avatarUrl.split('/');
+    const folder = urlParts.slice(-2, -1)[0];
+    const publicIdWithExtension = urlParts.at(-1);
+    const fileName = publicIdWithExtension.split('.')[0];
+    const publicId = `${folder}/${fileName}`;
+    await deleteFromCloudinary(publicId);
+  } catch (error) {
+    console.log("Failed to delete avatar from Cloudinary:", error.message);
+  }
 
   const updatedUser = await User.findByIdAndUpdate(
     userId,
@@ -89,18 +96,25 @@ export const updateAvatar = asyncHandler( async (req, res) => {
 
   const avatarResponse = await uploadOnCloudinary(avatarLocalPath);
 
-  if (!avatarResponse) throw new ApiError(500, "Failed to upload avatar to Cloudinary.");
+  if (!avatarResponse) {
+    throw new ApiError(500, "Failed to upload avatar to Cloudinary. Please check your internet connection and try again.");
+  }
 
   const user = await User.findById(userId);
   if(!user) throw new ApiError(404, "User not found.");
   const oldAvatarUrl = user?.avatar;
 
   if(oldAvatarUrl){
-    const urlParts = oldAvatarUrl.split('/');
-    const publicIdWithExtension = urlParts.at(-1);
-    const publicId = publicIdWithExtension.split('.')[0];
-
-    await deleteFromCloudinary(publicId);
+    try {
+      const urlParts = oldAvatarUrl.split('/');
+      const folder = urlParts.slice(-2, -1)[0];
+      const publicIdWithExtension = urlParts.at(-1);
+      const fileName = publicIdWithExtension.split('.')[0];
+      const publicId = `${folder}/${fileName}`;
+      await deleteFromCloudinary(publicId);
+    } catch (error) {
+      console.log("Failed to delete old avatar from Cloudinary:", error.message);
+    }
   }
 
   const updatedUser = await User.findByIdAndUpdate(

@@ -1,45 +1,41 @@
 import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import PlayerCard from "../../components/ui/PlayerCard";
 import SearchBar from "../../components/ui/SearchBar";
 import FilterDropdown from "../../components/ui/FilterDropdown";
 import Spinner from "../../components/ui/Spinner";
 import ErrorMessage from "../../components/ui/ErrorMessage";
-import axios from "axios";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
+import Pagination from "../../components/ui/Pagination";
+import BackButton from "../../components/ui/BackButton";
+import { fetchAllPlayers } from "../../store/slices/playerSlice";
+import { fetchAllSports } from "../../store/slices/sportSlice";
 
 const Players = () => {
   const [selectedSport, setSelectedSport] = useState("All");
   const [selectedRole, setSelectedRole] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [players, setPlayers] = useState([]);
-  const [sports, setSports] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const dispatch = useDispatch();
+  const {
+    players,
+    loading: playersLoading,
+    error: playersError,
+  } = useSelector((state) => state.player);
+  const {
+    sports,
+    loading: sportsLoading,
+    error: sportsError,
+  } = useSelector((state) => state.sport);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const loading = playersLoading || sportsLoading;
+  const error = playersError || sportsError;
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [playersRes, sportsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/players`, { withCredentials: true }),
-        axios.get(`${API_BASE_URL}/sports`, { withCredentials: true })
-      ]);
-
-      setPlayers(playersRes.data.data || []);
-      setSports(sportsRes.data.data || []);
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setError(err.response?.data?.message || err.message || "Failed to load players");
-    } finally {
-      setLoading(false);
-    }
-  };
+    dispatch(fetchAllPlayers());
+    dispatch(fetchAllSports());
+  }, [dispatch]);
 
   // Get sports and roles for filters from backend
   const sportOptions = [
@@ -85,16 +81,30 @@ const Players = () => {
     return matchesSport && matchesRole && matchesSearch;
   });
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredPlayers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedPlayers = filteredPlayers.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedSport, selectedRole, searchQuery]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Spinner size="lg" text="Loading players..." />
+        <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <section className="container mx-auto px-6 py-16">
+    <section className="container mx-auto px-6 py-4">
+      <BackButton className="mb-6" />
       <div className="mb-8">
         <h1 className="text-4xl font-bold my-5 text-text-primary dark:text-text-primary-dark">
           Explore Players
@@ -106,7 +116,7 @@ const Players = () => {
 
       {error && (
         <div className="mb-6">
-          <ErrorMessage message={error} type="error" />
+          <ErrorMessage message={typeof error === 'string' ? error : error?.message || 'An error occurred'} type="error" />
         </div>
       )}
 
@@ -147,25 +157,38 @@ const Players = () => {
 
       {/* Results Count */}
       <p className="mb-6 text-base dark:text-base-dark">
-        Showing {filteredPlayers.length} players
+        Showing <span className="font-num">{startIndex + 1}</span> to <span className="font-num">{Math.min(startIndex + itemsPerPage, filteredPlayers.length)}</span> of <span className="font-num">{filteredPlayers.length}</span> players
       </p>
 
       {/* Players Grid */}
       {filteredPlayers.length > 0 ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPlayers.map((player) => {
-            // Map backend data structure to PlayerCard expected format
-            const playerData = {
-              ...player,
-              playingRole: player.sports?.[0]?.role || "Player",
-              sports: player.sports?.map(s => ({
-                _id: s.sport?._id || s._id,
-                name: s.sport?.name || s.name
-              })) || []
-            };
-            return <PlayerCard key={player._id} player={playerData} />;
-          })}
-        </div>
+        <>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedPlayers.map((player) => {
+              // Map backend data structure to PlayerCard expected format
+              const playerData = {
+                ...player,
+                playingRole: player.sports?.[0]?.role || "Player",
+                sports: player.sports?.map(s => ({
+                  _id: s.sport?._id || s._id,
+                  name: s.sport?.name || s.name
+                })) || []
+              };
+              return <PlayerCard key={player._id} player={playerData} />;
+            })}
+          </div>
+          {totalPages > 1 && (
+            <div className="mt-8">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                itemsPerPage={itemsPerPage}
+                totalItems={filteredPlayers.length}
+              />
+            </div>
+          )}
+        </>
       ) : (
         <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-16 text-center">
           <p className="text-xl text-base dark:text-base-dark">

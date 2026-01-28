@@ -6,8 +6,9 @@ import { fetchMatchesByTournament } from "../../store/slices/matchSlice";
 import CardStat from "../../components/ui/CardStat";
 import Container from "../../components/container/Container";
 import Spinner from "../../components/ui/Spinner";
-import MatchCard from "../../components/ui/MatchCard";
+import FixturesTable from "../../components/ui/FixturesTable";
 import GridContainer from "../../components/ui/GridContainer";
+import BackButton from "../../components/ui/BackButton";
 import {
   MapPin,
   Users,
@@ -37,6 +38,8 @@ const TournamentDetail = () => {
     (state) => state.match
   );
 
+  const { user } = useSelector((state) => state.auth);
+
   useEffect(() => {
     window.scrollTo(0, 0);
     dispatch(fetchTournamentById(id));
@@ -50,6 +53,64 @@ const TournamentDetail = () => {
     const startDate = new Date(tournament.registrationStart);
     const endDate = new Date(tournament.registrationEnd);
     return currentDate >= startDate && currentDate <= endDate;
+  };
+
+  // Helper function to check if user should see register button on banner
+  const shouldShowBannerRegisterButton = () => {
+    if (!user) return true; // Show for guests
+    const role = user.role;
+    // Hide for TeamManager, TournamentOrganizer, and Admin
+    return role !== "TeamManager" && role !== "TournamentOrganizer" && role !== "Admin";
+  };
+
+  // Helper function to get registration button text based on role and tournament type
+  const getRegistrationButtonText = () => {
+    if (!user) return "Register Now";
+    
+    const role = user.role;
+    const regType = tournament?.registrationType;
+    
+    // Team Manager viewing player-based tournament
+    if (role === "TeamManager" && regType === "Player") {
+      return "Player Registration";
+    }
+    
+    // Tournament Organizer
+    if (role === "TournamentOrganizer") {
+      return regType === "Team" ? "Team Registration" : "Player Registration";
+    }
+    
+    // Player viewing team-based tournament
+    if (role === "Player" && regType === "Team") {
+      return "Team Registration";
+    }
+    
+    return "Register Now";
+  };
+
+  // Helper function to check if register button should be disabled
+  const isRegisterButtonDisabled = () => {
+    if (!user) return false; // Not disabled for guests
+    
+    const role = user.role;
+    const regType = tournament?.registrationType;
+    
+    // Disable for TournamentOrganizer and Admin always
+    if (role === "TournamentOrganizer" || role === "Admin") {
+      return true;
+    }
+    
+    // Disable for TeamManager viewing player-based tournaments
+    if (role === "TeamManager" && regType === "Player") {
+      return true;
+    }
+    
+    // Disable for Player viewing team-based tournaments
+    if (role === "Player" && regType === "Team") {
+      return true;
+    }
+    
+    return false;
   };
 
   if (loading) {
@@ -85,6 +146,11 @@ const TournamentDetail = () => {
         />
         <div className="absolute inset-0 bg-linear-to-t from-black via-black/70 to-black/30"></div>
 
+        {/* Back Button */}
+        <div className="absolute top-6 left-6">
+          <BackButton className="bg-black/50 dark:bg-black/70 border-white/20 text-white hover:bg-black/70 dark:hover:bg-black/90" />
+        </div>
+
         {/* Tournament Info Overlay */}
         <div className="absolute bottom-0 left-0 right-0 container mx-auto px-6 pb-8">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
@@ -98,7 +164,7 @@ const TournamentDetail = () => {
                   )} text-white text-xs sm:text-sm px-4 py-1.5 rounded-full font-semibold flex items-center gap-2 shadow-lg`}
                 >
                   {tournament.status === "Live" && (
-                    <p className="w-2 h-2 bg-white rounded-full animate-pulse"></p>
+                    <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
                   )}
                   {tournament.status}
                 </p>
@@ -121,7 +187,7 @@ const TournamentDetail = () => {
             </div>
 
             {/* Right Overlay - Registration Button */}
-            {isRegistrationOpen(tournament) && (
+            {isRegistrationOpen(tournament) && shouldShowBannerRegisterButton() && (
               <Link
                 to={`/tournaments/${id}/register`}
                 className="bg-accent hover:bg-accent/90 text-black px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-2xl hover:shadow-accent/50 hover:scale-105 whitespace-nowrap inline-block"
@@ -164,6 +230,12 @@ const TournamentDetail = () => {
                   iconColor="text-purple-600"
                   label="Registration Type"
                   value={`${tournament.registrationType} Based`}
+                />
+                <CardStat
+                  Icon={Users}
+                  iconColor="text-pink-600"
+                  label="Gender"
+                  value={tournament.gender || "Mixed"}
                 />
                 <CardStat
                   Icon={MapPin}
@@ -258,7 +330,7 @@ const TournamentDetail = () => {
                 <h2 className="text-2xl font-bold mb-3">Rules & Regulations</h2>
                 {tournament.rules.map((rule, index) => (
                   <div key={index} className="flex items-center m-3">
-                    <span className="font-medium text-sm">{index + 1}</span>
+                    <span className="text-sm font-num">{index + 1}</span>
                     <p className="text-base dark:text-base-dark ml-3 ">
                       {rule}
                     </p>
@@ -273,25 +345,25 @@ const TournamentDetail = () => {
                 <h2 className="text-2xl font-bold mb-3">Organized By</h2>
 
                 <h3 className="font-bold text-xl mb-2">
-                  {tournament.organizer.fullName || tournament.organizer.orgName}
+                  {tournament.organizer.orgName || tournament.organizer.fullName}
                 </h3>
-                <div className="space-y-2 text-sm text-base dark:text-base-dark">
+                <div className="space-y-2 text-sm">
                   {tournament.organizer.email && (
                     <a
                       href={`mailto:${tournament.organizer.email}`}
-                      className="flex items-center gap-2 hover:text-secondary dark:hover:text-accent transition-colors"
+                      className="flex items-center gap-2 text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors"
                     >
-                      <Mail className="w-4 h-4" />
+                      <Mail className="w-4 h-4 text-secondary dark:text-secondary-dark flex-shrink-0" />
                       {tournament.organizer.email}
                     </a>
                   )}
                   {tournament.organizer.phone && (
                     <a
                       href={`tel:${tournament.organizer.phone}`}
-                      className="flex items-center gap-2 hover:text-secondary dark:hover:text-accent transition-colors"
+                      className="flex items-center gap-2 text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors"
                     >
-                      <Phone className="w-4 h-4" />
-                      {tournament.organizer.phone}
+                      <Phone className="w-4 h-4 text-secondary dark:text-secondary-dark flex-shrink-0" />
+                      <span className="font-num">{tournament.organizer.phone}</span>
                     </a>
                   )}
                 </div>
@@ -306,7 +378,7 @@ const TournamentDetail = () => {
               <div className="text-center mb-6">
                 <div className="inline-flex items-center gap-2 bg-secondary/50 px-4 py-2 rounded-full mb-4">
                   <IndianRupeeIcon className="w-5 h-5" />
-                  <p className="font-semibold text-2xl">
+                  <p className="text-2xl font-num">
                     {tournament.entryFee?.toLocaleString()}
                   </p>
                 </div>
@@ -321,7 +393,7 @@ const TournamentDetail = () => {
                   <Trophy className="w-6 h-6" />
                   <span className="text-sm">Prize Pool</span>
                 </div>
-                <div className="text-3xl flex items-center justify-center gap-2 mb-1">
+                <div className="text-3xl font-num flex items-center justify-center gap-2 mb-1">
                   <IndianRupeeIcon className="w-7 h-7" />
                   {tournament.prizePool?.toLocaleString()}
                 </div>
@@ -334,7 +406,7 @@ const TournamentDetail = () => {
                   <span className="text-sm">Registered Teams</span>
                 </div>
                 <div className="text-center">
-                  <span className="font-bold text-2xl">
+                  <span className="text-2xl font-num">
                     {tournament.registeredTeams?.length || 0}/{tournament.teamLimit}
                   </span>
                   <span className="text-sm text-base dark:text-base-dark ml-2">
@@ -346,15 +418,24 @@ const TournamentDetail = () => {
               {/* Registration Status */}
               {isRegistrationOpen(tournament) ? (
                 <>
-                  <Link
-                    to={`/tournaments/${id}/register`}
-                    className="block w-full text-text-secondary dark:text-text-secondary-dark bg-secondary hover:bg-secondary/90 dark:bg-accent dark:hover:bg-accent/90 text-center px-6 py-4 rounded-lg font-bold text-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 mb-3"
-                  >
-                    Register Now
-                  </Link>
+                  {isRegisterButtonDisabled() ? (
+                    <button
+                      disabled
+                      className="block w-full text-text-primary dark:text-text-primary-dark bg-base-dark/50 dark:bg-base/50 text-center px-6 py-4 rounded-lg font-bold text-lg transition-all mb-3 cursor-not-allowed opacity-60"
+                    >
+                      {getRegistrationButtonText()}
+                    </button>
+                  ) : (
+                    <Link
+                      to={`/tournaments/${id}/register`}
+                      className="block w-full text-text-secondary dark:text-text-secondary-dark bg-secondary hover:bg-secondary/90 dark:bg-accent dark:hover:bg-accent/90 text-center px-6 py-4 rounded-lg font-bold text-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 mb-3"
+                    >
+                      {getRegistrationButtonText()}
+                    </Link>
+                  )}
                   <p className="text-xs text-center text-base dark:text-base-dark">
                     Registration closes on{" "}
-                    {formatDate(tournament.registrationEnd)}
+                    <span className="font-num">{formatDate(tournament.registrationEnd)}</span>
                   </p>
                 </>
               ) : (
@@ -388,13 +469,9 @@ const TournamentDetail = () => {
                         <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
                         Live Now
                       </h3>
-                      <GridContainer cols={4}>
-                        {tournamentMatches
-                          .filter(m => m.status === "Live")
-                          .map((match) => (
-                            <MatchCard key={match._id} match={match} />
-                          ))}
-                      </GridContainer>
+                      <FixturesTable
+                        matches={tournamentMatches.filter(m => m.status === "Live")}
+                      />
                     </div>
                   )}
 
@@ -404,13 +481,9 @@ const TournamentDetail = () => {
                       <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-4">
                         Upcoming Matches
                       </h3>
-                      <GridContainer cols={4}>
-                        {tournamentMatches
-                          .filter(m => m.status === "Scheduled")
-                          .map((match) => (
-                            <MatchCard key={match._id} match={match} />
-                          ))}
-                      </GridContainer>
+                      <FixturesTable
+                        matches={tournamentMatches.filter(m => m.status === "Scheduled")}
+                      />
                     </div>
                   )}
 
@@ -420,14 +493,9 @@ const TournamentDetail = () => {
                       <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-4">
                         Completed Matches
                       </h3>
-                      <GridContainer cols={4}>
-                        {tournamentMatches
-                          .filter(m => m.status === "Completed")
-                          .slice(0, 6)
-                          .map((match) => (
-                            <MatchCard key={match._id} match={match} />
-                          ))}
-                      </GridContainer>
+                      <FixturesTable
+                        matches={tournamentMatches.filter(m => m.status === "Completed").slice(0, 6)}
+                      />
                     </div>
                   )}
                 </div>

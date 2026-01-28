@@ -112,18 +112,6 @@ export const updateMatch = createAsyncThunk(
   }
 );
 
-export const updateMatchScore = createAsyncThunk(
-  "match/updateScore",
-  async ({ matchId, scoreData }, { rejectWithValue }) => {
-    try {
-      const response = await axios.patch(`${API_BASE_URL}/matches/${matchId}/score`, scoreData, { withCredentials: true, headers: { "Content-Type": "application/json" } });
-      return response.data.data;
-    } catch (error) {
-      return rejectWithValue(error);
-    }
-  }
-);
-
 export const updateMatchResult = createAsyncThunk(
   "match/updateResult",
   async ({ matchId, resultData }, { rejectWithValue }) => {
@@ -352,24 +340,6 @@ const matchSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
         state.updateSuccess = false;
-      })
-      // Update match score
-      .addCase(updateMatchScore.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(updateMatchScore.fulfilled, (state, action) => {
-        state.loading = false;
-        const index = state.matches.findIndex((m) => m._id === action.payload._id);
-        if (index !== -1) {
-          state.matches[index] = action.payload;
-        }
-        state.selectedMatch = action.payload;
-        state.updateSuccess = true;
-      })
-      .addCase(updateMatchScore.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
       })
       // Update match result
       .addCase(updateMatchResult.pending, (state) => {

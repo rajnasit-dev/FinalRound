@@ -8,7 +8,7 @@ import { Tournament } from "../models/Tournament.model.js";
 
 // Player sends a request to join a team
 export const sendTeamRequest = asyncHandler(async (req, res) => {
-  const { teamId, message } = req.body;
+  const { teamId } = req.body;
   const playerId = req.user._id;
 
   if (!teamId) {
@@ -44,7 +44,6 @@ export const sendTeamRequest = asyncHandler(async (req, res) => {
     sender: playerId,
     receiver: team.manager,
     team: teamId,
-    message: message || "",
   });
 
   const populatedRequest = await request.populate([
@@ -62,7 +61,7 @@ export const sendTeamRequest = asyncHandler(async (req, res) => {
 
 // Team sends a request to a player to join
 export const sendPlayerRequest = asyncHandler(async (req, res) => {
-  const { playerId, teamId, message } = req.body;
+  const { playerId, teamId } = req.body;
   const managerId = req.user._id;
 
   if (!playerId || !teamId) {
@@ -70,7 +69,7 @@ export const sendPlayerRequest = asyncHandler(async (req, res) => {
   }
 
   // Check if team exists and manager is the owner
-  const team = await Team.findById(teamId);
+  const team = await Team.findById(teamId).populate("sport", "name _id");
   if (!team) {
     throw new ApiError(404, "Team not found");
   }
@@ -79,10 +78,30 @@ export const sendPlayerRequest = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only team manager can send requests");
   }
 
-  // Check if player exists
-  const player = await User.findById(playerId);
+  // Check if player exists and populate sports with Sport details
+  const player = await User.findById(playerId).populate("sports.sport", "name _id");
   if (!player || player.role !== "Player") {
     throw new ApiError(404, "Player not found");
+  }
+
+  // Check if player plays the same sport as the team
+  // The player can play multiple sports - we check if ANY of their sports matches the team's sport
+  const playerPlaysSport = player.sports && player.sports.length > 0 && player.sports.some(
+    s => {
+      // Handle both populated and unpopulated sport references
+      const sportId = s.sport?._id || s.sport;
+      const teamSportId = team.sport?._id || team.sport;
+      return sportId.toString() === teamSportId.toString();
+    }
+  );
+
+  if (!playerPlaysSport) {
+    // Get the team sport name for error message
+    const teamSportName = team.sport?.name || "this sport";
+    throw new ApiError(
+      400, 
+      `This player does not play ${teamSportName}. Please select a player who plays this sport.`
+    );
   }
 
   // Check if player is already in the team
@@ -108,7 +127,6 @@ export const sendPlayerRequest = asyncHandler(async (req, res) => {
     sender: managerId,
     receiver: playerId,
     team: teamId,
-    message: message || "",
   });
 
   const populatedRequest = await request.populate([
@@ -301,7 +319,7 @@ export const cancelRequest = asyncHandler(async (req, res) => {
 
 // Organizer Authorization Request (Admin sends to organizer)
 export const sendOrganizerAuthorizationRequest = asyncHandler(async (req, res) => {
-  const { organizerId, message } = req.body;
+  const { organizerId } = req.body;
   const adminId = req.user._id;
 
   if (req.user.role !== "Admin") {
@@ -334,7 +352,6 @@ export const sendOrganizerAuthorizationRequest = asyncHandler(async (req, res) =
     requestType: "ORGANIZER_AUTHORIZATION",
     sender: adminId,
     receiver: organizerId,
-    message: message || "",
   });
 
   const populatedRequest = await request.populate([
@@ -351,7 +368,7 @@ export const sendOrganizerAuthorizationRequest = asyncHandler(async (req, res) =
 
 // Tournament Booking Request (Team/Player to Organizer)
 export const sendTournamentBookingRequest = asyncHandler(async (req, res) => {
-  const { tournamentId, message } = req.body;
+  const { tournamentId } = req.body;
   const senderId = req.user._id;
 
   if (!tournamentId) {
@@ -403,7 +420,6 @@ export const sendTournamentBookingRequest = asyncHandler(async (req, res) => {
     receiver: tournament.organizer,
     tournament: tournamentId,
     bookingEntity: bookingEntity,
-    message: message || "",
   });
 
   const populatedRequest = await request.populate([

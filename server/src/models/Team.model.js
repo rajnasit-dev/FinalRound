@@ -17,10 +17,6 @@ const teamSchema = new Schema(
       ref: "User", // Team Manager
       required: true,
     },
-    captain: {
-      type: Schema.Types.ObjectId,
-      ref: "User", // Player
-    },
     players: [
       {
         type: Schema.Types.ObjectId,
@@ -31,7 +27,13 @@ const teamSchema = new Schema(
       type: String,
       trim: true,
     },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Mixed"],
+      default: "Mixed"
+    },
     logoUrl: String,
+    bannerUrl: String,
     description: {
       type: String,
       trim: true,

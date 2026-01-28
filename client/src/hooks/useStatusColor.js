@@ -5,6 +5,8 @@ const useStatusColor = () => {
     switch (status) {
       case "Upcoming":
         return "bg-blue-500";
+      case "Scheduled":
+        return "bg-blue-500";
       case "Live":
         return "bg-red-500";
       case "Completed":

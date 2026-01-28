@@ -7,6 +7,7 @@ import TournamentCard from "../../components/ui/TournamentCard";
 import SearchBar from "../../components/ui/SearchBar";
 import FilterDropdown from "../../components/ui/FilterDropdown";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/ui/BackButton";
 import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
 
 const OrganizerTournaments = () => {
@@ -49,13 +50,14 @@ const OrganizerTournaments = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Spinner size="lg" text="Loading tournaments..." />
+        <Spinner size="lg" />
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
+      <BackButton className="mb-6" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -102,25 +104,22 @@ const OrganizerTournaments = () => {
 
       {/* Tournaments Grid */}
       {filteredTournaments.length > 0 ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 gap-6">
           {filteredTournaments.map((tournament) => (
-            <div key={tournament._id}>
-              <TournamentCard tournament={tournament} />
-              <div className="mt-3 flex gap-2 flex-wrap">
-                <Button
-                  onClick={() => navigate(`/organizer/tournaments/${tournament._id}`)}
-                  className="flex-1 bg-secondary hover:bg-secondary/90"
-                >
-                  View Details
-                </Button>
-                <Button
-                  onClick={() => navigate(`/organizer/tournaments/${tournament._id}/edit`)}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700"
-                >
-                  Edit
-                </Button>
-              </div>
-            </div>
+            <TournamentCard 
+              key={tournament._id} 
+              tournament={tournament} 
+              showOrganizerButtons={true}
+              onView={(id) => navigate(`/organizer/tournaments/${id}/fixtures`)}
+              onEdit={(id) => navigate(`/organizer/tournaments/${id}/edit`)}
+              onManage={(id) => navigate(`/organizer/tournaments/${id}`)}
+              onDelete={(id) => {
+                if (window.confirm('Are you sure you want to delete this tournament?')) {
+                  // Add delete handler here
+                  console.log('Delete tournament:', id);
+                }
+              }}
+            />
           ))}
         </div>
       ) : myTournaments.length > 0 ? (

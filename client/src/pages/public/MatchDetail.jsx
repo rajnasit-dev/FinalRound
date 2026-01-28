@@ -26,7 +26,7 @@ const MatchDetail = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Spinner size="lg" text="Loading match details..." />
+        <Spinner size="lg" />
       </div>
     );
   }

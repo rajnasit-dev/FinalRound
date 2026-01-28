@@ -1,17 +1,18 @@
-import { User, Mail, Phone, MapPin, Calendar, Edit, Trophy, Users, Camera, Trash2 } from "lucide-react";
+import { User, Mail, Phone, MapPin, Calendar, Edit, Trophy, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import useDateFormat from "../../hooks/useDateFormat";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 import { updateUserAvatar } from "../../store/slices/authSlice";
 import Spinner from "../../components/ui/Spinner";
 import Container from "../../components/container/Container";
+import BackButton from "../../components/ui/BackButton";
+import AvatarUpload from "../../components/ui/AvatarUpload";
 import { fetchManagerTeams } from "../../store/slices/teamSlice";
 
 const ManagerProfile = () => {
   const dispatch = useDispatch();
-  const fileInputRef = useRef(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [deletingAvatar, setDeletingAvatar] = useState(false);
   const { user } = useSelector((state) => state.auth);
@@ -25,19 +26,16 @@ const ManagerProfile = () => {
     }
   }, [dispatch, user?._id]);
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files?.[0];
+  const handleAvatarChange = async (file) => {
     if (!file) return;
 
+    // Validate file type
     if (!file.type.startsWith("image/")) {
       alert("Please select an image file");
       return;
     }
 
+    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       alert("Image size should be less than 5MB");
       return;
@@ -104,6 +102,7 @@ const ManagerProfile = () => {
 
   return (
     <div className="space-y-8">
+      <BackButton className="mb-4" />
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
@@ -122,47 +121,18 @@ const ManagerProfile = () => {
       <div className="bg-card-background dark:bg-card-background-dark rounded-2xl p-8 shadow-md">
         <div className="flex flex-col md:flex-row gap-6 items-start">
           {/* Avatar */}
-          <div className="flex-shrink-0 relative">
-            <img
-              src={user?.avatar || defaultAvatar}
+          <div className="flex-shrink-0">
+            <AvatarUpload
+              avatarUrl={user?.avatar}
+              defaultAvatar={defaultAvatar}
+              onUpload={handleAvatarChange}
+              onDelete={handleAvatarDelete}
+              uploading={uploadingAvatar}
+              deleting={deletingAvatar}
+              showDelete={!!user?.avatar}
+              size="lg"
+              shape="circle"
               alt={user?.fullName || "Manager"}
-              className="w-28 h-28 rounded-full object-cover shadow-md"
-            />
-            <button
-              onClick={handleAvatarClick}
-              disabled={uploadingAvatar || deletingAvatar}
-              className="absolute bottom-0 right-0 bg-secondary dark:bg-secondary-dark text-white p-2 rounded-full shadow-lg hover:bg-secondary/90 dark:hover:bg-secondary-dark/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Update avatar"
-            >
-              {uploadingAvatar ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Camera size={16} />
-              )}
-            </button>
-
-            {/* Delete avatar button - only show if avatar exists */}
-            {user?.avatar && (
-              <button
-                onClick={handleAvatarDelete}
-                disabled={uploadingAvatar || deletingAvatar}
-                className="absolute top-0 right-0 bg-red-500 text-white p-2 rounded-full shadow-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Delete avatar"
-              >
-                {deletingAvatar ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Trash2 size={16} />
-                )}
-              </button>
-            )}
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              className="hidden"
             />
           </div>
 

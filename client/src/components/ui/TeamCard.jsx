@@ -1,18 +1,23 @@
-import { Link } from "react-router-dom";
-import { Users, MapPin, Trophy, ArrowRight, Star, Edit } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Users, MapPin, Trophy, Edit, UserPlus, UserCog, Trash2, Users2 } from "lucide-react";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import defaultTeamCoverImage from "../../assets/defaultTeamCoverImage.png";
 import CardStat from "./CardStat";
 
-const TeamCard = ({ team, showEditButton = false, onEdit }) => {
+const TeamCard = ({ team, showEditButton = false, onEdit, onManagePlayers, onAddPlayer, onDeleteTeam }) => {
+  const navigate = useNavigate();
+
+  const handleCardClick = () => {
+    navigate(`/teams/${team._id}`);
+  };
   return (
-    <Link to={`/teams/${team._id}`} className="group">
-      <div className="relative bg-card-background dark:bg-card-background-dark rounded-xl overflow-hidden border border-base-dark dark:border-base transition-all duration-300 hover:shadow-2xl hover:border-secondary dark:hover:border-secondary hover:-translate-y-1">
+    <div className="group">
+      <div className="relative bg-card-background dark:bg-card-background-dark rounded-xl overflow-hidden border border-base-dark dark:border-base transition-all duration-300 hover:shadow-2xl hover:border-secondary dark:hover:border-secondary hover:-translate-y-1 cursor-pointer" onClick={handleCardClick}>
         {/* Card Header Banner-Avatar */}
         <div className="relative h-32">
           {/* Team Banner */}
           <img
-            src={team.banner || defaultTeamCoverImage}
+            src={team.bannerUrl || defaultTeamCoverImage}
             alt={team.name}
             className="w-full h-full object-cover"
           />
@@ -55,7 +60,7 @@ const TeamCard = ({ team, showEditButton = false, onEdit }) => {
           </div>
 
           {/* Stats Row */}
-          <div className="flex items-center gap-4 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
             <CardStat
               Icon={Users}
               iconColor="text-blue-600 dark:text-blue-400"
@@ -63,16 +68,13 @@ const TeamCard = ({ team, showEditButton = false, onEdit }) => {
               label="Players"
               value={team.players?.length || 0}
             />
-
-            {team.captain && (
-              <CardStat
-                Icon={Star}
-                iconColor="text-amber-600 dark:text-amber-400"
-                bgColor="bg-amber-50 dark:bg-amber-900/20"
-                label="Captain"
-                value={team.captain.fullName.split(" ")[0]}
-              />
-            )}
+            <CardStat
+              Icon={Users2}
+              iconColor="text-purple-600 dark:text-purple-400"
+              bgColor="bg-purple-50 dark:bg-purple-900/20"
+              label="Gender"
+              value={team.gender || "Mixed"}
+            />
           </div>
 
           {/* Description */}
@@ -82,28 +84,62 @@ const TeamCard = ({ team, showEditButton = false, onEdit }) => {
             </p>
           )}
 
-          {/* View Details / Edit Button */}
-          <div className="flex items-center justify-between pt-3 text-secondary font-semibold group-hover:translate-x-2 transition-transform">
-            <p>View Team</p>
-            <div className="flex gap-2">
-              {showEditButton && onEdit && (
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onEdit(team._id);
-                  }}
-                  className="p-2 rounded-lg bg-secondary/10 hover:bg-secondary/20 dark:bg-secondary-dark/10 dark:hover:bg-secondary-dark/20 text-secondary dark:text-secondary-dark transition-colors"
-                  title="Edit Team"
-                >
-                  <Edit className="w-5 h-5" />
-                </button>
-              )}
-              <ArrowRight className="w-5 h-5" />
+          {/* Buttons */}
+          {showEditButton ? (
+            <div className="grid grid-cols-2 gap-2 pt-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit && onEdit(team._id);
+                }}
+                className="flex items-center justify-center gap-2 px-3 py-2 bg-secondary hover:bg-secondary/90 dark:bg-secondary-dark dark:hover:bg-secondary-dark/90 text-white rounded-lg transition-colors font-semibold text-sm"
+                title="Edit Team"
+              >
+                <Edit className="w-4 h-4" />
+                Edit
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onManagePlayers && onManagePlayers(team._id);
+                }}
+                className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold text-sm"
+                title="Manage Players"
+              >
+                <UserCog className="w-4 h-4" />
+                Manage
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddPlayer && onAddPlayer(team._id);
+                }}
+                className="flex items-center justify-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors font-semibold text-sm"
+                title="Add Player"
+              >
+                <UserPlus className="w-4 h-4" />
+                Add Player
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteTeam && onDeleteTeam(team._id);
+                }}
+                className="flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white rounded-lg transition-colors font-semibold text-sm"
+                title="Delete Team"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center justify-between pt-3 text-secondary font-semibold group-hover:translate-x-2 transition-transform">
+              <p>View Team</p>
+            </div>
+          )}
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 

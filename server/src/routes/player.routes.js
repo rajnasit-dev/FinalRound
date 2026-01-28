@@ -12,6 +12,7 @@ import {
   deleteAchievement,
   getPlayersBySport,
   getPlayersByCity,
+  getPlayersBySportAndGender,
   updatePlayerAvatar,
   deletePlayerAvatar,
 } from "../controllers/player.controllers.js";
@@ -30,6 +31,7 @@ playerRouter.delete("/avatar", authMiddleware, deletePlayerAvatar);
 playerRouter.get("/", getAllPlayers);
 playerRouter.get("/sport/:sportId", getPlayersBySport);
 playerRouter.get("/city/:city", getPlayersByCity);
+playerRouter.get("/search/by-sport-gender", getPlayersBySportAndGender);
 playerRouter.get("/:id", getPlayerById);
 
 // Sports management

@@ -11,6 +11,8 @@ import { fetchPlayerTeams, fetchManagerTeams } from "../../store/slices/teamSlic
 import { Trophy, Calendar, MapPin, Users, DollarSign, Clock, FileText, ArrowLeft, CheckCircle } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import Button from "../../components/ui/Button";
+import ErrorMessage from "../../components/ui/ErrorMessage";
+import BackButton from "../../components/ui/BackButton";
 
 const TournamentDetails = () => {
   const { id } = useParams();
@@ -97,20 +99,10 @@ const TournamentDetails = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       {/* Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-6"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        Back to Tournaments
-      </button>
+      <BackButton className="mb-6" />
 
       {/* Error Message */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-          {error}
-        </div>
-      )}
+      {error && <ErrorMessage message={error} type="error" />}
 
       {/* Tournament Banner */}
       <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
@@ -163,7 +155,7 @@ const TournamentDetails = () => {
               <Calendar className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
               <div>
                 <p className="text-sm text-gray-600">Tournament Dates</p>
-                <p className="font-semibold text-gray-800">
+                <p className="font-semibold text-gray-800 font-num">
                   {formatDate(selectedTournament.startDate)} - {formatDate(selectedTournament.endDate)}
                 </p>
               </div>
@@ -173,7 +165,7 @@ const TournamentDetails = () => {
               <Clock className="w-6 h-6 text-orange-600 flex-shrink-0 mt-1" />
               <div>
                 <p className="text-sm text-gray-600">Registration Period</p>
-                <p className="font-semibold text-gray-800">
+                <p className="font-semibold text-gray-800 font-num">
                   {formatDate(selectedTournament.registrationStart)} - {formatDate(selectedTournament.registrationEnd)}
                 </p>
               </div>
@@ -215,7 +207,7 @@ const TournamentDetails = () => {
               <DollarSign className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
               <div>
                 <p className="text-sm text-gray-600">Entry Fee</p>
-                <p className="font-semibold text-gray-800">
+                <p className="font-semibold text-gray-800 font-num">
                   ₹{selectedTournament.entryFee.toLocaleString()}
                 </p>
               </div>
@@ -226,7 +218,7 @@ const TournamentDetails = () => {
                 <Trophy className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
                 <div>
                   <p className="text-sm text-gray-600">Prize Pool</p>
-                  <p className="font-semibold text-gray-800">
+                  <p className="font-semibold text-gray-800 font-num">
                     {selectedTournament.prizePool}
                   </p>
                 </div>
@@ -372,7 +364,7 @@ const TournamentDetails = () => {
 
                 <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-4">
                   <p className="text-sm">
-                    Entry Fee: <span className="font-semibold">₹{selectedTournament.entryFee.toLocaleString()}</span>
+                    Entry Fee: <span>₹{selectedTournament.entryFee.toLocaleString()}</span>
                   </p>
                   <p className="text-xs mt-1">You will be redirected to payment after registration</p>
                 </div>

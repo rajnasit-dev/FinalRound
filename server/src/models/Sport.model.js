@@ -12,12 +12,6 @@ const sportSchema = new Schema(
       type: Boolean,
       required: true, // true = Cricket, Football | false = Chess, Badminton
     },
-    minPlayers: {
-      type: Number, // e.g. 11 for Cricket
-    },
-    maxPlayers: {
-      type: Number, // e.g. 11 for Cricket
-    },
     roles: {
       type: [String],
       default: ["Player"], // Available roles for this sport

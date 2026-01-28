@@ -1,40 +1,72 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { getAllUsers } from "../../store/slices/adminSlice";
-import { Users, Trash2, Edit2 } from "lucide-react";
+import { fetchAllSports } from "../../store/slices/sportSlice";
+import { Users, Trash2, MapPin, Mail, Phone } from "lucide-react";
+import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
 import SearchBar from "../../components/ui/SearchBar";
 import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
+import DataTable from "../../components/ui/DataTable";
+import defaultAvatar from "../../assets/defaultAvatar.png";
+import axios from "axios";
+import { toast } from "react-hot-toast";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
 const AdminUsers = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { users, loading, error } = useSelector((state) => state.admin);
+  const { sports } = useSelector((state) => state.sport);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
+  const [activeTab, setActiveTab] = useState("Player");
+  const [genderFilter, setGenderFilter] = useState("");
+  const [sportFilter, setSportFilter] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     dispatch(getAllUsers({ role: "", search: "", page: 1, limit: 100 }));
+    dispatch(fetchAllSports());
   }, [dispatch]);
 
   useEffect(() => {
-    let filtered = users || [];
-
-    if (roleFilter) {
-      filtered = filtered.filter((u) => u.role === roleFilter);
+    if (!users) {
+      setFilteredUsers([]);
+      return;
     }
 
-    if (search) {
+    let filtered = [...users];
+
+    // Filter by active tab
+    if (activeTab) {
+      filtered = filtered.filter((u) => u.role === activeTab);
+    }
+
+    // Additional filters for Players only
+    if (activeTab === "Player") {
+      if (genderFilter) {
+        filtered = filtered.filter((u) => u.gender === genderFilter);
+      }
+      if (sportFilter) {
+        filtered = filtered.filter((u) => u.sport?._id === sportFilter || u.sport === sportFilter);
+      }
+    }
+
+    if (search.trim()) {
+      const searchLower = search.toLowerCase().trim();
       filtered = filtered.filter(
         (u) =>
-          u.fullName?.toLowerCase().includes(search.toLowerCase()) ||
-          u.email?.toLowerCase().includes(search.toLowerCase())
+          (u.fullName && u.fullName.toLowerCase().includes(searchLower)) ||
+          (u.email && u.email.toLowerCase().includes(searchLower))
       );
     }
 
     setFilteredUsers(filtered);
-  }, [users, search, roleFilter]);
+  }, [users, search, activeTab, genderFilter, sportFilter]);
 
   const getRoleColor = (role) => {
     const colors = {
@@ -47,6 +79,109 @@ const AdminUsers = () => {
     };
     return colors[role] || "bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300";
   };
+
+  const handleDelete = async (e, user) => {
+    e.stopPropagation();
+    
+    if (!window.confirm(`Are you sure you want to delete ${user.fullName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingId(user._id);
+    try {
+      await axios.delete(`${API_BASE_URL}/admin/users/${user._id}`, {
+        withCredentials: true,
+      });
+      toast.success(`User ${user.fullName} deleted successfully`);
+      // Refresh users list
+      dispatch(getAllUsers({ role: "", search: "", page: 1, limit: 100 }));
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to delete user");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleRowClick = (user) => {
+    // Only allow navigation for Players
+    if (user.role === "Player") {
+      navigate(`/players/${user._id}`);
+    }
+  };
+
+  const columns = [
+    {
+      header: "User",
+      width: "30%",
+      render: (user) => (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
+            <img
+              src={user.avatarUrl || defaultAvatar}
+              alt={user.fullName}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-text-primary dark:text-text-primary-dark truncate">
+              {user.fullName}
+            </p>
+            <div className="flex items-center gap-1 text-xs text-base dark:text-base-dark">
+              <MapPin className="w-3 h-3 shrink-0" />
+              <span className="truncate">{user.city || "N/A"}</span>
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Role",
+      width: "20%",
+      render: (user) => (
+        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+          {user.role}
+        </span>
+      ),
+    },
+    {
+      header: "Contact Details",
+      width: "30%",
+      render: (user) => (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
+            <Mail className="w-4 h-4 shrink-0" />
+            <span className="truncate">{user.email || "N/A"}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
+            <Phone className="w-4 h-4 shrink-0" />
+            <span className="truncate">{user.phone || "N/A"}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Actions",
+      width: "20%",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      render: (user) => (
+        <Button
+          onClick={(e) => handleDelete(e, user)}
+          disabled={deletingId === user._id}
+          className="!bg-red-600 hover:!bg-red-700 !text-white !px-4 !py-2 text-sm"
+        >
+          {deletingId === user._id ? (
+            <Spinner size="sm" />
+          ) : (
+            <>
+              <Trash2 className="w-4 h-4" />
+              <span className="ml-2">Delete</span>
+            </>
+          )}
+        </Button>
+      ),
+    },
+  ];
 
   if (loading) {
     return (
@@ -68,36 +203,77 @@ const AdminUsers = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="min-h-screen pb-16 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
+      <BackButton className="mb-6" />
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           User Management
         </h1>
         <p className="text-base dark:text-base-dark mt-2">
-          View and manage all platform users
+          View and manage all users
         </p>
       </div>
 
-      {/* Filters */}
-      <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Tabs */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 border-b border-base-dark dark:border-base mb-6">
+          {["Player", "TeamManager", "TournamentOrganizer"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => {
+                setActiveTab(tab);
+                setSearch("");
+                setGenderFilter("");
+                setSportFilter("");
+              }}
+              className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+                activeTab === tab
+                  ? "border-secondary text-secondary dark:border-secondary dark:text-secondary"
+                  : "border-transparent text-base dark:text-base-dark hover:text-text-primary dark:hover:text-text-primary-dark"
+              }`}
+            >
+              {tab === "TeamManager" ? "Team Managers" : tab === "TournamentOrganizer" ? "Organizers" : "Players"}
+            </button>
+          ))}
+        </div>
+
+        {/* Search and filters */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <SearchBar
             placeholder="Search by name or email..."
             searchQuery={search}
             setSearchQuery={setSearch}
           />
-          <Select
-            options={[
-              { value: "", label: "All Roles" },
-              { value: "Admin", label: "Admin" },
-              { value: "Player", label: "Player" },
-              { value: "TeamManager", label: "Team Manager" },
-              { value: "TournamentOrganizer", label: "Tournament Organizer" },
-            ]}
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-          />
-          <div className="flex items-center justify-start">
+          {activeTab === "Player" ? (
+            <>
+              <Select
+                options={[
+                  { value: "", label: "All Genders" },
+                  { value: "Male", label: "Male" },
+                  { value: "Female", label: "Female" },
+                ]}
+                value={genderFilter}
+                onChange={(e) => setGenderFilter(e.target.value)}
+              />
+              <Select
+                options={[
+                  { value: "", label: "All Sports" },
+                  ...(sports || []).map((sport) => ({
+                    value: sport._id,
+                    label: sport.name,
+                  })),
+                ]}
+                value={sportFilter}
+                onChange={(e) => setSportFilter(e.target.value)}
+              />
+            </>
+          ) : (
+            <>
+              <div></div>
+              <div></div>
+            </>
+          )}
+          <div className="flex items-center justify-end">
             <span className="text-sm text-base dark:text-base-dark font-medium">
               Total: {filteredUsers.length}
             </span>
@@ -106,83 +282,25 @@ const AdminUsers = () => {
       </div>
 
       {/* Users Table */}
-      <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base overflow-hidden">
-        {filteredUsers.length === 0 ? (
-          <div className="p-8 text-center">
-            <Users className="w-12 h-12 mx-auto text-base dark:text-base-dark opacity-50 mb-4" />
-            <p className="text-base dark:text-base-dark">No users found</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-base-dark dark:bg-base">
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Role</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">City</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Verified</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-base-dark dark:divide-base">
-                {filteredUsers.map((user) => (
-                  <tr key={user._id} className="hover:bg-base-dark/50 dark:hover:bg-base/50 transition">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        {user.avatar && (
-                          <img
-                            src={user.avatar}
-                            alt={user.fullName}
-                            className="w-8 h-8 rounded-full object-cover"
-                          />
-                        )}
-                        <span className="font-medium">{user.fullName}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm">{user.email}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm">{user.city || "-"}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        user.isActive
-                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                          : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-                      }`}>
-                        {user.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        user.isVerified
-                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                          : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
-                      }`}>
-                        {user.isVerified ? "Yes" : "No"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-2">
-                        <button className="p-2 text-secondary hover:bg-base-dark/20 dark:hover:bg-base/20 rounded-lg transition">
-                          <Edit2 size={16} />
-                        </button>
-                        <button className="p-2 text-red-600 hover:bg-red-100/20 dark:hover:bg-red-900/20 rounded-lg transition">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {filteredUsers.length === 0 ? (
+        <div className="text-center py-12">
+          <Users className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            No Users Found
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            No users match your search criteria.
+          </p>
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={filteredUsers}
+          onRowClick={activeTab === "Player" ? handleRowClick : undefined}
+          itemsPerPage={10}
+          emptyMessage="No users found"
+        />
+      )}
     </div>
   );
 };

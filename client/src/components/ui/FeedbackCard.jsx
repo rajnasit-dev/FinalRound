@@ -18,6 +18,18 @@ const FeedbackCard = ({ feedback }) => {
     ));
   };
 
+  const getRoleBadge = (role) => {
+    const badges = {
+      Player: { label: "Player", color: "bg-blue-500" },
+      TeamManager: { label: "Team Manager", color: "bg-green-500" },
+      TournamentOrganizer: { label: "Tournament Organizer", color: "bg-purple-500" },
+      Admin: { label: "Admin", color: "bg-red-500" }
+    };
+    return badges[role] || null;
+  };
+
+  const roleBadge = feedback.user?.role ? getRoleBadge(feedback.user.role) : null;
+
   return (
     <div className="bg-card-background dark:bg-card-background-dark rounded-xl p-6 border border-base-dark dark:border-base">
       {/* Header with user info and rating */}
@@ -38,13 +50,20 @@ const FeedbackCard = ({ feedback }) => {
             <h4 className="font-semibold text-text-primary dark:text-text-primary-dark">
               {feedback.user?.fullName || "Anonymous"}
             </h4>
-            <p className="text-xs text-base dark:text-base-dark">
-              {formatDate(feedback.createdAt)}
-            </p>
+            {roleBadge && (
+              <span className={`${roleBadge.color} text-white text-xs px-2 py-0.5 rounded-full inline-block mt-1`}>
+                {roleBadge.label}
+              </span>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          {renderStars(feedback.rating)}
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center gap-1">
+            {renderStars(feedback.rating)}
+          </div>
+          <p className="text-xs text-base dark:text-base-dark">
+            {formatDate(feedback.createdAt)}
+          </p>
         </div>
       </div>
 

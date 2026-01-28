@@ -7,6 +7,7 @@ import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
 import Spinner from "../../components/ui/Spinner";
+import BackButton from "../../components/ui/BackButton";
 import { fetchMatchById, updateMatch } from "../../store/slices/matchSlice";
 
 const EditMatch = () => {
@@ -85,13 +86,14 @@ const EditMatch = () => {
   if (loading && !selectedMatch) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Spinner size="lg" text="Loading match..." />
+        <Spinner size="lg" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <BackButton className="mb-6" />
       {/* Header */}
       <div className="flex items-center gap-4">
         <button

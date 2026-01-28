@@ -70,7 +70,7 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
     const roleLabels = {
       Player: "Player",
       TeamManager: "Team Manager",
-      TournamentOrganizer: "Organizer",
+      TournamentOrganizer: "Tournament Organizer",
     };
     
     return roleLabels[user?.role] || user?.role;

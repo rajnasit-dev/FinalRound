@@ -91,8 +91,8 @@ const Register = () => {
       fd.append("fullName", data.fullName);
       fd.append("email", data.email);
       fd.append("password", data.password);
-      if (data.phone) fd.append("phone", data.phone);
-      if (data.city) fd.append("city", data.city);
+      fd.append("phone", data.phone);
+      fd.append("city", data.city);
 
       // Handle avatar file
       if (data.avatar && data.avatar[0]) {
@@ -273,14 +273,13 @@ const Register = () => {
               />
 
               <Input
-                label={role === "player" ? "Phone" : "Phone (optional)"}
-                placeholder="+1 555 555 1234"
+                label="Phone"
+                placeholder="+91 555 555 1234"
                 icon={<Phone size={20} />}
                 error={errors.phone?.message}
-                required={role === "player"}
+                required={true}
                 {...register("phone", {
-                  required:
-                    role === "player" ? "Phone is required for players" : false,
+                  required: "Phone is required",
                   pattern: {
                     value: /^\+?[0-9]{7,15}$/,
                     message: "Enter a valid phone number",
@@ -289,14 +288,13 @@ const Register = () => {
               />
 
               <Input
-                label={role === "player" ? "City" : "City (optional)"}
-                placeholder="New York"
+                label="City"
+                placeholder="Ahmedabad"
                 icon={<MapPin size={20} />}
                 error={errors.city?.message}
-                required={role === "player"}
+                required={true}
                 {...register("city", {
-                  required:
-                    role === "player" ? "City is required for players" : false,
+                  required: "City is required",
                   minLength: {
                     value: 2,
                     message: "City must be at least 2 characters",

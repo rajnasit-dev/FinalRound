@@ -2,17 +2,21 @@ import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 const Input = React.forwardRef(
-  ({ label, type = "text", name, placeholder, error, icon, required = false, ...rest }, ref) => {
+  ({ label, type = "text", name, placeholder, error, icon, required, ...rest }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPasswordField = type === "password";
     const inputType = isPasswordField && showPassword ? "text" : type;
+
+    // Prefer explicit prop, but also respect aria/data flags for required indicators
+    const isRequired =
+      required ?? rest?.["aria-required"] ?? rest?.["data-required"] ?? false;
 
     return (
       <div className="mb-4">
         {label && (
           <label className="block text-sm font-medium mb-2" htmlFor={name}>
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {isRequired && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
 
@@ -28,6 +32,7 @@ const Input = React.forwardRef(
             name={name}
             type={inputType}
             placeholder={placeholder}
+            required={!!isRequired}
             {...rest}
             className={`w-full py-3 bg-card-background dark:bg-card-background-dark rounded-lg border border-base-dark dark:border-base dark:focus:border-base-dark/50 focus:border-base/50 focus:outline-none text-base dark:text-base-dark ${
               icon ? "pl-10" : "pl-4"

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { getDashboardStats } from "../../store/slices/adminSlice";
 import {
   Users,
@@ -14,6 +15,7 @@ import DashboardCardState from "../../components/ui/DashboardCardState";
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { dashboardStats, loading } = useSelector((state) => state.admin);
 
   useEffect(() => {
@@ -41,46 +43,54 @@ const AdminDashboard = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <DashboardCardState
-          Icon={Users}
-          label="Total Users"
-          value={dashboardStats?.users?.total || 0}
-          gradientFrom="from-blue-500/10"
-          gradientVia="via-blue-500/5"
-          borderColor="border-blue-500/20"
-          iconGradientFrom="from-blue-500"
-          iconGradientTo="to-blue-600"
-        />
-        <DashboardCardState
-          Icon={Trophy}
-          label="Tournaments"
-          value={dashboardStats?.tournaments?.total || 0}
-          gradientFrom="from-amber-500/10"
-          gradientVia="via-amber-500/5"
-          borderColor="border-amber-500/20"
-          iconGradientFrom="from-amber-500"
-          iconGradientTo="to-amber-600"
-        />
-        <DashboardCardState
-          Icon={Shield}
-          label="Teams"
-          value={dashboardStats?.teams?.total || 0}
-          gradientFrom="from-green-500/10"
-          gradientVia="via-green-500/5"
-          borderColor="border-green-500/20"
-          iconGradientFrom="from-green-500"
-          iconGradientTo="to-green-600"
-        />
-        <DashboardCardState
-          Icon={DollarSign}
-          label="Total Revenue"
-          value={`₹${dashboardStats?.revenue?.total || 0}`}
-          gradientFrom="from-purple-500/10"
-          gradientVia="via-purple-500/5"
-          borderColor="border-purple-500/20"
-          iconGradientFrom="from-purple-500"
-          iconGradientTo="to-purple-600"
-        />
+        <div onClick={() => navigate("/admin/users")} className="cursor-pointer">
+          <DashboardCardState
+            Icon={Users}
+            label="Total Users"
+            value={dashboardStats?.users?.total || 0}
+            gradientFrom="from-blue-500/10"
+            gradientVia="via-blue-500/5"
+            borderColor="border-blue-500/20"
+            iconGradientFrom="from-blue-500"
+            iconGradientTo="to-blue-600"
+          />
+        </div>
+        <div onClick={() => navigate("/admin/tournaments")} className="cursor-pointer">
+          <DashboardCardState
+            Icon={Trophy}
+            label="Tournaments"
+            value={dashboardStats?.tournaments?.total || 0}
+            gradientFrom="from-amber-500/10"
+            gradientVia="via-amber-500/5"
+            borderColor="border-amber-500/20"
+            iconGradientFrom="from-amber-500"
+            iconGradientTo="to-amber-600"
+          />
+        </div>
+        <div onClick={() => navigate("/admin/teams")} className="cursor-pointer">
+          <DashboardCardState
+            Icon={Shield}
+            label="Teams"
+            value={dashboardStats?.teams?.total || 0}
+            gradientFrom="from-green-500/10"
+            gradientVia="via-green-500/5"
+            borderColor="border-green-500/20"
+            iconGradientFrom="from-green-500"
+            iconGradientTo="to-green-600"
+          />
+        </div>
+        <div onClick={() => navigate("/admin/revenue")} className="cursor-pointer">
+          <DashboardCardState
+            Icon={DollarSign}
+            label="Total Revenue"
+            value={`₹${dashboardStats?.revenue?.total || 0}`}
+            gradientFrom="from-purple-500/10"
+            gradientVia="via-purple-500/5"
+            borderColor="border-purple-500/20"
+            iconGradientFrom="from-purple-500"
+            iconGradientTo="to-purple-600"
+          />
+        </div>
       </div>
 
       {/* Additional Stats */}

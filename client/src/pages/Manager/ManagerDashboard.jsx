@@ -12,7 +12,7 @@ import {
 import Spinner from "../../components/ui/Spinner";
 import DashboardCardState from "../../components/ui/DashboardCardState";
 import TeamCard from "../../components/ui/TeamCard";
-import MatchCard from "../../components/ui/MatchCard";
+import FixturesTable from "../../components/ui/FixturesTable";
 import { fetchManagerTeams } from "../../store/slices/teamSlice";
 import { fetchMatchesByTeam } from "../../store/slices/matchSlice";
 
@@ -44,7 +44,7 @@ const ManagerDashboard = () => {
   if (teamsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Spinner size="lg" text="Loading dashboard..." />
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -187,14 +187,9 @@ const ManagerDashboard = () => {
             </Link>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {teamMatches
-              .filter((m) => m.status === "Scheduled")
-              .slice(0, 3)
-              .map((match) => (
-                <MatchCard key={match._id} match={match} />
-              ))}
-          </div>
+          <FixturesTable
+            matches={teamMatches.filter((m) => m.status === "Scheduled").slice(0, 3)}
+          />
         </div>
       )}
     </div>

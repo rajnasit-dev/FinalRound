@@ -7,7 +7,8 @@ import {
   LayoutDashboard,
   Inbox,
   Zap,
-  Target
+  Target,
+  Lock
 } from "lucide-react";
 
 // Player dashboard menu links
@@ -16,23 +17,24 @@ export const playerLinks = [
   { name: "My Teams", icon: Users, url: "/player/teams" },
   { name: "Requests", icon: Inbox, url: "/player/requests" },
   { name: "Profile", icon: UserCircle, url: "/player/profile" },
+  { name: "Change Password", icon: Lock, url: "/player/change-password" },
 ];
 
 // Team Manager dashboard menu links
 export const managerLinks = [
   { name: "My Tournaments", icon: Trophy, url: "/manager/tournaments" },
   { name: "My Teams", icon: Users, url: "/manager/teams" },
-  { name: "Team Players", icon: Zap, url: "/manager/players" },
   { name: "Requests", icon: Inbox, url: "/manager/requests" },
   { name: "Profile", icon: UserCircle, url: "/manager/profile" },
+  { name: "Change Password", icon: Lock, url: "/manager/change-password" },
 ];
 
 // Tournament Organizer dashboard menu links
 export const organizerLinks = [
   { name: "Dashboard", icon: LayoutDashboard, url: "/organizer/dashboard" },
   { name: "Tournaments", icon: Trophy, url: "/organizer/tournaments" },
-  { name: "Registrations", icon: Target, url: "/organizer/registrations" },
-  { name: "Matches", icon: Calendar, url: "/organizer/matches" },
+  { name: "Profile", icon: UserCircle, url: "/organizer/profile" },
+  { name: "Change Password", icon: Lock, url: "/organizer/change-password" },
 ];
 
 // Get dashboard links based on user role

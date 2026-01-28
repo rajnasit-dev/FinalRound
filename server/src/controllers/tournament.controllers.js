@@ -9,6 +9,7 @@ import { Match } from "../models/Match.model.js";
 import { User } from "../models/User.model.js";
 import { Request } from "../models/Request.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+import { addTournamentStatus, addTournamentStatuses, getTournamentStatus } from "../utils/statusHelpers.js";
 
 // Create a new tournament
 export const createTournament = asyncHandler(async (req, res) => {
@@ -28,8 +29,7 @@ export const createTournament = asyncHandler(async (req, res) => {
     entryFee,
     prizePool,
     rules,
-    ground,
-    status
+    ground
   } = req.body;
 
   const bannerLocalPath = req.file?.path;
@@ -96,18 +96,19 @@ export const createTournament = asyncHandler(async (req, res) => {
     rules: parsedRules,
     ground: parsedGround,
     bannerUrl: bannerResponse?.url || null,
-    status: status || "Upcoming",
     registeredTeams: [],
     approvedTeams: [],
   });
 
   const populatedTournament = await Tournament.findById(tournament._id)
     .populate("sport", "name teamBased iconUrl")
-    .populate("organizer", "fullName email avatar orgName");
+    .populate("organizer", "fullName email phone avatar orgName");
+
+  const tournamentWithStatus = addTournamentStatus(populatedTournament);
 
   res
     .status(201)
-    .json(new ApiResponse(201, populatedTournament, "Tournament created successfully."));
+    .json(new ApiResponse(201, tournamentWithStatus, "Tournament created successfully."));
 });
 
 // Get all tournaments
@@ -117,27 +118,35 @@ export const getAllTournaments = asyncHandler(async (req, res) => {
   let filter = {};
 
   if (sport) filter.sport = sport;
-  if (status) filter.status = status;
   if (registrationType) filter.registrationType = registrationType;
 
   const tournaments = await Tournament.find(filter)
     .populate("sport", "name teamBased iconUrl")
-    .populate("organizer", "fullName email avatar orgName")
+    .populate("organizer", "fullName email phone avatar orgName")
     .populate("registeredTeams", "name logoUrl")
     .populate("approvedTeams", "name logoUrl")
     .sort({ startDate: -1 });
 
+  // Add computed status to all tournaments
+  let tournamentsWithStatus = addTournamentStatuses(tournaments);
+
   // Filter by city if provided
-  let filteredTournaments = tournaments;
   if (city) {
-    filteredTournaments = tournaments.filter(t => 
+    tournamentsWithStatus = tournamentsWithStatus.filter(t => 
       t.ground && t.ground.city && t.ground.city.toLowerCase() === city.toLowerCase()
+    );
+  }
+
+  // Filter by status if provided
+  if (status) {
+    tournamentsWithStatus = tournamentsWithStatus.filter(t => 
+      t.status && t.status.toLowerCase() === status.toLowerCase()
     );
   }
 
   res
     .status(200)
-    .json(new ApiResponse(200, filteredTournaments, "Tournaments retrieved successfully."));
+    .json(new ApiResponse(200, tournamentsWithStatus, "Tournaments retrieved successfully."));
 });
 
 // Get tournament by ID
@@ -145,19 +154,19 @@ export const getTournamentById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const tournament = await Tournament.findById(id)
-    .populate("sport", "name teamBased iconUrl minPlayers maxPlayers")
+    .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar phone city orgName")
     .populate({
       path: "registeredTeams",
       populate: {
-        path: "sport manager captain players",
+        path: "sport manager players",
         select: "name teamBased iconUrl fullName email avatar"
       }
     })
     .populate({
       path: "approvedTeams",
       populate: {
-        path: "sport manager captain players",
+        path: "sport manager players",
         select: "name teamBased iconUrl fullName email avatar"
       }
     });
@@ -166,9 +175,11 @@ export const getTournamentById = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Tournament not found.");
   }
 
+  const tournamentWithStatus = addTournamentStatus(tournament);
+
   res
     .status(200)
-    .json(new ApiResponse(200, tournament, "Tournament retrieved successfully."));
+    .json(new ApiResponse(200, tournamentWithStatus, "Tournament retrieved successfully."));
 });
 
 // Update tournament
@@ -188,8 +199,7 @@ export const updateTournament = asyncHandler(async (req, res) => {
     entryFee,
     prizePool,
     rules,
-    ground,
-    status
+    ground
   } = req.body;
 
   const tournament = await Tournament.findById(id);
@@ -214,7 +224,6 @@ export const updateTournament = asyncHandler(async (req, res) => {
   if (endDate) tournament.endDate = new Date(endDate);
   if (entryFee !== undefined) tournament.entryFee = entryFee;
   if (prizePool !== undefined) tournament.prizePool = prizePool;
-  if (status) tournament.status = status;
 
   if (rules) {
     try {
@@ -237,13 +246,15 @@ export const updateTournament = asyncHandler(async (req, res) => {
 
   const updatedTournament = await Tournament.findById(id)
     .populate("sport", "name teamBased iconUrl")
-    .populate("organizer", "fullName email avatar orgName")
+    .populate("organizer", "fullName email phone avatar orgName")
     .populate("registeredTeams", "name logoUrl")
     .populate("approvedTeams", "name logoUrl");
 
+  const tournamentWithStatus = addTournamentStatus(updatedTournament);
+
   res
     .status(200)
-    .json(new ApiResponse(200, updatedTournament, "Tournament updated successfully."));
+    .json(new ApiResponse(200, tournamentWithStatus, "Tournament updated successfully."));
 });
 
 // Generate fixtures (schedule) for a tournament - branched for player vs team
@@ -442,8 +453,9 @@ export const deleteTournament = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only the tournament organizer can delete this tournament.");
   }
 
-  // Can't delete if status is Live
-  if (tournament.status === "Live") {
+  // Can't delete if status is Live (compute status dynamically)
+  const currentStatus = getTournamentStatus(tournament);
+  if (currentStatus === "Live") {
     throw new ApiError(400, "Cannot delete a live tournament.");
   }
 
@@ -741,38 +753,51 @@ export const getTournamentsBySport = asyncHandler(async (req, res) => {
     .populate("organizer", "fullName email avatar orgName")
     .sort({ startDate: -1 });
 
+  const tournamentsWithStatus = addTournamentStatuses(tournaments);
+
   res
     .status(200)
-    .json(new ApiResponse(200, tournaments, "Tournaments retrieved successfully."));
+    .json(new ApiResponse(200, tournamentsWithStatus, "Tournaments retrieved successfully."));
 });
 
 // Get upcoming tournaments
 export const getUpcomingTournaments = asyncHandler(async (req, res) => {
   const tournaments = await Tournament.find({ 
-    status: "Upcoming",
-    startDate: { $gte: new Date() }
+    startDate: { $gte: new Date() },
+    isCancelled: false
   })
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar orgName")
     .sort({ startDate: 1 })
     .limit(20);
 
+  // Add computed status and filter for upcoming
+  const tournamentsWithStatus = addTournamentStatuses(tournaments);
+  const upcomingTournaments = tournamentsWithStatus.filter(t => t.status === "Upcoming");
+
   res
     .status(200)
-    .json(new ApiResponse(200, tournaments, "Upcoming tournaments retrieved successfully."));
+    .json(new ApiResponse(200, upcomingTournaments, "Upcoming tournaments retrieved successfully."));
 });
 
 // Get live tournaments
 export const getLiveTournaments = asyncHandler(async (req, res) => {
-  const tournaments = await Tournament.find({ status: "Live" })
+  const now = new Date();
+  const tournaments = await Tournament.find({ 
+    startDate: { $lte: now },
+    endDate: { $gte: now },
+    isCancelled: false
+  })
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar orgName")
     .populate("approvedTeams", "name logoUrl")
     .sort({ startDate: -1 });
 
+  const tournamentsWithStatus = addTournamentStatuses(tournaments);
+
   res
     .status(200)
-    .json(new ApiResponse(200, tournaments, "Live tournaments retrieved successfully."));
+    .json(new ApiResponse(200, tournamentsWithStatus, "Live tournaments retrieved successfully."));
 });
 
 // Search tournaments
@@ -791,19 +816,21 @@ export const searchTournaments = asyncHandler(async (req, res) => {
     .sort({ startDate: -1 })
     .limit(20);
 
+  const tournamentsWithStatus = addTournamentStatuses(tournaments);
+
   res
     .status(200)
-    .json(new ApiResponse(200, tournaments, "Tournaments retrieved successfully."));
+    .json(new ApiResponse(200, tournamentsWithStatus, "Tournaments retrieved successfully."));
 });
 
-// Update tournament status
+// Cancel/uncancel tournament
 export const updateTournamentStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const organizerId = req.user._id;
-  const { status } = req.body;
+  const { isCancelled } = req.body;
 
-  if (!status || !["Upcoming", "Live", "Completed", "Cancelled"].includes(status)) {
-    throw new ApiError(400, "Invalid status value.");
+  if (typeof isCancelled !== 'boolean') {
+    throw new ApiError(400, "isCancelled must be a boolean value.");
   }
 
   const tournament = await Tournament.findById(id);
@@ -817,24 +844,28 @@ export const updateTournamentStatus = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only the tournament organizer can update the status.");
   }
 
-  tournament.status = status;
+  tournament.isCancelled = isCancelled;
   await tournament.save();
 
   const updatedTournament = await Tournament.findById(id)
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar orgName");
 
+  const tournamentWithStatus = addTournamentStatus(updatedTournament);
+
   res
     .status(200)
-    .json(new ApiResponse(200, updatedTournament, "Tournament status updated successfully."));
+    .json(new ApiResponse(200, tournamentWithStatus, "Tournament status updated successfully."));
 });
 
 // Get trending tournaments (sorted by number of registered teams)
 export const getTrendingTournaments = asyncHandler(async (req, res) => {
   const { limit = 6 } = req.query;
 
+  const now = new Date();
   const tournaments = await Tournament.find({
-    status: { $in: ["Upcoming", "Live"] }
+    endDate: { $gte: now },
+    isCancelled: false
   })
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar orgName")
@@ -843,8 +874,11 @@ export const getTrendingTournaments = asyncHandler(async (req, res) => {
     .sort({ registeredTeams: -1, startDate: 1 })
     .limit(parseInt(limit));
 
+  // Add computed status
+  const tournamentsWithStatus = addTournamentStatuses(tournaments);
+
   // Sort by number of registered teams in descending order
-  const sortedTournaments = tournaments.sort((a, b) => 
+  const sortedTournaments = tournamentsWithStatus.sort((a, b) => 
     b.registeredTeams.length - a.registeredTeams.length
   );
 

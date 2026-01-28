@@ -5,6 +5,7 @@
 
 @theme {
   --font-syne: 'Syne', sans-serif;
+  --font-numbers: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 @theme {
@@ -46,37 +47,12 @@ body .dark {
   color: var(--color-text-primary-dark);
 }
 
-/* Toast animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Toast notifications - ensure they appear on top */
+[data-sonner-toaster],
+.react-hot-toast-container,
+[data-react-hot-toast] {
+  z-index: 9999 !important;
 }
-
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-.animate-fade-out {
-  animation: fadeOut 0.3s ease-in-out;
-}
-
 
 /* Autofill styles for inputs */
 input:-webkit-autofill,
@@ -109,4 +85,11 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
   height: 0;
   width: 0;
   margin: 0;
+}
+
+/* Use system font for numbers */
+.font-num {
+  font-family: var(--font-numbers);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
 }

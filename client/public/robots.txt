@@ -1,0 +1,51 @@
+# FinalRound.Online - robots.txt for SEO optimization
+# Allow search engines to crawl and index the website
+
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /tournaments
+Allow: /teams
+Allow: /players
+Allow: /matches
+
+# Disallow private/admin areas
+Disallow: /admin/
+Disallow: /manager/
+Disallow: /organizer/
+Disallow: /player/
+Disallow: /*.json$
+Disallow: /public/temp/
+
+# Disallow crawling of specific paths
+Disallow: /api/
+Disallow: /src/
+Disallow: /*?*sort=
+Disallow: /*?*filter=
+Disallow: /search?
+Disallow: /verify-email
+
+# Allow Google and Bing to crawl everything else
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Disallow bad bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+# Sitemap location
+Sitemap: https://finalround.online/sitemap.xml
+Sitemap: https://finalround.online/sitemap-mobile.xml
+
+# Crawl delay
+Crawl-delay: 1
+
+# Request rate
+Request-rate: 30/1m

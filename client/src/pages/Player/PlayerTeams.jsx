@@ -4,6 +4,8 @@ import { Users } from "lucide-react";
 import TeamCard from "../../components/ui/TeamCard";
 import Spinner from "../../components/ui/Spinner";
 import GridContainer from "../../components/ui/GridContainer";
+import ErrorMessage from "../../components/ui/ErrorMessage";
+import BackButton from "../../components/ui/BackButton";
 import { fetchPlayerTeams } from "../../store/slices/teamSlice";
 
 const PlayerTeams = () => {
@@ -27,34 +29,29 @@ const PlayerTeams = () => {
 
   return (
     <div className="space-y-6">
+      <BackButton className="mb-4" />
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
             My Teams
           </h1>
-          <p className="text-text-secondary dark:text-text-secondary-dark mt-1">
+          <p className="mt-1">
             Teams you are a member of
           </p>
         </div>
       </div>
 
       {/* Error State */}
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <p className="text-red-600 dark:text-red-400">
-            {typeof error === "string" ? error : "Failed to load teams"}
-          </p>
-        </div>
-      )}
+      {error && <ErrorMessage message={typeof error === "string" ? error : "Failed to load teams"} type="error" />}
 
       {/* Teams Grid */}
       {playerTeams && playerTeams.length > 0 ? (
         <>
-          <p className="text-text-secondary dark:text-text-secondary-dark">
+          <p>
             You are a member of {playerTeams.length} team{playerTeams.length !== 1 ? "s" : ""}
           </p>
-          <GridContainer cols={3}>
+          <GridContainer cols={2}>
             {playerTeams.map((team) => (
               <TeamCard key={team._id} team={team} />
             ))}

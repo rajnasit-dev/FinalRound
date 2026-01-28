@@ -5,10 +5,12 @@ import {
   getTeamById,
   updateTeam,
   updateTeamLogo,
+  updateTeamBanner,
   deleteTeam,
+  deleteTeamLogo,
+  deleteTeamBanner,
   addPlayerToTeam,
   removePlayerFromTeam,
-  setTeamCaptain,
   getTeamsBySport,
   getTeamsByCity,
   searchTeams,
@@ -30,14 +32,16 @@ teamRouter.get("/manager/:managerId", getManagerTeams);
 teamRouter.get("/:id", getTeamById);
 
 // Protected routes - Team Manager only
-teamRouter.post("/", authMiddleware, upload.single("logo"), createTeam);
+teamRouter.post("/", authMiddleware, upload.fields([{ name: "logo", maxCount: 1 }, { name: "banner", maxCount: 1 }]), createTeam);
 teamRouter.put("/:id", authMiddleware, updateTeam);
 teamRouter.patch("/:id/logo", authMiddleware, upload.single("logo"), updateTeamLogo);
+teamRouter.patch("/:id/banner", authMiddleware, upload.single("banner"), updateTeamBanner);
+teamRouter.delete("/:id/logo", authMiddleware, deleteTeamLogo);
+teamRouter.delete("/:id/banner", authMiddleware, deleteTeamBanner);
 teamRouter.delete("/:id", authMiddleware, deleteTeam);
 
 // Team player management
 teamRouter.post("/:id/players", authMiddleware, addPlayerToTeam);
 teamRouter.delete("/:id/players/:playerId", authMiddleware, removePlayerFromTeam);
-teamRouter.patch("/:id/captain", authMiddleware, setTeamCaptain);
 
 export default teamRouter;

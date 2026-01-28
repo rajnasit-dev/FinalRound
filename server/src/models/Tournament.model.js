@@ -38,6 +38,11 @@ const tournamentSchema = new Schema(
       enum: ["Team", "Player"],
       default: "Team"
     },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Mixed"],
+      default: "Mixed"
+    },
     registrationStart: {
       type: Date,
       required: true,
@@ -83,9 +88,9 @@ const tournamentSchema = new Schema(
     bannerUrl: {
       type: String,
     },
-    status: {
-      type: String,
-      enum: ["Upcoming", "Live", "Completed", "Cancelled"],
+    isCancelled: {
+      type: Boolean,
+      default: false,
     },
     registeredTeams: [
       {

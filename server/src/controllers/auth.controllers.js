@@ -501,7 +501,7 @@ export const login = asyncHandler(async (req, res) => {
   // ========== HARDCODED ADMIN CREDENTIALS ==========
   if (role === "Admin") {
     const ADMIN_EMAIL = "admin@gmail.com";
-    const ADMIN_PASSWORD = "Admin123!";
+    const ADMIN_PASSWORD = "Password123!";
 
     if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
       throw new ApiError(400, "Invalid admin credentials.");
@@ -723,4 +723,36 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
     .json(new ApiResponse(200, {}, "Access token refreshed successfully."));
+});
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.user._id;
+
+  if (!currentPassword || !newPassword) {
+    throw new ApiError(400, "Current password and new password are required.");
+  }
+
+  if (currentPassword === newPassword) {
+    throw new ApiError(400, "New password must be different from current password.");
+  }
+
+  const user = await User.findById(userId).select("+password");
+
+  if (!user) {
+    throw new ApiError(404, "User not found.");
+  }
+
+  const isPasswordCorrect = await user.isPasswordCorrect(currentPassword);
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(401, "Current password is incorrect.");
+  }
+
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully."));
 });

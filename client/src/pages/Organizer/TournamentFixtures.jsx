@@ -5,6 +5,7 @@ import { Plus, ArrowLeft, Edit, Trash2, Play, CheckCircle } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import MatchCard from "../../components/ui/MatchCard";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/ui/BackButton";
 import { fetchTournamentById } from "../../store/slices/tournamentSlice";
 import { fetchMatchesByTournament, deleteMatch, generateTournamentFixtures } from "../../store/slices/matchSlice";
 
@@ -45,7 +46,7 @@ const TournamentFixtures = () => {
   if (tournamentLoading || matchesLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Spinner size="lg" text="Loading fixtures..." />
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -85,6 +86,7 @@ const TournamentFixtures = () => {
 
   return (
     <div className="space-y-8">
+      <BackButton className="mb-6" />
       {/* Header */}
       <div>
         <Link

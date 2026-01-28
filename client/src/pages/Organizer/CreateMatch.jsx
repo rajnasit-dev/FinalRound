@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, MapPin } from "lucide-react";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/ui/BackButton";
 import { createMatch } from "../../store/slices/matchSlice";
 import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
 import { fetchAllTeams } from "../../store/slices/teamSlice";
@@ -95,7 +96,8 @@ const CreateMatch = () => {
       const result = await dispatch(createMatch(matchData)).unwrap();
 
       if (result) {
-        navigate("/organizer/matches");
+        // Navigate back to the tournament dashboard
+        navigate(`/organizer/tournaments/${data.tournament}`);
       }
     } catch (error) {
       console.error("Failed to create match:", error);
@@ -120,22 +122,15 @@ const CreateMatch = () => {
 
   return (
     <div className="space-y-6">
+      <BackButton className="mb-6" />
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate("/organizer/matches")}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
-            Schedule Match
-          </h1>
-          <p className="text-base dark:text-base-dark">
-            Create a new match for a tournament
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
+          Schedule Match
+        </h1>
+        <p className="text-base dark:text-base-dark">
+          Create a new match for a tournament
+        </p>
       </div>
 
       {/* Form */}
@@ -267,7 +262,7 @@ const CreateMatch = () => {
         </div>
       </form>
     </div>
-  );
+  );-1
 };
 
 export default CreateMatch;

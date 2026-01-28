@@ -9,6 +9,8 @@ import {
   LogOut,
   UserCheck,
   MessageSquare,
+  Dumbbell,
+  Lock,
 } from "lucide-react";
 import { logoutUser } from "../store/slices/authSlice";
 import Logo from "../components/Logo";
@@ -26,10 +28,12 @@ const AdminLayout = () => {
     { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/admin/organizer-requests", icon: UserCheck, label: "Organizer Requests" },
     { to: "/admin/users", icon: Users, label: "Users" },
+    { to: "/admin/sports", icon: Dumbbell, label: "Sports" },
     { to: "/admin/tournaments", icon: Trophy, label: "Tournaments" },
     { to: "/admin/teams", icon: Shield, label: "Teams" },
     { to: "/admin/revenue", icon: DollarSign, label: "Revenue" },
     { to: "/admin/feedback", icon: MessageSquare, label: "Feedback" },
+    { to: "/admin/change-password", icon: Lock, label: "Change Password" },
   ];
 
   return (

@@ -362,3 +362,38 @@ export const deletePlayerAvatar = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, player, "Avatar deleted successfully."));
 });
+
+// Get players by sport and gender (for team manager to add players)
+export const getPlayersBySportAndGender = asyncHandler(async (req, res) => {
+  const { sportId, gender } = req.query;
+
+  if (!sportId || !gender) {
+    throw new ApiError(400, "Sport ID and gender are required.");
+  }
+
+  // Verify sport exists
+  const sport = await Sport.findById(sportId);
+  if (!sport) {
+    throw new ApiError(404, "Sport not found.");
+  }
+
+  // Build filter query
+  let query = {
+    isActive: true,
+    "sports.sport": sportId,
+  };
+
+  // If gender is not "Mixed", filter by exact gender
+  if (gender !== "Mixed") {
+    query.gender = gender;
+  }
+
+  const players = await Player.find(query)
+    .populate("sports.sport", "name teamBased iconUrl")
+    .select("-password -refreshToken -verifyEmailOtp -verifyEmailOtpExpiry -resetPasswordToken -resetPasswordTokenExpiry")
+    .limit(100);
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, players, "Players retrieved successfully."));
+});

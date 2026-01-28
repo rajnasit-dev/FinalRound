@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   getReceivedRequests,
   getSentRequests,
@@ -9,13 +10,19 @@ import {
   clearError,
   clearRequests,
 } from "../../store/slices/requestSlice";
-import Container from "../../components/container/Container";
-import RequestCard from "../../components/ui/RequestCard";
 import Spinner from "../../components/ui/Spinner";
-import { Inbox, Send } from "lucide-react";
+import ErrorMessage from "../../components/ui/ErrorMessage";
+import BackButton from "../../components/ui/BackButton";
+import Button from "../../components/ui/Button";
+import DataTable from "../../components/ui/DataTable";
+import { Inbox, Send, CheckCircle2, XCircle, User, Trophy } from "lucide-react";
+import { toast } from "react-hot-toast";
+import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
+import defaultAvatar from "../../assets/defaultAvatar.png";
 
 const PlayerRequests = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { receivedRequests, sentRequests, loading, error } = useSelector(
     (state) => state.request
   );
@@ -34,20 +41,170 @@ const PlayerRequests = () => {
     };
   }, [dispatch]);
 
-  const handleAccept = async (requestId) => {
-    await dispatch(acceptRequest(requestId));
-    dispatch(getReceivedRequests());
+  const handleAccept = async (e, requestId) => {
+    e.stopPropagation(); // Prevent row click
+    try {
+      await dispatch(acceptRequest(requestId)).unwrap();
+      toast.success("Request accepted successfully! You've joined the team.");
+      dispatch(getReceivedRequests());
+    } catch (error) {
+      toast.error(error?.message || "Failed to accept request");
+    }
   };
 
-  const handleReject = async (requestId) => {
-    await dispatch(rejectRequest(requestId));
-    dispatch(getReceivedRequests());
+  const handleReject = async (e, requestId) => {
+    e.stopPropagation(); // Prevent row click
+    try {
+      await dispatch(rejectRequest(requestId)).unwrap();
+      toast.success("Request rejected");
+      dispatch(getReceivedRequests());
+    } catch (error) {
+      toast.error(error?.message || "Failed to reject request");
+    }
   };
 
-  const handleCancel = async (requestId) => {
-    await dispatch(cancelRequest(requestId));
-    dispatch(getSentRequests());
+  const handleCancel = async (e, requestId) => {
+    e.stopPropagation(); // Prevent row click
+    try {
+      await dispatch(cancelRequest(requestId)).unwrap();
+      toast.success("Request deleted successfully");
+      dispatch(getSentRequests());
+    } catch (error) {
+      toast.error(error?.message || "Failed to delete request");
+    }
   };
+
+  const handleRowClick = (request) => {
+    // Navigate to team detail page
+    if (request.team?._id) {
+      navigate(`/teams/${request.team._id}`);
+    }
+  };
+
+  // Columns for Received Requests
+  const receivedColumns = [
+    {
+      header: "Player",
+      width: "40%",
+      render: (request) => (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
+            <img
+              src={request.sender?.avatarUrl || defaultAvatar}
+              alt={request.sender?.fullName}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-text-primary dark:text-text-primary-dark truncate">
+              {request.sender?.fullName}
+            </p>
+            <p className="text-xs text-base dark:text-base-dark truncate">
+              {request.sender?.email}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Team",
+      width: "20%",
+      render: (request) => (
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0">
+            <img
+              src={request.team?.logoUrl || defaultTeamAvatar}
+              alt={request.team?.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <span className="text-sm text-text-primary dark:text-text-primary-dark truncate">
+            {request.team?.name}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: "Actions",
+      width: "30%",
+      render: (request) => (
+        <div className="flex gap-2">
+          <Button
+            onClick={(e) => handleAccept(e, request._id)}
+            disabled={loading}
+            className="!bg-green-600 hover:!bg-green-700 !text-white px-4 py-2 flex items-center gap-2 text-sm w-auto"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            Accept
+          </Button>
+          <Button
+            onClick={(e) => handleReject(e, request._id)}
+            disabled={loading}
+            className="!bg-red-600 hover:!bg-red-700 !text-white px-4 py-2 flex items-center gap-2 text-sm w-auto"
+          >
+            <XCircle className="w-4 h-4" />
+            Reject
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  // Columns for Sent Requests
+  const sentColumns = [
+    {
+      header: "Team",
+      width: "40%",
+      render: (request) => (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0">
+            <img
+              src={request.team?.logoUrl || defaultTeamAvatar}
+              alt={request.team?.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-text-primary dark:text-text-primary-dark truncate">
+              {request.team?.name}
+            </p>
+            <p className="text-xs text-base dark:text-base-dark truncate">
+              {request.team?.sport?.name}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Manager",
+      width: "25%",
+      render: (request) => (
+        <div className="min-w-0">
+          <p className="text-sm text-text-primary dark:text-text-primary-dark truncate">
+            {request.receiver?.fullName}
+          </p>
+          <p className="text-xs text-base dark:text-base-dark truncate">
+            {request.receiver?.email}
+          </p>
+        </div>
+      ),
+    },
+    {
+      header: "Actions",
+      width: "30%",
+      render: (request) => (
+        <Button
+          onClick={(e) => handleCancel(e, request._id)}
+          disabled={loading}
+          variant="outline"
+          className="w-auto px-4 py-2 text-sm"
+        >
+          <XCircle className="w-4 h-4" />
+          Delete Request
+        </Button>
+      ),
+    },
+  ];
 
   if (loading && receivedRequests.length === 0 && sentRequests.length === 0) {
     return (
@@ -58,15 +215,11 @@ const PlayerRequests = () => {
   }
 
   return (
-    <div className="min-h-screen pb-16">
-      <Container>
-        <h1 className="text-3xl font-bold mb-6">Team Requests</h1>
+    <div className="min-h-screen pb-16 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
+      <BackButton className="mb-4" />
+      <h1 className="text-3xl font-bold mb-6">Team Requests</h1>
 
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg text-red-700 dark:text-red-400">
-            {error}
-          </div>
-        )}
+        {error && <ErrorMessage message={error} type="error" onDismiss={() => dispatch(clearError())} />}
 
         {/* Tabs */}
         <div className="flex gap-4 mb-6 border-b border-base-dark dark:border-base">
@@ -96,7 +249,7 @@ const PlayerRequests = () => {
 
         {/* Received Requests */}
         {activeTab === "received" && (
-          <div className="space-y-3">
+          <>
             {receivedRequests.length === 0 ? (
               <div className="text-center py-12">
                 <Inbox className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
@@ -108,23 +261,20 @@ const PlayerRequests = () => {
                 </p>
               </div>
             ) : (
-              receivedRequests.map((request) => (
-                <RequestCard
-                  key={request._id}
-                  request={request}
-                  type="received"
-                  onAccept={handleAccept}
-                  onReject={handleReject}
-                  loading={loading}
-                />
-              ))
+              <DataTable
+                columns={receivedColumns}
+                data={receivedRequests}
+                onRowClick={handleRowClick}
+                itemsPerPage={receivedRequests.length}
+                emptyMessage="No received requests"
+              />
             )}
-          </div>
+          </>
         )}
 
         {/* Sent Requests */}
         {activeTab === "sent" && (
-          <div className="space-y-3">
+          <>
             {sentRequests.length === 0 ? (
               <div className="text-center py-12">
                 <Send className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
@@ -136,19 +286,16 @@ const PlayerRequests = () => {
                 </p>
               </div>
             ) : (
-              sentRequests.map((request) => (
-                <RequestCard
-                  key={request._id}
-                  request={request}
-                  type="sent"
-                  onCancel={handleCancel}
-                  loading={loading}
-                />
-              ))
+              <DataTable
+                columns={sentColumns}
+                data={sentRequests}
+                onRowClick={handleRowClick}
+                itemsPerPage={sentRequests.length}
+                emptyMessage="No sent requests"
+              />
             )}
-          </div>
+          </>
         )}
-      </Container>
     </div>
   );
 };

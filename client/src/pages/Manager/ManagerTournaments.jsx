@@ -4,6 +4,7 @@ import { Trophy, CheckCircle, Clock } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import GridContainer from "../../components/ui/GridContainer";
 import TournamentCard from "../../components/ui/TournamentCard";
+import BackButton from "../../components/ui/BackButton";
 import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
 import { fetchManagerTeams } from "../../store/slices/teamSlice";
 
@@ -42,6 +43,7 @@ const ManagerTournaments = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
+      <BackButton className="mb-6" />
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
           My Tournaments
@@ -54,7 +56,7 @@ const ManagerTournaments = () => {
 
       {loading && (
         <div className="flex justify-center items-center py-12">
-          <Spinner size="lg" text="Loading tournaments..." />
+          <Spinner size="lg" />
         </div>
       )}
 
@@ -104,7 +106,7 @@ const ManagerTournaments = () => {
                   ))}
                 </div>
 
-                <TournamentCard tournament={tournament} />
+                <TournamentCard tournament={tournament} isManager={true} />
               </div>
             );
           })}

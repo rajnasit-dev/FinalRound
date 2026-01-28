@@ -46,7 +46,7 @@ export const getTeamManagerProfile = asyncHandler(async (req, res) => {
     .populate({
       path: "teams",
       populate: {
-        path: "sport players captain",
+        path: "sport players",
         select: "name teamBased iconUrl fullName email avatar"
       }
     })
@@ -93,7 +93,6 @@ export const getManagerTeams = asyncHandler(async (req, res) => {
 
   const teams = await Team.find({ manager: managerId, isActive: true })
     .populate("sport", "name teamBased iconUrl")
-    .populate("captain", "fullName email avatar")
     .populate("players", "fullName email avatar");
 
   res

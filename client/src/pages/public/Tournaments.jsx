@@ -5,6 +5,8 @@ import SearchBar from "../../components/ui/SearchBar";
 import FilterDropdown from "../../components/ui/FilterDropdown";
 import Spinner from "../../components/ui/Spinner";
 import GridContainer from "../../components/ui/GridContainer";
+import Pagination from "../../components/ui/Pagination";
+import BackButton from "../../components/ui/BackButton";
 import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
 
 const Tournaments = () => {
@@ -18,7 +20,13 @@ const Tournaments = () => {
 
   const [selectedSport, setSelectedSport] = useState("All");
   const [selectedRegistrationType, setSelectedRegistrationType] = useState("All");
+  const [selectedGender, setSelectedGender] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [liveCurrentPage, setLiveCurrentPage] = useState(1);
+  const [upcomingCurrentPage, setUpcomingCurrentPage] = useState(1);
+  const [completedCurrentPage, setCompletedCurrentPage] = useState(1);
+  const [cancelledCurrentPage, setCancelledCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const sports = [
     "All",
@@ -32,6 +40,8 @@ const Tournaments = () => {
 
   const registrationTypes = ["All", "Team", "Player"];
 
+  const genders = ["All", "Male", "Female", "Mixed"];
+
   // Filter tournaments by sport, registration type, and search
   const filterTournaments = (tournamentList) => {
     return (tournamentList || []).filter((tournament) => {
@@ -39,11 +49,13 @@ const Tournaments = () => {
         selectedSport === "All" || tournament?.sport?.name === selectedSport || tournament?.sport === selectedSport;
       const matchesRegistrationType =
         selectedRegistrationType === "All" || tournament?.registrationType === selectedRegistrationType;
+      const matchesGender =
+        selectedGender === "All" || tournament?.gender === selectedGender;
       const matchesSearch =
         tournament?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tournament?.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tournament?.ground?.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         tournament?.location?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSport && matchesRegistrationType && matchesSearch;
+      return matchesSport && matchesRegistrationType && matchesGender && matchesSearch;
     });
   };
 
@@ -52,6 +64,31 @@ const Tournaments = () => {
   const upcomingTournaments = filterTournaments(tournaments.filter(t => t.status === "Upcoming"));
   const completedTournaments = filterTournaments(tournaments.filter(t => t.status === "Completed"));
   const cancelledTournaments = filterTournaments(tournaments.filter(t => t.status === "Cancelled"));
+
+  // Pagination logic for each section
+  const liveTotalPages = Math.ceil(liveTournaments.length / itemsPerPage);
+  const liveStartIndex = (liveCurrentPage - 1) * itemsPerPage;
+  const paginatedLiveTournaments = liveTournaments.slice(liveStartIndex, liveStartIndex + itemsPerPage);
+
+  const upcomingTotalPages = Math.ceil(upcomingTournaments.length / itemsPerPage);
+  const upcomingStartIndex = (upcomingCurrentPage - 1) * itemsPerPage;
+  const paginatedUpcomingTournaments = upcomingTournaments.slice(upcomingStartIndex, upcomingStartIndex + itemsPerPage);
+
+  const completedTotalPages = Math.ceil(completedTournaments.length / itemsPerPage);
+  const completedStartIndex = (completedCurrentPage - 1) * itemsPerPage;
+  const paginatedCompletedTournaments = completedTournaments.slice(completedStartIndex, completedStartIndex + itemsPerPage);
+
+  const cancelledTotalPages = Math.ceil(cancelledTournaments.length / itemsPerPage);
+  const cancelledStartIndex = (cancelledCurrentPage - 1) * itemsPerPage;
+  const paginatedCancelledTournaments = cancelledTournaments.slice(cancelledStartIndex, cancelledStartIndex + itemsPerPage);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setLiveCurrentPage(1);
+    setUpcomingCurrentPage(1);
+    setCompletedCurrentPage(1);
+    setCancelledCurrentPage(1);
+  }, [selectedSport, selectedRegistrationType, selectedGender, searchQuery]);
 
   if (loading) {
     return (
@@ -65,6 +102,7 @@ const Tournaments = () => {
 
   return (
     <section className="container mx-auto px-6 py-4">
+      <BackButton className="mb-6" />
       <div className="mb-8">
         <h1 className="text-4xl font-bold my-5">Explore Tournaments</h1>
         <p>Find and join tournaments happening near you</p>
@@ -103,6 +141,16 @@ const Tournaments = () => {
                 label: type === "All" ? "All Types" : type,
               }))}
             />
+
+            {/* Gender Filter Dropdown */}
+            <FilterDropdown
+              value={selectedGender}
+              onChange={(e) => setSelectedGender(e.target.value)}
+              options={genders.map((gender) => ({
+                value: gender,
+                label: gender === "All" ? "All Genders" : gender,
+              }))}
+            />
           </div>
         </div>
       </div>
@@ -112,13 +160,24 @@ const Tournaments = () => {
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
             <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-            Live Tournaments ({liveTournaments.length})
+            Live Tournaments (<span className="font-num">{liveTournaments.length}</span>)
           </h2>
           <GridContainer cols={3}>
-            {liveTournaments.map((tournament) => (
+            {paginatedLiveTournaments.map((tournament) => (
               <TournamentCard key={tournament._id || tournament.id} tournament={tournament} />
             ))}
           </GridContainer>
+          {liveTotalPages > 1 && (
+            <div className="mt-8">
+              <Pagination
+                currentPage={liveCurrentPage}
+                totalPages={liveTotalPages}
+                onPageChange={setLiveCurrentPage}
+                itemsPerPage={itemsPerPage}
+                totalItems={liveTournaments.length}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -126,13 +185,24 @@ const Tournaments = () => {
       {upcomingTournaments.length > 0 && (
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-6">
-            Upcoming Tournaments ({upcomingTournaments.length})
+            Upcoming Tournaments (<span className="font-num">{upcomingTournaments.length}</span>)
           </h2>
           <GridContainer cols={3}>
-            {upcomingTournaments.map((tournament) => (
+            {paginatedUpcomingTournaments.map((tournament) => (
               <TournamentCard key={tournament._id || tournament.id} tournament={tournament} />
             ))}
           </GridContainer>
+          {upcomingTotalPages > 1 && (
+            <div className="mt-8">
+              <Pagination
+                currentPage={upcomingCurrentPage}
+                totalPages={upcomingTotalPages}
+                onPageChange={setUpcomingCurrentPage}
+                itemsPerPage={itemsPerPage}
+                totalItems={upcomingTournaments.length}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -140,13 +210,24 @@ const Tournaments = () => {
       {completedTournaments.length > 0 && (
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-6">
-            Completed Tournaments ({completedTournaments.length})
+            Completed Tournaments (<span className="font-num">{completedTournaments.length}</span>)
           </h2>
           <GridContainer cols={3}>
-            {completedTournaments.map((tournament) => (
+            {paginatedCompletedTournaments.map((tournament) => (
               <TournamentCard key={tournament._id || tournament.id} tournament={tournament} />
             ))}
           </GridContainer>
+          {completedTotalPages > 1 && (
+            <div className="mt-8">
+              <Pagination
+                currentPage={completedCurrentPage}
+                totalPages={completedTotalPages}
+                onPageChange={setCompletedCurrentPage}
+                itemsPerPage={itemsPerPage}
+                totalItems={completedTournaments.length}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -154,13 +235,24 @@ const Tournaments = () => {
       {cancelledTournaments.length > 0 && (
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-6 text-gray-500 dark:text-gray-400">
-            Cancelled Tournaments ({cancelledTournaments.length})
+            Cancelled Tournaments (<span className="font-num">{cancelledTournaments.length}</span>)
           </h2>
           <GridContainer cols={3}>
-            {cancelledTournaments.map((tournament) => (
+            {paginatedCancelledTournaments.map((tournament) => (
               <TournamentCard key={tournament._id || tournament.id} tournament={tournament} />
             ))}
           </GridContainer>
+          {cancelledTotalPages > 1 && (
+            <div className="mt-8">
+              <Pagination
+                currentPage={cancelledCurrentPage}
+                totalPages={cancelledTotalPages}
+                onPageChange={setCancelledCurrentPage}
+                itemsPerPage={itemsPerPage}
+                totalItems={cancelledTournaments.length}
+              />
+            </div>
+          )}
         </div>
       )}
 

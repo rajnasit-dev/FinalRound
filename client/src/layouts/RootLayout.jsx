@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Lenis from "lenis";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { Toaster } from "react-hot-toast";
 
 const RootLayout = () => {
   const [darkMode, setDarkMode] = useState(() => {
@@ -43,6 +44,9 @@ const RootLayout = () => {
       <main className="flex-1" style={{ paddingTop: "var(--navbar-height)" }}>
         <Outlet />
       </main>
+
+      {/* Global Toasts */}
+      <Toaster position="top-right" reverseOrder={false} />
 
       <Footer />
     </div>

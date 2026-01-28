@@ -54,27 +54,9 @@ const matchSchema = new Schema(
       required: true,
     },
 
-    status: {
-      type: String,
-      enum: ["Scheduled", "Live", "Completed", "Cancelled"],
-      default: "Scheduled",
-    },
-
-    scoreA: {
-      type: String, // simple text: "150/7 in 20 ov"
-    },
-
-    scoreB: {
-      type: String,
-    },
-
-    resultText: {
-      type: String, // "Team A won by 10 runs"
-    },
-
-    manOfTheMatch: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
+    isCancelled: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

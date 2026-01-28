@@ -5,6 +5,8 @@ import { createPayment, verifyPayment, clearError, clearCurrentPayment, clearPay
 import { CreditCard, CheckCircle, XCircle, Loader } from "lucide-react";
 import useDateFormat from "../../hooks/useDateFormat";
 import Button from "../../components/ui/Button";
+import ErrorMessage from "../../components/ui/ErrorMessage";
+import BackButton from "../../components/ui/BackButton";
 
 const TournamentPayment = () => {
   const { id } = useParams();
@@ -136,6 +138,7 @@ const TournamentPayment = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-2xl mx-auto">
+        <BackButton className="mb-6" />
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
             <CreditCard className="w-16 h-16 mx-auto text-blue-600 mb-4" />
@@ -157,7 +160,7 @@ const TournamentPayment = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Start Date:</span>
-                <span className="font-medium text-gray-800">
+                <span className="font-medium text-gray-800 font-num">
                   {formatDate(tournament.startDate)}
                 </span>
               </div>
@@ -170,18 +173,18 @@ const TournamentPayment = () => {
             <div className="space-y-2 mb-4">
               <div className="flex justify-between">
                 <span className="text-gray-600">Entry Fee:</span>
-                <span className="font-medium text-gray-800">
+                <span className="font-medium text-gray-800 font-num">
                   ₹{tournament.entryFee.toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Processing Fee:</span>
-                <span className="font-medium text-gray-800">₹0</span>
+                <span className="font-medium text-gray-800 font-num">₹0</span>
               </div>
               <div className="border-t border-blue-300 pt-2 mt-2">
                 <div className="flex justify-between text-lg">
                   <span className="font-semibold text-gray-800">Total Amount:</span>
-                  <span className="font-bold text-blue-600">
+                  <span className="font-bold text-blue-600 font-num">
                     ₹{tournament.entryFee.toLocaleString()}
                   </span>
                 </div>
@@ -190,12 +193,7 @@ const TournamentPayment = () => {
           </div>
 
           {/* Error Message */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
-              <XCircle className="w-5 h-5" />
-              {error}
-            </div>
-          )}
+          {error && <ErrorMessage message={error} type="error" />}
 
           {/* Payment Button */}
           <Button

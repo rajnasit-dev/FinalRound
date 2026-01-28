@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -7,87 +7,54 @@ import {
   Users,
   Mail,
   Phone,
-  Shield,
   User,
   ArrowLeft,
   UserPlus,
-  Target,
-  Calendar,
   Award,
-  Crown,
-  ChevronRight,
   Send,
+  Users2,
 } from "lucide-react";
 import CardStat from "../../components/ui/CardStat";
 import Container from "../../components/container/Container";
 import Spinner from "../../components/ui/Spinner";
 import Button from "../../components/ui/Button";
+import BackButton from "../../components/ui/BackButton";
+import DataTable from "../../components/ui/DataTable";
 import { fetchTeamById } from "../../store/slices/teamSlice";
-import { sendTeamRequest } from "../../store/slices/requestSlice";
-import defaultAvatar from "../../assets/defaultAvatar.png";
+import { sendTeamRequest, getSentRequests } from "../../store/slices/requestSlice";
 import defaultTeamCoverImage from "../../assets/defaultTeamCoverImage.png";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
+import defaultTeamManagerAvatar from "../../assets/defaultTeamManagerAvatar.png";
 import AchievementCard from "../../components/ui/AchievementCard";
+import { toast } from "react-hot-toast";
 import useDateFormat from "../../hooks/useDateFormat";
-import useAge from "../../hooks/useAge";
 
-// Helper component to display player with age calculated from DOB
-const PlayerListItem = ({ player, isCaptain }) => {
-  const age = useAge(player?.dateOfBirth);
-  
-  return (
-    <Link
-      to={`/players/${player._id}`}
-      className="group flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-750 transition-all border border-gray-200 dark:border-gray-700 hover:border-secondary dark:hover:border-secondary hover:shadow-md"
-    >
-      <div className="relative">
-        <div className="w-14 h-14 rounded-xl overflow-hidden bg-linear-to-br from-blue-500 to-purple-600 shrink-0">
-          {player.avatar ? (
-            <img
-              src={player.avatar}
-              alt={player.fullName}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-white font-bold">
-              {player.fullName
-                .split(" ")
-                .map((n) => n[0])
-                .join("")
-                .toUpperCase()}
-            </div>
-          )}
-        </div>
-        {isCaptain && (
-          <Crown className="absolute -top-1 -right-1 w-5 h-5 text-amber-500" />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <h4 className="font-semibold text-gray-900 dark:text-white truncate group-hover:text-secondary transition-colors">
-          {player.fullName}
-        </h4>
-        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <Target className="w-3 h-3" />
-          {player.playingRole}
-        </div>
-      </div>
-      {age && (
-        <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-          {age} yrs
-        </div>
-      )}
-    </Link>
-  );
+// Helpers
+const computeAge = (dateOfBirth) => {
+  if (!dateOfBirth) return null;
+  try {
+    const dob = new Date(dateOfBirth);
+    if (isNaN(dob.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age >= 0 ? age : null;
+  } catch (err) {
+    return null;
+  }
 };
 
 const TeamDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { selectedTeam: team, loading } = useSelector((state) => state.team);
   const { user } = useSelector((state) => state.auth);
-  const { loading: requestLoading } = useSelector((state) => state.request);
-  const [showJoinModal, setShowJoinModal] = useState(false);
-  const [joinMessage, setJoinMessage] = useState("");
+  const { sentRequests, loading: requestLoading } = useSelector((state) => state.request);
+  const [requestSent, setRequestSent] = useState(false);
   const { formatDate } = useDateFormat();
 
   useEffect(() => {
@@ -95,7 +62,10 @@ const TeamDetail = () => {
     if (id) {
       dispatch(fetchTeamById(id));
     }
-  }, [id, dispatch]);
+    if (user?.role === "Player") {
+      dispatch(getSentRequests());
+    }
+  }, [id, dispatch, user?.role]);
 
   if (loading) {
     return (
@@ -120,24 +90,124 @@ const TeamDetail = () => {
     );
   }
 
-  const teamSince = formatDate(team.createdAt);
-
   const handleJoinRequest = async () => {
-    await dispatch(
-      sendTeamRequest({
-        teamId: team._id,
-        message: joinMessage,
-      })
-    );
-    setShowJoinModal(false);
-    setJoinMessage("");
-    alert("Join request sent successfully!");
+    try {
+      await dispatch(
+        sendTeamRequest({
+          teamId: team._id,
+          message: "",
+        }),
+      ).unwrap();
+      setRequestSent(true);
+      toast.success("Join request sent successfully!");
+    } catch (err) {
+      toast.error(err?.message || "Failed to send request");
+    }
   };
 
   const isPlayer = user?.role === "Player";
-  const isTeamMember = team.players?.some(
-    (player) => player._id === user?._id
+  const isTeamMember = team.players?.some((player) => player._id === user?._id);
+  
+  // Check if user has already sent a request to this team
+  const hasExistingRequest = sentRequests.some(
+    (request) => request.team?._id === team._id && request.status === "PENDING"
   );
+
+  const getRoleForTeamSport = (player) => {
+    const teamSportId = team.sport?._id || team.sport;
+    const matched = player.sports?.find(
+      (s) => (s.sport?._id || s.sport) === teamSportId,
+    );
+    return matched?.role || player.playingRole || "";
+  };
+
+  const playerColumns = [
+    {
+      header: "Player",
+      width: "28%",
+      render: (player) => (
+        <div className="flex items-center gap-3">
+          <img
+            src={player.avatar || defaultTeamAvatar}
+            alt={player.fullName}
+            className="w-10 h-10 rounded-full object-cover shrink-0"
+          />
+          <div className="min-w-0">
+            <p className="font-semibold text-text-primary dark:text-text-primary-dark truncate">
+              {player.fullName}
+            </p>
+            <p className="text-sm text-base dark:text-base-dark truncate">
+              {player.email}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Role",
+      width: "16%",
+      render: (player) => (
+        <span className="text-sm text-text-primary dark:text-text-primary-dark">
+          {getRoleForTeamSport(player)}
+        </span>
+      ),
+    },
+    {
+      header: "Gender",
+      width: "10%",
+      render: (player) => (
+        <span
+          className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
+            player.gender === "Female"
+              ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300"
+              : "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+          }`}
+        >
+          {player.gender}
+        </span>
+      ),
+    },
+    {
+      header: "Age",
+      width: "8%",
+      render: (player) => {
+        const age = computeAge(player.dateOfBirth);
+        return (
+          <span className="text-sm text-text-primary dark:text-text-primary-dark">
+            {age ?? "-"}
+          </span>
+        );
+      },
+    },
+    {
+      header: "Location",
+      width: "15%",
+      render: (player) => (
+        <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark truncate">
+          <MapPin className="w-4 h-4 text-secondary shrink-0" />
+          <span className="truncate">{player.city || "N/A"}</span>
+        </div>
+      ),
+    },
+    {
+      header: "Contact",
+      width: "23%",
+      render: (player) => (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
+            <Mail className="w-4 h-4 text-secondary shrink-0" />
+            <span className="truncate">{player.email}</span>
+          </div>
+          {player.phone && (
+            <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
+              <Phone className="w-4 h-4 text-secondary shrink-0" />
+              <span className="truncate">{player.phone}</span>
+            </div>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="min-h-screen pb-16">
@@ -152,13 +222,7 @@ const TeamDetail = () => {
 
         {/* Back Button */}
         <div className="absolute top-6 left-6">
-          <Link
-            to="/teams"
-            className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors bg-black/30 backdrop-blur-sm px-4 py-2 rounded-lg"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="font-medium">Back to Teams</span>
-          </Link>
+          <BackButton className="bg-black/50 dark:bg-black/70 border-white/20 text-white hover:bg-black/70 dark:hover:bg-black/90" />
         </div>
 
         {/* Team Info Overlay */}
@@ -190,15 +254,11 @@ const TeamDetail = () => {
               {/* Badges */}
               <div className="flex items-center gap-3 mb-4 flex-wrap">
                 <span className="bg-accent text-text-primary text-xs sm:text-sm px-4 py-1.5 rounded-full font-bold shadow-lg">
-                  {team.sport?.name || 'Sport'}
+                  {team.sport?.name || "Sport"}
                 </span>
                 <span className="bg-white/20 backdrop-blur-sm text-white text-xs sm:text-sm px-4 py-1.5 rounded-full font-medium flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  {team.city || 'N/A'}
-                </span>
-                <span className="bg-white/20 backdrop-blur-sm text-white text-xs sm:text-sm px-4 py-1.5 rounded-full font-medium flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  Since {teamSince}
+                  {team.city || "N/A"}
                 </span>
               </div>
 
@@ -208,15 +268,31 @@ const TeamDetail = () => {
             </div>
 
             {/* Right Overlay - Join Button */}
-            {team.openToJoin && isPlayer && !isTeamMember && (
-              <Button
-                onClick={() => setShowJoinModal(true)}
-                variant="primary"
-                className="w-auto px-8 py-4 text-lg shadow-2xl"
-              >
-                Send Join Request
-              </Button>
-            )}
+            {isPlayer &&
+              !isTeamMember &&
+              (requestSent || hasExistingRequest ? (
+                <button
+                  className="bg-accent/50 text-black/50 px-8 py-4 rounded-xl font-bold text-lg shadow-2xl whitespace-nowrap cursor-not-allowed"
+                  disabled
+                >
+                  Request Already Sent
+                </button>
+              ) : !team.openToJoin ? (
+                <button
+                  className="bg-accent/50 text-black/50 px-8 py-4 rounded-xl font-bold text-lg shadow-2xl whitespace-nowrap cursor-not-allowed"
+                  disabled
+                >
+                  Team Registration Closed
+                </button>
+              ) : (
+                <button
+                  onClick={handleJoinRequest}
+                  disabled={requestLoading}
+                  className="bg-accent hover:bg-accent/90 text-black px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-2xl hover:shadow-accent/50 hover:scale-105 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {requestLoading ? "Sending..." : "Send Join Request"}
+                </button>
+              ))}
           </div>
         </div>
       </div>
@@ -227,16 +303,17 @@ const TeamDetail = () => {
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* About Team */}
+            {team.description && (
+              <Container>
+                <h2 className="text-2xl font-bold mb-5">About Team</h2>
+                <p className="text-base dark:text-base-dark leading-relaxed">
+                  {team.description}
+                </p>
+              </Container>
+            )}
+            {/* Team Information */}
             <Container>
-              <h2 className="text-2xl font-bold mb-5">About Team</h2>
-              <p className="text-base dark:text-base-dark leading-relaxed">
-                {team.description}
-              </p>
-            </Container>
-
-            {/* Team Stats */}
-            <Container>
-              <h2 className="text-2xl font-bold mb-5">Team Statistics</h2>
+              <h2 className="text-2xl font-bold mb-5">Team Details</h2>
               <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
                 <CardStat
                   Icon={Users}
@@ -257,21 +334,15 @@ const TeamDetail = () => {
                   value={team.city}
                 />
                 <CardStat
-                  Icon={Calendar}
-                  iconColor="text-green-600"
-                  label="Established"
-                  value={teamSince}
-                />
-                <CardStat
-                  Icon={Shield}
+                  Icon={Users2}
                   iconColor="text-purple-600"
-                  label="Status"
-                  value={team.isActive ? "Active" : "Inactive"}
+                  label="Gender"
+                  value={team.gender || "Mixed"}
                 />
                 <CardStat
                   Icon={UserPlus}
                   iconColor="text-cyan-600"
-                  label="Recruitment"
+                  label="Join Status"
                   value={team.openToJoin ? "Open" : "Closed"}
                 />
               </div>
@@ -286,12 +357,14 @@ const TeamDetail = () => {
                     <h2 className="text-2xl font-bold">Achievements</h2>
                   </div>
                   <p className="text-sm text-base dark:text-base-dark">
-                    {team.achievements.length} accomplishment{team.achievements.length > 1 ? "s" : ""}
+                    {team.achievements.length} accomplishment
+                    {team.achievements.length > 1 ? "s" : ""}
                   </p>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {team.achievements.map((achievement, index) => {
-                    const title = achievement?.title || achievement || "Achievement";
+                    const title =
+                      achievement?.title || achievement || "Achievement";
                     const year = achievement?.year;
                     return (
                       <AchievementCard key={index} title={title} year={year} />
@@ -302,78 +375,10 @@ const TeamDetail = () => {
             )}
 
             {/* Team Members */}
-            <Container>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                  <Users className="w-6 h-6 text-blue-600" />
-                  Team Members
-                  <span className="text-lg text-gray-500 dark:text-gray-400">
-                    ({team.players.length})
-                  </span>
-                </h2>
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                {team.players.map((player) => (
-                  <PlayerListItem 
-                    key={player._id} 
-                    player={player} 
-                    isCaptain={player._id === team.captain?._id}
-                  />
-                ))}
-              </div>
-            </Container>
           </div>
 
           {/* Right Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Team Captain Card */}
-            {team.captain && (
-              <div className="bg-linear-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-xl border-2 border-amber-200 dark:border-amber-800 p-6">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                  <Crown className="w-5 h-5 text-amber-600" />
-                  Team Captain
-                </h3>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-linear-to-br from-amber-500 to-yellow-600 shrink-0">
-                      {team.captain.avatar ? (
-                        <img
-                          src={team.captain.avatar}
-                          alt={team.captain.fullName}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white font-bold text-lg">
-                          {team.captain.fullName
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <Crown className="absolute -top-2 -right-2 w-6 h-6 text-amber-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-gray-900 dark:text-white truncate">
-                      {team.captain.fullName}
-                    </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {team.captain.playingRole}
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  to={`/players/${team.captain._id}`}
-                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold transition-colors"
-                >
-                  View Profile
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
-              </div>
-            )}
-
             {/* Manager Card */}
             <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
               <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
@@ -382,21 +387,11 @@ const TeamDetail = () => {
               </h3>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-linear-to-br from-blue-500 to-purple-600 shrink-0">
-                  {team.manager.avatar ? (
-                    <img
-                      src={team.manager.avatar}
-                      alt={team.manager.fullName}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white font-bold text-lg">
-                      {team.manager.fullName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()}
-                    </div>
-                  )}
+                  <img
+                    src={team.manager.avatar || defaultTeamManagerAvatar}
+                    alt={team.manager.fullName}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold truncate">
@@ -410,65 +405,52 @@ const TeamDetail = () => {
               <div className="space-y-2 pt-3 border-t border-gray-200 dark:border-gray-700">
                 <a
                   href={`mailto:${team.manager.email}`}
-                  className="flex items-center gap-2 text-sm text-secondary hover:underline"
+                  className="flex items-center gap-2 text-sm text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors"
                 >
-                  <Mail className="w-4 h-4" />
+                  <Mail className="w-4 h-4 text-secondary dark:text-secondary-dark shrink-0" />
                   <span className="truncate">{team.manager.email}</span>
                 </a>
                 <a
                   href={`tel:${team.manager.phone}`}
-                  className="flex items-center gap-2 text-sm text-secondary hover:underline"
+                  className="flex items-center gap-2 text-sm text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors"
                 >
-                  <Phone className="w-4 h-4" />
-                  {team.manager.phone}
+                  <Phone className="w-4 h-4 text-secondary dark:text-secondary-dark shrink-0" />
+                  <span className="font-num">{team.manager.phone}</span>
                 </a>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Join Request Modal */}
-      {showJoinModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-800">
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Send Join Request
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Tell the team manager why you'd like to join {team.name}
-            </p>
-            <textarea
-              value={joinMessage}
-              onChange={(e) => setJoinMessage(e.target.value)}
-              placeholder="Introduce yourself and mention your experience, playing position, and why you want to join this team..."
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all mb-4 min-h-32 bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
-            />
-            <div className="flex gap-3">
-              <Button
-                onClick={() => {
-                  setShowJoinModal(false);
-                  setJoinMessage("");
-                }}
-                variant="primary"
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleJoinRequest}
-                disabled={requestLoading || !joinMessage.trim()}
-                loading={requestLoading}
-                variant="primary"
-                className="flex-1"
-              >
-                <Send className="w-4 h-4" />
-                Send Request
-              </Button>
+        {/* Full Width Team Members Section */}
+        <div className="mt-12">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2 mb-1">
+                <Users className="w-7 h-7 text-blue-600" />
+                Team Members ({team.players.length})
+              </h2>
             </div>
           </div>
+
+          {team.players.length > 0 ? (
+            <DataTable
+              columns={playerColumns}
+              data={team.players}
+              onRowClick={(player) => navigate(`/players/${player._id}`)}
+              itemsPerPage={team.players.length}
+              emptyMessage="No team members yet"
+            />
+          ) : (
+            <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700">
+              <Users className="w-16 h-16 mx-auto mb-4 text-gray-400 dark:text-gray-600" />
+              <p className="text-gray-600 dark:text-gray-400 font-medium">
+                No team members yet
+              </p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

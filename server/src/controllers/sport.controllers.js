@@ -5,7 +5,7 @@ import { Sport } from "../models/Sport.model.js";
 
 // Create a new sport (Admin only)
 export const createSport = asyncHandler(async (req, res) => {
-  const { name, teamBased, minPlayers, maxPlayers } = req.body;
+  const { name, teamBased } = req.body;
 
   if (!name || teamBased === undefined) {
     throw new ApiError(400, "name, and teamBased are required fields.");
@@ -20,8 +20,6 @@ export const createSport = asyncHandler(async (req, res) => {
   const sport = await Sport.create({
     name,
     teamBased,
-    minPlayers,
-    maxPlayers,
   });
 
   if (!sport) {
@@ -78,7 +76,7 @@ export const getSportByName = asyncHandler(async (req, res) => {
 // Update sport (Admin only)
 export const updateSport = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { name, teamBased, minPlayers, maxPlayers } = req.body;
+  const { name, teamBased } = req.body;
 
   const sport = await Sport.findById(id);
 
@@ -97,8 +95,6 @@ export const updateSport = asyncHandler(async (req, res) => {
   // Update fields if provided
   if (name) sport.name = name;
   if (teamBased !== undefined) sport.teamBased = teamBased;
-  if (minPlayers !== undefined) sport.minPlayers = minPlayers;
-  if (maxPlayers !== undefined) sport.maxPlayers = maxPlayers;
 
   await sport.save();
 

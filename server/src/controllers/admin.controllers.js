@@ -8,6 +8,7 @@ import { Payment } from "../models/Payment.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { deleteFromCloudinary } from "../utils/cloudinary.js";
 
 const TOURNAMENT_LISTING_FEE = 100; // 100 rupees per tournament
 
@@ -335,10 +336,31 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
 export const deleteUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
-  const user = await User.findByIdAndDelete(userId);
+  const user = await User.findById(userId);
   if (!user) {
     throw new ApiError(404, "User not found");
   }
+
+  // Delete avatar from cloudinary if exists
+  if (user.avatarUrl) {
+    try {
+      await deleteFromCloudinary(user.avatarUrl);
+    } catch (error) {
+      console.error("Error deleting avatar from cloudinary:", error);
+    }
+  }
+
+  // Delete banner from cloudinary if exists
+  if (user.bannerUrl) {
+    try {
+      await deleteFromCloudinary(user.bannerUrl);
+    } catch (error) {
+      console.error("Error deleting banner from cloudinary:", error);
+    }
+  }
+
+  // Delete the user
+  await User.findByIdAndDelete(userId);
 
   res.status(200).json(new ApiResponse(200, null, "User deleted successfully"));
 });

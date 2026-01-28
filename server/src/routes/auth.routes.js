@@ -10,6 +10,7 @@ import {
   registerTeamManager,
   registerTournamentOrganizer,
   refreshAccessToken,
+  changePassword,
 } from "../controllers/auth.controllers.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -40,5 +41,6 @@ authRouter.post("/refresh-token", refreshAccessToken);
 
 //secure routes
 authRouter.post("/logout",authMiddleware, logout);
+authRouter.post("/change-password", authMiddleware, changePassword);
 
 export default authRouter;

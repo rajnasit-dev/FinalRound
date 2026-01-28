@@ -90,18 +90,20 @@ const RequestCard = ({
             <button
               onClick={() => onAccept(request._id)}
               disabled={loading}
-              className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 text-sm font-medium"
               title="Accept request"
             >
-              <CheckCircle2 className="w-5 h-5" />
+              <CheckCircle2 className="w-4 h-4" />
+              Accept
             </button>
             <button
               onClick={() => onReject(request._id)}
               disabled={loading}
-              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 text-sm font-medium"
               title="Reject request"
             >
-              <XCircle className="w-5 h-5" />
+              <XCircle className="w-4 h-4" />
+              Reject
             </button>
           </div>
         )}
@@ -110,10 +112,11 @@ const RequestCard = ({
           <button
             onClick={() => onCancel(request._id)}
             disabled={loading}
-            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 text-sm font-medium"
             title="Cancel request"
           >
-            <XCircle className="w-5 h-5" />
+            <XCircle className="w-4 h-4" />
+            Cancel
           </button>
         )}
       </div>
