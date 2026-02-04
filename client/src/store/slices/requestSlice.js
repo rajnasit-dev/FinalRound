@@ -15,7 +15,7 @@ export const sendTeamRequest = createAsyncThunk(
       );
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to send request");
     }
   }
 );
@@ -31,7 +31,7 @@ export const sendPlayerRequest = createAsyncThunk(
       );
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to send request");
     }
   }
 );
@@ -46,7 +46,7 @@ export const getReceivedRequests = createAsyncThunk(
       );
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch requests");
     }
   }
 );
@@ -61,7 +61,7 @@ export const getSentRequests = createAsyncThunk(
       );
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch requests");
     }
   }
 );
@@ -76,7 +76,7 @@ export const getTeamRequests = createAsyncThunk(
       );
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch requests");
     }
   }
 );

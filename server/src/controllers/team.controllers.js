@@ -25,8 +25,10 @@ export const createTeam = asyncHandler(async (req, res) => {
   }
 
   // Verify sport exists
+  console.log("Creating team with sport ID:", sport);
   const sportDoc = await Sport.findById(sport);
   if (!sportDoc) {
+    console.log("Sport not found for ID:", sport);
     throw new ApiError(404, "Sport not found.");
   }
 

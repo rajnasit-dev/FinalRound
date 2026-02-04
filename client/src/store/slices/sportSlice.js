@@ -11,7 +11,7 @@ export const fetchAllSports = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/sports`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch sports");
     }
   }
 );
@@ -23,7 +23,7 @@ export const fetchSportById = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/sports/${sportId}`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch sport");
     }
   }
 );
@@ -35,7 +35,7 @@ export const fetchSportByName = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/sports/name/${sportName}`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch sport");
     }
   }
 );
@@ -47,7 +47,7 @@ export const fetchTeamBasedSports = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/sports/team-based`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch sports");
     }
   }
 );
@@ -59,7 +59,7 @@ export const fetchIndividualSports = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/sports/individual`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch sports");
     }
   }
 );
@@ -71,7 +71,7 @@ export const createSport = createAsyncThunk(
       const response = await axios.post(`${API_BASE_URL}/sports`, sportData, { withCredentials: true, headers: { "Content-Type": "application/json" } });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to create sport");
     }
   }
 );
@@ -83,7 +83,7 @@ export const updateSport = createAsyncThunk(
       const response = await axios.put(`${API_BASE_URL}/sports/${sportId}`, sportData, { withCredentials: true, headers: { "Content-Type": "application/json" } });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to update sport");
     }
   }
 );

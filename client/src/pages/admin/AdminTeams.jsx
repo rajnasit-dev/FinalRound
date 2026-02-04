@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getAllTeams } from "../../store/slices/adminSlice";
 import { fetchAllSports } from "../../store/slices/sportSlice";
 import { Users, Trash2, Mail, Phone } from "lucide-react";
+import toast from "react-hot-toast";
 import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
 import SearchBar from "../../components/ui/SearchBar";
@@ -13,7 +14,6 @@ import Table from "../../components/ui/Table";
 import Pagination from "../../components/ui/Pagination";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import axios from "axios";
-import { toast } from "react-hot-toast";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
@@ -83,9 +83,7 @@ const AdminTeams = () => {
   const handleDelete = async (e, team) => {
     e.stopPropagation();
     
-    if (!window.confirm(`Are you sure you want to delete team "${team.name}"? This action cannot be undone.`)) {
-      return;
-    }
+    if (!window.confirm(`Are you sure you want to delete team "${team.name}"? This action cannot be undone.`)) return;
 
     setDeletingId(team._id);
     try {
@@ -180,19 +178,6 @@ const AdminTeams = () => {
             {value?.length || 0}
           </span>
         </div>
-      ),
-    },
-    {
-      header: "Status",
-      accessor: "isActive",
-      Cell: ({ value }) => (
-        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-          value
-            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-        }`}>
-          {value ? "Active" : "Inactive"}
-        </span>
       ),
     },
     {

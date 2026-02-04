@@ -1,18 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus, ArrowLeft, Edit, Trash2, Play, CheckCircle } from "lucide-react";
+import { Plus, ArrowLeft, Edit, Trash2, Play, Calendar, Trophy, Users } from "lucide-react";
+import toast from "react-hot-toast";
 import Spinner from "../../components/ui/Spinner";
-import MatchCard from "../../components/ui/MatchCard";
+import DataTable from "../../components/ui/DataTable";
 import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
+import useDateFormat from "../../hooks/useDateFormat";
+import useStatusColor from "../../hooks/useStatusColor";
 import { fetchTournamentById } from "../../store/slices/tournamentSlice";
-import { fetchMatchesByTournament, deleteMatch, generateTournamentFixtures } from "../../store/slices/matchSlice";
+import { fetchMatchesByTournament, deleteMatch } from "../../store/slices/matchSlice";
 
 const TournamentFixtures = () => {
   const { tournamentId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { formatDate, formatTime } = useDateFormat();
+  const getStatusColor = useStatusColor();
   const { user } = useSelector((state) => state.auth);
   const { selectedTournament: tournament, loading: tournamentLoading } = useSelector(
     (state) => state.tournament
@@ -29,18 +34,11 @@ const TournamentFixtures = () => {
   // Check if user is the organizer
   const isOrganizer = tournament?.organizer?._id === user?._id;
 
-  const canGenerate = isOrganizer && !tournament?.isScheduleCreated && (tournament?.approvedTeams?.length || 0) >= 2;
-
-  const handleGenerateFixtures = async () => {
-    await dispatch(generateTournamentFixtures(tournamentId));
-    dispatch(fetchMatchesByTournament(tournamentId));
-  };
-
   const handleDeleteMatch = async (matchId) => {
-    if (window.confirm("Are you sure you want to delete this match?")) {
-      await dispatch(deleteMatch(matchId));
-      dispatch(fetchMatchesByTournament(tournamentId));
-    }
+    if (!window.confirm("Are you sure you want to delete this match?")) return;
+    
+    await dispatch(deleteMatch(matchId));
+    dispatch(fetchMatchesByTournament(tournamentId));
   };
 
   if (tournamentLoading || matchesLoading) {
@@ -114,14 +112,6 @@ const TournamentFixtures = () => {
               <Plus className="w-5 h-5" />
               Schedule New Match
             </Button>
-            <Button
-              onClick={handleGenerateFixtures}
-              disabled={!canGenerate}
-              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60"
-            >
-              <CheckCircle className="w-5 h-5" />
-              Generate Fixtures
-            </Button>
           </div>
         </div>
       </div>
@@ -156,108 +146,94 @@ const TournamentFixtures = () => {
         </div>
       </div>
 
-      {/* Live Matches */}
-      {liveMatches.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-6 flex items-center gap-2">
-            <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-            Live Matches
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {liveMatches.map((match) => (
-              <div key={match._id} className="relative">
-                <MatchCard match={match} />
-                <div className="mt-3 flex gap-2">
-                  <Button
-                    onClick={() => navigate(`/organizer/matches/${match._id}/edit`)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Update Score
-                  </Button>
+      {/* Matches Table */}
+      <DataTable
+        columns={[
+          {
+            header: "Date & Time",
+            accessor: "scheduledAt",
+            render: (match) => (
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-base dark:text-base-dark" />
+                <div>
+                  <div className="text-sm font-medium text-text-primary dark:text-text-primary-dark">
+                    {formatDate(match.scheduledAt)}
+                  </div>
+                  <div className="text-xs text-base dark:text-base-dark">
+                    {formatTime(match.scheduledAt)}
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Scheduled Matches */}
-      {scheduledMatches.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-6">
-            Scheduled Matches
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {scheduledMatches.map((match) => (
-              <div key={match._id} className="relative">
-                <MatchCard match={match} />
-                <div className="mt-3 flex gap-2">
-                  <Button
-                    onClick={() => navigate(`/organizer/matches/${match._id}/edit`)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit
-                  </Button>
+            ),
+          },
+          {
+            header: "Participants",
+            accessor: "participants",
+            render: (match) => {
+              const participantA = match.teamA?.name || match.playerA?.fullName || "TBD";
+              const participantB = match.teamB?.name || match.playerB?.fullName || "TBD";
+              return (
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-secondary dark:text-secondary" />
+                  <div className="text-sm text-text-primary dark:text-text-primary-dark">
+                    {participantA} <span className="text-base dark:text-base-dark">vs</span> {participantB}
+                  </div>
+                </div>
+              );
+            },
+          },
+          {
+            header: "Score",
+            accessor: "score",
+            render: (match) => (
+              <div className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">
+                {match.status === "Completed" || match.status === "Live"
+                  ? `${match.scoreA || 0} - ${match.scoreB || 0}`
+                  : "-"}
+              </div>
+            ),
+          },
+          {
+            header: "Status",
+            accessor: "status",
+            render: (match) => {
+              const statusClass = getStatusColor(match.status);
+              return (
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${statusClass}`}>
+                  {match.status === "Live" && <span className="w-2 h-2 bg-current rounded-full animate-pulse mr-1.5" />}
+                  {match.status}
+                </span>
+              );
+            },
+          },
+          {
+            header: "Actions",
+            accessor: "actions",
+            render: (match) => (
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => navigate(`/organizer/matches/${match._id}/edit`)}
+                  className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700"
+                >
+                  <Edit className="w-3.5 h-3.5 mr-1" />
+                  {match.status === "Live" ? "Update" : "Edit"}
+                </Button>
+                {match.status === "Scheduled" && (
                   <Button
                     onClick={() => handleDeleteMatch(match._id)}
-                    className="px-4 bg-red-600 hover:bg-red-700"
+                    className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </Button>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Completed Matches */}
-      {completedMatches.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-6">
-            Completed Matches
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {completedMatches.map((match) => (
-              <MatchCard key={match._id} match={match} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {matches?.length === 0 && (
-        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
-            <Plus className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-          </div>
-          <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
-            No matches scheduled yet
-          </h3>
-          <p className="text-base dark:text-base-dark mb-6">
-            Start by scheduling the first match for this tournament
-          </p>
-          <div className="flex justify-center gap-3">
-            <Button
-              onClick={() => navigate(`/organizer/tournaments/${tournamentId}/fixtures/create`)}
-              className="inline-flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Schedule Match
-            </Button>
-            <Button
-              onClick={handleGenerateFixtures}
-              disabled={!canGenerate}
-              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60"
-            >
-              <CheckCircle className="w-5 h-5" />
-              Generate Fixtures
-            </Button>
-          </div>
-        </div>
-      )}
+            ),
+          },
+        ]}
+        data={matches || []}
+        itemsPerPage={10}
+        emptyMessage="No matches scheduled yet. Click 'Schedule New Match' to create your first match."
+      />
     </div>
   );
 };

@@ -1,9 +1,13 @@
 import cors from 'cors'
 import cookieParser from 'cookie-parser';
-import express from 'express'
+import express from 'express';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { connectDB } from './db.js';
 import helmet from 'helmet';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
 // Security and SEO headers middleware
@@ -17,24 +21,12 @@ app.use(cors({
     maxAge: 86400
 }));
 
-// Additional SEO and security headers
+// Security headers
 app.use((req, res, next) => {
-  // SEO Headers
-  res.setHeader('X-Robots-Tag', 'index, follow');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
-  // Enable compression
-  res.setHeader('Accept-Encoding', 'gzip, deflate, br');
-  
-  // Cache control
-  if (req.url.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-  } else {
-    res.setHeader('Cache-Control', 'public, max-age=3600');
-  }
   
   next();
 });
@@ -92,6 +84,16 @@ app.use('/api/v1/payments', paymentRouter);
 app.use('/api/v1/bookings', bookingRouter);
 app.use('/api/v1/requests', requestRouter);
 app.use('/api/v1/admin', adminRouter);
+
+// SPA fallback: serve client build for non-API routes (fixes 404 on direct /teams/:id etc.)
+const clientDist = path.join(__dirname, '../../client/dist');
+if (process.env.NODE_ENV === 'production' || fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' || req.path.startsWith('/api/')) return next();
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
 
 app.use((err, req, res, next) => {
     console.error("Error:", err.message);

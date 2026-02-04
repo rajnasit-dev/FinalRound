@@ -219,4 +219,74 @@ export const getOrganizersByCity = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, organizers, "Tournament organizers retrieved successfully."));
 });
 
+// Request authorization
+export const requestAuthorization = asyncHandler(async (req, res) => {
+  const organizerId = req.user._id;
+  const documentLocalPath = req.file?.path;
 
+  if (!documentLocalPath) {
+    throw new ApiError(400, "Verification document is required.");
+  }
+
+  const organizer = await TournamentOrganizer.findById(organizerId);
+  if (!organizer) {
+    throw new ApiError(404, "Tournament organizer not found.");
+  }
+
+  // Check if already authorized
+  if (organizer.isAuthorized) {
+    throw new ApiError(400, "Organization is already authorized.");
+  }
+
+  // Upload document to cloudinary
+  const documentResponse = await uploadOnCloudinary(documentLocalPath);
+
+  if (!documentResponse) {
+    throw new ApiError(500, "Failed to upload document to Cloudinary.");
+  }
+
+  // Update organizer with document and request date
+  organizer.verificationDocumentUrl = documentResponse.url;
+  organizer.authorizationRequestDate = new Date();
+  organizer.rejectionReason = undefined; // Clear any previous rejection reason
+  
+  await organizer.save();
+
+  const updatedOrganizer = await TournamentOrganizer.findById(organizerId)
+    .select("-password -refreshToken");
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, updatedOrganizer, "Authorization request submitted successfully."));
+});
+
+// Get authorization status
+export const getAuthorizationStatus = asyncHandler(async (req, res) => {
+  const organizerId = req.user._id;
+
+  const organizer = await TournamentOrganizer.findById(organizerId)
+    .select("isAuthorized verificationDocumentUrl authorizationRequestDate rejectionReason authorizedAt");
+
+  if (!organizer) {
+    throw new ApiError(404, "Tournament organizer not found.");
+  }
+
+  const status = {
+    isAuthorized: organizer.isAuthorized,
+    verificationDocumentUrl: organizer.verificationDocumentUrl,
+    authorizationRequestDate: organizer.authorizationRequestDate,
+    rejectionReason: organizer.rejectionReason,
+    authorizedAt: organizer.authorizedAt,
+    status: organizer.isAuthorized 
+      ? "authorized" 
+      : organizer.verificationDocumentUrl 
+        ? organizer.rejectionReason 
+          ? "rejected" 
+          : "pending"
+        : "not_requested"
+  };
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, status, "Authorization status retrieved successfully."));
+});

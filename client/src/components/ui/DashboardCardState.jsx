@@ -1,6 +1,11 @@
-const DashboardCardState = ({ Icon, label, value, gradientFrom, gradientVia, borderColor, iconGradientFrom, iconGradientTo }) => {
+const DashboardCardState = ({ Icon, label, value, gradientFrom, gradientVia, borderColor, iconGradientFrom, iconGradientTo, onClick }) => {
+  const Component = onClick ? 'button' : 'div';
+  
   return (
-    <div className={`group relative bg-card-background dark:bg-card-background-dark border-2 ${borderColor} rounded-2xl p-6 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-opacity-100`}>
+    <Component 
+      onClick={onClick}
+      className={`group relative bg-card-background dark:bg-card-background-dark border-2 ${borderColor} rounded-2xl p-6 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-opacity-100 ${onClick ? 'cursor-pointer w-full text-left' : ''}`}
+    >
       {/* Background gradient overlay */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientVia} to-transparent opacity-5 group-hover:opacity-10 transition-opacity duration-300`}></div>
       
@@ -14,7 +19,7 @@ const DashboardCardState = ({ Icon, label, value, gradientFrom, gradientVia, bor
 
       {/* Decorative corner accent */}
       <div className={`absolute -bottom-6 -right-6 w-24 h-24 bg-gradient-to-br ${iconGradientFrom} ${iconGradientTo} rounded-full opacity-10 group-hover:opacity-20 transition-opacity duration-300`}></div>
-    </div>
+    </Component>
   );
 };
 

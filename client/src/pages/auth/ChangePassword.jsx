@@ -5,6 +5,9 @@ import { Lock, Eye, EyeOff, Save, X } from "lucide-react";
 import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
 import axios from "axios";
+import { toast } from "react-hot-toast";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
 const ChangePassword = () => {
   const navigate = useNavigate();
@@ -34,15 +37,9 @@ const ChangePassword = () => {
     setError(null);
     setSuccess(false);
 
-    // Check if new password matches confirm password
-    if (data.newPassword !== data.confirmPassword) {
-      setError("New password and confirm password do not match.");
-      return;
-    }
-
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/change-password`,
+        `${API_BASE_URL}/auth/change-password`,
         {
           currentPassword: data.currentPassword,
           newPassword: data.newPassword,
@@ -51,15 +48,16 @@ const ChangePassword = () => {
       );
 
       setSuccess(true);
+      toast.success("Password changed successfully!");
       reset();
 
       setTimeout(() => {
         navigate(-1);
       }, 2000);
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Failed to change password. Please try again."
-      );
+      const errorMessage = err.response?.data?.message || "Failed to change password. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -152,8 +150,16 @@ const ChangePassword = () => {
                   {...register("newPassword", {
                     required: "New password is required",
                     minLength: {
-                      value: 6,
-                      message: "Password must be at least 6 characters",
+                      value: 8,
+                      message: "Password must be at least 8 characters",
+                    },
+                    maxLength: {
+                      value: 64,
+                      message: "Password must be under 64 characters",
+                    },
+                    pattern: {
+                      value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]/,
+                      message: "Password must include uppercase, lowercase, number, and special character (@$!%*?&#)",
                     },
                   })}
                   className="w-full pl-10 pr-10 py-3 border border-base-dark dark:border-base rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent bg-white dark:bg-gray-800 text-text-primary dark:text-text-primary-dark"
@@ -176,6 +182,9 @@ const ChangePassword = () => {
                   {errors.newPassword.message}
                 </p>
               )}
+              <p className="mt-1 text-xs text-base dark:text-base-dark">
+                Must be 8-64 characters with uppercase, lowercase, number, and special character
+              </p>
             </div>
 
             {/* Confirm New Password */}
@@ -217,12 +226,20 @@ const ChangePassword = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 justify-end">
+              <Button
+                type="button"
+                onClick={handleCancel}
+                className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 px-6 py-3 flex items-center justify-center gap-2"
+                disabled={isSubmitting}
+              >
+                <X size={18} />
+                Cancel
+              </Button>
               <Button
                 type="submit"
-                variant="primary"
-                className="flex-1 flex items-center justify-center gap-2"
                 disabled={isSubmitting}
+                className="bg-secondary dark:bg-secondary-dark hover:opacity-90 px-6 py-3 flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <>
@@ -231,20 +248,10 @@ const ChangePassword = () => {
                   </>
                 ) : (
                   <>
-                    <Save className="w-5 h-5" />
+                    <Save size={18} />
                     Change Password
                   </>
                 )}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleCancel}
-                className="flex-1 flex items-center justify-center gap-2"
-                disabled={isSubmitting}
-              >
-                <X className="w-5 h-5" />
-                Cancel
               </Button>
             </div>
           </form>

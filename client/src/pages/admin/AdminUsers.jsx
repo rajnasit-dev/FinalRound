@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getAllUsers } from "../../store/slices/adminSlice";
 import { fetchAllSports } from "../../store/slices/sportSlice";
 import { Users, Trash2, MapPin, Mail, Phone } from "lucide-react";
+import toast from "react-hot-toast";
 import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
 import SearchBar from "../../components/ui/SearchBar";
@@ -12,7 +13,6 @@ import Button from "../../components/ui/Button";
 import DataTable from "../../components/ui/DataTable";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 import axios from "axios";
-import { toast } from "react-hot-toast";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
@@ -83,9 +83,7 @@ const AdminUsers = () => {
   const handleDelete = async (e, user) => {
     e.stopPropagation();
     
-    if (!window.confirm(`Are you sure you want to delete ${user.fullName}? This action cannot be undone.`)) {
-      return;
-    }
+    if (!window.confirm(`Are you sure you want to delete ${user.fullName}? This action cannot be undone.`)) return;
 
     setDeletingId(user._id);
     try {

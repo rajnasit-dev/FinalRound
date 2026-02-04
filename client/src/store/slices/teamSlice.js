@@ -11,7 +11,7 @@ export const fetchAllTeams = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/teams`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch teams");
     }
   }
 );
@@ -24,7 +24,7 @@ export const fetchPlayerTeams = createAsyncThunk(
 
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch player teams");
     }
   }
 );
@@ -37,7 +37,7 @@ export const fetchManagerTeams = createAsyncThunk(
 
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch manager teams");
     }
   }
 );

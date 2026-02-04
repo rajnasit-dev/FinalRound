@@ -9,10 +9,6 @@ const FixturesTable = ({ matches, showEditButton = false, onEdit }) => {
   const { formatDate, formatTime } = useDateFormat();
   const { getStatusColor } = useStatusColor();
 
-  const handleRowClick = (match) => {
-    navigate(`/matches/${match._id}`);
-  };
-
   const columns = [
     {
       header: "Date & Time",
@@ -141,7 +137,6 @@ const FixturesTable = ({ matches, showEditButton = false, onEdit }) => {
     <DataTable
       columns={columns}
       data={matches || []}
-      onRowClick={handleRowClick}
       itemsPerPage={10}
       emptyMessage="No fixtures available"
     />

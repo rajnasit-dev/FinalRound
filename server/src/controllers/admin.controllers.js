@@ -5,10 +5,11 @@ import { Team } from "../models/Team.model.js";
 import { Player } from "../models/Player.model.js";
 import { TeamManager } from "../models/TeamManager.model.js";
 import { Payment } from "../models/Payment.model.js";
+import { WebsiteSettings } from "../models/WebsiteSettings.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { deleteFromCloudinary } from "../utils/cloudinary.js";
+import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const TOURNAMENT_LISTING_FEE = 100; // 100 rupees per tournament
 
@@ -177,9 +178,9 @@ export const getAllTeams = asyncHandler(async (req, res) => {
 
 // Get revenue/profit statistics
 export const getRevenue = asyncHandler(async (req, res) => {
-  const { startDate, endDate } = req.query;
+  const { startDate, endDate, type } = req.query; // type: "all", "admin", "organizer"
 
-  // Calculate total tournaments (each tournament = 100 rupees)
+  // Calculate total tournaments (each tournament = 100 rupees platform fee - ADMIN REVENUE)
   const filter = {};
   if (startDate || endDate) {
     filter.createdAt = {};
@@ -187,80 +188,118 @@ export const getRevenue = asyncHandler(async (req, res) => {
     if (endDate) filter.createdAt.$lte = new Date(endDate);
   }
 
+  // ADMIN REVENUE: Platform fees from organizers (₹100 per tournament)
   const totalTournaments = await Tournament.countDocuments(filter);
-  const tournamentRevenue = totalTournaments * TOURNAMENT_LISTING_FEE;
+  const adminRevenue = totalTournaments * TOURNAMENT_LISTING_FEE;
 
-  // Get payment statistics
-  const paymentStats = await Payment.aggregate([
-    ...(Object.keys(filter).length > 0 ? [{ $match: filter }] : []),
+  // ORGANIZER REVENUE: Registration fees from players/managers
+  const organizerRevenueStats = await Payment.aggregate([
+    {
+      $match: {
+        status: "Success",
+        ...(startDate || endDate ? {
+          createdAt: {
+            ...(startDate && { $gte: new Date(startDate) }),
+            ...(endDate && { $lte: new Date(endDate) })
+          }
+        } : {})
+      }
+    },
     {
       $group: {
         _id: null,
         totalPayments: { $sum: 1 },
-        totalAmount: { $sum: "$amount" },
-        successfulPayments: {
-          $sum: { $cond: [{ $eq: ["$status", "Success"] }, 1, 0] },
-        },
-        successfulAmount: {
-          $sum: {
-            $cond: [{ $eq: ["$status", "Success"] }, "$amount", 0],
-          },
-        },
-      },
-    },
+        totalAmount: { $sum: "$amount" }
+      }
+    }
   ]);
 
-  const paymentData = paymentStats[0] || {
-    totalPayments: 0,
-    totalAmount: 0,
-    successfulPayments: 0,
-    successfulAmount: 0,
-  };
+  const organizerRevenue = organizerRevenueStats[0]?.totalAmount || 0;
+  const organizerPaymentCount = organizerRevenueStats[0]?.totalPayments || 0;
 
-  // Get all payments with populated data
-  const allPayments = await Payment.find(filter)
+  // Get all successful payments (organizer revenue transactions)
+  const paymentTransactions = await Payment.find({
+    status: "Success",
+    ...(startDate || endDate ? {
+      createdAt: {
+        ...(startDate && { $gte: new Date(startDate) }),
+        ...(endDate && { $lte: new Date(endDate) })
+      }
+    } : {})
+  })
     .populate("tournament", "name")
     .populate("team", "name")
+    .populate("player", "fullName")
+    .populate("organizer", "fullName orgName")
     .sort({ createdAt: -1 })
     .limit(100);
 
-  // Monthly revenue breakdown
-  const monthlyRevenue = await Tournament.aggregate([
-    ...(Object.keys(filter).length > 0 ? [{ $match: filter }] : []),
-    {
-      $group: {
-        _id: {
-          year: { $year: "$createdAt" },
-          month: { $month: "$createdAt" },
-        },
-        count: { $sum: 1 },
-        revenue: { $sum: TOURNAMENT_LISTING_FEE },
-      },
-    },
-    { $sort: { "_id.year": -1, "_id.month": -1 } },
-    { $limit: 12 },
-  ]);
+  // Get platform fee transactions (admin revenue) - tournament creations
+  const platformFeeTransactions = await Tournament.find({
+    platformFeePayment: "Success",
+    ...(startDate || endDate ? {
+      createdAt: {
+        ...(startDate && { $gte: new Date(startDate) }),
+        ...(endDate && { $lte: new Date(endDate) })
+      }
+    } : {})
+  })
+    .populate("sport", "name")
+    .populate("organizer", "fullName orgName")
+    .sort({ createdAt: -1 })
+    .limit(100);
 
-  // Calculate monthly revenue from current year
-  const currentDate = new Date();
-  const currentMonth = currentDate.getMonth() + 1;
-  const currentYear = currentDate.getFullYear();
-  const monthlyTournamentRevenue = await Tournament.countDocuments({
-    createdAt: {
-      $gte: new Date(currentYear, currentMonth - 1, 1),
-      $lt: new Date(currentYear, currentMonth, 1),
+  // Format platform fee transactions like payments
+  const formattedPlatformFees = platformFeeTransactions.map(tournament => ({
+    _id: tournament._id,
+    type: "Platform Fee",
+    tournament: {
+      _id: tournament._id,
+      name: tournament.name
     },
-  });
+    organizer: tournament.organizer,
+    amount: TOURNAMENT_LISTING_FEE,
+    status: "Success",
+    paymentType: "Admin Revenue",
+    createdAt: tournament.createdAt
+  }));
+
+  // Format payment transactions
+  const formattedPayments = paymentTransactions.map(payment => ({
+    _id: payment._id,
+    type: payment.payerType === "Team" ? "Team Registration" : "Player Registration",
+    tournament: payment.tournament,
+    team: payment.team,
+    player: payment.player,
+    organizer: payment.organizer,
+    amount: payment.amount,
+    status: payment.status,
+    paymentType: "Organizer Revenue",
+    createdAt: payment.createdAt
+  }));
+
+  // Combine all transactions
+  let allTransactions = [...formattedPlatformFees, ...formattedPayments];
+  
+  // Apply filter based on type
+  if (type === "admin") {
+    allTransactions = formattedPlatformFees;
+  } else if (type === "organizer") {
+    allTransactions = formattedPayments;
+  }
+  
+  // Sort by date
+  allTransactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   const statistics = {
-    tournamentListingFee: TOURNAMENT_LISTING_FEE,
-    totalTournaments,
-    tournamentRevenue,
-    totalPayments: paymentData.totalPayments,
-    totalRevenue: tournamentRevenue,
-    monthlyRevenue: monthlyTournamentRevenue * TOURNAMENT_LISTING_FEE,
-    monthlyBreakdown: monthlyRevenue,
-    payments: allPayments,
+    adminRevenue, // Platform fees from organizers
+    organizerRevenue, // Registration fees from players/managers
+    totalRevenue: adminRevenue + organizerRevenue, // Combined revenue
+    totalTransactions: totalTournaments + organizerPaymentCount,
+    platformFeeCount: totalTournaments,
+    registrationPaymentCount: organizerPaymentCount,
+    platformFeePerTournament: TOURNAMENT_LISTING_FEE,
+    transactions: allTransactions.slice(0, 100)
   };
 
   res
@@ -387,4 +426,95 @@ export const updateUser = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, user, "User updated successfully"));
+});
+
+// Get website settings
+export const getWebsiteSettings = asyncHandler(async (req, res) => {
+  const settings = await WebsiteSettings.getSettings();
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, settings, "Website settings retrieved successfully"));
+});
+
+// Update website settings
+export const updateWebsiteSettings = asyncHandler(async (req, res) => {
+  const { platformFee, siteName, siteDescription, contactEmail, contactPhone, socialMedia, maintenanceMode } = req.body;
+
+  let settings = await WebsiteSettings.getSettings();
+
+  if (platformFee !== undefined) settings.platformFee = platformFee;
+  if (siteName) settings.siteName = siteName;
+  if (siteDescription) settings.siteDescription = siteDescription;
+  if (contactEmail) settings.contactEmail = contactEmail;
+  if (contactPhone) settings.contactPhone = contactPhone;
+  if (socialMedia) settings.socialMedia = socialMedia;
+  if (maintenanceMode !== undefined) settings.maintenanceMode = maintenanceMode;
+  
+  settings.updatedBy = req.user._id;
+
+  await settings.save();
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, settings, "Website settings updated successfully"));
+});
+
+// Upload hero video
+export const uploadHeroVideo = asyncHandler(async (req, res) => {
+  const videoLocalPath = req.file?.path;
+
+  if (!videoLocalPath) {
+    throw new ApiError(400, "Video file is required");
+  }
+
+  let settings = await WebsiteSettings.getSettings();
+
+  // Delete old video if exists
+  if (settings.heroVideoUrl) {
+    const urlParts = settings.heroVideoUrl.split('/');
+    const publicIdWithExtension = urlParts.at(-1);
+    const publicId = publicIdWithExtension.split('.')[0];
+    await deleteFromCloudinary(publicId);
+  }
+
+  // Upload new video
+  const videoResponse = await uploadOnCloudinary(videoLocalPath);
+
+  if (!videoResponse) {
+    throw new ApiError(500, "Failed to upload video to Cloudinary");
+  }
+
+  settings.heroVideoUrl = videoResponse.url;
+  settings.updatedBy = req.user._id;
+
+  await settings.save();
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, settings, "Hero video uploaded successfully"));
+});
+
+// Delete hero video
+export const deleteHeroVideo = asyncHandler(async (req, res) => {
+  let settings = await WebsiteSettings.getSettings();
+
+  if (!settings.heroVideoUrl) {
+    throw new ApiError(404, "No hero video found");
+  }
+
+  // Delete from cloudinary
+  const urlParts = settings.heroVideoUrl.split('/');
+  const publicIdWithExtension = urlParts.at(-1);
+  const publicId = publicIdWithExtension.split('.')[0];
+  await deleteFromCloudinary(publicId);
+
+  settings.heroVideoUrl = null;
+  settings.updatedBy = req.user._id;
+
+  await settings.save();
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, settings, "Hero video deleted successfully"));
 });

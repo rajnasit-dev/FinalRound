@@ -45,6 +45,10 @@ const userSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    role: {
+      type: String,
+      enum: ['Admin', 'Player', 'TeamManager', 'TournamentOrganizer'],
+    },
 
     verifyEmailOtp: String,
     verifyEmailOtpExpiry: Date,

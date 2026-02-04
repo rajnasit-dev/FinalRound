@@ -21,6 +21,7 @@ import {
   getTrendingTournaments,
   generateFixtures,
   getTournamentRequests,
+  completePlatformFeePayment,
 } from "../controllers/tournament.controllers.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -42,6 +43,7 @@ tournamentRouter.put("/:id", authMiddleware, updateTournament);
 tournamentRouter.patch("/:id/banner", authMiddleware, upload.single("banner"), updateTournamentBanner);
 tournamentRouter.patch("/:id/status", authMiddleware, updateTournamentStatus);
 tournamentRouter.post("/:id/generate-fixtures", authMiddleware, generateFixtures);
+tournamentRouter.post("/:tournamentId/complete-payment", authMiddleware, completePlatformFeePayment);
 tournamentRouter.get("/:id/participants", authMiddleware, getTournamentParticipants);
 tournamentRouter.delete("/:id", authMiddleware, deleteTournament);
 

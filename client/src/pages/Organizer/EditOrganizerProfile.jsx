@@ -187,10 +187,21 @@ const EditOrganizerProfile = () => {
                   />
                   <input
                     type="tel"
-                    {...register("phone")}
+                    {...register("phone", {
+                      pattern: {
+                        value: /^[0-9]{10}$/,
+                        message: "Phone number must be 10 digits",
+                      },
+                    })}
+                    placeholder="Enter 10-digit phone number"
                     className="w-full pl-10 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark"
                   />
                 </div>
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.phone.message}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -204,10 +215,25 @@ const EditOrganizerProfile = () => {
                   />
                   <input
                     type="text"
-                    {...register("city")}
+                    {...register("city", {
+                      minLength: {
+                        value: 2,
+                        message: "City must be at least 2 characters",
+                      },
+                      maxLength: {
+                        value: 50,
+                        message: "City must not exceed 50 characters",
+                      },
+                    })}
+                    placeholder="Enter your city"
                     className="w-full pl-10 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark"
                   />
                 </div>
+                {errors.city && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.city.message}
+                  </p>
+                )}
               </div>
             </div>
           </div>

@@ -77,7 +77,6 @@ const TournamentCard = ({
               )}
               {tournament.status}
             </p>
-            
           </div>
         </div>
 
@@ -143,56 +142,58 @@ const TournamentCard = ({
 
           {/* Organizer Actions */}
           {showOrganizerButtons ? (
-            <div className="grid grid-cols-2 gap-2 pt-3">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onEdit && onEdit(tournament._id);
-                }}
-                className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold text-sm"
-                title="Edit Tournament"
-              >
-                <Edit className="w-4 h-4" />
-                Edit
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onManage && onManage(tournament._id);
-                }}
-                className="flex items-center justify-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors font-semibold text-sm"
-                title="Manage Participants"
-              >
-                <Settings className="w-4 h-4" />
-                Participants
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onView && onView(tournament._id);
-                }}
-                className="flex items-center justify-center gap-2 px-3 py-2 bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white rounded-lg transition-colors font-semibold text-sm"
-                title="Manage Fixtures"
-              >
-                <Trophy className="w-4 h-4" />
-                Fixtures
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onDelete && onDelete(tournament._id);
-                }}
-                className="flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white rounded-lg transition-colors font-semibold text-sm"
-                title="Delete Tournament"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </button>
-            </div>
+            <>
+              <div className="grid grid-cols-2 gap-2 pt-3">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onEdit && onEdit(tournament._id);
+                  }}
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold text-sm"
+                  title="Edit Tournament"
+                >
+                  <Edit className="w-4 h-4" />
+                  Edit
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onManage && onManage(tournament._id);
+                  }}
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors font-semibold text-sm"
+                  title="Manage Participants"
+                >
+                  <Settings className="w-4 h-4" />
+                  Participants
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onView && onView(tournament._id);
+                  }}
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white rounded-lg transition-colors font-semibold text-sm"
+                  title="Manage Fixtures"
+                >
+                  <Trophy className="w-4 h-4" />
+                  Fixtures
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDelete && onDelete(tournament._id);
+                  }}
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white rounded-lg transition-colors font-semibold text-sm"
+                  title="Delete Tournament"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </button>
+              </div>
+            </>
           ) : isManager ? (
             <div className="pt-3 text-secondary opacity-50 cursor-not-allowed">
               <p className="font-semibold">Player Registration Only</p>

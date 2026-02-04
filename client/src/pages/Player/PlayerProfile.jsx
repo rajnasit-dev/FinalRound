@@ -15,6 +15,7 @@ import {
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 import useDateFormat from "../../hooks/useDateFormat";
 import useAge from "../../hooks/useAge";
 import defaultAvatar from "../../assets/defaultAvatar.png";
@@ -53,13 +54,13 @@ const PlayerProfile = () => {
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file");
+      toast.error("Please select an image file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image size should be less than 5MB");
+      toast.error("Image size should be less than 5MB");
       return;
     }
 
@@ -70,8 +71,9 @@ const PlayerProfile = () => {
       if (result?.avatar) {
         dispatch(updateUserAvatar(result.avatar));
       }
+      toast.success("Avatar updated successfully");
     } catch (error) {
-      alert(error || "Failed to update avatar");
+      toast.error(error || "Failed to update avatar");
     } finally {
       setUploadingAvatar(false);
     }
@@ -80,7 +82,7 @@ const PlayerProfile = () => {
   const handleAvatarDelete = async () => {
     if (!user?.avatar) return;
 
-    if (!confirm("Are you sure you want to delete your avatar?")) {
+    if (!window.confirm("Are you sure you want to delete your avatar?")) {
       return;
     }
 
@@ -89,8 +91,9 @@ const PlayerProfile = () => {
       await dispatch(deletePlayerAvatar()).unwrap();
       // Clear avatar from auth state so it clears from navbar
       dispatch(updateUserAvatar(null));
+      toast.success("Avatar deleted successfully");
     } catch (error) {
-      alert(error || "Failed to delete avatar");
+      toast.error(error || "Failed to delete avatar");
     } finally {
       setDeletingAvatar(false);
     }
@@ -101,22 +104,22 @@ const PlayerProfile = () => {
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file");
+      toast.error("Please select an image file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image size should be less than 5MB");
+      toast.error("Image size should be less than 5MB");
       return;
     }
 
     setUploadingBanner(true);
     try {
-      alert("Banner upload functionality will be added soon");
+      toast("Banner upload functionality will be added soon", { icon: 'ℹ️' });
       // TODO: Implement banner upload when API endpoint is available
     } catch (error) {
-      alert(error || "Failed to upload banner");
+      toast.error(error || "Failed to upload banner");
     } finally {
       setUploadingBanner(false);
     }
@@ -125,10 +128,10 @@ const PlayerProfile = () => {
   const handleBannerDelete = async () => {
     setDeletingBanner(true);
     try {
-      alert("Banner delete functionality will be added soon");
+      toast("Banner delete functionality will be added soon", { icon: 'ℹ️' });
       // TODO: Implement banner delete when API endpoint is available
     } catch (error) {
-      alert(error || "Failed to delete banner");
+      toast.error(error || "Failed to delete banner");
     } finally {
       setDeletingBanner(false);
     }

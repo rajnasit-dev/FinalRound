@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   MapPin,
@@ -12,6 +12,9 @@ import {
   Award,
   Users,
   Shield,
+  UserPlus,
+  X,
+  Check,
 } from "lucide-react";
 import CardStat from "../../components/ui/CardStat";
 import Container from "../../components/container/Container";
@@ -19,6 +22,8 @@ import Spinner from "../../components/ui/Spinner";
 import AchievementCard from "../../components/ui/AchievementCard";
 import BackButton from "../../components/ui/BackButton";
 import { fetchPlayerById } from "../../store/slices/playerSlice";
+import { fetchManagerTeams } from "../../store/slices/teamSlice";
+import { sendPlayerRequest } from "../../store/slices/requestSlice";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 import defaultCoverImage from "../../assets/defaultCoverImage.png";
 import useDateFormat from "../../hooks/useDateFormat";
@@ -29,8 +34,16 @@ const PlayerDetail = () => {
   const dispatch = useDispatch();
   const { currentPlayer: player, loading } = useSelector((state) => state.player);
   const { user } = useSelector((state) => state.auth);
+  const { managerTeams } = useSelector((state) => state.team);
   const { formatDate } = useDateFormat();
   const age = useAge(player?.dateOfBirth);
+
+  // Team invite modal state
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState("");
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteSuccess, setInviteSuccess] = useState(false);
+  const [inviteError, setInviteError] = useState("");
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -38,6 +51,50 @@ const PlayerDetail = () => {
       dispatch(fetchPlayerById(id));
     }
   }, [id, dispatch]);
+
+  // Fetch manager's teams if user is a TeamManager
+  useEffect(() => {
+    if (user?.role === "TeamManager" && user?._id) {
+      dispatch(fetchManagerTeams(user._id));
+    }
+  }, [user, dispatch]);
+
+  // Check if user is a team manager and not viewing their own profile
+  const isTeamManager = user?.role === "TeamManager";
+  const isOwnProfile = user?._id === id;
+  const canInvitePlayer = isTeamManager && !isOwnProfile && player;
+
+  // Handle invite button click
+  const handleOpenInviteModal = () => {
+    setShowInviteModal(true);
+    setSelectedTeam("");
+    setInviteSuccess(false);
+    setInviteError("");
+  };
+
+  // Handle sending invite
+  const handleSendInvite = async () => {
+    if (!selectedTeam) {
+      setInviteError("Please select a team");
+      return;
+    }
+
+    setInviteLoading(true);
+    setInviteError("");
+
+    try {
+      await dispatch(sendPlayerRequest({ playerId: id, teamId: selectedTeam })).unwrap();
+      setInviteSuccess(true);
+      setTimeout(() => {
+        setShowInviteModal(false);
+        setInviteSuccess(false);
+      }, 2000);
+    } catch (error) {
+      setInviteError(error || "Failed to send invite");
+    } finally {
+      setInviteLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -73,9 +130,19 @@ const PlayerDetail = () => {
         />
         <div className="absolute inset-0 bg-linear-to-t from-black via-black/70 to-black/30"></div>
 
-        {/* Back Button */}
-        <div className="absolute top-6 left-6">
+        {/* Back Button and Invite Button */}
+        <div className="absolute top-6 left-6 flex items-center gap-3">
           <BackButton className="bg-black/50 dark:bg-black/70 border-white/20 text-white hover:bg-black/70 dark:hover:bg-black/90" />
+          {canInvitePlayer && (
+            <button
+              onClick={handleOpenInviteModal}
+              className="flex items-center gap-2 px-4 py-2 bg-secondary dark:bg-secondary-dark text-white rounded-lg hover:opacity-90 transition-all font-semibold shadow-lg"
+            >
+              <UserPlus size={18} />
+              <span className="hidden sm:inline">Request to Join Team</span>
+              <span className="sm:hidden">Invite</span>
+            </button>
+          )}
         </div>
 
         {/* Player Info Overlay */}
@@ -87,11 +154,11 @@ const PlayerDetail = () => {
               <div className="flex items-end gap-6 mb-4">
                 <div className="relative">
                   <div className="w-32 h-32 rounded-full border-4 border-white shadow-2xl bg-white overflow-hidden">
-                      <img
-                        src={player.avatarUrl || defaultAvatar}
-                        alt={player.fullName}
-                        className="w-full h-full object-cover"
-                      />
+                    <img
+                      src={player.avatarUrl || defaultAvatar}
+                      alt={player.fullName}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   {player.isAvailable && (
                     <div className="absolute -top-2 -right-2">
@@ -160,12 +227,12 @@ const PlayerDetail = () => {
                   />
                 )}
                 {player.weight && (
-                <CardStat
-                  Icon={Weight}
-                  iconColor="text-amber-600"
-                  label="Weight"
-                  value={`${player.weight} kg`}
-                />
+                  <CardStat
+                    Icon={Weight}
+                    iconColor="text-amber-600"
+                    label="Weight"
+                    value={`${player.weight} kg`}
+                  />
                 )}
                 <CardStat
                   Icon={MapPin}
@@ -176,7 +243,7 @@ const PlayerDetail = () => {
               </div>
             </Container>
 
-          
+
             {/* Achievements */}
             <Container>
               <h2 className="text-2xl font-bold mb-5 flex items-center gap-2">
@@ -255,7 +322,7 @@ const PlayerDetail = () => {
                 <Trophy className="w-5 h-5 text-secondary dark:text-secondary-dark" />
                 Sports & Roles
               </h3>
-              
+
               {player.sports && player.sports.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {player.sports.map((sportItem, index) => {
@@ -312,6 +379,116 @@ const PlayerDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Team Invite Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-card-background dark:bg-card-background-dark rounded-2xl shadow-2xl max-w-md w-full p-6 border border-base-dark dark:border-base animate-in fade-in zoom-in duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
+                Invite to Team
+              </h3>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+              >
+                <X size={20} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* Success State */}
+            {inviteSuccess ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
+                  <Check size={32} className="text-green-600" />
+                </div>
+                <h4 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+                  Invite Sent Successfully!
+                </h4>
+                <p className="text-base dark:text-base-dark">
+                  {player?.fullName} will receive your team invitation.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Player Info */}
+                <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                  <img
+                    src={player?.avatarUrl || defaultAvatar}
+                    alt={player?.fullName}
+                    className="w-14 h-14 rounded-full object-cover border-2 border-secondary"
+                  />
+                  <div>
+                    <p className="font-semibold text-text-primary dark:text-text-primary-dark">
+                      {player?.fullName}
+                    </p>
+                    <p className="text-sm text-base dark:text-base-dark">
+                      {player?.city}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Team Selection */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
+                    Select Team
+                  </label>
+                  {managerTeams && managerTeams.length > 0 ? (
+                    <select
+                      value={selectedTeam}
+                      onChange={(e) => setSelectedTeam(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-text-primary dark:text-text-primary-dark focus:ring-2 focus:ring-secondary focus:border-transparent transition-all"
+                    >
+                      <option value="">Choose a team...</option>
+                      {managerTeams.map((team) => (
+                        <option key={team._id} value={team._id}>
+                          {team.name} ({team.sport?.name || 'Unknown Sport'})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-sm text-base dark:text-base-dark p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                      You don't have any teams yet. Create a team first to invite players.
+                    </p>
+                  )}
+                </div>
+
+                {/* Error Message */}
+                {inviteError && (
+                  <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-600 dark:text-red-400">{inviteError}</p>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowInviteModal(false)}
+                    className="flex-1 px-4 py-3 border border-base-dark dark:border-base rounded-xl text-text-primary dark:text-text-primary-dark hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSendInvite}
+                    disabled={inviteLoading || !selectedTeam || managerTeams?.length === 0}
+                    className="flex-1 px-4 py-3 bg-secondary dark:bg-secondary-dark text-white rounded-xl hover:opacity-90 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {inviteLoading ? (
+                      <Spinner size="sm" />
+                    ) : (
+                      <>
+                        <UserPlus size={18} />
+                        Send Invite
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

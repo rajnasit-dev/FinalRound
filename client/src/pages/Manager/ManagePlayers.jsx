@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { UserMinus, Mail, Phone, MapPin, Loader } from "lucide-react";
 import axios from "axios";
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 import BackButton from "../../components/ui/BackButton";
 import DataTable from "../../components/ui/DataTable";
 import defaultAvatar from "../../assets/defaultAvatar.png";
@@ -16,7 +16,6 @@ const ManagePlayers = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { selectedTeam, loading: teamLoading } = useSelector((state) => state.team);
-  const { user } = useSelector((state) => state.auth);
 
   const [teamPlayers, setTeamPlayers] = useState([]);
   const [removingPlayerId, setRemovingPlayerId] = useState(null);
@@ -36,9 +35,7 @@ const ManagePlayers = () => {
   }, [selectedTeam]);
 
   const handleRemovePlayer = async (playerId) => {
-    if (!confirm("Are you sure you want to remove this player from the team?")) {
-      return;
-    }
+    if (!window.confirm("Are you sure you want to remove this player from the team?")) return;
 
     setRemovingPlayerId(playerId);
 

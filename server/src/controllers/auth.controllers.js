@@ -562,8 +562,15 @@ export const login = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) throw new ApiError(404, "User not found");
 
+  console.log('🔍 Login attempt:', { email, role: role, userRole: user.role });
+
   const isPasswordCorrect = await user.isPasswordCorrect(password);
   if (!isPasswordCorrect) throw new ApiError(400, "Invalid credentials.");
+
+  console.log('✅ Password correct. Checking role...');
+  console.log('   Frontend sent role:', role);
+  console.log('   User actual role:', user.role);
+  console.log('   Match:', user.role === role);
 
   if (user.role !== role) throw new ApiError(400, "Invalid credentials.");
 
@@ -737,6 +744,20 @@ export const changePassword = asyncHandler(async (req, res) => {
     throw new ApiError(400, "New password must be different from current password.");
   }
 
+  // ========== HANDLE ADMIN PASSWORD CHANGE ==========
+  if (req.user.role === "Admin") {
+    const ADMIN_PASSWORD = "Password123!";
+    
+    if (currentPassword !== ADMIN_PASSWORD) {
+      throw new ApiError(401, "Current password is incorrect.");
+    }
+
+    // For admin, we cannot change the hardcoded password
+    // You would need to update the hardcoded password in the login controller
+    throw new ApiError(403, "Admin password cannot be changed. Contact system administrator.");
+  }
+
+  // ========== HANDLE REGULAR USER PASSWORD CHANGE ==========
   const user = await User.findById(userId).select("+password");
 
   if (!user) {

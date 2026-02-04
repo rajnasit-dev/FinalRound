@@ -43,10 +43,10 @@ const MatchDetail = () => {
     );
   }
 
-  const team1 = match.team1 || {};
-  const team2 = match.team2 || {};
-  const score1 = match.score1 || 0;
-  const score2 = match.score2 || 0;
+  const team1 = match.teamA || {};
+  const team2 = match.teamB || {};
+  const score1 = match.scoreA || 0;
+  const score2 = match.scoreB || 0;
 
   return (
     <section className="container mx-auto px-6 py-16">
@@ -107,27 +107,42 @@ const MatchDetail = () => {
       <div className="bg-card-background dark:bg-card-background-dark rounded-xl p-8 mb-6 border border-base-dark dark:border-base">
         <div className="grid md:grid-cols-3 gap-8 items-center">
           {/* Team 1 */}
-          <Link
-            to={`/teams/${team1._id}`}
-            className="flex flex-col items-center text-center group"
-          >
-            <div className="w-32 h-32 rounded-xl bg-white dark:bg-gray-800 border-4 border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden mb-4 group-hover:border-secondary transition-colors">
-              <img
-                src={team1.logoUrl || defaultTeamAvatar}
-                alt={team1.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-2 group-hover:text-secondary transition-colors">
-              {team1.name || "TBD"}
-            </h2>
-            {team1.city && (
-              <div className="flex items-center gap-1 text-base dark:text-base-dark">
-                <MapPin className="w-4 h-4" />
-                <span>{team1.city}</span>
+          {team1._id ? (
+            <Link
+              to={`/teams/${team1._id}`}
+              className="flex flex-col items-center text-center group"
+            >
+              <div className="w-32 h-32 rounded-xl bg-white dark:bg-gray-800 border-4 border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden mb-4 group-hover:border-secondary transition-colors">
+                <img
+                  src={team1.logoUrl || defaultTeamAvatar}
+                  alt={team1.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
-            )}
-          </Link>
+              <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-2 group-hover:text-secondary transition-colors">
+                {team1.name || "TBD"}
+              </h2>
+              {team1.city && (
+                <div className="flex items-center gap-1 text-base dark:text-base-dark">
+                  <MapPin className="w-4 h-4" />
+                  <span>{team1.city}</span>
+                </div>
+              )}
+            </Link>
+          ) : (
+            <div className="flex flex-col items-center text-center">
+              <div className="w-32 h-32 rounded-xl bg-white dark:bg-gray-800 border-4 border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden mb-4">
+                <img
+                  src={defaultTeamAvatar}
+                  alt="TBD"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+                TBD
+              </h2>
+            </div>
+          )}
 
           {/* Score */}
           <div className="flex flex-col items-center">
@@ -166,27 +181,42 @@ const MatchDetail = () => {
           </div>
 
           {/* Team 2 */}
-          <Link
-            to={`/teams/${team2._id}`}
-            className="flex flex-col items-center text-center group"
-          >
-            <div className="w-32 h-32 rounded-xl bg-white dark:bg-gray-800 border-4 border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden mb-4 group-hover:border-secondary transition-colors">
-              <img
-                src={team2.logoUrl || defaultTeamAvatar}
-                alt={team2.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-2 group-hover:text-secondary transition-colors">
-              {team2.name || "TBD"}
-            </h2>
-            {team2.city && (
-              <div className="flex items-center gap-1 text-base dark:text-base-dark">
-                <MapPin className="w-4 h-4" />
-                <span>{team2.city}</span>
+          {team2._id ? (
+            <Link
+              to={`/teams/${team2._id}`}
+              className="flex flex-col items-center text-center group"
+            >
+              <div className="w-32 h-32 rounded-xl bg-white dark:bg-gray-800 border-4 border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden mb-4 group-hover:border-secondary transition-colors">
+                <img
+                  src={team2.logoUrl || defaultTeamAvatar}
+                  alt={team2.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
-            )}
-          </Link>
+              <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-2 group-hover:text-secondary transition-colors">
+                {team2.name || "TBD"}
+              </h2>
+              {team2.city && (
+                <div className="flex items-center gap-1 text-base dark:text-base-dark">
+                  <MapPin className="w-4 h-4" />
+                  <span>{team2.city}</span>
+                </div>
+              )}
+            </Link>
+          ) : (
+            <div className="flex flex-col items-center text-center">
+              <div className="w-32 h-32 rounded-xl bg-white dark:bg-gray-800 border-4 border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden mb-4">
+                <img
+                  src={defaultTeamAvatar}
+                  alt="TBD"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+                TBD
+              </h2>
+            </div>
+          )}
         </div>
       </div>
 

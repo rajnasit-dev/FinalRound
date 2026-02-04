@@ -7,6 +7,7 @@ import {
 } from "../../store/slices/adminSlice";
 import BackButton from "../../components/ui/BackButton";
 import { CheckCircle, XCircle, FileText, Trash2, Mail, Phone, User } from "lucide-react";
+import toast from "react-hot-toast";
 import Spinner from "../../components/ui/Spinner";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
@@ -14,7 +15,6 @@ import SearchBar from "../../components/ui/SearchBar";
 import DataTable from "../../components/ui/DataTable";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 import axios from "axios";
-import { toast } from "react-hot-toast";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
@@ -65,9 +65,7 @@ const OrganizerRequests = () => {
 
   const handleDelete = async (e, organizer) => {
     e.stopPropagation();
-    if (!window.confirm(`Are you sure you want to delete ${organizer.fullName}? This action cannot be undone.`)) {
-      return;
-    }
+    if (!window.confirm(`Are you sure you want to delete ${organizer.fullName}? This action cannot be undone.`)) return;
 
     setDeletingId(organizer._id);
     try {
@@ -123,7 +121,7 @@ const OrganizerRequests = () => {
       width: "20%",
       render: (organizer) => (
         <p className="text-sm text-text-primary dark:text-text-primary-dark truncate">
-          {organizer.organizationName || "N/A"}
+          {organizer.orgName || "N/A"}
         </p>
       ),
     },

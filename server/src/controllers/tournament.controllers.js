@@ -8,6 +8,7 @@ import { TournamentOrganizer } from "../models/TournamentOrganizer.model.js";
 import { Match } from "../models/Match.model.js";
 import { User } from "../models/User.model.js";
 import { Request } from "../models/Request.model.js";
+import { WebsiteSettings } from "../models/WebsiteSettings.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import { addTournamentStatus, addTournamentStatuses, getTournamentStatus } from "../utils/statusHelpers.js";
 
@@ -44,10 +45,25 @@ export const createTournament = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only tournament organizers can create tournaments.");
   }
 
+  // Check if organizer is authorized
+  if (!organizer.isAuthorized) {
+    throw new ApiError(403, "Your organization must be authorized before creating tournaments. Please submit authorization request.");
+  }
+
   // Verify sport exists
   const sportDoc = await Sport.findById(sport);
   if (!sportDoc) {
     throw new ApiError(404, "Sport not found.");
+  }
+
+  // Check if tournament with same name already exists for this organizer
+  const existingTournament = await Tournament.findOne({
+    name: { $regex: new RegExp(`^${name}$`, 'i') },
+    organizer: organizerId
+  });
+
+  if (existingTournament) {
+    throw new ApiError(400, "You already have a tournament with this name. Please use a different name.");
   }
 
   let bannerResponse = null;
@@ -78,6 +94,10 @@ export const createTournament = asyncHandler(async (req, res) => {
     }
   }
 
+  // Get platform fee from website settings
+  const websiteSettings = await WebsiteSettings.getSettings();
+  const platformFee = websiteSettings.platformFee || 500;
+
   const tournament = await Tournament.create({
     name,
     sport,
@@ -98,6 +118,11 @@ export const createTournament = asyncHandler(async (req, res) => {
     bannerUrl: bannerResponse?.url || null,
     registeredTeams: [],
     approvedTeams: [],
+    platformFeePayment: {
+      isPaid: false,
+      amount: platformFee,
+    },
+    isPublished: false,
   });
 
   const populatedTournament = await Tournament.findById(tournament._id)
@@ -108,14 +133,14 @@ export const createTournament = asyncHandler(async (req, res) => {
 
   res
     .status(201)
-    .json(new ApiResponse(201, tournamentWithStatus, "Tournament created successfully."));
+    .json(new ApiResponse(201, tournamentWithStatus, "Tournament created successfully. Please complete platform fee payment to publish your tournament."));
 });
 
 // Get all tournaments
 export const getAllTournaments = asyncHandler(async (req, res) => {
   const { sport, status, city, registrationType } = req.query;
 
-  let filter = {};
+  let filter = { isPublished: true }; // Only show published tournaments publicly
 
   if (sport) filter.sport = sport;
   if (registrationType) filter.registrationType = registrationType;
@@ -885,6 +910,43 @@ export const getTrendingTournaments = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, sortedTournaments, "Trending tournaments retrieved successfully."));
+});
+
+// Complete platform fee payment for tournament
+export const completePlatformFeePayment = asyncHandler(async (req, res) => {
+  const { tournamentId } = req.params;
+  const { paymentId } = req.body;
+  const organizerId = req.user._id;
+
+  const tournament = await Tournament.findById(tournamentId);
+
+  if (!tournament) {
+    throw new ApiError(404, "Tournament not found");
+  }
+
+  if (tournament.organizer.toString() !== organizerId.toString()) {
+    throw new ApiError(403, "Only tournament organizer can complete payment");
+  }
+
+  if (tournament.platformFeePayment.isPaid) {
+    throw new ApiError(400, "Platform fee already paid for this tournament");
+  }
+
+  // Update payment status
+  tournament.platformFeePayment.isPaid = true;
+  tournament.platformFeePayment.paymentId = paymentId;
+  tournament.platformFeePayment.paidAt = new Date();
+  tournament.isPublished = true;
+
+  await tournament.save();
+
+  const populatedTournament = await Tournament.findById(tournamentId)
+    .populate("sport", "name teamBased iconUrl")
+    .populate("organizer", "fullName email phone avatar orgName");
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, populatedTournament, "Platform fee payment completed successfully. Tournament is now published!"));
 });
 
 // Get all pending requests for a tournament (team/player join requests)

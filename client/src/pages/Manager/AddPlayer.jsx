@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { UserPlus, Mail, Phone, MapPin, Loader } from "lucide-react";
@@ -32,7 +32,7 @@ const AddPlayer = () => {
     fetchAvailablePlayers();
   }, [teamId, selectedTeam]);
 
-  const fetchAvailablePlayers = async () => {
+  const fetchAvailablePlayers = useCallback(async () => {
     if (!selectedTeam) return;
 
     setLoading(true);
@@ -60,7 +60,11 @@ const AddPlayer = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedTeam]);
+
+  useEffect(() => {
+    fetchAvailablePlayers();
+  }, [fetchAvailablePlayers]);
 
   const handleSendRequest = async (playerId) => {
     setRequestingPlayerId(playerId);

@@ -11,7 +11,7 @@ export const fetchAllMatches = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/matches`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch matches");
     }
   }
 );
@@ -23,7 +23,7 @@ export const fetchMatchById = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/matches/${matchId}`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch match");
     }
   }
 );
@@ -35,7 +35,7 @@ export const fetchUpcomingMatches = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/matches/upcoming`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch upcoming matches");
     }
   }
 );
@@ -47,7 +47,7 @@ export const fetchLiveMatches = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/matches/live`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch live matches");
     }
   }
 );
@@ -59,7 +59,7 @@ export const fetchCompletedMatches = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/matches/completed`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch completed matches");
     }
   }
 );
@@ -71,7 +71,7 @@ export const fetchMatchesByTournament = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/matches/tournament/${tournamentId}`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch matches");
     }
   }
 );
@@ -83,7 +83,7 @@ export const fetchMatchesByTeam = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/matches/team/${teamId}`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch matches");
     }
   }
 );
@@ -95,7 +95,7 @@ export const createMatch = createAsyncThunk(
       const response = await axios.post(`${API_BASE_URL}/matches`, matchData, { withCredentials: true, headers: { "Content-Type": "application/json" } });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to create match");
     }
   }
 );
@@ -107,7 +107,7 @@ export const updateMatch = createAsyncThunk(
       const response = await axios.put(`${API_BASE_URL}/matches/${matchId}`, matchData, { withCredentials: true, headers: { "Content-Type": "application/json" } });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to update match");
     }
   }
 );
@@ -119,7 +119,7 @@ export const updateMatchResult = createAsyncThunk(
       const response = await axios.patch(`${API_BASE_URL}/matches/${matchId}/result`, resultData, { withCredentials: true, headers: { "Content-Type": "application/json" } });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to update match result");
     }
   }
 );
@@ -131,7 +131,7 @@ export const updateMatchStatus = createAsyncThunk(
       const response = await axios.patch(`${API_BASE_URL}/matches/${matchId}/status`, { status }, { withCredentials: true, headers: { "Content-Type": "application/json" } });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to update match status");
     }
   }
 );

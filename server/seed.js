@@ -1,1003 +1,875 @@
-import 'dotenv/config';
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+// Import models
 import { Sport } from './src/models/Sport.model.js';
-import { User } from './src/models/User.model.js';
-import { Admin } from './src/models/Admin.model.js';
 import { Player } from './src/models/Player.model.js';
 import { TeamManager } from './src/models/TeamManager.model.js';
 import { TournamentOrganizer } from './src/models/TournamentOrganizer.model.js';
+import { Admin } from './src/models/Admin.model.js';
 import { Team } from './src/models/Team.model.js';
 import { Tournament } from './src/models/Tournament.model.js';
 import { Match } from './src/models/Match.model.js';
 import { Payment } from './src/models/Payment.model.js';
-import { Feedback } from './src/models/Feedback.model.js';
 import { Request } from './src/models/Request.model.js';
 import Booking from './src/models/Booking.model.js';
+import { WebsiteSettings } from './src/models/WebsiteSettings.model.js';
 
-// Helper function to generate date of birth from age
-const getDOBFromAge = (age) => {
-  const today = new Date();
-  const birthYear = today.getFullYear() - age;
-  const month = Math.floor(Math.random() * 12);
-  const day = Math.floor(Math.random() * 28) + 1;
-  return new Date(birthYear, month, day);
-};
+// Same password for all users
+const DEFAULT_PASSWORD = 'Password123!';
 
-// First names for realistic data generation
-const firstNamesM = ["Arjun", "Aryan", "Aditya", "Akshay", "Rajesh", "Rohan", "Rahul", "Ravi", "Sanjay", "Sandeep", "Karan", "Kamal", "Kaushik", "Vikram", "Viraj", "Vinod", "Vishal", "Harshil", "Hrithik", "Hemant", "Hardik", "Imran", "Ishant", "Jatin", "Jasprit", "Kunal", "Mahesh", "Manish", "Mayank", "Mohan", "Naveen", "Nikhil", "Nitesh", "Pankaj", "Parth", "Pawan", "Rishi", "Rishabh"];
-
-const firstNamesF = ["Priya", "Priti", "Preeti", "Poonam", "Pooja", "Nikita", "Neha", "Nisha", "Nidhi", "Kanika", "Kavya", "Kalpana", "Kriti", "Isha", "Ila", "Indu", "Jaya", "Jasmine", "Megha", "Meera", "Mansi", "Harshita", "Hema", "Divya", "Deepa", "Deepika", "Archita", "Anuradha", "Anushka", "Ananya", "Anjali"];
-
-const lastNames = ["Patel", "Shah", "Sharma", "Singh", "Kumar", "Gupta", "Verma", "Reddy", "Rao", "Menon", "Iyer", "Desai", "Joshi", "Bhat", "Srivastava", "Chopra", "Kapoor", "Malhotra", "Arora", "Saxena"];
-
-const cities = ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar", "Bhavnagar", "Jamnagar", "Junagadh", "Porbandar", "Anand"];
-
-const getRandomGender = () => ["Male", "Female"][Math.floor(Math.random() * 2)];
-const getRandomCity = () => cities[Math.floor(Math.random() * cities.length)];
-const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const generateEmail = (firstName, lastName, index) => {
-  return `${firstName.toLowerCase()}${lastName.toLowerCase()}${index}@gmail.com`;
-};
-
-const sports = [
-  {
-    name: "Cricket",
-    teamBased: true,
-    roles: ["Batsman", "Bowler", "All-Rounder", "Wicket Keeper"],
-    isActive: true
-  },
-  {
-    name: "Football",
-    teamBased: true,
-    roles: ["Goalkeeper", "Defender", "Midfielder", "Forward", "Striker", "Winger"],
-    isActive: true
-  },
-  {
-    name: "Basketball",
-    teamBased: true,
-    roles: ["Point Guard", "Shooting Guard", "Small Forward", "Power Forward", "Center"],
-    isActive: true
-  },
-  {
-    name: "Volleyball",
-    teamBased: true,
-    roles: ["Setter", "Outside Hitter", "Middle Blocker", "Opposite Hitter", "Libero"],
-    isActive: true
-  },
-  {
-    name: "Tennis",
-    teamBased: false,
-    roles: ["Singles Player", "Doubles Player"],
-    isActive: true
-  },
-  {
-    name: "Badminton",
-    teamBased: false,
-    roles: ["Singles Player", "Doubles Player"],
-    isActive: true
-  },
-  {
-    name: "Table Tennis",
-    teamBased: false,
-    roles: ["Singles Player", "Doubles Player"],
-    isActive: true
-  },
-  {
-    name: "Kabaddi",
-    teamBased: true,
-    roles: ["Raider", "Defender", "All-Rounder"],
-    isActive: true
-  },
-  {
-    name: "Hockey",
-    teamBased: true,
-    roles: ["Goalkeeper", "Defender", "Midfielder", "Forward", "Striker"],
-    isActive: true
-  },
-  {
-    name: "Chess",
-    teamBased: false,
-    roles: ["Player"],
-    isActive: true
-  }
-];
-
-const seedDatabase = async () => {
+async function connectDB() {
   try {
-    // Connect to MongoDB
-    await mongoose.connect(`${process.env.MONGODB_URI}/${process.env.DB_NAME}`);
-    console.log('✅ Connected to MongoDB');
+    const MONGODB_URI = `${process.env.MONGODB_URI}/${process.env.DB_NAME}`;
+    await mongoose.connect(MONGODB_URI);
+    console.log('✅ MongoDB connected successfully');
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error);
+    process.exit(1);
+  }
+}
 
-    // Clear existing data
-    await User.deleteMany({});
-    await Sport.deleteMany({});
-    await Team.deleteMany({});
-    await Tournament.deleteMany({});
-    await Match.deleteMany({});
-    await Payment.deleteMany({});
-    await Feedback.deleteMany({});
-    await Request.deleteMany({});
-    await Booking.deleteMany({});
-    console.log('🗑️  Cleared existing data');
+async function clearDatabase() {
+  console.log('🗑️  Clearing existing data...');
+  await Sport.deleteMany({});
+  await Player.deleteMany({});
+  await TeamManager.deleteMany({});
+  await TournamentOrganizer.deleteMany({});
+  await Admin.deleteMany({});
+  await Team.deleteMany({});
+  await Tournament.deleteMany({});
+  await Match.deleteMany({});
+  await Payment.deleteMany({});
+  await Request.deleteMany({});
+  await Booking.deleteMany({});
+  await WebsiteSettings.deleteMany({});
+  console.log('✅ Database cleared');
+}
 
-    // ========== SEED SPORTS ==========
-    const createdSports = await Sport.insertMany(sports);
-    console.log(`✅ Created ${createdSports.length} sports`);
+async function seedSports() {
+  console.log('🏃 Seeding sports...');
+  
+  const sports = [
+    { name: 'Cricket', teamBased: true, roles: ['Batsman', 'Bowler', 'All-rounder', 'Wicketkeeper'] },
+    { name: 'Football', teamBased: true, roles: ['Striker', 'Midfielder', 'Defender', 'Goalkeeper'] },
+    { name: 'Basketball', teamBased: true, roles: ['Point Guard', 'Shooting Guard', 'Small Forward', 'Power Forward', 'Center'] },
+    { name: 'Volleyball', teamBased: true, roles: ['Setter', 'Outside Hitter', 'Middle Blocker', 'Opposite Hitter', 'Libero'] },
+    { name: 'Hockey', teamBased: true, roles: ['Forward', 'Midfielder', 'Defender', 'Goalkeeper'] },
+    { name: 'Badminton', teamBased: false, roles: ['Singles Player', 'Doubles Player'] },
+    { name: 'Tennis', teamBased: false, roles: ['Singles Player', 'Doubles Player'] },
+    { name: 'Table Tennis', teamBased: false, roles: ['Singles Player', 'Doubles Player'] },
+    { name: 'Chess', teamBased: false, roles: ['Player'] },
+    { name: 'Kabaddi', teamBased: true, roles: ['Raider', 'Defender', 'All-rounder'] },
+    { name: 'Rugby', teamBased: true, roles: ['Forward', 'Back', 'Scrum-half', 'Fly-half'] },
+    { name: 'Baseball', teamBased: true, roles: ['Pitcher', 'Catcher', 'Infielder', 'Outfielder'] },
+  ];
 
-    // ========== SEED ADMIN ==========
-    const admin = await Admin.create({
-      fullName: "Admin User",
-      email: "admin@gmail.com",
-      password: "Admin123!",
-      phone: "+91-9999999999",
-      city: "Ahmedabad",
+  const createdSports = await Sport.insertMany(sports);
+  console.log(`✅ Seeded ${createdSports.length} sports`);
+  return createdSports;
+}
+
+async function seedAdmin() {
+  console.log('👤 Seeding admin...');
+  
+  const admin = await Admin.create({
+    fullName: 'Admin User',
+    email: 'admin@gmail.com',
+    password: DEFAULT_PASSWORD,
+    isVerified: true,
+    isActive: true,
+  });
+
+  console.log('✅ Seeded admin user');
+  return admin;
+}
+
+async function seedPlayer(sports) {
+  console.log('🎮 Seeding player...');
+  
+  const player = await Player.create({
+    fullName: 'Raj Nasit',
+    email: 'rajnasit@gmail.com',
+    password: DEFAULT_PASSWORD,
+    phone: '+91-98765-43210',
+    city: 'Ahmedabad',
+    isVerified: true,
+    isActive: true,
+    sports: [
+      { sport: sports[0]._id, role: 'All-rounder' }, // Cricket
+      { sport: sports[1]._id, role: 'Striker' }, // Football
+      { sport: sports[2]._id, role: 'Point Guard' }, // Basketball
+    ],
+    gender: 'Male',
+    dateOfBirth: new Date('1998-05-15'),
+    height: 180,
+    weight: 75,
+    bio: 'Passionate multi-sport athlete from Gujarat with 10+ years of experience',
+    achievements: [
+      { title: 'Gujarat State Cricket Championship Winner', year: 2020 },
+      { title: 'Western India Football MVP Award', year: 2021 },
+      { title: 'Gujarat Basketball Regional Champion', year: 2022 },
+    ],
+  });
+
+  console.log('✅ Seeded player');
+  return player;
+}
+
+async function seedManager(sports) {
+  console.log('👔 Seeding manager...');
+  
+  const manager = await TeamManager.create({
+    fullName: 'Krish Sanghani',
+    email: 'krishsanghani@gmail.com',
+    password: DEFAULT_PASSWORD,
+
+    phone: '+91-98765-43211',
+    city: 'Surat',
+    isVerified: true,
+    isActive: true,
+    teams: [],
+  });
+
+  console.log('✅ Seeded manager');
+  return manager;
+}
+
+async function seedOrganizer() {
+  console.log('🏆 Seeding organizer...');
+  
+  const organizer = await TournamentOrganizer.create({
+    fullName: 'Uday Odedara',
+    email: 'udayodedara@gujaratsportsfederation.com',
+    password: DEFAULT_PASSWORD,
+
+    phone: '+91-98765-43212',
+    city: 'Vadodara',
+    isVerified: true,
+    isActive: true,
+    orgName: 'Gujarat Sports Federation',
+    isVerifiedOrganizer: true,
+    isAuthorized: true,
+    authorizationRequestDate: new Date('2025-01-01'),
+    authorizedAt: new Date('2025-01-05'),
+  });
+
+  console.log('✅ Seeded organizer');
+  return organizer;
+}
+
+async function seedAdditionalPlayers(sports) {
+  console.log('👥 Seeding additional players...');
+  
+  // Expanded player list - at least 15 players per sport for Cricket, Football, Hockey
+  const playerTemplates = [
+    // Cricket players (sport 0) - 25 players
+    { name: 'Amit Kumar', sport: 0, role: 'Batsman', city: 'Ahmedabad', gender: 'Male' },
+    { name: 'Sneha Patel', sport: 0, role: 'Bowler', city: 'Rajkot', gender: 'Female' },
+    { name: 'Kavita Shah', sport: 0, role: 'Wicketkeeper', city: 'Junagadh', gender: 'Female' },
+    { name: 'Nikhil Trivedi', sport: 0, role: 'All-rounder', city: 'Mehsana', gender: 'Male' },
+    { name: 'Neha Kapadia', sport: 0, role: 'Batsman', city: 'Palanpur', gender: 'Female' },
+    { name: 'Dhruv Desai', sport: 0, role: 'Bowler', city: 'Ahmedabad', gender: 'Male' },
+    { name: 'Ravi Patel', sport: 0, role: 'All-rounder', city: 'Surat', gender: 'Male' },
+    { name: 'Yash Mehta', sport: 0, role: 'Batsman', city: 'Vadodara', gender: 'Male' },
+    { name: 'Krish Shah', sport: 0, role: 'Bowler', city: 'Rajkot', gender: 'Male' },
+    { name: 'Aditya Singh', sport: 0, role: 'Wicketkeeper', city: 'Gandhinagar', gender: 'Male' },
+    { name: 'Priya Joshi', sport: 0, role: 'All-rounder', city: 'Bhavnagar', gender: 'Female' },
+    { name: 'Rahul Deshmukh', sport: 0, role: 'Batsman', city: 'Jamnagar', gender: 'Male' },
+    { name: 'Manish Gupta', sport: 0, role: 'Bowler', city: 'Anand', gender: 'Male' },
+    { name: 'Siddharth Rao', sport: 0, role: 'All-rounder', city: 'Nadiad', gender: 'Male' },
+    { name: 'Deepak Modi', sport: 0, role: 'Batsman', city: 'Morbi', gender: 'Male' },
+    { name: 'Swati Kulkarni', sport: 0, role: 'Bowler', city: 'Surendranagar', gender: 'Female' },
+    { name: 'Tanvi Sharma', sport: 0, role: 'Wicketkeeper', city: 'Navsari', gender: 'Female' },
+    { name: 'Kiran Dave', sport: 0, role: 'All-rounder', city: 'Valsad', gender: 'Male' },
+    { name: 'Varun Thakur', sport: 0, role: 'Batsman', city: 'Bharuch', gender: 'Male' },
+    { name: 'Ishaan Pandya', sport: 0, role: 'Bowler', city: 'Porbandar', gender: 'Male' },
+    { name: 'Aryan Bhatt', sport: 0, role: 'All-rounder', city: 'Himmatnagar', gender: 'Male' },
+    { name: 'Nisha Raval', sport: 0, role: 'Batsman', city: 'Ankleshwar', gender: 'Female' },
+    { name: 'Rohan Vyas', sport: 0, role: 'Bowler', city: 'Ahmedabad', gender: 'Male' },
+    { name: 'Ajay Prajapati', sport: 0, role: 'Wicketkeeper', city: 'Surat', gender: 'Male' },
+    { name: 'Divya Solanki', sport: 0, role: 'All-rounder', city: 'Vadodara', gender: 'Female' },
+    { name: 'Minal Desai', sport: 0, role: 'Batsman', city: 'Junagadh', gender: 'Female' },
+    { name: 'Ritu Bhatt', sport: 0, role: 'Bowler', city: 'Junagadh', gender: 'Female' },
+    { name: 'Sarita Mehta', sport: 0, role: 'All-rounder', city: 'Rajkot', gender: 'Female' },
+    { name: 'Geeta Pandya', sport: 0, role: 'Wicketkeeper', city: 'Junagadh', gender: 'Female' },
+    { name: 'Anita Vyas', sport: 0, role: 'Batsman', city: 'Surat', gender: 'Female' },
+    { name: 'Radha Modi', sport: 0, role: 'Bowler', city: 'Vadodara', gender: 'Female' },
+    { name: 'Seema Joshi', sport: 0, role: 'All-rounder', city: 'Junagadh', gender: 'Female' },
+    { name: 'Lata Shah', sport: 0, role: 'Batsman', city: 'Ahmedabad', gender: 'Female' },
+    { name: 'Sunita Patel', sport: 0, role: 'Wicketkeeper', city: 'Rajkot', gender: 'Female' },
+    { name: 'Usha Rao', sport: 0, role: 'Bowler', city: 'Gandhinagar', gender: 'Female' },
+    
+    // Football players (sport 1) - 25 players
+    { name: 'Priyanka Sharma', sport: 1, role: 'Goalkeeper', city: 'Surat', gender: 'Female' },
+    { name: 'Vikram Singh', sport: 1, role: 'Defender', city: 'Gandhinagar', gender: 'Male' },
+    { name: 'Pooja Pandya', sport: 1, role: 'Midfielder', city: 'Nadiad', gender: 'Female' },
+    { name: 'Ritu Thakkar', sport: 1, role: 'Striker', city: 'Navsari', gender: 'Female' },
+    { name: 'Vishal Bhatt', sport: 1, role: 'Midfielder', city: 'Himmatnagar', gender: 'Male' },
+    { name: 'Karan Joshi', sport: 1, role: 'Defender', city: 'Ahmedabad', gender: 'Male' },
+    { name: 'Ankit Yadav', sport: 1, role: 'Striker', city: 'Rajkot', gender: 'Male' },
+    { name: 'Mihir Choudhary', sport: 1, role: 'Goalkeeper', city: 'Surat', gender: 'Male' },
+    { name: 'Riya Kapoor', sport: 1, role: 'Defender', city: 'Vadodara', gender: 'Female' },
+    { name: 'Sagar Panchal', sport: 1, role: 'Midfielder', city: 'Gandhinagar', gender: 'Male' },
+    { name: 'Pratik Jain', sport: 1, role: 'Striker', city: 'Bhavnagar', gender: 'Male' },
+    { name: 'Kajal Mishra', sport: 1, role: 'Defender', city: 'Jamnagar', gender: 'Female' },
+    { name: 'Chirag Patel', sport: 1, role: 'Midfielder', city: 'Anand', gender: 'Male' },
+    { name: 'Akash Nair', sport: 1, role: 'Striker', city: 'Morbi', gender: 'Male' },
+    { name: 'Simran Kaur', sport: 1, role: 'Goalkeeper', city: 'Surendranagar', gender: 'Female' },
+    { name: 'Jay Parekh', sport: 1, role: 'Defender', city: 'Navsari', gender: 'Male' },
+    { name: 'Harsh Shah', sport: 1, role: 'Midfielder', city: 'Valsad', gender: 'Male' },
+    { name: 'Tina Agarwal', sport: 1, role: 'Striker', city: 'Bharuch', gender: 'Female' },
+    { name: 'Gaurav Kumar', sport: 1, role: 'Defender', city: 'Porbandar', gender: 'Male' },
+    { name: 'Bhavesh Amin', sport: 1, role: 'Midfielder', city: 'Palanpur', gender: 'Male' },
+    { name: 'Komal Vora', sport: 1, role: 'Striker', city: 'Ankleshwar', gender: 'Female' },
+    { name: 'Mayur Trivedi', sport: 1, role: 'Goalkeeper', city: 'Junagadh', gender: 'Male' },
+    { name: 'Parthiv Desai', sport: 1, role: 'Defender', city: 'Mehsana', gender: 'Male' },
+    { name: 'Shraddha Joshi', sport: 1, role: 'Midfielder', city: 'Ahmedabad', gender: 'Female' },
+    { name: 'Tushar Pandya', sport: 1, role: 'Striker', city: 'Surat', gender: 'Male' },
+    { name: 'Aarti Mehta', sport: 1, role: 'Defender', city: 'Gandhinagar', gender: 'Female' },
+    { name: 'Preeti Shah', sport: 1, role: 'Midfielder', city: 'Rajkot', gender: 'Female' },
+    { name: 'Mamta Desai', sport: 1, role: 'Striker', city: 'Surat', gender: 'Female' },
+    { name: 'Jyoti Patel', sport: 1, role: 'Goalkeeper', city: 'Vadodara', gender: 'Female' },
+    { name: 'Rekha Joshi', sport: 1, role: 'Defender', city: 'Gandhinagar', gender: 'Female' },
+    { name: 'Kaveri Rao', sport: 1, role: 'Midfielder', city: 'Ahmedabad', gender: 'Female' },
+    { name: 'Anuja Vora', sport: 1, role: 'Striker', city: 'Rajkot', gender: 'Female' },
+    { name: 'Malini Pandya', sport: 1, role: 'Defender', city: 'Surat', gender: 'Female' },
+    { name: 'Dipika Modi', sport: 1, role: 'Midfielder', city: 'Gandhinagar', gender: 'Female' },
+    { name: 'Hansa Bhatt', sport: 1, role: 'Goalkeeper', city: 'Vadodara', gender: 'Female' },
+    
+    // Basketball players (sport 2) - 20 players
+    { name: 'Raj Mehta', sport: 2, role: 'Shooting Guard', city: 'Vadodara', gender: 'Male' },
+    { name: 'Arjun Rao', sport: 2, role: 'Center', city: 'Jamnagar', gender: 'Male' },
+    { name: 'Diya Modi', sport: 2, role: 'Small Forward', city: 'Surendranagar', gender: 'Female' },
+    { name: 'Sanjay Amin', sport: 2, role: 'Power Forward', city: 'Porbandar', gender: 'Male' },
+    { name: 'Veer Solanki', sport: 2, role: 'Point Guard', city: 'Ahmedabad', gender: 'Male' },
+    { name: 'Lakshmi Iyer', sport: 2, role: 'Shooting Guard', city: 'Rajkot', gender: 'Female' },
+    { name: 'Parth Thakkar', sport: 2, role: 'Center', city: 'Surat', gender: 'Male' },
+    { name: 'Riddhi Patel', sport: 2, role: 'Small Forward', city: 'Vadodara', gender: 'Female' },
+    { name: 'Kunal Mehta', sport: 2, role: 'Power Forward', city: 'Gandhinagar', gender: 'Male' },
+    { name: 'Isha Kapadia', sport: 2, role: 'Point Guard', city: 'Bhavnagar', gender: 'Female' },
+    { name: 'Dev Chauhan', sport: 2, role: 'Shooting Guard', city: 'Anand', gender: 'Male' },
+    { name: 'Palak Shah', sport: 2, role: 'Center', city: 'Nadiad', gender: 'Female' },
+    { name: 'Yug Prajapati', sport: 2, role: 'Small Forward', city: 'Morbi', gender: 'Male' },
+    { name: 'Navya Joshi', sport: 2, role: 'Power Forward', city: 'Navsari', gender: 'Female' },
+    { name: 'Dhruvi Dave', sport: 2, role: 'Point Guard', city: 'Valsad', gender: 'Female' },
+    { name: 'Meet Amin', sport: 2, role: 'Shooting Guard', city: 'Bharuch', gender: 'Male' },
+    { name: 'Aditi Raval', sport: 2, role: 'Center', city: 'Palanpur', gender: 'Female' },
+    { name: 'Smit Pandya', sport: 2, role: 'Small Forward', city: 'Ankleshwar', gender: 'Male' },
+    { name: 'Mira Vyas', sport: 2, role: 'Power Forward', city: 'Junagadh', gender: 'Female' },
+    { name: 'Rudra Modi', sport: 2, role: 'Point Guard', city: 'Mehsana', gender: 'Male' },
+    { name: 'Neel Patel', sport: 2, role: 'Shooting Guard', city: 'Jamnagar', gender: 'Male' },
+    { name: 'Abhay Desai', sport: 2, role: 'Center', city: 'Rajkot', gender: 'Male' },
+    { name: 'Pranav Joshi', sport: 2, role: 'Power Forward', city: 'Surat', gender: 'Male' },
+    { name: 'Roshan Shah', sport: 2, role: 'Small Forward', city: 'Gandhinagar', gender: 'Male' },
+    { name: 'Sahil Vora', sport: 2, role: 'Point Guard', city: 'Bhavnagar', gender: 'Male' },
+    { name: 'Kavita Desai', sport: 2, role: 'Shooting Guard', city: 'Vadodara', gender: 'Female' },
+    { name: 'Shilpa Mehta', sport: 2, role: 'Center', city: 'Rajkot', gender: 'Female' },
+    { name: 'Priti Joshi', sport: 2, role: 'Small Forward', city: 'Surat', gender: 'Female' },
+    { name: 'Rina Shah', sport: 2, role: 'Power Forward', city: 'Vadodara', gender: 'Female' },
+    { name: 'Meena Patel', sport: 2, role: 'Point Guard', city: 'Ahmedabad', gender: 'Female' },
+    
+    // Volleyball players (sport 3) - 15 players
+    { name: 'Anjali Desai', sport: 3, role: 'Setter', city: 'Bhavnagar', gender: 'Female' },
+    { name: 'Hardik Vora', sport: 3, role: 'Libero', city: 'Morbi', gender: 'Male' },
+    { name: 'Meera Dave', sport: 3, role: 'Outside Hitter', city: 'Bharuch', gender: 'Female' },
+    { name: 'Pranav Shah', sport: 3, role: 'Middle Blocker', city: 'Ahmedabad', gender: 'Male' },
+    { name: 'Aanya Patel', sport: 3, role: 'Opposite Hitter', city: 'Surat', gender: 'Female' },
+    { name: 'Shiv Joshi', sport: 3, role: 'Setter', city: 'Vadodara', gender: 'Male' },
+    { name: 'Roshni Mehta', sport: 3, role: 'Libero', city: 'Rajkot', gender: 'Female' },
+    { name: 'Aryan Desai', sport: 3, role: 'Outside Hitter', city: 'Gandhinagar', gender: 'Male' },
+    { name: 'Hiral Thakkar', sport: 3, role: 'Middle Blocker', city: 'Jamnagar', gender: 'Female' },
+    { name: 'Nirmal Amin', sport: 3, role: 'Opposite Hitter', city: 'Anand', gender: 'Male' },
+    { name: 'Khushi Pandya', sport: 3, role: 'Setter', city: 'Nadiad', gender: 'Female' },
+    { name: 'Darshan Raval', sport: 3, role: 'Libero', city: 'Navsari', gender: 'Male' },
+    { name: 'Aarohi Vyas', sport: 3, role: 'Outside Hitter', city: 'Valsad', gender: 'Female' },
+    { name: 'Jatin Modi', sport: 3, role: 'Middle Blocker', city: 'Bharuch', gender: 'Male' },
+    { name: 'Sia Kapadia', sport: 3, role: 'Opposite Hitter', city: 'Porbandar', gender: 'Female' },
+    { name: 'Kaushal Desai', sport: 3, role: 'Setter', city: 'Bhavnagar', gender: 'Male' },
+    { name: 'Suresh Mehta', sport: 3, role: 'Libero', city: 'Jamnagar', gender: 'Male' },
+    { name: 'Ramesh Patel', sport: 3, role: 'Outside Hitter', city: 'Ahmedabad', gender: 'Male' },
+    { name: 'Dinesh Shah', sport: 3, role: 'Middle Blocker', city: 'Surat', gender: 'Male' },
+    { name: 'Paresh Vora', sport: 3, role: 'Opposite Hitter', city: 'Vadodara', gender: 'Male' },
+    { name: 'Rajni Desai', sport: 3, role: 'Setter', city: 'Morbi', gender: 'Female' },
+    { name: 'Sheetal Joshi', sport: 3, role: 'Libero', city: 'Gandhinagar', gender: 'Female' },
+    { name: 'Varsha Pandya', sport: 3, role: 'Outside Hitter', city: 'Rajkot', gender: 'Female' },
+    { name: 'Archana Raval', sport: 3, role: 'Middle Blocker', city: 'Morbi', gender: 'Female' },
+    { name: 'Bharti Modi', sport: 3, role: 'Opposite Hitter', city: 'Anand', gender: 'Female' },
+    
+    // Hockey players (sport 4) - 20 players
+    { name: 'Rohit Joshi', sport: 4, role: 'Forward', city: 'Anand', gender: 'Male' },
+    { name: 'Shruti Raval', sport: 4, role: 'Defender', city: 'Ankleshwar', gender: 'Female' },
+    { name: 'Karan Parikh', sport: 4, role: 'Goalkeeper', city: 'Valsad', gender: 'Male' },
+    { name: 'Vivek Sharma', sport: 4, role: 'Midfielder', city: 'Ahmedabad', gender: 'Male' },
+    { name: 'Tanmay Patel', sport: 4, role: 'Forward', city: 'Surat', gender: 'Male' },
+    { name: 'Kavya Shah', sport: 4, role: 'Defender', city: 'Vadodara', gender: 'Female' },
+    { name: 'Hitesh Mehta', sport: 4, role: 'Midfielder', city: 'Rajkot', gender: 'Male' },
+    { name: 'Snehal Joshi', sport: 4, role: 'Forward', city: 'Gandhinagar', gender: 'Female' },
+    { name: 'Rajesh Desai', sport: 4, role: 'Goalkeeper', city: 'Bhavnagar', gender: 'Male' },
+    { name: 'Nidhi Amin', sport: 4, role: 'Defender', city: 'Jamnagar', gender: 'Female' },
+    { name: 'Ashwin Pandya', sport: 4, role: 'Midfielder', city: 'Morbi', gender: 'Male' },
+    { name: 'Kriti Vora', sport: 4, role: 'Forward', city: 'Surendranagar', gender: 'Female' },
+    { name: 'Hemant Raval', sport: 4, role: 'Defender', city: 'Navsari', gender: 'Male' },
+    { name: 'Poornima Dave', sport: 4, role: 'Midfielder', city: 'Palanpur', gender: 'Female' },
+    { name: 'Sameer Vyas', sport: 4, role: 'Forward', city: 'Junagadh', gender: 'Male' },
+    { name: 'Jinal Modi', sport: 4, role: 'Goalkeeper', city: 'Mehsana', gender: 'Female' },
+    { name: 'Chetan Kapadia', sport: 4, role: 'Defender', city: 'Ankleshwar', gender: 'Male' },
+    { name: 'Urmila Solanki', sport: 4, role: 'Midfielder', city: 'Himmatnagar', gender: 'Female' },
+    { name: 'Lalit Thakur', sport: 4, role: 'Forward', city: 'Porbandar', gender: 'Male' },
+    { name: 'Megha Kulkarni', sport: 4, role: 'Defender', city: 'Bharuch', gender: 'Female' },
+  ];
+
+  const players = [];
+  for (let i = 0; i < playerTemplates.length; i++) {
+    const template = playerTemplates[i];
+    const player = await Player.create({
+      fullName: template.name,
+      email: `${template.name.toLowerCase().replace(/ /g, '.')}@players.com`,
+      password: DEFAULT_PASSWORD,
+      role: 'Player',
+      phone: `+91-${String(98760 + i).padStart(5, '9')}-${String(10000 + i * 100).padStart(5, '0')}`,
+      city: template.city,
       isVerified: true,
       isActive: true,
-      avatar: "https://randomuser.me/api/portraits/men/99.jpg",
-      permissions: [
-        "manage_users",
-        "manage_organizers",
-        "manage_tournaments",
-        "manage_teams",
-        "manage_matches",
-        "manage_payments",
-        "view_analytics",
-        "manage_sports",
-      ]
+      sports: [{ sport: sports[template.sport]._id, role: template.role }],
+      gender: template.gender,
+      dateOfBirth: new Date(1995 + (i % 10), (i % 12), (i % 28) + 1),
+      height: 160 + (i % 30),
+      weight: 60 + (i % 30),
     });
-    console.log(`✅ Created 1 admin user (admin@gmail.com / Admin123!)`);
+    players.push(player);
+  }
 
-    // ========== SEED ORGANIZERS (20) ==========
-    const fixedOrganizers = [
-      { firstName: "Arjun", lastName: "Patel", city: "Ahmedabad" },
-      { firstName: "Rohan", lastName: "Shah", city: "Surat" },
-      { firstName: "Vikram", lastName: "Sharma", city: "Vadodara" },
-      { firstName: "Karan", lastName: "Singh", city: "Rajkot" },
-      { firstName: "Rahul", lastName: "Kumar", city: "Gandhinagar" },
-      { firstName: "Ravi", lastName: "Gupta", city: "Bhavnagar" },
-      { firstName: "Sanjay", lastName: "Verma", city: "Jamnagar" },
-      { firstName: "Aditya", lastName: "Reddy", city: "Junagadh" },
-      { firstName: "Rajesh", lastName: "Rao", city: "Porbandar" },
-      { firstName: "Manish", lastName: "Menon", city: "Anand" },
-      { firstName: "Vishal", lastName: "Iyer", city: "Ahmedabad" },
-      { firstName: "Nikhil", lastName: "Desai", city: "Surat" },
-      { firstName: "Akshay", lastName: "Joshi", city: "Vadodara" },
-      { firstName: "Hemant", lastName: "Bhat", city: "Rajkot" },
-      { firstName: "Pankaj", lastName: "Chopra", city: "Gandhinagar" },
-      { firstName: "Mohan", lastName: "Kapoor", city: "Bhavnagar" },
-      { firstName: "Kunal", lastName: "Malhotra", city: "Jamnagar" },
-      { firstName: "Harshil", lastName: "Arora", city: "Junagadh" },
-      { firstName: "Mayank", lastName: "Saxena", city: "Porbandar" },
-      { firstName: "Vinod", lastName: "Srivastava", city: "Anand" }
-    ];
+  console.log(`✅ Seeded ${players.length} additional players`);
+  return players;
+}
+
+async function seedTeams(manager, player, allPlayers, sports) {
+  console.log('⚽ Seeding teams...');
+  
+  const teamTemplates = [
+    { name: 'Ahmedabad Lions', sport: 0, gender: 'Male', city: 'Ahmedabad' },
+    { name: 'Surat Strikers', sport: 1, gender: 'Male', city: 'Surat' },
+    { name: 'Vadodara Warriors', sport: 2, gender: 'Female', city: 'Vadodara' },
+    { name: 'Rajkot Royals', sport: 0, gender: 'Mixed', city: 'Rajkot' },
+    { name: 'Gandhinagar Giants', sport: 1, gender: 'Female', city: 'Gandhinagar' },
+    { name: 'Bhavnagar Blazers', sport: 3, gender: 'Male', city: 'Bhavnagar' },
+    { name: 'Jamnagar Jaguars', sport: 2, gender: 'Male', city: 'Jamnagar' },
+    { name: 'Junagadh Thunder', sport: 0, gender: 'Female', city: 'Junagadh' },
+    { name: 'Anand Eagles', sport: 4, gender: 'Mixed', city: 'Anand' },
+    { name: 'Nadiad Ninjas', sport: 1, gender: 'Male', city: 'Nadiad' },
+    { name: 'Morbi Mavericks', sport: 3, gender: 'Female', city: 'Morbi' },
+    { name: 'Mehsana Challengers', sport: 2, gender: 'Mixed', city: 'Mehsana' },
+  ];
+
+  const teams = [];
+  
+  for (let i = 0; i < teamTemplates.length; i++) {
+    const template = teamTemplates[i];
     
-    const organizerPromises = fixedOrganizers.map((org, i) => ({
-      fullName: `${org.firstName} ${org.lastName}`,
-      email: `${org.firstName.toLowerCase()}${org.lastName.toLowerCase()}${i}@gmail.com`,
-      password: "Password123!",
-      phone: `+91-${String(9876543300 + i).slice(-10)}`,
-      city: org.city,
-      isVerified: true,
-      isActive: true,
-      orgName: `${org.firstName} ${org.lastName} Sports Organization`,
-      isVerifiedOrganizer: true,
-      isAuthorized: true
-    }));
-    const organizers = await TournamentOrganizer.create(organizerPromises);
-    console.log(`✅ Created 20 tournament organizers`);
-
-    // ========== SEED TEAM MANAGERS (20) ==========
-    const fixedManagers = [
-      { firstName: "Priya", lastName: "Patel", city: "Ahmedabad" },
-      { firstName: "Aryan", lastName: "Shah", city: "Surat" },
-      { firstName: "Neha", lastName: "Sharma", city: "Vadodara" },
-      { firstName: "Ishant", lastName: "Singh", city: "Rajkot" },
-      { firstName: "Kavya", lastName: "Kumar", city: "Gandhinagar" },
-      { firstName: "Jatin", lastName: "Gupta", city: "Bhavnagar" },
-      { firstName: "Megha", lastName: "Verma", city: "Jamnagar" },
-      { firstName: "Parth", lastName: "Reddy", city: "Junagadh" },
-      { firstName: "Divya", lastName: "Rao", city: "Porbandar" },
-      { firstName: "Hrithik", lastName: "Menon", city: "Anand" },
-      { firstName: "Ananya", lastName: "Iyer", city: "Ahmedabad" },
-      { firstName: "Jasprit", lastName: "Desai", city: "Surat" },
-      { firstName: "Isha", lastName: "Joshi", city: "Vadodara" },
-      { firstName: "Rishabh", lastName: "Bhat", city: "Rajkot" },
-      { firstName: "Kriti", lastName: "Chopra", city: "Gandhinagar" },
-      { firstName: "Naveen", lastName: "Kapoor", city: "Bhavnagar" },
-      { firstName: "Pooja", lastName: "Malhotra", city: "Jamnagar" },
-      { firstName: "Kaushik", lastName: "Arora", city: "Junagadh" },
-      { firstName: "Nisha", lastName: "Saxena", city: "Porbandar" },
-      { firstName: "Rishi", lastName: "Srivastava", city: "Anand" }
-    ];
-    
-    const managerPromises = fixedManagers.map((mgr, i) => ({
-      fullName: `${mgr.firstName} ${mgr.lastName}`,
-      email: `${mgr.firstName.toLowerCase()}${mgr.lastName.toLowerCase()}${100 + i}@gmail.com`,
-      password: "Password123!",
-      phone: `+91-${String(9876543400 + i).slice(-10)}`,
-      city: mgr.city,
-      isVerified: true,
-      isActive: true,
-      achievements: {
-        title: `Team Manager of the Year - ${mgr.city} District`,
-        year: 2024
-      }
-    }));
-    const managers = await TeamManager.create(managerPromises);
-    console.log(`✅ Created 20 team managers`);
-
-    // ========== SEED PLAYERS (100 - 10 per sport) ==========
-    const playerPromises = [];
-    const playersPerSport = 10;
-    
-    const fixedPlayerNames = [
-      { firstName: "Arjun", lastName: "Patel", gender: "Male", city: "Ahmedabad" },
-      { firstName: "Priya", lastName: "Shah", gender: "Female", city: "Surat" },
-      { firstName: "Rahul", lastName: "Sharma", gender: "Male", city: "Vadodara" },
-      { firstName: "Neha", lastName: "Singh", gender: "Female", city: "Rajkot" },
-      { firstName: "Karan", lastName: "Kumar", gender: "Male", city: "Gandhinagar" },
-      { firstName: "Kavya", lastName: "Gupta", gender: "Female", city: "Bhavnagar" },
-      { firstName: "Rohan", lastName: "Verma", gender: "Male", city: "Jamnagar" },
-      { firstName: "Isha", lastName: "Reddy", gender: "Female", city: "Junagadh" },
-      { firstName: "Vikram", lastName: "Rao", gender: "Male", city: "Porbandar" },
-      { firstName: "Ananya", lastName: "Menon", gender: "Female", city: "Anand" }
-    ];
-
-    for (let sportIdx = 0; sportIdx < createdSports.length; sportIdx++) {
-      const sport = createdSports[sportIdx];
-      const roles = sport.roles;
-
-      for (let i = 0; i < playersPerSport; i++) {
-        const playerData = fixedPlayerNames[i];
-        const firstName = playerData.firstName;
-        const lastName = playerData.lastName;
-        const gender = playerData.gender;
-        const city = playerData.city;
-        
-        const sportData = [
-          {
-            sport: sport._id,
-            role: roles[i % roles.length] // Use deterministic role selection
-          }
-        ];
-        
-        // Every 3rd player plays multiple sports (deterministic)
-        if (i % 3 === 0 && createdSports.length > 1) {
-          const secondSportIdx = (sportIdx + 1) % createdSports.length;
-          const secondSport = createdSports[secondSportIdx];
-          sportData.push({
-            sport: secondSport._id,
-            role: secondSport.roles[0]
-          });
-        }
-
-        playerPromises.push({
-          fullName: `${firstName} ${lastName}`,
-          email: `${firstName.toLowerCase()}${lastName.toLowerCase()}${200 + (sportIdx * 10) + i}@gmail.com`,
-          password: "Password123!",
-          phone: `+91-${String(9876543500 + (sportIdx * 10) + i).slice(-10)}`,
-          city: city,
-          isVerified: true,
-          isActive: true,
-          sports: sportData,
-          achievements: [
-            { title: `${sport.name} State Championship Winner`, year: 2024 },
-            { title: `Best Player Award - ${city} District`, year: 2023 }
-          ],
-          gender: gender,
-          dateOfBirth: getDOBFromAge(18 + (i % 10)), // Deterministic ages 18-27
-          height: 5.0 + (i % 15) * 0.1, // Height in feet.inches format (5.0 - 6.4 ft range)
-          weight: 60 + (i * 2), // Deterministic weights
-          bio: `Professional ${sport.name} player with ${2 + (i % 10)} years experience`
-        });
-      }
-    }
-
-    const players = await Player.create(playerPromises);
-    console.log(`✅ Created 100 players (10 per sport)`);
-    
-    // Build a map of sport ID to player IDs for easier team creation
-    const playersBySpport = new Map();
-    players.forEach((player, index) => {
-      // Each player is created with 10 players per sport across createdSports
-      // We need to map them back based on the sportData structure
-      const sportsArray = player.sports || [];
-      sportsArray.forEach(sportItem => {
-        const sportId = sportItem.sport.toString();
-        if (!playersBySpport.has(sportId)) {
-          playersBySpport.set(sportId, []);
-        }
-        playersBySpport.get(sportId).push(player._id);
-      });
+    // Get all players who play this sport and match gender (or team is Mixed)
+    const availablePlayers = allPlayers.filter(p => {
+      const playsThisSport = p.sports.some(s => s.sport.toString() === sports[template.sport]._id.toString());
+      const genderMatch = template.gender === 'Mixed' || p.gender === template.gender;
+      return playsThisSport && genderMatch;
     });
     
-
-    // ========== SEED TEAMS ==========
-    const teamPromises = [];
-    const teamPlayerMap = new Map(); // Track players per team
+    // Assign at least 15 players per team (11 playing + 4 substitutes)
+    const teamPlayers = [];
+    const playerCount = Math.min(15, availablePlayers.length);
     
-    for (let i = 0; i < managers.length; i++) {
-      const manager = managers[i];
-      const numTeams = Math.random() > 0.5 ? 2 : 1;
-
-      for (let t = 0; t < numTeams; t++) {
-        const sport = getRandomElement(createdSports);
-        const sportIdStr = sport._id.toString();
-        
-        // Get players for this sport using our pre-built mapping
-        const availablePlayerIds = playersBySpport.get(sportIdStr) || [];
-        
-        // Allocate 60-100% of sport's max players per team
-        // Choose team size without relying on sport.maxPlayers
-        const baseMin = sport.teamBased ? 5 : 1;
-        const baseMax = sport.teamBased ? 12 : 2;
-        const randomCount = Math.floor(Math.random() * (baseMax - baseMin + 1)) + baseMin;
-        const teamPlayerCount = Math.min(randomCount, availablePlayerIds.length);
-        
-        // Shuffle available players and select team players
-        const shuffledPlayerIds = availablePlayerIds.sort(() => Math.random() - 0.5);
-        const teamPlayerIds = shuffledPlayerIds.slice(0, teamPlayerCount);
-        
-        const openToJoin = Math.random() > 0.4;
-        const teamGender = ["Male", "Female", "Mixed"][Math.floor(Math.random() * 3)];
-        const teamCity = getRandomCity();
-        
-        const teamData = {
-          name: `${getRandomElement(firstNamesM)} ${sport.name} Warriors - ${teamCity}`,
-          sport: sport._id,
-          manager: manager._id,
-          gender: teamGender,
-          players: teamPlayerIds,
-          city: teamCity,
-          bannerUrl: `https://images.unsplash.com/photo-${['1517649763962-0c623066013b', '1461896836934-ffe607ba8211', '1519861155730-972f87d2b8f1'][Math.floor(Math.random() * 3)]}?w=1200&h=400&fit=crop`,
-          description: `Professional ${sport.name} team. ${openToJoin ? 'Open to recruitment' : 'Not currently recruiting'}`,
-          achievements: [
-            { title: `${sport.name} District Champion 2024`, year: 2024 },
-            { title: "Best Team Performance Award 2023", year: 2023 }
-          ],
-          openToJoin,
-          isActive: true
-        };
-        
-        teamPromises.push(teamData);
+    for (let j = 0; j < playerCount; j++) {
+      if (availablePlayers[j]) {
+        teamPlayers.push(availablePlayers[j]._id);
       }
     }
-
-    const teams = await Team.create(teamPromises);
-    // Build team player map for reference
-    teams.forEach(team => {
-      teamPlayerMap.set(team._id.toString(), team.players.length);
-    });
     
-    console.log(`✅ Created ${teams.length} teams`);
-    console.log(`   Team player distribution:`);
-    teams.forEach(team => {
-      const playerCount = team.players ? team.players.length : 0;
-      console.log(`   - ${team.name}: ${playerCount} players`);
+    // Add main player if they play this sport and match gender
+    const mainPlayerPlaysThisSport = player.sports.some(s => s.sport.toString() === sports[template.sport]._id.toString());
+    const mainPlayerGenderMatch = template.gender === 'Mixed' || player.gender === template.gender;
+    if (mainPlayerPlaysThisSport && mainPlayerGenderMatch && i === 0) {
+      teamPlayers.unshift(player._id); // Add to first team only
+    }
+
+    const team = await Team.create({
+      name: template.name,
+      sport: sports[template.sport]._id,
+      manager: manager._id,
+      city: template.city,
+      gender: template.gender,
+      description: `Professional ${sports[template.sport].name} team representing ${template.city}, Gujarat`,
+      openToJoin: i % 3 === 0, // Every third team is open to join
+      players: teamPlayers,
+      achievements: [
+        { title: `${template.city} District Championship`, year: 2023 },
+        { title: 'Gujarat State Cup Winner', year: 2024 },
+      ],
     });
 
-    // ========== SEED TOURNAMENTS ==========
-    const now = new Date();
-    const tournamentPromises = [];
-    const tournamentStatusMap = new Map(); // Track which tournaments are Live/Completed
+    teams.push(team);
+    console.log(`  ✓ ${template.name}: ${teamPlayers.length} players assigned`);
+  }
+
+  // Update manager's teams
+  await TeamManager.findByIdAndUpdate(manager._id, {
+    teams: teams.map(t => t._id),
+  });
+
+  console.log(`✅ Seeded ${teams.length} teams`);
+  return teams;
+}
+
+async function seedTournaments(organizer, teams, sports) {
+  console.log('🏆 Seeding tournaments...');
+  
+  const now = new Date();
+  const tournamentTemplates = [
+    { 
+      name: 'Gujarat Premier Cricket League 2026', 
+      sport: 0, 
+      format: 'Knockout',
+      registrationType: 'Team',
+      teamLimit: 16,
+      entryFee: 5000,
+      prizePool: 100000,
+      status: 'Upcoming',
+      daysUntilStart: 30,
+    },
+    { 
+      name: 'Ahmedabad Football Championship 2026', 
+      sport: 1, 
+      format: 'League',
+      registrationType: 'Team',
+      teamLimit: 20,
+      entryFee: 7000,
+      prizePool: 150000,
+      status: 'Live',
+      daysUntilStart: -5,
+    },
+    { 
+      name: 'Surat Basketball Cup 2026', 
+      sport: 2, 
+      format: 'Knockout',
+      registrationType: 'Team',
+      teamLimit: 12,
+      entryFee: 4000,
+      prizePool: 80000,
+      status: 'Upcoming',
+      daysUntilStart: 15,
+    },
+    { 
+      name: 'Vadodara Volleyball League 2026', 
+      sport: 3, 
+      format: 'League',
+      registrationType: 'Team',
+      teamLimit: 10,
+      entryFee: 3000,
+      prizePool: 60000,
+      status: 'Upcoming',
+      daysUntilStart: 20,
+    },
+    { 
+      name: 'Gujarat Cricket Masters 2025', 
+      sport: 0, 
+      format: 'Knockout',
+      registrationType: 'Team',
+      teamLimit: 8,
+      entryFee: 6000,
+      prizePool: 120000,
+      status: 'Completed',
+      daysUntilStart: -60,
+    },
+    { 
+      name: 'Rajkot City Football League 2026', 
+      sport: 1, 
+      format: 'League',
+      registrationType: 'Team',
+      teamLimit: 14,
+      entryFee: 5500,
+      prizePool: 110000,
+      status: 'Upcoming',
+      daysUntilStart: 45,
+    },
+    { 
+      name: 'Gandhinagar Basketball Tournament', 
+      sport: 2, 
+      format: 'Knockout',
+      registrationType: 'Team',
+      teamLimit: 16,
+      entryFee: 4500,
+      prizePool: 90000,
+      status: 'Live',
+      daysUntilStart: -2,
+    },
+    { 
+      name: 'Gujarat Hockey Champions Cup 2026', 
+      sport: 4, 
+      format: 'League',
+      registrationType: 'Team',
+      teamLimit: 12,
+      entryFee: 5000,
+      prizePool: 100000,
+      status: 'Upcoming',
+      daysUntilStart: 25,
+    },
+    { 
+      name: 'Bhavnagar Summer Cricket Series 2026', 
+      sport: 0, 
+      format: 'League',
+      registrationType: 'Team',
+      teamLimit: 10,
+      entryFee: 4000,
+      prizePool: 75000,
+      status: 'Upcoming',
+      daysUntilStart: 40,
+    },
+    { 
+      name: 'Jamnagar Winter Football Classic 2025', 
+      sport: 1, 
+      format: 'Knockout',
+      registrationType: 'Team',
+      teamLimit: 8,
+      entryFee: 6500,
+      prizePool: 130000,
+      status: 'Completed',
+      daysUntilStart: -90,
+    },
+    { 
+      name: 'Anand Volleyball Super League 2026', 
+      sport: 3, 
+      format: 'League',
+      registrationType: 'Team',
+      teamLimit: 12,
+      entryFee: 3500,
+      prizePool: 70000,
+      status: 'Upcoming',
+      daysUntilStart: 35,
+    },
+    { 
+      name: 'Mehsana Spring Basketball Tournament', 
+      sport: 2, 
+      format: 'Knockout',
+      registrationType: 'Team',
+      teamLimit: 10,
+      entryFee: 4200,
+      prizePool: 85000,
+      status: 'Upcoming',
+      daysUntilStart: 50,
+    },
+  ];
+
+  const tournaments = [];
+  for (let i = 0; i < tournamentTemplates.length; i++) {
+    const template = tournamentTemplates[i];
     
-    for (let i = 0; i < organizers.length; i++) {
-      const organizer = organizers[i];
-      const numTournaments = Math.random() > 0.6 ? 2 : 1;
-
-      for (let t = 0; t < numTournaments; t++) {
-        const sport = getRandomElement(createdSports);
-        const format = ["League", "Knockout", "Round Robin"][Math.floor(Math.random() * 3)];
-        
-        // Create tournaments with different statuses
-        const tournamentStatusChance = Math.random();
-        let registrationStart, registrationEnd, startDate, endDate, status;
-        
-        if (tournamentStatusChance > 0.7) {
-          // 30% Live tournaments - already started, matches ongoing
-          registrationStart = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-          registrationEnd = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          startDate = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
-          endDate = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
-          status = "Live";
-        } else if (tournamentStatusChance > 0.4) {
-          // 30% Completed tournaments - already finished
-          registrationStart = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-          registrationEnd = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-          startDate = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000);
-          endDate = new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000);
-          status = "Completed";
-        } else {
-          // 40% Upcoming tournaments - registration open
-          registrationStart = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
-          registrationEnd = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000);
-          startDate = new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000);
-          endDate = new Date(startDate.getTime() + 14 * 24 * 60 * 60 * 1000);
-          status = "Upcoming";
-        }
-        
-        const city = getRandomCity();
-        
-        // Determine if this tournament is team-based or individual
-        const isTeamBased = sport.teamBased;
-        const registrationType = isTeamBased ? "Team" : "Player";
-        const tournamentType = isTeamBased ? "Championship" : "Individual";
-        const tournamentGender = ["Male", "Female", "Mixed"][Math.floor(Math.random() * 3)];
-
-        // Set sport-specific min players per team for team-based tournaments
-        let playersPerTeam = 1;
-        if (isTeamBased) {
-          const sportPlayersMap = {
-            "Cricket": 11,
-            "Football": 11,
-            "Basketball": 5,
-            "Volleyball": 6,
-            "Kabaddi": 7,
-            "Hockey": 11
-          };
-          playersPerTeam = sportPlayersMap[sport.name] || 11;
-        }
-        
-        // Generate sport-specific rules
-        const sportRulesMap = {
-          "Cricket": [
-            "Each team must have 11 players on the field",
-            "Matches will follow standard ICC cricket rules",
-            "Each team gets 2 innings (Test) or 1 innings (Limited Overs)",
-            "DRS (Decision Review System) will be available",
-            "No-ball and wide rules apply as per ICC guidelines"
-          ],
-          "Football": [
-            "Each team must have 11 players on the field",
-            "Matches follow FIFA standard rules",
-            "90 minutes of play (45 minutes each half)",
-            "Extra time and penalties in knockout stages",
-            "Yellow and red card rules apply"
-          ],
-          "Basketball": [
-            "Each team must have 5 players on the court",
-            "Four quarters of 10 minutes each (FIBA rules)",
-            "24-second shot clock applies",
-            "6 team fouls per quarter allowed",
-            "Overtime periods of 5 minutes if scores are tied"
-          ],
-          "Volleyball": [
-            "Each team must have 6 players on the court",
-            "Best of 5 sets format (first to 3 sets wins)",
-            "First 4 sets played to 25 points, 5th set to 15 points",
-            "Teams must win by 2 points",
-            "Maximum 3 hits per side allowed"
-          ],
-          "Kabaddi": [
-            "Each team must have 7 players on the mat",
-            "Matches consist of two halves of 20 minutes each",
-            "Raiders must chant 'Kabaddi' continuously",
-            "Pro Kabaddi League rules apply",
-            "Super tackles and bonus points applicable"
-          ],
-          "Hockey": [
-            "Each team must have 11 players on the field",
-            "Four quarters of 15 minutes each",
-            "Penalty corners and penalty strokes as per FIH rules",
-            "Unlimited substitutions allowed",
-            "Video umpire available for goal decisions"
-          ],
-          "Tennis": [
-            "Singles or doubles format",
-            "Best of 3 or 5 sets format",
-            "Tiebreakers at 6-6 in each set",
-            "Lets and faults as per ITF rules",
-            "Hawkeye technology available for line calls"
-          ],
-          "Badminton": [
-            "Singles or doubles format",
-            "Best of 3 games to 21 points",
-            "Rally point system (point on every serve)",
-            "Service rules as per BWF regulations",
-            "2-point lead required to win a game"
-          ],
-          "Table Tennis": [
-            "Singles or doubles format",
-            "Best of 5 or 7 games to 11 points",
-            "Service alternates every 2 points",
-            "Let serves do not count",
-            "2-point lead required to win a game"
-          ],
-          "Chess": [
-            "FIDE standard rules apply",
-            "Time control as specified by organizer",
-            "Touch-move rule applies",
-            "Draw offers allowed",
-            "Arbiter decisions are final"
-          ]
-        };
-        
-        const rules = sportRulesMap[sport.name] || [
-          "All participants must follow tournament guidelines",
-          "Punctuality is mandatory for all matches",
-          "Fair play and sportsmanship expected",
-          "Organizer decisions are final"
-        ];
-
-        const tournamentData = {
-          name: `${sport.name} ${tournamentType} ${new Date().getFullYear()} - ${city}`,
-          sport: sport._id,
-          organizer: organizer._id,
-          format,
-          description: isTeamBased 
-            ? `Prestigious ${sport.name} team tournament featuring the best teams from the region`
-            : `Individual ${sport.name} tournament featuring talented players from the region`,
-          teamLimit: isTeamBased ? (Math.floor(Math.random() * 8) + 8) : Math.floor(Math.random() * 16) + 16,
-          playersPerTeam,
-          rules,
-          registrationType,
-          gender: tournamentGender,
-          registrationStart,
-          registrationEnd,
-          startDate,
-          endDate,
-          entryFee: Math.floor(Math.random() * 50) * 1000,
-          prizePool: `${Math.floor(Math.random() * 50) * 10000}`,
-          ground: {
-            name: `${city} Sports Complex`,
-            city: city,
-            address: `${city} Main Road, ${city}, Gujarat`
-          },
-          bannerUrl: `https://images.unsplash.com/photo-${['1517649763962-0c623066013b', '1461896836934-ffe607ba8211', '1519861155730-972f87d2b8f1', '1574629810360-7efbbe195018', '1546608235-3a3099921008'][Math.floor(Math.random() * 5)]}?w=1200&h=400&fit=crop`,
-          isActive: true,
-          registeredTeams: [],
-          approvedTeams: [],
-          registeredPlayers: [],
-          approvedPlayers: []
-        };
-        
-        tournamentPromises.push(tournamentData);
-        tournamentStatusMap.set(tournamentData.name, { status, isTeamBased, sport });
-      }
-    }
-
-    const tournaments = await Tournament.create(tournamentPromises);
-    console.log(`✅ Created ${tournaments.length} tournaments`);
-
-    // ========== REGISTER AND APPROVE TEAMS IN TOURNAMENTS ==========
-    console.log(`\n📋 Tournament Registration Details:`);
-    for (let i = 0; i < tournaments.length; i++) {
-      const tournament = tournaments[i];
-      const tournamentInfo = tournamentStatusMap.get(tournament.name);
-      
-      // Only register teams if tournament is team-based
-      if (tournamentInfo && tournamentInfo.isTeamBased) {
-        const relatedTeams = teams.filter(t => t.sport.toString() === tournament.sport.toString());
-        
-        if (relatedTeams.length > 0) {
-          // Register 40-60% of related teams (no qualifying filter)
-          const numTeamsToRegister = Math.ceil(relatedTeams.length * (0.4 + Math.random() * 0.2));
-          const registeredTeams = relatedTeams.slice(0, numTeamsToRegister);
-          
-          // For Live and Completed tournaments, approve all registered teams
-          const approvedTeams = (tournamentInfo.status === "Live" || tournamentInfo.status === "Completed") 
-            ? registeredTeams 
-            : registeredTeams.slice(0, Math.ceil(registeredTeams.length * 0.5)); // For Upcoming, approve 50%
-          
-          // Update tournament with registered and approved teams
-          await Tournament.findByIdAndUpdate(tournament._id, {
-            registeredTeams: registeredTeams.map(t => t._id),
-            approvedTeams: approvedTeams.map(t => t._id),
-            status: tournamentInfo.status
-          });
-          
-          console.log(`   📍 ${tournament.name}`);
-          console.log(`      - Status: ${tournamentInfo.status}`);
-          console.log(`      - Players Required/Team: ${tournament.playersPerTeam}`);
-          console.log(`      - Total Teams for Sport: ${relatedTeams.length}`);
-          console.log(`      - Registered Teams: ${registeredTeams.length}`);
-          console.log(`      - Approved Teams: ${approvedTeams.length}`);
-        }
-      }
-      
-      // Register and approve players for individual player tournaments
-      if (tournamentInfo && !tournamentInfo.isTeamBased) {
-        const relatedPlayers = players.filter(p => 
-          p.sports.some(s => s.sport.toString() === tournament.sport.toString())
-        );
-        
-        if (relatedPlayers.length > 0) {
-          // Register 40-60% of related players
-          const numPlayersToRegister = Math.floor(relatedPlayers.length * (0.4 + Math.random() * 0.2));
-          const registeredPlayers = relatedPlayers.slice(0, numPlayersToRegister);
-          
-          // For Live and Completed tournaments, approve all registered players
-          const approvedPlayers = (tournamentInfo.status === "Live" || tournamentInfo.status === "Completed") 
-            ? registeredPlayers 
-            : registeredPlayers.slice(0, Math.ceil(registeredPlayers.length * 0.5)); // For Upcoming, approve 50%
-          
-          // Update tournament with registered and approved players
-          await Tournament.findByIdAndUpdate(tournament._id, {
-            registeredPlayers: registeredPlayers.map(p => p._id),
-            approvedPlayers: approvedPlayers.map(p => p._id),
-            status: tournamentInfo.status
-          });
-          
-          console.log(`   📍 ${tournament.name}`);
-          console.log(`      - Status: ${tournamentInfo.status}`);
-          console.log(`      - Total Players for Sport: ${relatedPlayers.length}`);
-          console.log(`      - Registered Players: ${registeredPlayers.length}`);
-          console.log(`      - Approved Players: ${approvedPlayers.length}`);
-        }
-      }
-    }
-    console.log(`✅ Registered and approved teams/players in tournaments`);
-
-    // Reload tournaments to get updated registrations/approvals for match creation
-    const refreshedTournaments = await Tournament.find({}).lean();
-
-    // ========== SEED MATCHES (Only for Live/Completed tournaments with approved teams) ==========
-    const matchPromises = [];
+    const startDate = new Date(now);
+    startDate.setDate(startDate.getDate() + template.daysUntilStart);
     
-    for (let i = 0; i < refreshedTournaments.length; i++) {
-      const tournament = refreshedTournaments[i];
-      const tournamentInfo = tournamentStatusMap.get(tournament.name);
-      
-      // Only create matches for Live and Completed tournaments
-      if (tournamentInfo && (tournamentInfo.status === "Live" || tournamentInfo.status === "Completed")) {
-        let matchTeams = [];
-        
-        if (tournamentInfo.isTeamBased) {
-          // Create matches between approved teams
-          matchTeams = teams.filter(t => 
-            tournament.approvedTeams.some(at => at.toString() === t._id.toString())
-          );
-        }
-        
-        // Only create matches if there are enough approved teams (at least 2)
-        if (matchTeams.length >= 2) {
-          const numMatches = Math.floor(Math.random() * 6) + 3; // 3-8 matches
-          
-          for (let m = 0; m < numMatches; m++) {
-            const team1Index = Math.floor(Math.random() * matchTeams.length);
-            let team2Index = Math.floor(Math.random() * matchTeams.length);
-            while (team2Index === team1Index && matchTeams.length > 1) {
-              team2Index = Math.floor(Math.random() * matchTeams.length);
-            }
-            
-            const matchDate = new Date(tournament.startDate.getTime() + Math.random() * (tournament.endDate.getTime() - tournament.startDate.getTime()));
-            const matchStatus = matchDate < now ? (Math.random() > 0.3 ? "Completed" : "Live") : "Scheduled";
-
-            matchPromises.push({
-              tournament: tournament._id,
-              sport: tournament.sport,
-              teamA: matchTeams[team1Index]._id,
-              teamB: matchTeams[team2Index]._id,
-              scheduledAt: matchDate,
-              ground: tournament.ground,
-              status: matchStatus
-            });
-          }
-        }
-      }
-    }
-
-    if (matchPromises.length > 0) {
-      await Match.create(matchPromises);
-      console.log(`✅ Created ${matchPromises.length} matches (fixtures)`);
-    }
-
-    // ========== SEED PAYMENTS ==========
-    const paymentPromises = [];
-    const paymentStatuses = ["Success", "Pending", "Failed", "Refunded"];
-    const paymentProviders = ["Razorpay", "PayPal", "Stripe", "Google Pay"];
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 15);
     
-    // Team payments
-    for (let i = 0; i < Math.min(15, tournaments.length); i++) {
-      const randomTournament = tournaments[Math.floor(Math.random() * tournaments.length)];
-      const randomTeam = teams.filter(t => t.sport.toString() === randomTournament.sport.toString())[0];
-      const randomOrganizer = organizers[Math.floor(Math.random() * organizers.length)];
-      
-      if (randomTeam) {
-        paymentPromises.push({
-          tournament: randomTournament._id,
-          team: randomTeam._id,
-          payerType: "Team",
-          organizer: randomOrganizer._id,
-          amount: Math.floor(Math.random() * 40) * 1000 + 10000,
-          currency: "INR",
-          status: getRandomElement(paymentStatuses),
-          provider: getRandomElement(paymentProviders),
-          providerPaymentId: "pay_" + Math.random().toString(36).substr(2, 12)
-        });
-      }
-    }
+    const regStart = new Date(startDate);
+    regStart.setDate(regStart.getDate() - 30);
     
-    // Player payments
-    for (let i = 0; i < Math.min(10, tournaments.length); i++) {
-      const randomTournament = tournaments[Math.floor(Math.random() * tournaments.length)];
-      const randomPlayer = players[Math.floor(Math.random() * players.length)];
-      const randomOrganizer = organizers[Math.floor(Math.random() * organizers.length)];
-      
-      paymentPromises.push({
-        tournament: randomTournament._id,
-        player: randomPlayer._id,
-        payerType: "Player",
-        organizer: randomOrganizer._id,
-        amount: Math.floor(Math.random() * 10) * 1000 + 1000,
-        currency: "INR",
-        status: getRandomElement(paymentStatuses),
-        provider: getRandomElement(paymentProviders),
-        providerPaymentId: "pay_" + Math.random().toString(36).substr(2, 12)
-      });
-    }
-    
-    const payments = await Payment.create(paymentPromises);
-    console.log(`✅ Created ${payments.length} payments`);
+    const regEnd = new Date(startDate);
+    regEnd.setDate(regEnd.getDate() - 7);
 
-    // ========== SEED FEEDBACK ==========
-    const feedbacks = await Feedback.create([
-      {
-        user: players[0]._id,
-        rating: 5,
-        comment: "Amazing platform! Makes organizing and joining tournaments so easy."
+    // Get teams for this sport
+    const sportTeams = teams.filter(t => t.sport.toString() === sports[template.sport]._id.toString());
+    const registeredTeams = sportTeams.slice(0, Math.min(template.teamLimit, sportTeams.length));
+    const approvedTeams = registeredTeams.slice(0, Math.floor(registeredTeams.length * 0.8));
+
+    const tournament = await Tournament.create({
+      name: template.name,
+      sport: sports[template.sport]._id,
+      organizer: organizer._id,
+      format: template.format,
+      registrationType: template.registrationType,
+      teamLimit: template.teamLimit,
+      playersPerTeam: 11,
+      description: `${template.format} style ${sports[template.sport].name} tournament featuring top Gujarat teams`,
+      registrationStart: regStart,
+      registrationEnd: regEnd,
+      startDate: startDate,
+      endDate: endDate,
+      entryFee: template.entryFee,
+      prizePool: template.prizePool,
+      ground: {
+        name: `${template.name.split(' ')[0]} Stadium`,
+        city: organizer.city,
+        address: `SG Highway, ${organizer.city}, Gujarat`,
       },
-      {
-        user: managers[0]._id,
-        rating: 5,
-        comment: "As a team manager, this platform has been a game-changer!"
-      },
-      {
-        user: organizers[0]._id,
-        rating: 5,
-        comment: "SportsHub has revolutionized how we organize tournaments."
-      }
-    ]);
-    console.log(`✅ Created ${feedbacks.length} feedback entries`);
+      rules: [
+        'All participants must arrive 30 minutes before match time',
+        'Proper sports attire is mandatory',
+        'Teams must have minimum required players',
+        'Follow referee decisions',
+        'Maintain sportsmanship at all times',
+      ],
+      registeredTeams: registeredTeams.map(t => t._id),
+      approvedTeams: approvedTeams.map(t => t._id),
+      platformFee: 500,
+      platformFeePaid: i % 3 !== 0, // 2/3 tournaments have paid platform fee
+      isPublished: i % 3 !== 0,
+    });
 
-    // ========== SEED REQUESTS ==========
-    const requestPromises = [];
+    tournaments.push(tournament);
+  }
+
+  console.log(`✅ Seeded ${tournaments.length} tournaments`);
+  return tournaments;
+}
+
+async function seedMatches(tournaments, sports) {
+  console.log('⚡ Seeding matches...');
+  
+  const matches = [];
+  
+  // Create matches for tournaments with approved teams
+  for (let i = 0; i < tournaments.length; i++) {
+    const tournament = tournaments[i];
     
-    // Specific requests for Arjun Patel organizer (first organizer - arjunpatel0@gmail.com)
-    // Authorization request to admin
-    requestPromises.push({
-      requestType: "ORGANIZER_AUTHORIZATION",
-      sender: organizers[0]._id,
-      receiver: admin._id,
-      status: "PENDING",
-      message: `Authorization request for organizing tournaments from ${organizers[0].fullName}`
+    if (tournament.approvedTeams.length < 2) continue;
+    
+    const numMatches = Math.min(10, Math.floor(tournament.approvedTeams.length / 2) * 3);
+    
+    for (let j = 0; j < numMatches; j++) {
+      const teamAIndex = j % tournament.approvedTeams.length;
+      const teamBIndex = (j + 1) % tournament.approvedTeams.length;
+      
+      if (teamAIndex === teamBIndex) continue;
+      
+      const matchDate = new Date(tournament.startDate);
+      matchDate.setDate(matchDate.getDate() + j);
+      
+      const match = await Match.create({
+        tournament: tournament._id,
+        sport: tournament.sport,
+        teamA: tournament.approvedTeams[teamAIndex],
+        teamB: tournament.approvedTeams[teamBIndex],
+        scheduledAt: matchDate,
+        ground: {
+          name: tournament.ground.name,
+          city: tournament.ground.city,
+          address: tournament.ground.address,
+        },
+      });
+      
+      matches.push(match);
+    }
+  }
+
+  console.log(`✅ Seeded ${matches.length} matches`);
+  return matches;
+}
+
+async function seedPayments(tournaments, player, manager, organizer) {
+  console.log('💳 Seeding payments...');
+  
+  const payments = [];
+  
+  // Player payments for tournament registrations
+  for (let i = 0; i < Math.min(10, tournaments.length); i++) {
+    const tournament = tournaments[i];
+    
+    const payment = await Payment.create({
+      player: player._id,
+      payerType: 'Player',
+      tournament: tournament._id,
+      organizer: tournament.organizer,
+      amount: tournament.entryFee,
+      status: i % 5 === 0 ? 'Pending' : 'Success',
+      provider: 'razorpay',
+      providerPaymentId: `razorpay_${Date.now()}${i}`,
     });
     
-    // Specific requests for Arjun Patel player (first player - arjunpatel200@gmail.com)
-    // Player to Team requests (sent by Arjun the player)
-    if (teams.length > 0) {
-      requestPromises.push({
-        requestType: "PLAYER_TO_TEAM",
-        sender: players[0]._id,
-        receiver: managers[0]._id,
-        team: teams[0]._id,
-        status: "PENDING",
-        message: `I'm interested in joining your team - ${players[0].fullName}`
-      });
-      
-      if (teams.length > 1) {
-        requestPromises.push({
-          requestType: "PLAYER_TO_TEAM",
-          sender: players[0]._id,
-          receiver: managers[1]._id,
-          team: teams[1]._id,
-          status: "ACCEPTED",
-          message: `I would like to be part of your team - ${players[0].fullName}`
-        });
-      }
-    }
-    
-    // Team to Player requests (received by Arjun the player)
-    if (teams.length > 2) {
-      requestPromises.push({
-        requestType: "TEAM_TO_PLAYER",
-        sender: managers[2]._id,
-        receiver: players[0]._id,
-        team: teams[2]._id,
-        status: "PENDING",
-        message: `We'd like to invite you to join our team!`
-      });
-    }
-    
-    // Player to Team requests
-    for (let i = 1; i < Math.min(15, players.length); i++) {
-      const randomPlayer = players[i];
-      const randomManager = managers[Math.floor(Math.random() * managers.length)];
-      const randomTeam = teams.filter(t => t.manager.toString() === randomManager._id.toString())[0];
-      
-      if (randomTeam) {
-        requestPromises.push({
-          requestType: "PLAYER_TO_TEAM",
-          sender: randomPlayer._id,
-          receiver: randomManager._id,
-          team: randomTeam._id,
-          status: getRandomElement(["PENDING", "ACCEPTED", "REJECTED"]),
-          message: `I'm interested in joining your team as a ${randomTeam.name}`
-        });
-      }
-    }
-    
-    // Team to Player requests
-    for (let i = 0; i < Math.min(10, managers.length); i++) {
-      const randomManager = managers[i];
-      const randomPlayer = players[Math.floor(Math.random() * players.length)];
-      const randomTeam = teams.filter(t => t.manager.toString() === randomManager._id.toString())[0];
-      
-      if (randomTeam) {
-        requestPromises.push({
-          requestType: "TEAM_TO_PLAYER",
-          sender: randomManager._id,
-          receiver: randomPlayer._id,
-          team: randomTeam._id,
-          status: getRandomElement(["PENDING", "ACCEPTED", "REJECTED"]),
-          message: `We'd like to invite you to join our team!`
-        });
-      }
-    }
-    
-    // Tournament Booking requests
-    for (let i = 0; i < Math.min(8, tournaments.length); i++) {
-      const randomTournament = tournaments[i];
-      const randomTeam = teams.filter(t => t.sport.toString() === randomTournament.sport.toString())[0];
-      const randomManager = managers.find(m => m._id.toString() === randomTeam?.manager.toString());
-      
-      if (randomManager && randomTeam) {
-        requestPromises.push({
-          requestType: "TOURNAMENT_BOOKING",
-          sender: randomManager._id,
-          receiver: organizers[Math.floor(Math.random() * organizers.length)]._id,
-          tournament: randomTournament._id,
-          bookingEntity: randomTeam._id,
-          status: getRandomElement(["PENDING", "ACCEPTED", "REJECTED"]),
-          message: `Team booking request for ${randomTournament.name}`
-        });
-      }
-    }
-    
-    // Organizer Authorization requests (skip first organizer as we already added specific request)
-    for (let i = 1; i < 5 && i < organizers.length; i++) {
-      const randomOrganizer = organizers[i];
-      requestPromises.push({
-        requestType: "ORGANIZER_AUTHORIZATION",
-        sender: randomOrganizer._id,
-        receiver: admin._id,
-        status: getRandomElement(["PENDING", "ACCEPTED", "REJECTED"]),
-        message: `Authorization request for organizing tournaments`
-      });
-    }
-    
-    const requests = await Request.create(requestPromises);
-    console.log(`✅ Created ${requests.length} requests`);
+    payments.push(payment);
+  }
 
-    // ========== SEED BOOKINGS ==========
-    const bookingPromises = [];
-    const bookingStatuses = ["Pending", "Confirmed", "Cancelled"];
-    const bookingPaymentStatuses = ["Pending", "Success", "Failed"];
+  // Team payments (manager)
+  for (let i = 0; i < Math.min(10, tournaments.length); i++) {
+    const tournament = tournaments[i];
     
-    // Specific bookings for Arjun Patel player (first player - arjunpatel200@gmail.com)
-    if (tournaments.length > 0) {
-      bookingPromises.push({
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: players[0]._id,
-        tournament: tournaments[0]._id,
-        player: players[0]._id,
-        registrationType: "Player",
-        amount: tournaments[0].entryFee || 2000,
-        status: "Confirmed",
-        paymentStatus: "Success"
-      });
-      
-      if (tournaments.length > 1) {
-        bookingPromises.push({
-          bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-          user: players[0]._id,
-          tournament: tournaments[1]._id,
-          player: players[0]._id,
-          registrationType: "Player",
-          amount: tournaments[1].entryFee || 1500,
-          status: "Pending",
-          paymentStatus: "Pending"
-        });
-      }
-    }
+    if (tournament.registeredTeams.length === 0) continue;
     
-    // Team bookings
-    for (let i = 0; i < Math.min(15, teams.length); i++) {
-      const randomTeam = teams[i];
-      const relatedTournaments = tournaments.filter(t => t.sport.toString() === randomTeam.sport.toString());
-      
-      if (relatedTournaments.length > 0) {
-        const randomTournament = relatedTournaments[Math.floor(Math.random() * relatedTournaments.length)];
-        const manager = managers.find(m => m._id.toString() === randomTeam.manager.toString());
-        
-        if (manager) {
-          bookingPromises.push({
-            bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-            user: manager._id,
-            tournament: randomTournament._id,
-            team: randomTeam._id,
-            registrationType: "Team",
-            amount: randomTournament.entryFee || 50000,
-            status: getRandomElement(bookingStatuses),
-            paymentStatus: getRandomElement(bookingPaymentStatuses)
-          });
-        }
-      }
-    }
+    const payment = await Payment.create({
+      team: tournament.registeredTeams[0],
+      payerType: 'Team',
+      tournament: tournament._id,
+      organizer: tournament.organizer,
+      amount: tournament.entryFee,
+      status: i % 4 === 0 ? 'Pending' : 'Success',
+      provider: 'razorpay',
+      providerPaymentId: `razorpay_${Date.now()}${i + 100}`,
+    });
     
-    // Player bookings (skip first player as we already added specific bookings)
-    for (let i = 1; i < Math.min(15, players.length); i++) {
-      const randomPlayer = players[i];
-      const randomTournament = tournaments[Math.floor(Math.random() * tournaments.length)];
-      
-      bookingPromises.push({
-        bookingId: "BOOK_" + Math.random().toString(36).substr(2, 9).toUpperCase(),
-        user: randomPlayer._id,
-        tournament: randomTournament._id,
-        player: randomPlayer._id,
-        registrationType: "Player",
-        amount: Math.floor(Math.random() * 5) * 1000 + 500,
-        status: getRandomElement(bookingStatuses),
-        paymentStatus: getRandomElement(bookingPaymentStatuses)
-      });
-    }
-    
-    const bookings = await Booking.create(bookingPromises);
-    console.log(`✅ Created ${bookings.length} bookings`);
+    payments.push(payment);
+  }
 
-    // ========== FINAL SUMMARY & CREDENTIALS ==========
-    console.log('\n🎉 DATABASE SEEDING COMPLETED SUCCESSFULLY!\n');
-    console.log('═══════════════════════════════════════════════════════════════');
-    console.log('📋 LOGIN CREDENTIALS FOR TESTING');
-    console.log('═══════════════════════════════════════════════════════════════\n');
+  console.log(`✅ Seeded ${payments.length} payments`);
+  return payments;
+}
 
-    // Sample Player
-    console.log('👤 SAMPLE PLAYER:');
-    console.log(`   Email: ${players[0].email}`);
-    console.log(`   Password: Password123!`);
-    console.log(`   Sports: ${players[0].sports.map(s => {
-      const sportName = createdSports.find(sp => sp._id.toString() === s.sport.toString())?.name;
-      return `${sportName} (${s.role})`;
-    }).join(', ')}`);
-    console.log(`   City: ${players[0].city}\n`);
-
-    // Sample Organizer
-    console.log('🏢 SAMPLE ORGANIZER:');
-    console.log(`   Email: ${organizers[0].email}`);
-    console.log(`   Password: Password123!`);
-    console.log(`   Organization: ${organizers[0].orgName}`);
-    console.log(`   City: ${organizers[0].city}\n`);
-
-    // Sample Team Manager
-    console.log('👔 SAMPLE TEAM MANAGER:');
-    console.log(`   Email: ${managers[0].email}`);
-    console.log(`   Password: Password123!`);
-    console.log(`   City: ${managers[0].city}`);
-    console.log(`   Teams Managed: ${teams.filter(t => t.manager.toString() === managers[0]._id.toString()).length}\n`);
-
-    console.log('═══════════════════════════════════════════════════════════════\n');
+async function seedRequests(player, manager, teams, tournaments) {
+  console.log('📋 Seeding requests...');
+  
+  const requests = [];
+  
+  // Player join team requests
+  for (let i = 0; i < Math.min(10, teams.length); i++) {
+    const team = teams[i];
     
-    console.log('📊 COMPLETE SUMMARY:');
-    console.log(`   ✅ Sports: ${createdSports.length}`);
-    console.log(`   ✅ Admin: 1`);
-    console.log(`   ✅ Tournament Organizers: ${organizers.length}`);
-    console.log(`   ✅ Team Managers: ${managers.length}`);
-    console.log(`   ✅ Players: ${players.length}`);
-    console.log(`   ✅ Teams: ${teams.length}`);
-    console.log(`   ✅ Tournaments: ${tournaments.length}`);
-    console.log(`   ✅ Matches: ${matchPromises.length}`);
-    console.log(`   ✅ Payments: ${payments.length}`);
-    console.log(`   ✅ Requests: ${requests.length}`);
-    console.log(`   ✅ Bookings: ${bookings.length}`);
-    console.log(`   ✅ Feedback: ${feedbacks.length}\n`);
+    const request = await Request.create({
+      requestType: 'PLAYER_TO_TEAM',
+      sender: player._id,
+      receiver: manager._id,
+      team: team._id,
+      status: i % 3 === 0 ? 'PENDING' : (i % 3 === 1 ? 'ACCEPTED' : 'REJECTED'),
+    });
     
-    console.log('═══════════════════════════════════════════════════════════════\n');
+    requests.push(request);
+  }
+
+  // Team invite player requests
+  for (let i = 0; i < Math.min(10, teams.length); i++) {
+    const team = teams[i];
+    
+    const request = await Request.create({
+      requestType: 'TEAM_TO_PLAYER',
+      sender: manager._id,
+      receiver: player._id,
+      team: team._id,
+      status: i % 3 === 0 ? 'PENDING' : (i % 3 === 1 ? 'ACCEPTED' : 'REJECTED'),
+    });
+    
+    requests.push(request);
+  }
+
+  console.log(`✅ Seeded ${requests.length} requests`);
+  return requests;
+}
+
+async function seedBookings(tournaments, organizer) {
+  console.log('📅 Seeding bookings...');
+  
+  const bookings = [];
+  
+  for (let i = 0; i < Math.min(10, tournaments.length); i++) {
+    const tournament = tournaments[i];
+    
+    // Skip if no registered teams
+    if (tournament.registeredTeams.length === 0) continue;
+    
+    const booking = await Booking.create({
+      bookingId: `BK${Date.now()}${i}`,
+      user: organizer._id,
+      tournament: tournament._id,
+      team: tournament.registeredTeams[0],
+      registrationType: 'Team',
+      amount: tournament.entryFee,
+      status: i % 4 === 0 ? 'Pending' : (i % 4 === 1 ? 'Confirmed' : 'Cancelled'),
+    });
+    
+    bookings.push(booking);
+  }
+
+  console.log(`✅ Seeded ${bookings.length} bookings`);
+  return bookings;
+}
+
+async function seedOrganizerRequests(organizer, admin) {
+  console.log('🔐 Seeding organizer authorization requests...');
+  
+  const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+  const requests = [];
+  
+  const gujaratCities = ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Gandhinagar', 'Bhavnagar', 
+                         'Jamnagar', 'Junagadh', 'Anand', 'Nadiad', 'Morbi', 'Mehsana'];
+  
+  // Create 10+ pending organizer authorization requests
+  for (let i = 0; i < 12; i++) {
+    const pendingOrganizer = await TournamentOrganizer.create({
+      fullName: `${['Rajesh', 'Vikas', 'Mahesh', 'Suresh', 'Ramesh', 'Dinesh', 'Nilesh', 'Hitesh', 'Prakash', 'Jayesh', 'Deepak', 'Ashok'][i]} ${['Patel', 'Shah', 'Desai', 'Modi', 'Joshi', 'Mehta', 'Trivedi', 'Pandya', 'Amin', 'Vora', 'Raval', 'Thakkar'][i]}`,
+      email: `organizer${i + 2}@gujarat.com`,
+      password: DEFAULT_PASSWORD,
+      role: 'TournamentOrganizer',
+      phone: `+91-${String(98750 + i).padStart(5, '9')}-${String(30000 + i * 100).padStart(5, '0')}`,
+      city: gujaratCities[i],
+      isVerified: true,
+      isActive: true,
+      orgName: `${gujaratCities[i]} Sports Association`,
+      isVerifiedOrganizer: false,
+      isAuthorized: false,
+      authorizationRequestDate: new Date(),
+    });
+    
+    requests.push(pendingOrganizer);
+  }
+
+  console.log(`✅ Seeded ${requests.length} organizer authorization requests`);
+  return requests;
+}
+
+async function seedWebsiteSettings() {
+  console.log('⚙️ Seeding website settings...');
+  
+  await WebsiteSettings.create({
+    platformFee: 500,
+    maintenanceMode: false,
+  });
+
+  console.log('✅ Seeded website settings');
+}
+
+async function seed() {
+  try {
+    await connectDB();
+    await clearDatabase();
+
+    // Seed in order due to dependencies
+    const sports = await seedSports();
+    const admin = await seedAdmin();
+    const player = await seedPlayer(sports);
+    const manager = await seedManager(sports);
+    const organizer = await seedOrganizer();
+    const additionalPlayers = await seedAdditionalPlayers(sports);
+    const teams = await seedTeams(manager, player, additionalPlayers, sports);
+    const tournaments = await seedTournaments(organizer, teams, sports);
+    const matches = await seedMatches(tournaments, sports);
+    const payments = await seedPayments(tournaments, player, manager, organizer);
+    const requests = await seedRequests(player, manager, teams, tournaments);
+    const bookings = await seedBookings(tournaments, organizer);
+    const authRequests = await seedOrganizerRequests(organizer, admin);
+    await seedWebsiteSettings();
+
+    console.log('\n🎉 Database seeded successfully!');
+    console.log('\n📊 Summary:');
+    console.log(`- Sports: ${sports.length}`);
+    console.log(`- Users: 1 admin, 1 player, 1 manager, 1 organizer, ${additionalPlayers.length} additional players, ${authRequests.length} pending organizers`);
+    console.log(`- Teams: ${teams.length}`);
+    console.log(`- Tournaments: ${tournaments.length}`);
+    console.log(`- Matches: ${matches.length}`);
+    console.log(`- Payments: ${payments.length}`);
+    console.log(`- Requests: ${requests.length}`);
+    console.log(`- Bookings: ${bookings.length}`);
+    
+    console.log('\n🔑 Test Credentials:');
+    console.log('Admin: admin@gmail.com / Password123!');
+    console.log('Player: rajnasit@gmail.com / Password123!');
+    console.log('Manager: krishsanghani@gmail.com / Password123!');
+    console.log('Organizer: udayodedara@gujaratsportsfederation.com / Password123!');
+    
+    console.log('\n📍 All data is for Gujarat, India');
+    console.log('Cities: Ahmedabad, Surat, Vadodara, Rajkot, Gandhinagar, and more Gujarat cities');
 
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error seeding database:', error);
+    console.error('❌ Seeding error:', error);
     process.exit(1);
   }
-};
+}
 
-seedDatabase();
+seed();

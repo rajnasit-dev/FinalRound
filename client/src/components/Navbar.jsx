@@ -135,20 +135,27 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
                     <div className="absolute right-0 mt-2 w-48 bg-card-background dark:bg-card-background-dark rounded-lg shadow-lg border border-base-dark dark:border-base overflow-hidden z-50">
                       <button
                         onClick={() => {
-                          // Map role to URL path
+                          // Map role to URL path - show dashboard for admin, profile for others
                           const roleMap = {
+                            Admin: "admin",
                             Player: "player",
                             TeamManager: "manager",
                             TournamentOrganizer: "organizer",
                           };
                           const rolePath = roleMap[user?.role] || user?.role.toLowerCase();
-                          navigate(`/${rolePath}/profile`);
+                          
+                          // Navigate to dashboard for admin, profile for others
+                          if (user?.role === "Admin") {
+                            navigate(`/${rolePath}/dashboard`);
+                          } else {
+                            navigate(`/${rolePath}/profile`);
+                          }
                           setShowDropdown(false);
                         }}
                         className="w-full px-4 py-3 text-left hover:bg-primary dark:hover:bg-primary-dark transition-colors flex items-center gap-2"
                       >
                         <User size={16} />
-                        <span>My Profile</span>
+                        <span>{user?.role === "Admin" ? "Dashboard" : "My Profile"}</span>
                       </button>
                       <LogoutBtn />
                     </div>

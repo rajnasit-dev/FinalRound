@@ -5,6 +5,12 @@ import fs from "fs";
 if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
   console.warn("⚠️  WARNING: Cloudinary credentials not configured in .env file!");
   console.warn("Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET");
+} else {
+  console.log("✅ Cloudinary configured:", {
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY ? "***" + process.env.CLOUDINARY_API_KEY.slice(-4) : "NOT SET",
+    api_secret: process.env.CLOUDINARY_API_SECRET ? "***" + process.env.CLOUDINARY_API_SECRET.slice(-4) : "NOT SET"
+  });
 }
 
 cloudinary.config({
@@ -27,7 +33,7 @@ const uploadOnCloudinary = async (localFilePath) => {
       resource_type: "image",
     });
 
-    console.log("Cloudinary upload successful:", response.url);
+    console.log("✅ Cloudinary upload successful:", response.url);
 
     if (fs.existsSync(localFilePath)) {
       fs.unlinkSync(localFilePath);
@@ -35,7 +41,12 @@ const uploadOnCloudinary = async (localFilePath) => {
 
     return response;
   } catch (error) {
-    console.error("❌ Cloudinary upload error:", error.message);
+    console.error("❌ Cloudinary upload error:", error);
+    console.error("Error details:", {
+      message: error.message,
+      statusCode: error.http_code,
+      error: error.error
+    });
 
     if (fs.existsSync(localFilePath)) {
       fs.unlinkSync(localFilePath);

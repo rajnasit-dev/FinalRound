@@ -25,8 +25,8 @@ const Sidebar = ({ userRole, isMobile = false, onClose }) => {
   const menuLinks = getMenuLinks(userRole);
 
   return (
-    <aside className="sticky top-0 w-72 max-h-200 h-screen flex flex-col p-4 lg:block">
-      <div className="h-full bg-card-background dark:bg-card-background-dark rounded-2xl shadow-lg flex flex-col">
+    <aside className="sticky top-0 w-72 flex flex-col p-4 lg:block">
+      <div className="h-[80vh] mt-8 bg-card-background dark:bg-card-background-dark rounded-2xl shadow-lg flex flex-col">
       
         {/* TOP SECTION - Logo and Menu */}
         <div className="flex-1 flex flex-col p-6">

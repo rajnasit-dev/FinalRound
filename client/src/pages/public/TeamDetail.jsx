@@ -20,7 +20,7 @@ import Spinner from "../../components/ui/Spinner";
 import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
 import DataTable from "../../components/ui/DataTable";
-import { fetchTeamById } from "../../store/slices/teamSlice";
+import { fetchTeamById, clearSelectedTeam } from "../../store/slices/teamSlice";
 import { sendTeamRequest, getSentRequests } from "../../store/slices/requestSlice";
 import defaultTeamCoverImage from "../../assets/defaultTeamCoverImage.png";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
@@ -107,7 +107,7 @@ const TeamDetail = () => {
 
   const isPlayer = user?.role === "Player";
   const isTeamMember = team.players?.some((player) => player._id === user?._id);
-  
+
   // Check if user has already sent a request to this team
   const hasExistingRequest = sentRequests.some(
     (request) => request.team?._id === team._id && request.status === "PENDING"
@@ -157,11 +157,10 @@ const TeamDetail = () => {
       width: "10%",
       render: (player) => (
         <span
-          className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-            player.gender === "Female"
+          className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${player.gender === "Female"
               ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300"
               : "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
-          }`}
+            }`}
         >
           {player.gender}
         </span>
@@ -215,7 +214,7 @@ const TeamDetail = () => {
       <div className="relative h-screen sm:h-112 overflow-hidden">
         <img
           src={team.bannerUrl || defaultTeamCoverImage}
-          alt={team.name}
+          alt={team.name || "Team Banner"}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-linear-to-t from-black via-black/70 to-black/30"></div>
@@ -236,7 +235,7 @@ const TeamDetail = () => {
                   <div className="w-32 h-32 rounded-xl border-4 border-white shadow-2xl bg-white overflow-hidden">
                     <img
                       src={team.logoUrl || defaultTeamAvatar}
-                      alt={team.name}
+                      alt={team.name || "Team Logo"}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -319,19 +318,19 @@ const TeamDetail = () => {
                   Icon={Users}
                   iconColor="text-blue-600"
                   label="Total Players"
-                  value={team.players.length}
+                  value={team.players?.length || 0}
                 />
                 <CardStat
                   Icon={Trophy}
                   iconColor="text-amber-600"
                   label="Sport"
-                  value={team.sport.name}
+                  value={team.sport?.name || "N/A"}
                 />
                 <CardStat
                   Icon={MapPin}
                   iconColor="text-red-600"
                   label="Location"
-                  value={team.city}
+                  value={team.city || "N/A"}
                 />
                 <CardStat
                   Icon={Users2}
@@ -385,39 +384,56 @@ const TeamDetail = () => {
                 <User className="w-5 h-5 text-blue-600" />
                 Team Manager
               </h3>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-16 h-16 rounded-xl overflow-hidden bg-linear-to-br from-blue-500 to-purple-600 shrink-0">
-                  <img
-                    src={team.manager.avatar || defaultTeamManagerAvatar}
-                    alt={team.manager.fullName}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold truncate">
-                    {team.manager.fullName}
-                  </h4>
+              {team.manager ? (
+                <>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-linear-to-br from-blue-500 to-purple-600 shrink-0">
+                      <img
+                        src={team.manager.avatar || defaultTeamManagerAvatar}
+                        alt={team.manager.fullName || "Manager"}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold truncate">
+                        {team.manager.fullName || "Team Manager"}
+                      </h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Team Manager
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    {team.manager.email && (
+                      <a
+                        href={`mailto:${team.manager.email}`}
+                        className="flex items-center gap-2 text-sm text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors"
+                      >
+                        <Mail className="w-4 h-4 text-secondary dark:text-secondary-dark shrink-0" />
+                        <span className="truncate">{team.manager.email}</span>
+                      </a>
+                    )}
+                    {team.manager.phone && (
+                      <a
+                        href={`tel:${team.manager.phone}`}
+                        className="flex items-center gap-2 text-sm text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors"
+                      >
+                        <Phone className="w-4 h-4 text-secondary dark:text-secondary-dark shrink-0" />
+                        <span className="font-num">{team.manager.phone}</span>
+                      </a>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-6">
+                  <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 mx-auto mb-3 flex items-center justify-center">
+                    <User className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                  </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Team Manager
+                    No manager assigned
                   </p>
                 </div>
-              </div>
-              <div className="space-y-2 pt-3 border-t border-gray-200 dark:border-gray-700">
-                <a
-                  href={`mailto:${team.manager.email}`}
-                  className="flex items-center gap-2 text-sm text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors"
-                >
-                  <Mail className="w-4 h-4 text-secondary dark:text-secondary-dark shrink-0" />
-                  <span className="truncate">{team.manager.email}</span>
-                </a>
-                <a
-                  href={`tel:${team.manager.phone}`}
-                  className="flex items-center gap-2 text-sm text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors"
-                >
-                  <Phone className="w-4 h-4 text-secondary dark:text-secondary-dark shrink-0" />
-                  <span className="font-num">{team.manager.phone}</span>
-                </a>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -428,17 +444,17 @@ const TeamDetail = () => {
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2 mb-1">
                 <Users className="w-7 h-7 text-blue-600" />
-                Team Members ({team.players.length})
+                Team Members ({team.players?.length || 0})
               </h2>
             </div>
           </div>
 
-          {team.players.length > 0 ? (
+          {team.players && team.players.length > 0 ? (
             <DataTable
               columns={playerColumns}
-              data={team.players}
+              data={team.players || []}
               onRowClick={(player) => navigate(`/players/${player._id}`)}
-              itemsPerPage={team.players.length}
+              itemsPerPage={team.players?.length || 10}
               emptyMessage="No team members yet"
             />
           ) : (

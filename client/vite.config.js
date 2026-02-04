@@ -5,8 +5,12 @@ import tailwindcss from "@tailwindcss/vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  appType: "spa",
   server: {
-    port: 5173, // Change this to your desired port
+    port: 5173,
+    strictPort: false,
+    // Ensure SPA routes (e.g. /teams/:id) serve index.html on direct nav or refresh
+    historyApiFallback: true,
   },
   build: {
     // Optimize build for production

@@ -14,7 +14,7 @@ export const getDashboardStats = createAsyncThunk(
       );
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch dashboard stats");
     }
   }
 );
@@ -30,7 +30,7 @@ export const getPendingOrganizerRequests = createAsyncThunk(
       );
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch pending requests");
     }
   }
 );
@@ -46,7 +46,7 @@ export const getAllOrganizers = createAsyncThunk(
       );
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch organizers");
     }
   }
 );
@@ -153,11 +153,12 @@ export const getAllTeams = createAsyncThunk(
 // Get revenue stats
 export const getRevenue = createAsyncThunk(
   "admin/getRevenue",
-  async ({ startDate, endDate }, { rejectWithValue }) => {
+  async ({ startDate, endDate, type } = {}, { rejectWithValue }) => {
     try {
       const params = new URLSearchParams();
       if (startDate) params.append("startDate", startDate);
       if (endDate) params.append("endDate", endDate);
+      if (type) params.append("type", type);
 
       const response = await axios.get(
         `${API_BASE_URL}/admin/revenue?${params.toString()}`,
@@ -171,7 +172,14 @@ export const getRevenue = createAsyncThunk(
 );
 
 const initialState = {
-  dashboardStats: null,
+  dashboardStats: {
+    users: { total: 0, players: 0, managers: 0, organizers: 0 },
+    tournaments: { total: 0, active: 0 },
+    teams: { total: 0 },
+    revenue: { total: 0, perTournament: 0 },
+    pendingRequests: 0,
+    recentPayments: [],
+  },
   pendingOrganizers: [],
   organizers: [],
   users: [],

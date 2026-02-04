@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 import { fetchTournamentById } from "../../store/slices/tournamentSlice";
 import { fetchPlayerTeams, fetchManagerTeams } from "../../store/slices/teamSlice";
 import { createBooking, updateBookingPaymentStatus, fetchUserBookings } from "../../store/slices/bookingSlice";
@@ -117,7 +118,7 @@ const TournamentRegister = () => {
   const handlePayment = async () => {
     const selectionError = validateSelection();
     if (selectionError) {
-      alert(selectionError);
+      toast.error(selectionError);
       setValidationError(selectionError);
       return;
     }
@@ -141,7 +142,7 @@ const TournamentRegister = () => {
       const bookingResult = await dispatch(createBooking(bookingData));
 
       if (!createBooking.fulfilled.match(bookingResult)) {
-        alert(bookingResult.payload || "Failed to create booking. Please try again.");
+        toast.error(bookingResult.payload || "Failed to create booking. Please try again.");
         setProcessingPayment(false);
         return;
       }
@@ -151,7 +152,7 @@ const TournamentRegister = () => {
       // Step 2: Load Razorpay script
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
-        alert("Failed to load payment gateway. Please try again.");
+        toast.error("Failed to load payment gateway. Please try again.");
         setProcessingPayment(false);
         return;
       }
@@ -224,12 +225,12 @@ const TournamentRegister = () => {
         const paymentObject = new window.Razorpay(options);
         paymentObject.open();
       } else {
-        alert(paymentResult.payload || "Failed to create payment order. Please try again.");
+        toast.error(paymentResult.payload || "Failed to create payment order. Please try again.");
         setProcessingPayment(false);
       }
     } catch (error) {
       console.error("Payment error:", error);
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
       setProcessingPayment(false);
     }
   };

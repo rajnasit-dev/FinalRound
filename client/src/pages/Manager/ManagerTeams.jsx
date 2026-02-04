@@ -37,9 +37,7 @@ const ManagerTeams = () => {
   };
 
   const handleDeleteTeam = async (teamId) => {
-    if (!confirm("Are you sure you want to delete this team? This action cannot be undone and will remove all associated data.")) {
-      return;
-    }
+    if (!window.confirm("Are you sure you want to delete this team? This action cannot be undone and will remove all associated data.")) return;
 
     setDeletingTeamId(teamId);
 

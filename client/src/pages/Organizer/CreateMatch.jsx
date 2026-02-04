@@ -18,7 +18,7 @@ const CreateMatch = () => {
   const { tournaments } = useSelector((state) => state.tournament);
   const { teams } = useSelector((state) => state.team);
   const { loading } = useSelector((state) => state.match);
-  
+
   const [selectedTournament, setSelectedTournament] = useState(null);
   const [participants, setParticipants] = useState([]);
 
@@ -54,16 +54,15 @@ const CreateMatch = () => {
       // Get participants based on tournament type
       if (tournament) {
         if (tournament.registrationType === "Team") {
-          // Filter teams that are approved for this tournament
-          const approvedTeamIds = tournament.approvedTeams || [];
-          const tournamentTeams = teams?.filter((team) =>
-            approvedTeamIds.includes(team._id)
-          ) || [];
+          // Use registeredTeams directly from tournament (already populated)
+          const tournamentTeams = tournament.registeredTeams || [];
+          console.log("Tournament teams:", tournamentTeams);
           setParticipants(tournamentTeams);
         } else if (tournament.registrationType === "Player") {
-          // Use approved players from tournament
-          const approvedPlayers = tournament.approvedPlayers || [];
-          setParticipants(approvedPlayers);
+          // Use registered players from tournament
+          const registeredPlayers = tournament.registeredPlayers || [];
+          console.log("Tournament players:", registeredPlayers);
+          setParticipants(registeredPlayers);
         }
       }
     } else {
@@ -76,6 +75,7 @@ const CreateMatch = () => {
     try {
       const matchData = {
         tournament: data.tournament,
+        sport: selectedTournament?.sport?._id || selectedTournament?.sport,
         scheduledAt: data.scheduledAt,
         ground: {
           name: data.groundName || "",
@@ -116,7 +116,9 @@ const CreateMatch = () => {
     { value: "", label: `Select ${selectedTournament?.registrationType === "Team" ? "Team" : "Player"}` },
     ...(participants?.map((participant) => ({
       value: participant._id,
-      label: participant.name || `${participant.firstName} ${participant.lastName}`,
+      label: selectedTournament?.registrationType === "Team" 
+        ? (participant.name || "Unknown Team")
+        : (participant.fullName || participant.name || "Unknown Player"),
     })) || []),
   ];
 
@@ -170,6 +172,13 @@ const CreateMatch = () => {
                   options={participantOptions}
                   {...register("participantB", {
                     required: `${selectedTournament.registrationType === "Team" ? "Team B" : "Player B"} is required`,
+                    validate: (value) => {
+                      const participantA = watch("participantA");
+                      if (value === participantA) {
+                        return `${selectedTournament.registrationType === "Team" ? "Team B" : "Player B"} must be different from ${selectedTournament.registrationType === "Team" ? "Team A" : "Player A"}`;
+                      }
+                      return true;
+                    },
                   })}
                   error={errors.participantB?.message}
                   required
@@ -236,7 +245,7 @@ const CreateMatch = () => {
         {selectedTournament && participants.length === 0 && (
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              No approved {selectedTournament.registrationType === "Team" ? "teams" : "players"} found for this tournament. 
+              No approved {selectedTournament.registrationType === "Team" ? "teams" : "players"} found for this tournament.
               Please approve participants first.
             </p>
           </div>
@@ -262,7 +271,7 @@ const CreateMatch = () => {
         </div>
       </form>
     </div>
-  );-1
+  ); -1
 };
 
 export default CreateMatch;

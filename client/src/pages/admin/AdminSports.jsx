@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import axios from "axios";
 import { Dumbbell, Edit2, Trash2, Plus } from "lucide-react";
+import toast from "react-hot-toast";
 import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
 import ErrorMessage from "../../components/ui/ErrorMessage";
@@ -10,7 +11,6 @@ import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
 import Input from "../../components/ui/Input";
 import RadioGroup from "../../components/ui/RadioGroup";
-import { toast } from "react-hot-toast";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
@@ -72,9 +72,7 @@ const AdminSports = () => {
 
   const handleDelete = async (e, sportId) => {
     e.stopPropagation();
-    if (!window.confirm("Are you sure you want to delete this sport? This action cannot be undone.")) {
-      return;
-    }
+    if (!window.confirm("Are you sure you want to delete this sport? This action cannot be undone.")) return;
 
     setDeletingId(sportId);
     try {

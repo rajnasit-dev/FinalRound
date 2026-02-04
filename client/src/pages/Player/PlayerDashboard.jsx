@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import DashboardCardState from "../../components/ui/DashboardCardState";
 import IconCard from "../../components/ui/IconCard";
 import Spinner from "../../components/ui/Spinner";
+import GridContainer from "../../components/ui/GridContainer";
 import { fetchPlayerProfile } from "../../store/slices/playerSlice";
 import { fetchUpcomingMatches, fetchCompletedMatches } from "../../store/slices/matchSlice";
 import { fetchPlayerTeams } from "../../store/slices/teamSlice";
@@ -39,7 +40,7 @@ const PlayerDashboard = () => {
     tournaments: uniqueTournaments.size || 0,
     teams: playerTeams?.length || 0,
     upcomingMatches: upcomingMatches?.length || 0,
-    winRate: completedMatches?.length > 0 
+    winRate: completedMatches?.length > 0
       ? Math.round((completedMatches.filter(m => m.result === "Won").length / completedMatches.length) * 100)
       : 0,
   };
@@ -71,7 +72,7 @@ const PlayerDashboard = () => {
       </h1>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <GridContainer cols={2}>
         <DashboardCardState
           Icon={Trophy}
           label="Active Tournaments"
@@ -112,7 +113,7 @@ const PlayerDashboard = () => {
           iconGradientFrom="from-green-500"
           iconGradientTo="to-green-600"
         />
-      </div>
+      </GridContainer>
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -140,7 +141,7 @@ const PlayerDashboard = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="font-semibold text-text-primary dark:text-text-primary-dark">
-                        {match.team1?.name} vs {match.team2?.name}
+                        {match.teamA?.name} vs {match.teamB?.name}
                       </h3>
                       <p className="text-sm text-base dark:text-base-dark mt-1">
                         {match.tournament?.name || "Tournament"}

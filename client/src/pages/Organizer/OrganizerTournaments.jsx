@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Search, Calendar } from "lucide-react";
+import toast from "react-hot-toast";
 import Spinner from "../../components/ui/Spinner";
 import TournamentCard from "../../components/ui/TournamentCard";
 import SearchBar from "../../components/ui/SearchBar";
 import FilterDropdown from "../../components/ui/FilterDropdown";
 import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
-import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
+import { fetchAllTournaments, deleteTournament } from "../../store/slices/tournamentSlice";
 
 const OrganizerTournaments = () => {
   const dispatch = useDispatch();
@@ -113,10 +114,13 @@ const OrganizerTournaments = () => {
               onView={(id) => navigate(`/organizer/tournaments/${id}/fixtures`)}
               onEdit={(id) => navigate(`/organizer/tournaments/${id}/edit`)}
               onManage={(id) => navigate(`/organizer/tournaments/${id}`)}
-              onDelete={(id) => {
-                if (window.confirm('Are you sure you want to delete this tournament?')) {
-                  // Add delete handler here
-                  console.log('Delete tournament:', id);
+              onDelete={async (id) => {
+                if (!window.confirm('Are you sure you want to delete this tournament?')) return;
+                try {
+                  await dispatch(deleteTournament(id)).unwrap();
+                  toast.success('Tournament deleted successfully!');
+                } catch (error) {
+                  toast.error(error || 'Failed to delete tournament');
                 }
               }}
             />

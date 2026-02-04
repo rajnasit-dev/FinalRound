@@ -12,12 +12,28 @@ import AvatarUpload from "../../components/ui/AvatarUpload";
 import BannerUpload from "../../components/ui/BannerUpload";
 import { fetchAllSports } from "../../store/slices/sportSlice";
 import { clearError } from "../../store/slices/teamSlice";
-import { validations, validateImageFile, validateFileSize } from "../../utils/formValidations";
 import axios from "axios";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import defaultTeamCoverImage from "../../assets/defaultTeamCoverImage.png";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
+
+// Validation functions
+const validateImageFile = (file) => {
+  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  if (!validTypes.includes(file.type)) {
+    return "Please select a valid image file (JPEG, PNG, GIF, or WebP)";
+  }
+  return true;
+};
+
+const validateFileSize = (file, maxSizeInMB = 5) => {
+  const maxSize = maxSizeInMB * 1024 * 1024;
+  if (file.size > maxSize) {
+    return `File size must be less than ${maxSizeInMB}MB`;
+  }
+  return true;
+};
 
 const openToJoinOptions = [
   { value: "true", label: "Open to join" },
@@ -152,6 +168,21 @@ const CreateTeam = () => {
     setSuccess(false);
     setIsSubmitting(true);
 
+    // Ensure sports are loaded
+    if (!sports || sports.length === 0) {
+      setError("Sports are still loading. Please wait and try again.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Ensure selected sport is valid
+    const selectedSport = sports.find(s => s._id === data.sport);
+    if (!selectedSport) {
+      setError("Selected sport is invalid. Please select a valid sport.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append("name", data.name);
@@ -222,7 +253,17 @@ const CreateTeam = () => {
                 placeholder="Enter team name"
                 icon={<Users size={18} />}
                 error={errors.name?.message}
-                {...register("name", validations.teamName)}
+                {...register("name", {
+                  required: "Team name is required",
+                  minLength: {
+                    value: 3,
+                    message: "Team name must be at least 3 characters",
+                  },
+                  maxLength: {
+                    value: 50,
+                    message: "Team name must not exceed 50 characters",
+                  },
+                })}
               />
 
               <Select
@@ -230,7 +271,9 @@ const CreateTeam = () => {
                 options={sportOptions}
                 icon={<Users size={18} />}
                 error={errors.sport?.message}
-                {...register("sport", validations.sport)}
+                {...register("sport", {
+                  required: "Please select a sport",
+                })}
               />
 
               <Controller
@@ -271,7 +314,12 @@ const CreateTeam = () => {
                   <FileText className="absolute left-3 top-3 text-base dark:text-base-dark" size={18} />
                   <textarea
                     placeholder="Tell us about your team..."
-                    {...register("description", validations.description)}
+                    {...register("description", {
+                      maxLength: {
+                        value: 500,
+                        message: "Description must not exceed 500 characters",
+                      },
+                    })}
                     rows={4}
                     className="w-full pl-10 pr-4 py-3 bg-card-background dark:bg-card-background-dark rounded-lg border border-base-dark dark:border-base dark:focus:border-base-dark/50 focus:border-base/50 focus:outline-none text-text-primary dark:text-text-primary-dark resize-none"
                   />

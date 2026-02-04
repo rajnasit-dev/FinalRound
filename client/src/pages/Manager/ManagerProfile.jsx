@@ -1,43 +1,35 @@
-import { User, Mail, Phone, MapPin, Calendar, Edit, Trophy, Users } from "lucide-react";
+import { User, Mail, Phone, MapPin, Calendar, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 import useDateFormat from "../../hooks/useDateFormat";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 import { updateUserAvatar } from "../../store/slices/authSlice";
 import Spinner from "../../components/ui/Spinner";
-import Container from "../../components/container/Container";
 import BackButton from "../../components/ui/BackButton";
 import AvatarUpload from "../../components/ui/AvatarUpload";
-import { fetchManagerTeams } from "../../store/slices/teamSlice";
 
 const ManagerProfile = () => {
   const dispatch = useDispatch();
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [deletingAvatar, setDeletingAvatar] = useState(false);
   const { user } = useSelector((state) => state.auth);
-  const { managerTeams, loading: teamsLoading } = useSelector((state) => state.team);
 
   const { formatDate } = useDateFormat();
-
-  useEffect(() => {
-    if (user?._id) {
-      dispatch(fetchManagerTeams(user._id));
-    }
-  }, [dispatch, user?._id]);
 
   const handleAvatarChange = async (file) => {
     if (!file) return;
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file");
+      toast.error("Please select an image file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image size should be less than 5MB");
+      toast.error("Image size should be less than 5MB");
       return;
     }
 
@@ -60,7 +52,7 @@ const ManagerProfile = () => {
         dispatch(updateUserAvatar(data.data.avatar));
       }
     } catch (error) {
-      alert(error.message || "Failed to update avatar");
+      toast.error(error.message || "Failed to update avatar");
     } finally {
       setUploadingAvatar(false);
     }
@@ -69,9 +61,7 @@ const ManagerProfile = () => {
   const handleAvatarDelete = async () => {
     if (!user?.avatar) return;
 
-    if (!confirm("Are you sure you want to delete your avatar?")) {
-      return;
-    }
+    if (!window.confirm("Are you sure you want to delete your avatar?")) return;
 
     setDeletingAvatar(true);
     try {
@@ -86,13 +76,13 @@ const ManagerProfile = () => {
 
       dispatch(updateUserAvatar(null));
     } catch (error) {
-      alert(error.message || "Failed to delete avatar");
+      toast.error(error.message || "Failed to delete avatar");
     } finally {
       setDeletingAvatar(false);
     }
   };
 
-  if (!user || teamsLoading) {
+  if (!user) {
     return (
       <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
@@ -167,50 +157,6 @@ const ManagerProfile = () => {
           </div>
         </div>
       </div>
-
-      {/* Manager Statistics */}
-      <Container>
-        <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-6">
-          Manager Statistics
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-4 bg-linear-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Trophy className="w-8 h-8 text-blue-600" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Teams</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {managerTeams?.length || 0}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-linear-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Users className="w-8 h-8 text-green-600" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Players</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {managerTeams?.reduce((acc, team) => acc + (team.players?.length || 0), 0) || 0}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-linear-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg">
-            <div className="flex items-center gap-3">
-              <Trophy className="w-8 h-8 text-purple-600" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Active Teams</p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {managerTeams?.filter(team => team.isActive)?.length || 0}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
     </div>
   );
 };

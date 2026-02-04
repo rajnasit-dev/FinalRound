@@ -12,7 +12,7 @@ export const fetchAllFeedback = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/feedback${queryParams ? `?${queryParams}` : ''}`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch feedback");
     }
   }
 );
@@ -24,7 +24,7 @@ export const fetchFeedbackById = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/feedback/${feedbackId}`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch feedback");
     }
   }
 );
@@ -36,7 +36,7 @@ export const fetchUserFeedback = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/feedback/user/me`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch feedback");
     }
   }
 );
@@ -48,7 +48,7 @@ export const createFeedback = createAsyncThunk(
       const response = await axios.post(`${API_BASE_URL}/feedback`, feedbackData, { withCredentials: true, headers: { "Content-Type": "application/json" } });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to create feedback");
     }
   }
 );
@@ -60,7 +60,7 @@ export const updateFeedback = createAsyncThunk(
       const response = await axios.put(`${API_BASE_URL}/feedback/${feedbackId}`, feedbackData, { withCredentials: true, headers: { "Content-Type": "application/json" } });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to update feedback");
     }
   }
 );

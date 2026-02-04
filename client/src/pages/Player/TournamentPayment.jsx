@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 import { createPayment, verifyPayment, clearError, clearCurrentPayment, clearPaymentSuccess } from "../../store/slices/paymentSlice";
 import { CreditCard, CheckCircle, XCircle, Loader } from "lucide-react";
 import useDateFormat from "../../hooks/useDateFormat";
@@ -62,7 +63,7 @@ const TournamentPayment = () => {
     // Load Razorpay script
     const scriptLoaded = await loadRazorpayScript();
     if (!scriptLoaded) {
-      alert("Failed to load payment gateway. Please try again.");
+      toast.error("Failed to load payment gateway. Please try again.");
       setProcessingPayment(false);
       return;
     }

@@ -8,14 +8,17 @@ import GridContainer from "../../components/ui/GridContainer";
 import Pagination from "../../components/ui/Pagination";
 import BackButton from "../../components/ui/BackButton";
 import { fetchAllTeams } from "../../store/slices/teamSlice";
+import { fetchAllSports } from "../../store/slices/sportSlice";
 
 const Teams = () => {
   const dispatch = useDispatch();
   const { teams, loading } = useSelector((state) => state.team);
+  const { sports, loading: sportsLoading } = useSelector((state) => state.sport);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     dispatch(fetchAllTeams());
+    dispatch(fetchAllSports());
   }, [dispatch]);
 
   const [selectedSport, setSelectedSport] = useState("All");
@@ -25,13 +28,9 @@ const Teams = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const sports = [
+  const sportOptions = [
     "All",
-    "Cricket",
-    "Football",
-    "Basketball",
-    "Badminton",
-    "Volleyball",
+    ...(sports?.map(sport => sport.name) || [])
   ];
 
   const statuses = ["All", "Open to Join", "Full"];
@@ -102,7 +101,7 @@ const Teams = () => {
             <FilterDropdown
               value={selectedSport}
               onChange={(e) => setSelectedSport(e.target.value)}
-              options={sports.map((sport) => ({
+              options={sportOptions.map((sport) => ({
                 value: sport,
                 label: sport === "All" ? "All Sports" : sport,
               }))}

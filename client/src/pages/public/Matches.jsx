@@ -28,8 +28,8 @@ const Matches = () => {
       selectedStatus === "All" || match?.status === selectedStatus;
     const matchesSearch =
       searchQuery === "" ||
-      match?.team1?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      match?.team2?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      match?.teamA?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      match?.teamB?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       match?.tournament?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       match?.venue?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;

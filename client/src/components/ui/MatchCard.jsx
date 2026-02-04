@@ -8,10 +8,10 @@ const MatchCard = ({ match, showEditButton = false, onEdit }) => {
   const { getStatusColor } = useStatusColor();
   const { formatDate, formatTime } = useDateFormat();
 
-  const team1 = match.team1 || {};
-  const team2 = match.team2 || {};
-  const score1 = match.score1 || 0;
-  const score2 = match.score2 || 0;
+  const team1 = match.teamA || {};
+  const team2 = match.teamB || {};
+  const score1 = match.scoreA || 0;
+  const score2 = match.scoreB || 0;
 
   return (
     <Link to={`/matches/${match._id}`} className="group">
@@ -24,32 +24,32 @@ const MatchCard = ({ match, showEditButton = false, onEdit }) => {
               <span className="font-medium">{match.tournament?.name || "Tournament"}</span>
             </div>
             <div className="flex items-center gap-2">
-            {showEditButton && onEdit && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  onEdit(match._id);
-                }}
-                className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-secondary/10 hover:bg-secondary/20 dark:bg-secondary-dark/10 dark:hover:bg-secondary-dark/20 text-secondary dark:text-secondary-dark transition-colors"
-                title="Edit Match"
-              >
-                <Edit className="w-3.5 h-3.5" />
-                Edit
-              </button>
-            )}
-            <span
-              className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                match.status
-              )} text-white`}
-            >
-              {match.status === "Live" && (
-                <span className="inline-block w-1.5 h-1.5 bg-white rounded-full animate-pulse mr-1"></span>
+              {showEditButton && onEdit && (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onEdit(match._id);
+                  }}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-secondary/10 hover:bg-secondary/20 dark:bg-secondary-dark/10 dark:hover:bg-secondary-dark/20 text-secondary dark:text-secondary-dark transition-colors"
+                  title="Edit Match"
+                >
+                  <Edit className="w-3.5 h-3.5" />
+                  Edit
+                </button>
               )}
-              {match.status}
-            </span>
+              <span
+                className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                  match.status
+                )} text-white`}
+              >
+                {match.status === "Live" && (
+                  <span className="inline-block w-1.5 h-1.5 bg-white rounded-full animate-pulse mr-1"></span>
+                )}
+                {match.status}
+              </span>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500">
             <Calendar className="w-3 h-3" />
             <span>{formatDate(match.date)}</span>
@@ -82,7 +82,7 @@ const MatchCard = ({ match, showEditButton = false, onEdit }) => {
                 )}
               </div>
             </div>
-            
+
             {match.status !== "Scheduled" && (
               <div className="text-3xl font-bold text-gray-900 dark:text-white">
                 {score1}
@@ -121,7 +121,7 @@ const MatchCard = ({ match, showEditButton = false, onEdit }) => {
                 )}
               </div>
             </div>
-            
+
             {match.status !== "Scheduled" && (
               <div className="text-3xl font-bold text-gray-900 dark:text-white">
                 {score2}

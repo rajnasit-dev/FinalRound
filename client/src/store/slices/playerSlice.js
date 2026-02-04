@@ -11,7 +11,7 @@ export const fetchPlayerProfile = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/players/profile/me`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch profile");
     }
   }
 );
@@ -23,7 +23,7 @@ export const fetchPlayerById = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/players/${playerId}`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch player");
     }
   }
 );
@@ -35,7 +35,7 @@ export const fetchAllPlayers = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/players`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch players");
     }
   }
 );
@@ -47,7 +47,7 @@ export const updatePlayerProfile = createAsyncThunk(
       const response = await axios.put(`${API_BASE_URL}/players/profile/me`, profileData, { withCredentials: true, headers: { "Content-Type": "application/json" } });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to update profile");
     }
   }
 );
@@ -95,7 +95,7 @@ export const addSport = createAsyncThunk(
       const response = await axios.post(`${API_BASE_URL}/players/sports`, sportData, { withCredentials: true, headers: { "Content-Type": "application/json" } });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to add sport");
     }
   }
 );
@@ -107,7 +107,7 @@ export const updateSportRole = createAsyncThunk(
       const response = await axios.put(`${API_BASE_URL}/players/sports`, sportData, { withCredentials: true, headers: { "Content-Type": "application/json" } });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to update sport role");
     }
   }
 );
@@ -119,7 +119,7 @@ export const removeSport = createAsyncThunk(
       const response = await axios.delete(`${API_BASE_URL}/players/sports/${sportId}`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to remove sport");
     }
   }
 );
@@ -131,7 +131,7 @@ export const addAchievement = createAsyncThunk(
       const response = await axios.post(`${API_BASE_URL}/players/achievements`, achievementData, { withCredentials: true, headers: { "Content-Type": "application/json" } });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to add achievement");
     }
   }
 );
@@ -147,7 +147,7 @@ export const updateAchievement = createAsyncThunk(
       );
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to update achievement");
     }
   }
 );
@@ -159,7 +159,7 @@ export const deleteAchievement = createAsyncThunk(
       const response = await axios.delete(`${API_BASE_URL}/players/achievements/${achievementId}`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to delete achievement");
     }
   }
 );
@@ -171,7 +171,7 @@ export const fetchPlayersBySport = createAsyncThunk(
       const response = await axios.get(`${API_BASE_URL}/players/sport/${sportId}`, { withCredentials: true });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch players");
     }
   }
 );

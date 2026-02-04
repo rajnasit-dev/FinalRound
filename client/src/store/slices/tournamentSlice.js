@@ -18,7 +18,7 @@ export const fetchAllTournaments = createAsyncThunk(
 
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch tournaments");
     }
   }
 );
@@ -31,7 +31,7 @@ export const fetchTrendingTournaments = createAsyncThunk(
 
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch trending tournaments");
     }
   }
 );
@@ -44,7 +44,7 @@ export const fetchTournamentById = createAsyncThunk(
 
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch tournament");
     }
   }
 );
@@ -171,6 +171,20 @@ export const rejectPlayerForTournament = createAsyncThunk(
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error?.response?.data?.message || error.message || "Request failed");
+    }
+  }
+);
+
+export const deleteTournament = createAsyncThunk(
+  "tournament/delete",
+  async (tournamentId, { rejectWithValue }) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/tournaments/${tournamentId}`, {
+        withCredentials: true,
+      });
+      return tournamentId;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to delete tournament");
     }
   }
 );
@@ -351,6 +365,22 @@ const tournamentSlice = createSlice({
         state.selectedTournament = action.payload;
       })
       .addCase(rejectPlayerForTournament.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Delete tournament
+      .addCase(deleteTournament.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteTournament.fulfilled, (state, action) => {
+        state.loading = false;
+        state.tournaments = state.tournaments.filter((t) => t._id !== action.payload);
+        if (state.selectedTournament?._id === action.payload) {
+          state.selectedTournament = null;
+        }
+      })
+      .addCase(deleteTournament.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

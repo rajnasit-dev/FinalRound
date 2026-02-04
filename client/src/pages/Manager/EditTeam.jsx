@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
 import { Users, MapPin, FileText, Globe, Save, X, Trash2, Mail, Phone } from "lucide-react";
+import toast from "react-hot-toast";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
@@ -14,13 +15,28 @@ import BannerUpload from "../../components/ui/BannerUpload";
 import { fetchAllSports } from "../../store/slices/sportSlice";
 import { fetchTeamById, clearError, clearSelectedTeam } from "../../store/slices/teamSlice";
 import Spinner from "../../components/ui/Spinner";
-import { validations, validateImageFile, validateFileSize } from "../../utils/formValidations";
 import axios from "axios";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import defaultTeamCoverImage from "../../assets/defaultTeamCoverImage.png";
-import { toast } from "react-hot-toast";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
+
+// Validation functions
+const validateImageFile = (file) => {
+  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  if (!validTypes.includes(file.type)) {
+    return "Please select a valid image file (JPEG, PNG, GIF, or WebP)";
+  }
+  return true;
+};
+
+const validateFileSize = (file, maxSizeInMB = 5) => {
+  const maxSize = maxSizeInMB * 1024 * 1024;
+  if (file.size > maxSize) {
+    return `File size must be less than ${maxSizeInMB}MB`;
+  }
+  return true;
+};
 
 const openToJoinOptions = [
   { value: "true", label: "Open to join" },
@@ -43,9 +59,9 @@ const EditTeam = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [logoFile, setLogoFile] = useState(null);
-  const [logoPreview, setLogoPreview] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null); // Used for image preview
   const [bannerFile, setBannerFile] = useState(null);
-  const [bannerPreview, setBannerPreview] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState(null); // Used for image preview
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isDeletingLogo, setIsDeletingLogo] = useState(false);
@@ -114,7 +130,8 @@ const EditTeam = () => {
   };
 
   const handleRemovePlayer = async (playerId) => {
-    if (!confirm("Remove this player from the team?")) return;
+    if (!window.confirm("Remove this player from the team?")) return;
+    
     try {
       await axios.delete(`${API_BASE_URL}/teams/${teamId}/players/${playerId}`, {
         withCredentials: true,
@@ -203,7 +220,6 @@ const EditTeam = () => {
         withCredentials: true,
       });
       
-      setLogoPreview(null);
       setLogoFile(null);
       dispatch(fetchTeamById(teamId));
     } catch (error) {
@@ -413,7 +429,17 @@ const EditTeam = () => {
                 placeholder="Enter team name"
                 icon={<Users size={18} />}
                 error={errors.name?.message}
-                {...register("name", validations.teamName)}
+                {...register("name", {
+                  required: "Team name is required",
+                  minLength: {
+                    value: 3,
+                    message: "Team name must be at least 3 characters",
+                  },
+                  maxLength: {
+                    value: 50,
+                    message: "Team name must not exceed 50 characters",
+                  },
+                })}
               />
 
               <Select
@@ -421,7 +447,9 @@ const EditTeam = () => {
                 options={sportOptions}
                 icon={<Users size={18} />}
                 error={errors.sport?.message}
-                {...register("sport", validations.sport)}
+                {...register("sport", {
+                  required: "Please select a sport",
+                })}
               />
 
               <Controller
@@ -462,7 +490,12 @@ const EditTeam = () => {
                   <FileText className="absolute left-3 top-3 text-base dark:text-base-dark" size={18} />
                   <textarea
                     placeholder="Tell us about your team..."
-                    {...register("description", validations.description)}
+                    {...register("description", {
+                      maxLength: {
+                        value: 500,
+                        message: "Description must not exceed 500 characters",
+                      },
+                    })}
                     rows={4}
                     className="w-full pl-10 pr-4 py-3 bg-card-background dark:bg-card-background-dark rounded-lg border border-base-dark dark:border-base dark:focus:border-base-dark/50 focus:border-base/50 focus:outline-none text-text-primary dark:text-text-primary-dark resize-none"
                   />

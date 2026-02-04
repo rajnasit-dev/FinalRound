@@ -218,15 +218,31 @@ export const getUserPayments = asyncHandler(async (req, res) => {
     // Get all teams managed by this user
     const teams = await Team.find({ manager: userId }).select('_id');
     const teamIds = teams.map(t => t._id);
-    filter.team = { $in: teamIds };
+    
+    // Show both team payments AND any individual player payments they made
+    filter = {
+      $or: [
+        { team: { $in: teamIds } },
+        { player: userId }
+      ]
+    };
   } else if (userRole === "TournamentOrganizer") {
-    filter.organizer = userId;
+    // Show both:
+    // 1. Payments received for tournaments they organized (as organizer)
+    // 2. Any payments they made as a player for other tournaments
+    filter = {
+      $or: [
+        { organizer: userId },
+        { player: userId }
+      ]
+    };
   }
 
   const payments = await Payment.find(filter)
     .populate("tournament", "name sport status")
     .populate("team", "name logoUrl")
     .populate("player", "fullName email avatar")
+    .populate("organizer", "fullName email avatar orgName")
     .sort({ createdAt: -1 });
 
   res

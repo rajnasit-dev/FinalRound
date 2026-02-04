@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAllTournaments } from "../../store/slices/adminSlice";
 import { Trophy, Trash2, Mail, Phone } from "lucide-react";
+import toast from "react-hot-toast";
 import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
 import SearchBar from "../../components/ui/SearchBar";
@@ -10,7 +11,6 @@ import Select from "../../components/ui/Select";
 import DataTable from "../../components/ui/DataTable";
 import Button from "../../components/ui/Button";
 import axios from "axios";
-import { toast } from "react-hot-toast";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
@@ -102,9 +102,7 @@ const AdminTournaments = () => {
   const handleDelete = async (e, tournament) => {
     e.stopPropagation();
 
-    if (!window.confirm(`Are you sure you want to delete ${tournament.name}? This action cannot be undone.`)) {
-      return;
-    }
+    if (!window.confirm(`Are you sure you want to delete ${tournament.name}? This action cannot be undone.`)) return;
 
     setDeletingId(tournament._id);
     try {

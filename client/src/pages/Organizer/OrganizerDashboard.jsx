@@ -1,23 +1,28 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Trophy,
   Users,
   Calendar,
-  TrendingUp,
+  DollarSign,
   Plus,
   ArrowRight,
+  AlertCircle,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import Spinner from "../../components/ui/Spinner";
+import Button from "../../components/ui/Button";
 import DashboardCardState from "../../components/ui/DashboardCardState";
+import GridContainer from "../../components/ui/GridContainer";
 import TournamentCard from "../../components/ui/TournamentCard";
 import FixturesTable from "../../components/ui/FixturesTable";
-import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
+import { fetchAllTournaments, deleteTournament } from "../../store/slices/tournamentSlice";
 import { fetchAllMatches } from "../../store/slices/matchSlice";
 
 const OrganizerDashboard = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { tournaments, loading: tournamentsLoading } = useSelector((state) => state.tournament);
   const { matches, loading: matchesLoading } = useSelector((state) => state.match);
@@ -34,9 +39,9 @@ const OrganizerDashboard = () => {
   ) || [];
 
   const totalTournaments = myTournaments.length;
-  const activeTournaments = myTournaments.filter((t) => t.status === "Live").length;
   const totalMatches = myMatches.length;
   const totalTeams = myTournaments.reduce((acc, t) => acc + (t.registeredTeams?.length || 0), 0);
+  const paymentsReceived = myTournaments.reduce((acc, t) => acc + (t.totalRevenue || 0), 0);
 
   if (tournamentsLoading || matchesLoading) {
     return (
@@ -48,6 +53,32 @@ const OrganizerDashboard = () => {
 
   return (
     <div className="space-y-8">
+      {/* Authorization Warning Banner */}
+      {!user?.isAuthorized && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-amber-900 dark:text-amber-400 mb-2">
+                Authorization Required
+              </h3>
+              <p className="text-sm text-amber-800 dark:text-amber-300 mb-4">
+                Your organization needs to be authorized before you can create tournaments. 
+                Submit your verification documents to get started.
+              </p>
+              <Button
+                onClick={() => navigate("/organizer/authorization")}
+                className="!w-auto px-6 bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-700"
+              >
+                Apply for Authorization
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Welcome Section */}
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
@@ -59,7 +90,7 @@ const OrganizerDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <GridContainer cols={2}>
         <DashboardCardState
           Icon={Trophy}
           label="Total Tournaments"
@@ -69,16 +100,18 @@ const OrganizerDashboard = () => {
           borderColor="border-amber-500/30"
           iconGradientFrom="from-amber-500"
           iconGradientTo="to-amber-600"
+          onClick={() => navigate("/organizer/tournaments")}
         />
         <DashboardCardState
-          Icon={TrendingUp}
-          label="Active Tournaments"
-          value={activeTournaments}
+          Icon={DollarSign}
+          label="Payments Received"
+          value={`₹${paymentsReceived}`}
           gradientFrom="from-green-500/10"
           gradientVia="via-green-500/5"
           borderColor="border-green-500/30"
           iconGradientFrom="from-green-500"
           iconGradientTo="to-green-600"
+          onClick={() => navigate("/organizer/payments")}
         />
         <DashboardCardState
           Icon={Calendar}
@@ -89,6 +122,7 @@ const OrganizerDashboard = () => {
           borderColor="border-blue-500/30"
           iconGradientFrom="from-blue-500"
           iconGradientTo="to-blue-600"
+          onClick={() => navigate("/organizer/matches")}
         />
         <DashboardCardState
           Icon={Users}
@@ -99,8 +133,9 @@ const OrganizerDashboard = () => {
           borderColor="border-purple-500/30"
           iconGradientFrom="from-purple-500"
           iconGradientTo="to-purple-600"
+          onClick={() => navigate("/organizer/teams")}
         />
-      </div>
+      </GridContainer>
 
       {/* Quick Actions */}
       <div className="bg-card-background dark:bg-card-background-dark rounded-xl p-6 border border-base-dark dark:border-base">
@@ -108,14 +143,26 @@ const OrganizerDashboard = () => {
           Quick Actions
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link
-            to="/organizer/tournaments/create"
-            className="flex items-center gap-3 p-4 bg-secondary hover:bg-secondary/90 text-white rounded-lg transition-colors group"
-          >
-            <Plus className="w-5 h-5" />
-            <span className="font-semibold">Create Tournament</span>
-            <ArrowRight className="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform" />
-          </Link>
+          {user?.isAuthorized ? (
+            <Link
+              to="/organizer/tournaments/create"
+              className="flex items-center gap-3 p-4 bg-secondary hover:bg-secondary/90 text-white rounded-lg transition-colors group"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="font-semibold">Create Tournament</span>
+              <ArrowRight className="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform" />
+            </Link>
+          ) : (
+            <button
+              onClick={() => navigate("/organizer/authorization")}
+              className="flex items-center gap-3 p-4 bg-gray-400 cursor-not-allowed text-white rounded-lg opacity-60"
+              disabled
+            >
+              <Plus className="w-5 h-5" />
+              <span className="font-semibold">Create Tournament</span>
+              <span className="ml-auto text-xs">(Auth Required)</span>
+            </button>
+          )}
           <Link
             to="/organizer/matches/create"
             className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-secondary dark:hover:border-secondary rounded-lg transition-colors group"
@@ -157,7 +204,23 @@ const OrganizerDashboard = () => {
         {myTournaments.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {myTournaments.slice(0, 3).map((tournament) => (
-              <TournamentCard key={tournament._id} tournament={tournament} />
+              <TournamentCard 
+                key={tournament._id} 
+                tournament={tournament}
+                showOrganizerButtons={true}
+                onEdit={(id) => navigate(`/organizer/tournaments/${id}/edit`)}
+                onManage={(id) => navigate(`/organizer/tournaments/${id}`)}
+                onView={(id) => navigate(`/organizer/tournaments/${id}/fixtures`)}
+                onDelete={async (id) => {
+                  if (!window.confirm('Are you sure you want to delete this tournament?')) return;
+                  try {
+                    await dispatch(deleteTournament(id)).unwrap();
+                    toast.success('Tournament deleted successfully!');
+                  } catch (error) {
+                    toast.error(error || 'Failed to delete tournament');
+                  }
+                }}
+              />
             ))}
           </div>
         ) : (

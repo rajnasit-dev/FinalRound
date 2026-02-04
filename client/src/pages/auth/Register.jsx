@@ -274,7 +274,7 @@ const Register = () => {
 
               <Input
                 label="Phone"
-                placeholder="+91 555 555 1234"
+                placeholder="555 555 1234"
                 icon={<Phone size={20} />}
                 error={errors.phone?.message}
                 required={true}
@@ -446,6 +446,10 @@ const Register = () => {
                   maxLength: {
                     value: 120,
                     message: "Organization name must be under 120 characters",
+                  },
+                  minLength: {
+                    value: 2,
+                    message: "Organization name must be at least 2 characters",
                   },
                 })}
               />

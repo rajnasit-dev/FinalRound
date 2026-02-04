@@ -31,7 +31,7 @@ const AdminLayout = () => {
     { to: "/admin/sports", icon: Dumbbell, label: "Sports" },
     { to: "/admin/tournaments", icon: Trophy, label: "Tournaments" },
     { to: "/admin/teams", icon: Shield, label: "Teams" },
-    { to: "/admin/revenue", icon: DollarSign, label: "Revenue" },
+    { to: "/admin/payments", icon: DollarSign, label: "Payments" },
     { to: "/admin/feedback", icon: MessageSquare, label: "Feedback" },
     { to: "/admin/change-password", icon: Lock, label: "Change Password" },
   ];

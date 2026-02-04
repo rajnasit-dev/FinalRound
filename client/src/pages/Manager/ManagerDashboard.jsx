@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import DashboardCardState from "../../components/ui/DashboardCardState";
+import GridContainer from "../../components/ui/GridContainer";
 import TeamCard from "../../components/ui/TeamCard";
 import FixturesTable from "../../components/ui/FixturesTable";
 import { fetchManagerTeams } from "../../store/slices/teamSlice";
@@ -20,7 +21,7 @@ const ManagerDashboard = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { managerTeams, loading: teamsLoading } = useSelector((state) => state.team);
-  const { teamMatches, loading: matchesLoading } = useSelector((state) => state.match);
+  const { teamMatches } = useSelector((state) => state.match);
 
   useEffect(() => {
     if (user?._id) {
@@ -62,36 +63,48 @@ const ManagerDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <GridContainer cols={2}>
         <DashboardCardState
           Icon={Users}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50 dark:bg-blue-900/20"
-          title="Total Teams"
+          label="Total Teams"
           value={totalTeams}
+          gradientFrom="from-blue-500/10"
+          gradientVia="via-blue-500/5"
+          borderColor="border-blue-500/20"
+          iconGradientFrom="from-blue-500"
+          iconGradientTo="to-blue-600"
         />
         <DashboardCardState
           Icon={Users}
-          iconColor="text-green-600"
-          bgColor="bg-green-50 dark:bg-green-900/20"
-          title="Total Players"
+          label="Total Players"
           value={totalPlayers}
+          gradientFrom="from-green-500/10"
+          gradientVia="via-green-500/5"
+          borderColor="border-green-500/20"
+          iconGradientFrom="from-green-500"
+          iconGradientTo="to-green-600"
         />
         <DashboardCardState
           Icon={CalendarDays}
-          iconColor="text-orange-600"
-          bgColor="bg-orange-50 dark:bg-orange-900/20"
-          title="Upcoming Matches"
+          label="Upcoming Matches"
           value={upcomingMatches}
+          gradientFrom="from-orange-500/10"
+          gradientVia="via-orange-500/5"
+          borderColor="border-orange-500/20"
+          iconGradientFrom="from-orange-500"
+          iconGradientTo="to-orange-600"
         />
         <DashboardCardState
           Icon={TrendingUp}
-          iconColor="text-purple-600"
-          bgColor="bg-purple-50 dark:bg-purple-900/20"
-          title="Win Rate"
-          value={`${Math.round(Math.random() * 30 + 50)}%`}
+          label="Win Rate"
+          value="0%"
+          gradientFrom="from-purple-500/10"
+          gradientVia="via-purple-500/5"
+          borderColor="border-purple-500/20"
+          iconGradientFrom="from-purple-500"
+          iconGradientTo="to-purple-600"
         />
-      </div>
+      </GridContainer>
 
       {/* Quick Actions */}
       <div className="bg-card-background dark:bg-card-background-dark rounded-xl p-6 border border-base-dark dark:border-base">

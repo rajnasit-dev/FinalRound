@@ -120,6 +120,26 @@ const tournamentSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    platformFeePayment: {
+      isPaid: {
+        type: Boolean,
+        default: false,
+      },
+      amount: {
+        type: Number,
+        default: 0,
+      },
+      paymentId: {
+        type: String,
+      },
+      paidAt: {
+        type: Date,
+      },
+    },
+    isPublished: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

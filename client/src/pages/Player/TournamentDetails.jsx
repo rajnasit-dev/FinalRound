@@ -2,6 +2,7 @@ import useDateFormat from "../../hooks/useDateFormat";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 import {
   fetchTournamentById,
   registerForTournament,
@@ -60,7 +61,7 @@ const TournamentDetails = () => {
     }
 
     if (!selectedTeam) {
-      alert("Please select a team");
+      toast.error("Please select a team");
       return;
     }
 

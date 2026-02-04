@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import DashboardCardState from "../../components/ui/DashboardCardState";
+import GridContainer from "../../components/ui/GridContainer";
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
@@ -42,7 +43,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <GridContainer cols={2}>
         <div onClick={() => navigate("/admin/users")} className="cursor-pointer">
           <DashboardCardState
             Icon={Users}
@@ -91,7 +92,7 @@ const AdminDashboard = () => {
             iconGradientTo="to-purple-600"
           />
         </div>
-      </div>
+      </GridContainer>
 
       {/* Additional Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

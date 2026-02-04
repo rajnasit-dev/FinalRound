@@ -2,6 +2,7 @@ import { User, Mail, Phone, MapPin, Calendar, Edit, Trophy, Target } from "lucid
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 import useDateFormat from "../../hooks/useDateFormat";
 import defaultAvatar from "../../assets/defaultOrganizerAvatar.png";
 import { updateUserAvatar } from "../../store/slices/authSlice";
@@ -30,13 +31,13 @@ const OrganizerProfile = () => {
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file");
+      toast.error("Please select an image file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image size should be less than 5MB");
+      toast.error("Image size should be less than 5MB");
       return;
     }
 
@@ -59,7 +60,7 @@ const OrganizerProfile = () => {
         dispatch(updateUserAvatar(data.data.avatar));
       }
     } catch (error) {
-      alert(error.message || "Failed to update avatar");
+      toast.error(error.message || "Failed to update avatar");
     } finally {
       setUploadingAvatar(false);
     }
@@ -68,9 +69,7 @@ const OrganizerProfile = () => {
   const handleAvatarDelete = async () => {
     if (!user?.avatar) return;
 
-    if (!confirm("Are you sure you want to delete your avatar?")) {
-      return;
-    }
+    if (!window.confirm("Are you sure you want to delete your avatar?")) return;
 
     setDeletingAvatar(true);
     try {
@@ -85,7 +84,7 @@ const OrganizerProfile = () => {
 
       dispatch(updateUserAvatar(null));
     } catch (error) {
-      alert(error.message || "Failed to delete avatar");
+      toast.error(error.message || "Failed to delete avatar");
     } finally {
       setDeletingAvatar(false);
     }

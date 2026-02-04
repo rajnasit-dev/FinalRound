@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { Mail, ShieldCheck, ArrowRight } from "lucide-react";
+import toast from "react-hot-toast";
 import Container from "../../components/container/Container";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
@@ -76,7 +77,7 @@ const VerifyEmail = () => {
     const result = await dispatch(resendOTP(emailValue));
     
     if (resendOTP.fulfilled.match(result)) {
-      alert("Verification code has been resent to your email!");
+      toast.success("Verification code has been resent to your email!");
     }
   };
 

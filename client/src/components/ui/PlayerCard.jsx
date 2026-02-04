@@ -34,8 +34,6 @@ const PlayerCard = ({ player }) => {
   const coverImage = player?.coverImageUrl || player?.banner || player?.coverImage || defaultCoverImage;
   const avatarImage = player?.avatarUrl || player?.avatar || defaultAvatar;
   const age = useAge(player?.dateOfBirth);
-  const achievementsList = Array.isArray(player?.achievements) ? player.achievements : [];
-  const primaryAchievement = achievementsList.find((a) => a?.title) || (!Array.isArray(player?.achievements) ? player?.achievements : null);
 
   return (
     <Link to={`/players/${player._id}`} className="group">

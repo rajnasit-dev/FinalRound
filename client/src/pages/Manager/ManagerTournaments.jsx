@@ -21,11 +21,24 @@ const ManagerTournaments = () => {
     }
   }, [dispatch, user]);
 
-  const managerTeamIds = new Set((managerTeams || []).map((t) => t._id));
+  // Create a Set of manager team IDs as strings for comparison
+  const managerTeamIds = new Set((managerTeams || []).map((t) => t._id?.toString() || t._id));
 
   const getManagerTeamsInTournament = (tournament) => {
-    const registered = (tournament.registeredTeams || []).filter((id) => managerTeamIds.has(id));
-    const approved = (tournament.approvedTeams || []).filter((id) => managerTeamIds.has(id));
+    // Handle both populated objects and plain ObjectIds
+    const getIdString = (item) => {
+      if (!item) return null;
+      if (typeof item === 'string') return item;
+      if (item._id) return item._id.toString();
+      return item.toString();
+    };
+
+    const registered = (tournament.registeredTeams || [])
+      .map(getIdString)
+      .filter((id) => id && managerTeamIds.has(id));
+    const approved = (tournament.approvedTeams || [])
+      .map(getIdString)
+      .filter((id) => id && managerTeamIds.has(id));
     return {
       registeredTeamIds: registered,
       approvedTeamIds: approved,
@@ -37,7 +50,10 @@ const ManagerTournaments = () => {
     return registeredTeamIds.length > 0 || approvedTeamIds.length > 0;
   });
 
-  const getTeamNameById = (id) => (managerTeams || []).find((t) => t._id === id)?.name || "Team";
+  const getTeamNameById = (id) => {
+    const team = (managerTeams || []).find((t) => t._id?.toString() === id || t._id === id);
+    return team?.name || "Team";
+  };
 
   const loading = tournamentsLoading || teamsLoading;
 
@@ -90,11 +106,10 @@ const ManagerTournaments = () => {
                   {chips.map((chip) => (
                     <div
                       key={`${tournament._id}-${chip.id}`}
-                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs shadow-sm ${
-                        chip.status === "Approved"
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs shadow-sm ${chip.status === "Approved"
                           ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
                           : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400"
-                      }`}
+                        }`}
                     >
                       {chip.status === "Approved" ? (
                         <CheckCircle className="w-3 h-3" />

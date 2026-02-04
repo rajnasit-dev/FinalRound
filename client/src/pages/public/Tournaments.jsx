@@ -8,15 +8,24 @@ import GridContainer from "../../components/ui/GridContainer";
 import Pagination from "../../components/ui/Pagination";
 import BackButton from "../../components/ui/BackButton";
 import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
+import { fetchAllSports } from "../../store/slices/sportSlice";
 
 const Tournaments = () => {
   const dispatch = useDispatch();
   const { tournaments, loading } = useSelector((state) => state.tournament);
+  const { sports, loading: sportsLoading } = useSelector((state) => state.sport);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     dispatch(fetchAllTournaments({}));
+    dispatch(fetchAllSports());
   }, [dispatch]);
+
+  // Debug: Log tournaments data
+  useEffect(() => {
+    console.log('Tournaments from Redux:', tournaments);
+    console.log('Tournaments length:', tournaments?.length || 0);
+  }, [tournaments]);
 
   const [selectedSport, setSelectedSport] = useState("All");
   const [selectedRegistrationType, setSelectedRegistrationType] = useState("All");
@@ -28,14 +37,9 @@ const Tournaments = () => {
   const [cancelledCurrentPage, setCancelledCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const sports = [
+  const sportOptions = [
     "All",
-    "Cricket",
-    "Football",
-    "Basketball",
-    "Badminton",
-    "Tennis",
-    "Volleyball",
+    ...(sports?.map(sport => sport.name) || [])
   ];
 
   const registrationTypes = ["All", "Team", "Player"];
@@ -126,7 +130,7 @@ const Tournaments = () => {
             <FilterDropdown
               value={selectedSport}
               onChange={(e) => setSelectedSport(e.target.value)}
-              options={sports.map((sport) => ({
+              options={sportOptions.map((sport) => ({
                 value: sport,
                 label: sport === "All" ? "All Sports" : sport,
               }))}

@@ -36,7 +36,7 @@ export const verifyPayment = createAsyncThunk(
 
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to verify payment");
     }
   }
 );
@@ -49,7 +49,7 @@ export const fetchPaymentReceipt = createAsyncThunk(
 
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch payment receipt");
     }
   }
 );
@@ -58,11 +58,11 @@ export const fetchUserPayments = createAsyncThunk(
   "payment/fetchUserPayments",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/payments/my-payments`, { withCredentials: true });
+      const response = await axios.get(`${API_BASE_URL}/payments/user/me`, { withCredentials: true });
 
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch payments");
     }
   }
 );

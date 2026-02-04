@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
 import { fetchUserBookings, cancelBooking } from "../../store/slices/bookingSlice";
 import Spinner from "../../components/ui/Spinner";
@@ -77,7 +78,7 @@ const PlayerTournaments = () => {
       await dispatch(cancelBooking(cancelModal.booking._id)).unwrap();
       setCancelModal({ open: false, booking: null });
     } catch (error) {
-      alert(error || "Failed to cancel booking");
+      toast.error(error || "Failed to cancel booking");
     } finally {
       setCancelling(false);
     }
