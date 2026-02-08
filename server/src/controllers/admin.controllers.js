@@ -5,7 +5,6 @@ import { Team } from "../models/Team.model.js";
 import { Player } from "../models/Player.model.js";
 import { TeamManager } from "../models/TeamManager.model.js";
 import { Payment } from "../models/Payment.model.js";
-import { WebsiteSettings } from "../models/WebsiteSettings.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -188,15 +187,48 @@ export const getRevenue = asyncHandler(async (req, res) => {
     if (endDate) filter.createdAt.$lte = new Date(endDate);
   }
 
-  // ADMIN REVENUE: Platform fees from organizers (₹100 per tournament)
+  // ADMIN REVENUE: Platform fees from organizers
+  // Count both tournament-based and payment-based platform fees
   const totalTournaments = await Tournament.countDocuments(filter);
-  const adminRevenue = totalTournaments * TOURNAMENT_LISTING_FEE;
+  const successfulPlatformFeePayments = await Payment.countDocuments({
+    payerType: "Organizer",
+    status: "Success",
+    ...(startDate || endDate ? {
+      createdAt: {
+        ...(startDate && { $gte: new Date(startDate) }),
+        ...(endDate && { $lte: new Date(endDate) })
+      }
+    } : {})
+  });
+  
+  const adminRevenue = (totalTournaments * TOURNAMENT_LISTING_FEE) + 
+                       (await Payment.aggregate([
+                         {
+                           $match: {
+                             payerType: "Organizer",
+                             status: "Success",
+                             ...(startDate || endDate ? {
+                               createdAt: {
+                                 ...(startDate && { $gte: new Date(startDate) }),
+                                 ...(endDate && { $lte: new Date(endDate) })
+                               }
+                             } : {})
+                           }
+                         },
+                         {
+                           $group: {
+                             _id: null,
+                             totalAmount: { $sum: "$amount" }
+                           }
+                         }
+                       ])).then(result => result[0]?.totalAmount || 0);
 
-  // ORGANIZER REVENUE: Registration fees from players/managers
+  // ORGANIZER REVENUE: Registration fees from players/managers (exclude organizer platform fees)
   const organizerRevenueStats = await Payment.aggregate([
     {
       $match: {
         status: "Success",
+        payerType: { $ne: "Organizer" }, // Only count player and team registrations
         ...(startDate || endDate ? {
           createdAt: {
             ...(startDate && { $gte: new Date(startDate) }),
@@ -220,6 +252,7 @@ export const getRevenue = asyncHandler(async (req, res) => {
   // Get all successful payments (organizer revenue transactions)
   const paymentTransactions = await Payment.find({
     status: "Success",
+    payerType: { $ne: "Organizer" }, // Exclude organizer platform fee payments
     ...(startDate || endDate ? {
       createdAt: {
         ...(startDate && { $gte: new Date(startDate) }),
@@ -234,7 +267,23 @@ export const getRevenue = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .limit(100);
 
-  // Get platform fee transactions (admin revenue) - tournament creations
+  // Get platform fee transactions from Payment collection (new method)
+  const platformFeePayments = await Payment.find({
+    status: "Success",
+    payerType: "Organizer",
+    ...(startDate || endDate ? {
+      createdAt: {
+        ...(startDate && { $gte: new Date(startDate) }),
+        ...(endDate && { $lte: new Date(endDate) })
+      }
+    } : {})
+  })
+    .populate("tournament", "name")
+    .populate("organizer", "fullName orgName")
+    .sort({ createdAt: -1 })
+    .limit(100);
+
+  // Get platform fee transactions (admin revenue) - tournament creations (legacy)
   const platformFeeTransactions = await Tournament.find({
     platformFeePayment: "Success",
     ...(startDate || endDate ? {
@@ -249,7 +298,19 @@ export const getRevenue = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .limit(100);
 
-  // Format platform fee transactions like payments
+  // Format platform fee transactions from Payment collection
+  const formattedPlatformFeePayments = platformFeePayments.map(payment => ({
+    _id: payment._id,
+    type: "Platform Fee",
+    tournament: payment.tournament,
+    organizer: payment.organizer,
+    amount: payment.amount,
+    status: payment.status,
+    paymentType: "Admin Revenue",
+    createdAt: payment.createdAt
+  }));
+
+  // Format platform fee transactions like payments (legacy)
   const formattedPlatformFees = platformFeeTransactions.map(tournament => ({
     _id: tournament._id,
     type: "Platform Fee",
@@ -278,12 +339,12 @@ export const getRevenue = asyncHandler(async (req, res) => {
     createdAt: payment.createdAt
   }));
 
-  // Combine all transactions
-  let allTransactions = [...formattedPlatformFees, ...formattedPayments];
+  // Combine all transactions (new platform fee payments + legacy + organizer revenue)
+  let allTransactions = [...formattedPlatformFeePayments, ...formattedPlatformFees, ...formattedPayments];
   
   // Apply filter based on type
   if (type === "admin") {
-    allTransactions = formattedPlatformFees;
+    allTransactions = [...formattedPlatformFeePayments, ...formattedPlatformFees];
   } else if (type === "organizer") {
     allTransactions = formattedPayments;
   }
@@ -371,6 +432,194 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     );
 });
 
+// Get all payments with filtering and pagination
+export const getAllPayments = asyncHandler(async (req, res) => {
+  const {
+    page = 1,
+    limit = 10,
+    payerType,
+    status,
+    startDate,
+    endDate,
+    searchTerm,
+  } = req.query;
+
+  const pageNum = parseInt(page, 10);
+  const pageLimit = parseInt(limit, 10);
+  const skip = (pageNum - 1) * pageLimit;
+
+  // Build filter object
+  const filter = {};
+
+  if (payerType && payerType !== "all") {
+    filter.payerType = payerType;
+  }
+
+  if (status && status !== "all") {
+    filter.status = status;
+  }
+
+  // Date range filter
+  if (startDate || endDate) {
+    filter.createdAt = {};
+    if (startDate) {
+      filter.createdAt.$gte = new Date(startDate);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      filter.createdAt.$lte = end;
+    }
+  }
+
+  // Calculate aggregate stats across ALL payments (ignoring pagination/search but respecting type/status/date filters)
+  const [statsResult] = await Payment.aggregate([
+    { $match: filter },
+    {
+      $group: {
+        _id: null,
+        totalAmount: { $sum: "$amount" },
+        totalTransactions: { $sum: 1 },
+        adminRevenue: {
+          $sum: {
+            $cond: [
+              { $and: [{ $eq: ["$payerType", "Organizer"] }, { $eq: ["$status", "Success"] }] },
+              "$amount",
+              0,
+            ],
+          },
+        },
+        platformFeesCollected: {
+          $sum: {
+            $cond: [{ $eq: ["$payerType", "Organizer"] }, "$amount", 0],
+          },
+        },
+        successCount: {
+          $sum: { $cond: [{ $eq: ["$status", "Success"] }, 1, 0] },
+        },
+        pendingCount: {
+          $sum: { $cond: [{ $eq: ["$status", "Pending"] }, 1, 0] },
+        },
+      },
+    },
+  ]);
+
+  const stats = statsResult || {
+    totalAmount: 0,
+    totalTransactions: 0,
+    adminRevenue: 0,
+    platformFeesCollected: 0,
+    successCount: 0,
+    pendingCount: 0,
+  };
+
+  // Search in payment IDs, tournament names, organizer names
+  let payments;
+  if (searchTerm) {
+    payments = await Payment.find(filter)
+      .populate({
+        path: "tournament",
+        select: "name",
+      })
+      .populate({
+        path: "organizer",
+        select: "fullName orgName email",
+      })
+      .populate({
+        path: "player",
+        select: "fullName email",
+      })
+      .populate({
+        path: "team",
+        select: "teamName",
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    // Filter payments by search term
+    payments = payments.filter(
+      (payment) =>
+        payment._id.toString().includes(searchTerm) ||
+        (payment.tournament?.name &&
+          payment.tournament.name
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())) ||
+        (payment.organizer?.fullName &&
+          payment.organizer.fullName
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())) ||
+        (payment.organizer?.orgName &&
+          payment.organizer.orgName
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())) ||
+        (payment.player?.fullName &&
+          payment.player.fullName
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())) ||
+        (payment.team?.teamName &&
+          payment.team.teamName
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()))
+    );
+
+    const paginatedPayments = payments.slice(skip, skip + pageLimit);
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          payments: paginatedPayments,
+          total: payments.length,
+          page: pageNum,
+          totalPages: Math.ceil(payments.length / pageLimit),
+          stats,
+        },
+        "Payments fetched successfully"
+      )
+    );
+  }
+
+  // Get total count for pagination
+  const total = await Payment.countDocuments(filter);
+
+  // Get paginated payments
+  payments = await Payment.find(filter)
+    .populate({
+      path: "tournament",
+      select: "name",
+    })
+    .populate({
+      path: "organizer",
+      select: "fullName orgName email",
+    })
+    .populate({
+      path: "player",
+      select: "fullName email",
+    })
+    .populate({
+      path: "team",
+      select: "teamName",
+    })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(pageLimit)
+    .exec();
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        payments,
+        total,
+        page: pageNum,
+        totalPages: Math.ceil(total / pageLimit),
+        stats,
+      },
+      "Payments fetched successfully"
+    )
+  );
+});
+
 // Delete user (soft delete or hard delete)
 export const deleteUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
@@ -426,95 +675,4 @@ export const updateUser = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, user, "User updated successfully"));
-});
-
-// Get website settings
-export const getWebsiteSettings = asyncHandler(async (req, res) => {
-  const settings = await WebsiteSettings.getSettings();
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, settings, "Website settings retrieved successfully"));
-});
-
-// Update website settings
-export const updateWebsiteSettings = asyncHandler(async (req, res) => {
-  const { platformFee, siteName, siteDescription, contactEmail, contactPhone, socialMedia, maintenanceMode } = req.body;
-
-  let settings = await WebsiteSettings.getSettings();
-
-  if (platformFee !== undefined) settings.platformFee = platformFee;
-  if (siteName) settings.siteName = siteName;
-  if (siteDescription) settings.siteDescription = siteDescription;
-  if (contactEmail) settings.contactEmail = contactEmail;
-  if (contactPhone) settings.contactPhone = contactPhone;
-  if (socialMedia) settings.socialMedia = socialMedia;
-  if (maintenanceMode !== undefined) settings.maintenanceMode = maintenanceMode;
-  
-  settings.updatedBy = req.user._id;
-
-  await settings.save();
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, settings, "Website settings updated successfully"));
-});
-
-// Upload hero video
-export const uploadHeroVideo = asyncHandler(async (req, res) => {
-  const videoLocalPath = req.file?.path;
-
-  if (!videoLocalPath) {
-    throw new ApiError(400, "Video file is required");
-  }
-
-  let settings = await WebsiteSettings.getSettings();
-
-  // Delete old video if exists
-  if (settings.heroVideoUrl) {
-    const urlParts = settings.heroVideoUrl.split('/');
-    const publicIdWithExtension = urlParts.at(-1);
-    const publicId = publicIdWithExtension.split('.')[0];
-    await deleteFromCloudinary(publicId);
-  }
-
-  // Upload new video
-  const videoResponse = await uploadOnCloudinary(videoLocalPath);
-
-  if (!videoResponse) {
-    throw new ApiError(500, "Failed to upload video to Cloudinary");
-  }
-
-  settings.heroVideoUrl = videoResponse.url;
-  settings.updatedBy = req.user._id;
-
-  await settings.save();
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, settings, "Hero video uploaded successfully"));
-});
-
-// Delete hero video
-export const deleteHeroVideo = asyncHandler(async (req, res) => {
-  let settings = await WebsiteSettings.getSettings();
-
-  if (!settings.heroVideoUrl) {
-    throw new ApiError(404, "No hero video found");
-  }
-
-  // Delete from cloudinary
-  const urlParts = settings.heroVideoUrl.split('/');
-  const publicIdWithExtension = urlParts.at(-1);
-  const publicId = publicIdWithExtension.split('.')[0];
-  await deleteFromCloudinary(publicId);
-
-  settings.heroVideoUrl = null;
-  settings.updatedBy = req.user._id;
-
-  await settings.save();
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, settings, "Hero video deleted successfully"));
 });

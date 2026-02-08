@@ -231,7 +231,7 @@ const OrganizerRequests = () => {
             placeholder="Search by name or email..."
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            className="mb-6"
+            className="mb-8"
           />
 
           <DataTable

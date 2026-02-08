@@ -21,7 +21,7 @@ const paymentSchema = new Schema(
 
     payerType: {
       type: String,
-      enum: ["Team", "Player"],
+      enum: ["Team", "Player", "Organizer"],
       required: true,
     },
 

@@ -137,55 +137,6 @@ const OrganizerDashboard = () => {
         />
       </GridContainer>
 
-      {/* Quick Actions */}
-      <div className="bg-card-background dark:bg-card-background-dark rounded-xl p-6 border border-base-dark dark:border-base">
-        <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {user?.isAuthorized ? (
-            <Link
-              to="/organizer/tournaments/create"
-              className="flex items-center gap-3 p-4 bg-secondary hover:bg-secondary/90 text-white rounded-lg transition-colors group"
-            >
-              <Plus className="w-5 h-5" />
-              <span className="font-semibold">Create Tournament</span>
-              <ArrowRight className="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform" />
-            </Link>
-          ) : (
-            <button
-              onClick={() => navigate("/organizer/authorization")}
-              className="flex items-center gap-3 p-4 bg-gray-400 cursor-not-allowed text-white rounded-lg opacity-60"
-              disabled
-            >
-              <Plus className="w-5 h-5" />
-              <span className="font-semibold">Create Tournament</span>
-              <span className="ml-auto text-xs">(Auth Required)</span>
-            </button>
-          )}
-          <Link
-            to="/organizer/matches/create"
-            className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-secondary dark:hover:border-secondary rounded-lg transition-colors group"
-          >
-            <Calendar className="w-5 h-5 text-secondary" />
-            <span className="font-semibold text-text-primary dark:text-text-primary-dark">
-              Schedule Match
-            </span>
-            <ArrowRight className="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform text-secondary" />
-          </Link>
-          <Link
-            to="/organizer/tournaments"
-            className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-secondary dark:hover:border-secondary rounded-lg transition-colors group"
-          >
-            <Trophy className="w-5 h-5 text-secondary" />
-            <span className="font-semibold text-text-primary dark:text-text-primary-dark">
-              Manage Tournaments
-            </span>
-            <ArrowRight className="w-4 h-4 ml-auto group-hover:translate-x-1 transition-transform text-secondary" />
-          </Link>
-        </div>
-      </div>
-
       {/* My Tournaments */}
       <div>
         <div className="flex items-center justify-between mb-6">
@@ -202,7 +153,7 @@ const OrganizerDashboard = () => {
         </div>
 
         {myTournaments.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             {myTournaments.slice(0, 3).map((tournament) => (
               <TournamentCard 
                 key={tournament._id} 

@@ -16,11 +16,11 @@ const loadUserFromStorage = () => {
 // Async Thunks
 export const loginUser = createAsyncThunk(
   "auth/login",
-  async ({ email, password, role }, { rejectWithValue }) => {
+  async ({ email, password }, { rejectWithValue }) => {
     try {
       const response = await axios.post(
         `${API_BASE_URL}/auth/login`,
-        { email, password, role },
+        { email, password },
         { withCredentials: true, headers: { "Content-Type": "application/json" } }
       );
 

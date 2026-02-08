@@ -16,7 +16,6 @@ import { Match } from './src/models/Match.model.js';
 import { Payment } from './src/models/Payment.model.js';
 import { Request } from './src/models/Request.model.js';
 import Booking from './src/models/Booking.model.js';
-import { WebsiteSettings } from './src/models/WebsiteSettings.model.js';
 
 // Same password for all users
 const DEFAULT_PASSWORD = 'Password123!';
@@ -45,7 +44,6 @@ async function clearDatabase() {
   await Payment.deleteMany({});
   await Request.deleteMany({});
   await Booking.deleteMany({});
-  await WebsiteSettings.deleteMany({});
   console.log('✅ Database cleared');
 }
 
@@ -139,8 +137,9 @@ async function seedManager(sports) {
 }
 
 async function seedOrganizer() {
-  console.log('🏆 Seeding organizer...');
+  console.log('🏆 Seeding organizers...');
   
+  // Authorized organizer
   const organizer = await TournamentOrganizer.create({
     fullName: 'Uday Odedara',
     email: 'udayodedara@gujaratsportsfederation.com',
@@ -157,7 +156,55 @@ async function seedOrganizer() {
     authorizedAt: new Date('2025-01-05'),
   });
 
-  console.log('✅ Seeded organizer');
+  // Unauthorized organizers (pending authorization)
+  const unauthorizedOrganizers = [
+    {
+      fullName: 'Raj Malhotra',
+      email: 'raj@maharashtracentral.com',
+      password: DEFAULT_PASSWORD,
+      phone: '+91-98765-43213',
+      city: 'Pune',
+      isVerified: true,
+      isActive: true,
+      orgName: 'Maharashtra Sports Central',
+      isVerifiedOrganizer: true,
+      isAuthorized: false,
+      verificationDocumentUrl: 'https://res.cloudinary.com/dggwds1xm/image/upload/v1728734567/document1.pdf',
+      authorizationRequestDate: new Date('2025-02-01'),
+    },
+    {
+      fullName: 'Priya Sharma',
+      email: 'priya@delhisports.com',
+      password: DEFAULT_PASSWORD,
+      phone: '+91-98765-43214',
+      city: 'Delhi',
+      isVerified: true,
+      isActive: true,
+      orgName: 'Delhi Sports Association',
+      isVerifiedOrganizer: true,
+      isAuthorized: false,
+      verificationDocumentUrl: 'https://res.cloudinary.com/dggwds1xm/image/upload/v1728734568/document2.pdf',
+      authorizationRequestDate: new Date('2025-02-02'),
+    },
+    {
+      fullName: 'Vikram Patel',
+      email: 'vikram@karnatasports.com',
+      password: DEFAULT_PASSWORD,
+      phone: '+91-98765-43215',
+      city: 'Bangalore',
+      isVerified: true,
+      isActive: true,
+      orgName: 'Karnataka Athletic Federation',
+      isVerifiedOrganizer: true,
+      isAuthorized: false,
+      verificationDocumentUrl: 'https://res.cloudinary.com/dggwds1xm/image/upload/v1728734569/document3.pdf',
+      authorizationRequestDate: new Date('2025-02-03'),
+    },
+  ];
+
+  await TournamentOrganizer.insertMany(unauthorizedOrganizers);
+
+  console.log('✅ Seeded 1 authorized + 3 unauthorized organizers');
   return organizer;
 }
 
@@ -666,50 +713,89 @@ async function seedMatches(tournaments, sports) {
   return matches;
 }
 
-async function seedPayments(tournaments, player, manager, organizer) {
+async function seedPayments(tournaments, player, manager, organizer, additionalPlayers, teams) {
   console.log('💳 Seeding payments...');
   
   const payments = [];
+  const statuses = ['Success', 'Success', 'Success', 'Pending', 'Failed']; // 60% success, 20% pending, 20% failed
+
+  // 1. Platform fee payments from organizer (₹500 each)
+  for (let i = 0; i < tournaments.length; i++) {
+    const tournament = tournaments[i];
+    const status = i % 3 !== 0 ? 'Success' : 'Pending';
+    
+    const platformFeePayment = await Payment.create({
+      tournament: tournament._id,
+      organizer: tournament.organizer,
+      payerType: 'Organizer',
+      amount: 500,
+      status,
+      provider: status === 'Success' ? 'razorpay' : null,
+      providerPaymentId: status === 'Success' ? `platform_${tournament._id}_${Date.now() + i}` : null,
+    });
+    
+    payments.push(platformFeePayment);
+  }
   
-  // Player payments for tournament registrations
-  for (let i = 0; i < Math.min(10, tournaments.length); i++) {
+  // 2. Player registration payments — spread across players and tournaments
+  const allPlayers = [player, ...(additionalPlayers || [])];
+  for (let i = 0; i < tournaments.length; i++) {
     const tournament = tournaments[i];
-    
-    const payment = await Payment.create({
-      player: player._id,
-      payerType: 'Player',
-      tournament: tournament._id,
-      organizer: tournament.organizer,
-      amount: tournament.entryFee,
-      status: i % 5 === 0 ? 'Pending' : 'Success',
-      provider: 'razorpay',
-      providerPaymentId: `razorpay_${Date.now()}${i}`,
-    });
-    
-    payments.push(payment);
+    // 2-3 players register per tournament
+    const numPlayerPayments = Math.min(3, allPlayers.length);
+    for (let j = 0; j < numPlayerPayments; j++) {
+      const currentPlayer = allPlayers[(i + j) % allPlayers.length];
+      const status = statuses[(i + j) % statuses.length];
+      
+      const payment = await Payment.create({
+        player: currentPlayer._id,
+        payerType: 'Player',
+        tournament: tournament._id,
+        organizer: tournament.organizer,
+        amount: tournament.entryFee,
+        status,
+        provider: status !== 'Pending' ? 'razorpay' : null,
+        providerPaymentId: status !== 'Pending' ? `player_pay_${Date.now()}_${i}_${j}` : null,
+      });
+      
+      payments.push(payment);
+    }
   }
 
-  // Team payments (manager)
-  for (let i = 0; i < Math.min(10, tournaments.length); i++) {
+  // 3. Team registration payments — use actual registered teams
+  for (let i = 0; i < tournaments.length; i++) {
     const tournament = tournaments[i];
+    if (!tournament.registeredTeams || tournament.registeredTeams.length === 0) continue;
     
-    if (tournament.registeredTeams.length === 0) continue;
-    
-    const payment = await Payment.create({
-      team: tournament.registeredTeams[0],
-      payerType: 'Team',
-      tournament: tournament._id,
-      organizer: tournament.organizer,
-      amount: tournament.entryFee,
-      status: i % 4 === 0 ? 'Pending' : 'Success',
-      provider: 'razorpay',
-      providerPaymentId: `razorpay_${Date.now()}${i + 100}`,
-    });
-    
-    payments.push(payment);
+    // Up to 2 team payments per tournament
+    const numTeamPayments = Math.min(2, tournament.registeredTeams.length);
+    for (let j = 0; j < numTeamPayments; j++) {
+      const status = statuses[(i + j + 1) % statuses.length];
+      
+      const payment = await Payment.create({
+        team: tournament.registeredTeams[j],
+        payerType: 'Team',
+        tournament: tournament._id,
+        organizer: tournament.organizer,
+        amount: tournament.entryFee,
+        status,
+        provider: status !== 'Pending' ? 'razorpay' : null,
+        providerPaymentId: status !== 'Pending' ? `team_pay_${Date.now()}_${i}_${j}` : null,
+      });
+      
+      payments.push(payment);
+    }
   }
 
-  console.log(`✅ Seeded ${payments.length} payments`);
+  // Log breakdown
+  const orgCount = payments.filter(p => p.payerType === 'Organizer').length;
+  const playerCount = payments.filter(p => p.payerType === 'Player').length;
+  const teamCount = payments.filter(p => p.payerType === 'Team').length;
+  const successCount = payments.filter(p => p.status === 'Success').length;
+  const pendingCount = payments.filter(p => p.status === 'Pending').length;
+  const failedCount = payments.filter(p => p.status === 'Failed').length;
+  console.log(`✅ Seeded ${payments.length} payments (Organizer: ${orgCount}, Player: ${playerCount}, Team: ${teamCount})`);
+  console.log(`   Status breakdown — Success: ${successCount}, Pending: ${pendingCount}, Failed: ${failedCount}`);
   return payments;
 }
 
@@ -813,17 +899,6 @@ async function seedOrganizerRequests(organizer, admin) {
   return requests;
 }
 
-async function seedWebsiteSettings() {
-  console.log('⚙️ Seeding website settings...');
-  
-  await WebsiteSettings.create({
-    platformFee: 500,
-    maintenanceMode: false,
-  });
-
-  console.log('✅ Seeded website settings');
-}
-
 async function seed() {
   try {
     await connectDB();
@@ -839,11 +914,10 @@ async function seed() {
     const teams = await seedTeams(manager, player, additionalPlayers, sports);
     const tournaments = await seedTournaments(organizer, teams, sports);
     const matches = await seedMatches(tournaments, sports);
-    const payments = await seedPayments(tournaments, player, manager, organizer);
+    const payments = await seedPayments(tournaments, player, manager, organizer, additionalPlayers, teams);
     const requests = await seedRequests(player, manager, teams, tournaments);
     const bookings = await seedBookings(tournaments, organizer);
     const authRequests = await seedOrganizerRequests(organizer, admin);
-    await seedWebsiteSettings();
 
     console.log('\n🎉 Database seeded successfully!');
     console.log('\n📊 Summary:');

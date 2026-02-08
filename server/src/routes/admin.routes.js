@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
-import { upload } from "../middlewares/multer.middleware.js";
 import {
   getPendingOrganizerRequests,
   getAllOrganizers,
@@ -11,12 +10,9 @@ import {
   getAllTeams,
   getRevenue,
   getDashboardStats,
+  getAllPayments,
   deleteUser,
   updateUser,
-  getWebsiteSettings,
-  updateWebsiteSettings,
-  uploadHeroVideo,
-  deleteHeroVideo,
 } from "../controllers/admin.controllers.js";
 
 const router = Router();
@@ -59,10 +55,7 @@ router.get("/teams", getAllTeams);
 // Revenue/Profit management
 router.get("/revenue", getRevenue);
 
-// Website settings
-router.get("/website-settings", getWebsiteSettings);
-router.put("/website-settings", updateWebsiteSettings);
-router.post("/website-settings/hero-video", upload.single("video"), uploadHeroVideo);
-router.delete("/website-settings/hero-video", deleteHeroVideo);
+// Payments management
+router.get("/payments", getAllPayments);
 
 export default router;

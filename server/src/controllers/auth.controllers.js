@@ -492,93 +492,24 @@ export const resendOtp = asyncHandler(async (req, res) => {
 });
 
 export const login = asyncHandler(async (req, res) => {
-  const { email, password, role } = req.body;
+  const { email, password } = req.body;
 
-  if ([email || password || role].some((field) => field?.trim() === "")) {
-    throw new ApiError(400, "email, password, and role are required.");
+  if ([email || password].some((field) => field?.trim() === "")) {
+    throw new ApiError(400, "email and password are required.");
   }
 
-  // ========== HARDCODED ADMIN CREDENTIALS ==========
-  if (role === "Admin") {
-    const ADMIN_EMAIL = "admin@gmail.com";
-    const ADMIN_PASSWORD = "Password123!";
-
-    if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
-      throw new ApiError(400, "Invalid admin credentials.");
-    }
-
-    // Generate admin tokens (without database lookup)
-    const adminId = new mongoose.Types.ObjectId();
-    const adminAccessToken = jwt.sign(
-      {
-        _id: adminId.toString(),
-        email: ADMIN_EMAIL,
-        fullName: "Admin User",
-        role: "Admin",
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      {
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
-      }
-    );
-
-    const adminRefreshToken = jwt.sign(
-      {
-        _id: adminId.toString(),
-        role: "Admin",
-      },
-      process.env.REFRESH_TOKEN_SECRET,
-      {
-        expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-      }
-    );
-
-    const options = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    };
-
-    const adminUser = {
-      _id: adminId,
-      fullName: "Admin User",
-      email: ADMIN_EMAIL,
-      role: "Admin",
-      isVerified: true,
-      isActive: true,
-    };
-
-    res
-      .status(200)
-      .cookie("accessToken", adminAccessToken, options)
-      .cookie("refreshToken", adminRefreshToken, options)
-      .json(new ApiResponse(200, adminUser, "Admin successfully loggedIn."));
-    return;
-  }
-
-  // ========== REGULAR USER LOGIN ==========
+  // Find user by email
   const user = await User.findOne({ email });
   if (!user) throw new ApiError(404, "User not found");
 
-  console.log('🔍 Login attempt:', { email, role: role, userRole: user.role });
-
+  // Check password
   const isPasswordCorrect = await user.isPasswordCorrect(password);
   if (!isPasswordCorrect) throw new ApiError(400, "Invalid credentials.");
 
-  console.log('✅ Password correct. Checking role...');
-  console.log('   Frontend sent role:', role);
-  console.log('   User actual role:', user.role);
-  console.log('   Match:', user.role === role);
+  // Get role from database
+  const userRole = user.role;
 
-  if (user.role !== role) throw new ApiError(400, "Invalid credentials.");
-
-  // Prevent non-admin users from accessing admin panel
-  if (role === "Admin") {
-    throw new ApiError(403, "Unauthorized access to admin panel.");
-  }
-
+  // Generate tokens
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
     user._id
   );
@@ -744,20 +675,7 @@ export const changePassword = asyncHandler(async (req, res) => {
     throw new ApiError(400, "New password must be different from current password.");
   }
 
-  // ========== HANDLE ADMIN PASSWORD CHANGE ==========
-  if (req.user.role === "Admin") {
-    const ADMIN_PASSWORD = "Password123!";
-    
-    if (currentPassword !== ADMIN_PASSWORD) {
-      throw new ApiError(401, "Current password is incorrect.");
-    }
-
-    // For admin, we cannot change the hardcoded password
-    // You would need to update the hardcoded password in the login controller
-    throw new ApiError(403, "Admin password cannot be changed. Contact system administrator.");
-  }
-
-  // ========== HANDLE REGULAR USER PASSWORD CHANGE ==========
+  // Find user and verify current password
   const user = await User.findById(userId).select("+password");
 
   if (!user) {

@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getRevenue } from "../../store/slices/adminSlice";
+import { getAllPayments } from "../../store/slices/adminSlice";
 import {
   DollarSign,
   Trophy,
   CreditCard,
-  Filter,
   Users,
   Building2,
+  Search,
 } from "lucide-react";
 import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
@@ -18,58 +18,48 @@ import useDateFormat from "../../hooks/useDateFormat";
 const AdminPayments = () => {
   const dispatch = useDispatch();
   const { formatDate, formatTime } = useDateFormat();
-  const { revenue, loading } = useSelector((state) => state.admin);
-  const [selectedFilter, setSelectedFilter] = useState("all");
-  const [paymentTypeFilter, setPaymentTypeFilter] = useState("all");
+  const { payments, paymentsPagination, paymentsStats, loading } = useSelector(
+    (state) => state.admin
+  );
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [payerTypeFilter, setPayerTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Fetch payments whenever filters or pagination changes
   useEffect(() => {
-    dispatch(getRevenue({ type: "all" }));
-  }, [dispatch]);
-
-  // Get filtered transactions based on selected filters
-  const getFilteredTransactions = () => {
-    if (!revenue?.transactions) return [];
-    
-    let filtered = [...revenue.transactions];
-
-    // Filter by payment category (Admin Revenue vs Organizer Revenue)
-    if (selectedFilter !== "all") {
-      filtered = filtered.filter((t) => {
-        if (selectedFilter === "admin") {
-          return t.paymentType === "Admin Revenue";
-        } else if (selectedFilter === "organizer") {
-          return t.paymentType === "Organizer Revenue";
-        }
-        return true;
-      });
-    }
-
-    // Filter by specific payment type (Platform Fee, Team Registration, Player Registration)
-    if (paymentTypeFilter !== "all") {
-      filtered = filtered.filter((t) => t.type === paymentTypeFilter);
-    }
-
-    return filtered;
-  };
-
-  const filteredTransactions = getFilteredTransactions();
+    dispatch(
+      getAllPayments({
+        page: currentPage,
+        limit: 10,
+        payerType: payerTypeFilter,
+        status: statusFilter,
+        searchTerm: searchTerm || undefined,
+      })
+    );
+  }, [dispatch, currentPage, payerTypeFilter, statusFilter, searchTerm]);
 
   // Define table columns
   const columns = [
     {
       header: "Payment Type",
-      accessor: "type",
+      accessor: "payerType",
       render: (item) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${
-            item.type === "Platform Fee"
+            item.payerType === "Organizer"
               ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-              : item.type === "Team Registration"
+              : item.payerType === "Team"
               ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
               : "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300"
           }`}
         >
-          {item.type}
+          {item.payerType === "Organizer"
+            ? "Platform Fee"
+            : item.payerType === "Team"
+            ? "Team Registration"
+            : "Player Registration"}
         </span>
       ),
     },
@@ -90,12 +80,12 @@ const AdminPayments = () => {
       accessor: "payer",
       render: (item) => (
         <div className="flex items-center gap-2">
-          {item.type === "Platform Fee" ? (
+          {item.payerType === "Organizer" ? (
             <>
               <Building2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               <div>
                 <p className="text-sm font-medium text-text-primary dark:text-text-primary-dark">
-                  {item.organizer?.fullName || item.organizer?.orgName || "Unknown"}
+                  {item.organizer?.orgName || item.organizer?.fullName || "Unknown"}
                 </p>
                 <p className="text-xs text-base dark:text-base-dark">Organizer</p>
               </div>
@@ -105,35 +95,12 @@ const AdminPayments = () => {
               <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <div>
                 <p className="text-sm font-medium text-text-primary dark:text-text-primary-dark">
-                  {item.team?.name || item.player?.fullName || "Unknown"}
+                  {item.team?.teamName || item.player?.fullName || "Unknown"}
                 </p>
                 <p className="text-xs text-base dark:text-base-dark">
                   {item.team ? "Team" : "Player"}
                 </p>
               </div>
-            </>
-          )}
-        </div>
-      ),
-    },
-    {
-      header: "Receiver",
-      accessor: "receiver",
-      render: (item) => (
-        <div className="flex items-center gap-2">
-          {item.paymentType === "Admin Revenue" ? (
-            <>
-              <Building2 className="w-4 h-4 text-green-600 dark:text-green-400" />
-              <span className="text-sm font-medium text-text-primary dark:text-text-primary-dark">
-                Platform (Admin)
-              </span>
-            </>
-          ) : (
-            <>
-              <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <span className="text-sm font-medium text-text-primary dark:text-text-primary-dark">
-                {item.organizer?.fullName || item.organizer?.orgName || "Unknown"}
-              </span>
             </>
           )}
         </div>
@@ -163,23 +130,27 @@ const AdminPayments = () => {
       ),
     },
     {
-      header: "Category",
-      accessor: "paymentType",
+      header: "Status",
+      accessor: "status",
       render: (item) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${
-            item.paymentType === "Admin Revenue"
+            item.status === "Success"
               ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-              : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+              : item.status === "Pending"
+              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
+              : item.status === "Failed"
+              ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+              : "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300"
           }`}
         >
-          {item.paymentType}
+          {item.status}
         </span>
       ),
     },
   ];
 
-  if (loading) {
+  if (loading && payments.length === 0) {
     return (
       <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
@@ -204,90 +175,95 @@ const AdminPayments = () => {
         <DashboardCardState
           Icon={DollarSign}
           label="Admin Revenue"
-          value={`₹${revenue?.adminRevenue?.toLocaleString() || 0}`}
+          value={`₹${(paymentsStats?.adminRevenue || 0).toLocaleString("en-IN")}`}
           gradientFrom="from-green-500/10"
           gradientVia="via-green-500/5"
-          borderColor={
-            selectedFilter === "admin" ? "border-green-500" : "border-green-500/20"
-          }
+          borderColor="border-green-500/20"
           iconGradientFrom="from-green-500"
           iconGradientTo="to-green-600"
-          onClick={() => setSelectedFilter(selectedFilter === "admin" ? "all" : "admin")}
-          className="cursor-pointer transform transition-all hover:scale-105"
         />
         <DashboardCardState
           Icon={Trophy}
-          label="Organizer Revenue"
-          value={`₹${revenue?.organizerRevenue?.toLocaleString() || 0}`}
+          label="Platform Fees Collected"
+          value={`₹${(paymentsStats?.platformFeesCollected || 0).toLocaleString("en-IN")}`}
           gradientFrom="from-blue-500/10"
           gradientVia="via-blue-500/5"
-          borderColor={
-            selectedFilter === "organizer"
-              ? "border-blue-500"
-              : "border-blue-500/20"
-          }
+          borderColor="border-blue-500/20"
           iconGradientFrom="from-blue-500"
           iconGradientTo="to-blue-600"
-          onClick={() =>
-            setSelectedFilter(selectedFilter === "organizer" ? "all" : "organizer")
-          }
-          className="cursor-pointer transform transition-all hover:scale-105"
         />
         <DashboardCardState
           Icon={CreditCard}
           label="Total Transactions"
-          value={revenue?.totalTransactions || 0}
+          value={paymentsPagination?.total || paymentsStats?.totalTransactions || 0}
           gradientFrom="from-purple-500/10"
           gradientVia="via-purple-500/5"
-          borderColor={
-            selectedFilter === "all" ? "border-purple-500" : "border-purple-500/20"
-          }
+          borderColor="border-purple-500/20"
           iconGradientFrom="from-purple-500"
           iconGradientTo="to-purple-600"
-          onClick={() => setSelectedFilter("all")}
-          className="cursor-pointer transform transition-all hover:scale-105"
         />
       </div>
 
-      {/* Filter Section */}
-      <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <Filter className="w-5 h-5 text-text-primary dark:text-text-primary-dark" />
-            <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark">
-              Filter Payments
-            </h3>
+      {/* Filter & Search Bar */}
+      <div className="flex items-end gap-4 flex-wrap bg-card-background dark:bg-card-background-dark rounded-xl p-6 border border-base-dark dark:border-base">
+        {/* Search Bar - Left Side */}
+        <div className="flex-1 min-w-xs">
+          <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
+            Search
+          </label>
+          <div className="relative">
+            <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Tournament, organizer, or player..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full pl-10 pr-4 py-2 border border-base-dark dark:border-base rounded-lg bg-white dark:bg-gray-800 text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary"
+            />
           </div>
-          <div className="flex items-center gap-4 flex-wrap">
-            <div>
-              <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                Payment Category
-              </label>
-              <select
-                value={selectedFilter}
-                onChange={(e) => setSelectedFilter(e.target.value)}
-                className="px-4 py-2 border border-base-dark dark:border-base rounded-lg bg-white dark:bg-gray-800 text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary"
-              >
-                <option value="all">All Categories</option>
-                <option value="admin">Admin Revenue (Platform Fees)</option>
-                <option value="organizer">Organizer Revenue (Registration Fees)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                Payment Type
-              </label>
-              <select
-                value={paymentTypeFilter}
-                onChange={(e) => setPaymentTypeFilter(e.target.value)}
-                className="px-4 py-2 border border-base-dark dark:border-base rounded-lg bg-white dark:bg-gray-800 text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary"
-              >
-                <option value="all">All Types</option>
-                <option value="Platform Fee">Platform Fee</option>
-                <option value="Team Registration">Team Registration</option>
-                <option value="Player Registration">Player Registration</option>
-              </select>
-            </div>
+        </div>
+
+        {/* Dropdowns - Right Side */}
+        <div className="flex items-end gap-3">
+          <div>
+            <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
+              Payer Type
+            </label>
+            <select
+              value={payerTypeFilter}
+              onChange={(e) => {
+                setPayerTypeFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="px-4 py-2 border border-base-dark dark:border-base rounded-lg bg-white dark:bg-gray-800 text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary"
+            >
+              <option value="all">All Types</option>
+              <option value="Organizer">Platform Fees</option>
+              <option value="Team">Team Registration</option>
+              <option value="Player">Player Registration</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
+              Status
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="px-4 py-2 border border-base-dark dark:border-base rounded-lg bg-white dark:bg-gray-800 text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary"
+            >
+              <option value="all">All Statuses</option>
+              <option value="Success">Success</option>
+              <option value="Pending">Pending</option>
+              <option value="Failed">Failed</option>
+              <option value="Refunded">Refunded</option>
+            </select>
           </div>
         </div>
       </div>
@@ -296,23 +272,15 @@ const AdminPayments = () => {
       <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base overflow-hidden">
         <div className="p-6 border-b border-base-dark dark:border-base">
           <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
-            {selectedFilter === "all"
-              ? "All Transactions"
-              : selectedFilter === "admin"
-              ? "Admin Revenue (Platform Fees)"
-              : "Organizer Revenue (Registration Fees)"}
+            All Transactions
           </h3>
           <p className="text-sm text-base dark:text-base-dark mt-1">
-            {selectedFilter === "all"
-              ? "Complete transaction history"
-              : selectedFilter === "admin"
-              ? "Platform fees from tournament organizers"
-              : "Registration fees from players and managers"}
+            Complete transaction history with detailed payment information
           </p>
         </div>
         <DataTable
           columns={columns}
-          data={filteredTransactions}
+          data={payments}
           itemsPerPage={10}
           emptyMessage={
             <div className="text-center py-12">
@@ -321,13 +289,47 @@ const AdminPayments = () => {
                 No Transactions Found
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                {selectedFilter !== "all" || paymentTypeFilter !== "all"
-                  ? "No transactions match your filters."
-                  : "No transactions recorded yet."}
+                No transactions match your filters.
               </p>
             </div>
           }
         />
+
+        {/* Pagination */}
+        {paymentsPagination && paymentsPagination.totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 p-6 border-t border-base-dark dark:border-base">
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-text-primary dark:text-text-primary-dark">
+                Page{" "}
+                <span className="font-bold">
+                  {paymentsPagination.page || 1}
+                </span>{" "}
+                of{" "}
+                <span className="font-bold">
+                  {paymentsPagination.totalPages}
+                </span>
+              </span>
+            </div>
+            <button
+              onClick={() =>
+                setCurrentPage(
+                  Math.min(paymentsPagination.totalPages, currentPage + 1)
+                )
+              }
+              disabled={currentPage === paymentsPagination.totalPages}
+              className="px-4 py-2 border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -171,6 +171,31 @@ export const getRevenue = createAsyncThunk(
   }
 );
 
+// Get all payments
+export const getAllPayments = createAsyncThunk(
+  "admin/getAllPayments",
+  async ({ page = 1, limit = 10, payerType, status, startDate, endDate, searchTerm } = {}, { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams();
+      params.append("page", page);
+      params.append("limit", limit);
+      if (payerType && payerType !== "all") params.append("payerType", payerType);
+      if (status && status !== "all") params.append("status", status);
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      if (searchTerm) params.append("searchTerm", searchTerm);
+
+      const response = await axios.get(
+        `${API_BASE_URL}/admin/payments?${params.toString()}`,
+        { withCredentials: true }
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error);
+    }
+  }
+);
+
 const initialState = {
   dashboardStats: {
     users: { total: 0, players: 0, managers: 0, organizers: 0 },
@@ -186,6 +211,16 @@ const initialState = {
   tournaments: [],
   teams: [],
   revenue: null,
+  payments: [],
+  paymentsPagination: null,
+  paymentsStats: {
+    totalAmount: 0,
+    totalTransactions: 0,
+    adminRevenue: 0,
+    platformFeesCollected: 0,
+    successCount: 0,
+    pendingCount: 0,
+  },
   loading: false,
   error: null,
   pagination: null,
@@ -309,6 +344,27 @@ const adminSlice = createSlice({
       .addCase(getRevenue.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Failed to fetch revenue";
+      })
+      // All payments
+      .addCase(getAllPayments.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getAllPayments.fulfilled, (state, action) => {
+        state.loading = false;
+        state.payments = action.payload?.payments || [];
+        state.paymentsPagination = {
+          page: action.payload?.page,
+          totalPages: action.payload?.totalPages,
+          total: action.payload?.total,
+        };
+        if (action.payload?.stats) {
+          state.paymentsStats = action.payload.stats;
+        }
+      })
+      .addCase(getAllPayments.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Failed to fetch payments";
       });
   },
 });

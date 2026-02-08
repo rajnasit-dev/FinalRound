@@ -8,9 +8,11 @@ import { TournamentOrganizer } from "../models/TournamentOrganizer.model.js";
 import { Match } from "../models/Match.model.js";
 import { User } from "../models/User.model.js";
 import { Request } from "../models/Request.model.js";
-import { WebsiteSettings } from "../models/WebsiteSettings.model.js";
+import { Payment } from "../models/Payment.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import { addTournamentStatus, addTournamentStatuses, getTournamentStatus } from "../utils/statusHelpers.js";
+
+const PLATFORM_FEE = 500; // Platform fee in rupees
 
 // Create a new tournament
 export const createTournament = asyncHandler(async (req, res) => {
@@ -94,9 +96,8 @@ export const createTournament = asyncHandler(async (req, res) => {
     }
   }
 
-  // Get platform fee from website settings
-  const websiteSettings = await WebsiteSettings.getSettings();
-  const platformFee = websiteSettings.platformFee || 500;
+  // Get platform fee
+  const platformFee = PLATFORM_FEE;
 
   const tournament = await Tournament.create({
     name,
@@ -123,6 +124,15 @@ export const createTournament = asyncHandler(async (req, res) => {
       amount: platformFee,
     },
     isPublished: false,
+  });
+
+  // Create payment record for platform fee
+  await Payment.create({
+    tournament: tournament._id,
+    organizer: organizerId,
+    amount: platformFee,
+    status: "Pending",
+    payerType: "Organizer",
   });
 
   const populatedTournament = await Tournament.findById(tournament._id)
@@ -932,13 +942,23 @@ export const completePlatformFeePayment = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Platform fee already paid for this tournament");
   }
 
-  // Update payment status
+  // Update tournament payment status
   tournament.platformFeePayment.isPaid = true;
   tournament.platformFeePayment.paymentId = paymentId;
   tournament.platformFeePayment.paidAt = new Date();
   tournament.isPublished = true;
 
   await tournament.save();
+
+  // Update payment record status
+  await Payment.findOneAndUpdate(
+    { tournament: tournamentId, organizer: organizerId, status: "Pending" },
+    {
+      status: "Success",
+      providerPaymentId: paymentId,
+    },
+    { new: true }
+  );
 
   const populatedTournament = await Tournament.findById(tournamentId)
     .populate("sport", "name teamBased iconUrl")

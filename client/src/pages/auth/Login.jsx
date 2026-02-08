@@ -1,10 +1,9 @@
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Mail, Lock, User } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 import Container from "../../components/container/Container";
 import Input from "../../components/ui/Input";
-import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import { loginUser, clearError } from "../../store/slices/authSlice";
@@ -25,7 +24,6 @@ const Login = () => {
     defaultValues: {
       email: "",
       password: "",
-      role: "Player",
     },
   });
 
@@ -41,7 +39,6 @@ const Login = () => {
     reset({
       email: "",
       password: "",
-      role: "Player",
     });
   }, [reset]);
 
@@ -53,6 +50,24 @@ const Login = () => {
     };
   }, [dispatch, reset]);
 
+  // Handle form submission
+  const onSubmit = async (data) => {
+    // Always call backend to set cookies
+    const result = await dispatch(loginUser(data));
+    if (loginUser.fulfilled.match(result)) {
+      // Let backend determine user's role from database
+      // and navigate based on the returned user role
+      const user = result.payload;
+      const roleRoutes = {
+        Admin: "/admin/dashboard",
+        Player: "/player/tournaments",
+        TeamManager: "/manager/teams",
+        TournamentOrganizer: "/organizer/dashboard",
+      };
+      navigate(roleRoutes[user.role] || "/");
+    }
+  };
+
   // Role options for dropdown
   const roleOptions = [
     { value: "Player", label: "Player" },
@@ -60,21 +75,6 @@ const Login = () => {
     { value: "TournamentOrganizer", label: "Tournament Organizer" },
     { value: "Admin", label: "Admin" },
   ];
-
-  // Handle form submission
-  const onSubmit = async (data) => {
-    // Always call backend to set cookies
-    const result = await dispatch(loginUser(data));
-    if (loginUser.fulfilled.match(result)) {
-      const roleRoutes = {
-        Admin: "/admin/dashboard",
-        Player: "/player/tournaments",
-        TeamManager: "/manager/teams",
-        TournamentOrganizer: "/organizer/dashboard",
-      };
-      navigate(roleRoutes[data.role] || "/");
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4">
@@ -92,16 +92,6 @@ const Login = () => {
 
           {/* Login Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" autoComplete="off">
-            {/* Role */}
-            <Select
-              label="Role"
-              options={roleOptions}
-              icon={<User size={20} />}
-              error={errors.role?.message}
-              autoComplete="off"
-              {...register("role", { required: "Role is required" })}
-            />
-
             {/* Email */}
             <Input
               label="Email"

@@ -163,7 +163,7 @@ const EditTournament = () => {
       const result = await dispatch(updateTournament({ id: tournamentId, data: updateData })).unwrap();
 
       if (result) {
-        navigate(`/organizer/tournaments/${tournamentId}`);
+        navigate("/organizer/tournaments");
       }
     } catch (error) {
       console.error("Failed to update tournament:", error);

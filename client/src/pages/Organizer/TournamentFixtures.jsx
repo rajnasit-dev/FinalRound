@@ -17,7 +17,7 @@ const TournamentFixtures = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { formatDate, formatTime } = useDateFormat();
-  const getStatusColor = useStatusColor();
+  const { getStatusColor } = useStatusColor();
   const { user } = useSelector((state) => state.auth);
   const { selectedTournament: tournament, loading: tournamentLoading } = useSelector(
     (state) => state.tournament
@@ -37,8 +37,13 @@ const TournamentFixtures = () => {
   const handleDeleteMatch = async (matchId) => {
     if (!window.confirm("Are you sure you want to delete this match?")) return;
     
-    await dispatch(deleteMatch(matchId));
-    dispatch(fetchMatchesByTournament(tournamentId));
+    try {
+      await dispatch(deleteMatch(matchId)).unwrap();
+      toast.success("Match deleted successfully!");
+      dispatch(fetchMatchesByTournament(tournamentId));
+    } catch (error) {
+      toast.error(error?.message || error || "Failed to delete match");
+    }
   };
 
   if (tournamentLoading || matchesLoading) {
@@ -199,7 +204,7 @@ const TournamentFixtures = () => {
             render: (match) => {
               const statusClass = getStatusColor(match.status);
               return (
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${statusClass}`}>
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white ${statusClass}`}>
                   {match.status === "Live" && <span className="w-2 h-2 bg-current rounded-full animate-pulse mr-1.5" />}
                   {match.status}
                 </span>
@@ -221,9 +226,10 @@ const TournamentFixtures = () => {
                 {match.status === "Scheduled" && (
                   <Button
                     onClick={() => handleDeleteMatch(match._id)}
-                    className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700"
+                    className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white font-medium"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3.5 h-3.5 mr-1" />
+                    Delete
                   </Button>
                 )}
               </div>
