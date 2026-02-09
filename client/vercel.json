@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://final-round-server-rho.vercel.app/api/v1/:path*" },
+    { "source": "/api/v1/:path*", "destination": "https://final-round-server-rho.vercel.app/api/v1/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
