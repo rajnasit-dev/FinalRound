@@ -188,12 +188,23 @@ const TournamentDetail = () => {
 
             {/* Right Overlay - Registration Button */}
             {isRegistrationOpen(tournament) && shouldShowBannerRegisterButton() && (
-              <Link
-                to={`/tournaments/${id}/register`}
-                className="bg-accent hover:bg-accent/90 text-black px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-2xl hover:shadow-accent/50 hover:scale-105 whitespace-nowrap inline-block"
-              >
-                Register Now
-              </Link>
+              <>
+                {isRegisterButtonDisabled() ? (
+                  <button
+                    disabled
+                    className="bg-gray-500 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-2xl whitespace-nowrap cursor-not-allowed opacity-60"
+                  >
+                    {getRegistrationButtonText()}
+                  </button>
+                ) : (
+                  <Link
+                    to={`/tournaments/${id}/register`}
+                    className="bg-accent hover:bg-accent/90 text-black px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-2xl hover:shadow-accent/50 hover:scale-105 whitespace-nowrap inline-block"
+                  >
+                    {getRegistrationButtonText()}
+                  </Link>
+                )}
+              </>
             )}
           </div>
         </div>
