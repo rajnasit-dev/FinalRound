@@ -201,9 +201,9 @@ const AdminUsers = () => {
   }
 
   return (
-    <div className="min-h-screen pb-16 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
-      <BackButton className="mb-6" />
-      <div className="mb-6">
+    <div className="space-y-8">
+      <BackButton />
+      <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           User Management
         </h1>
@@ -213,8 +213,8 @@ const AdminUsers = () => {
       </div>
 
       {/* Tabs */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 border-b border-base-dark dark:border-base mb-6">
+      <div>
+        <div className="flex items-center gap-2 border-b border-base-dark dark:border-base mb-4">
           {["Player", "TeamManager", "TournamentOrganizer"].map((tab) => (
             <button
               key={tab}

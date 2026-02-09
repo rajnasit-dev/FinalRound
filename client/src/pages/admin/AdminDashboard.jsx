@@ -44,54 +44,50 @@ const AdminDashboard = () => {
 
       {/* Stats Grid */}
       <GridContainer cols={2}>
-        <div onClick={() => navigate("/admin/users")} className="cursor-pointer">
-          <DashboardCardState
-            Icon={Users}
-            label="Total Users"
-            value={dashboardStats?.users?.total || 0}
-            gradientFrom="from-blue-500/10"
-            gradientVia="via-blue-500/5"
-            borderColor="border-blue-500/20"
-            iconGradientFrom="from-blue-500"
-            iconGradientTo="to-blue-600"
-          />
-        </div>
-        <div onClick={() => navigate("/admin/tournaments")} className="cursor-pointer">
-          <DashboardCardState
-            Icon={Trophy}
-            label="Tournaments"
-            value={dashboardStats?.tournaments?.total || 0}
-            gradientFrom="from-amber-500/10"
-            gradientVia="via-amber-500/5"
-            borderColor="border-amber-500/20"
-            iconGradientFrom="from-amber-500"
-            iconGradientTo="to-amber-600"
-          />
-        </div>
-        <div onClick={() => navigate("/admin/teams")} className="cursor-pointer">
-          <DashboardCardState
-            Icon={Shield}
-            label="Teams"
-            value={dashboardStats?.teams?.total || 0}
-            gradientFrom="from-green-500/10"
-            gradientVia="via-green-500/5"
-            borderColor="border-green-500/20"
-            iconGradientFrom="from-green-500"
-            iconGradientTo="to-green-600"
-          />
-        </div>
-        <div onClick={() => navigate("/admin/revenue")} className="cursor-pointer">
-          <DashboardCardState
-            Icon={DollarSign}
-            label="Total Revenue"
-            value={`₹${dashboardStats?.revenue?.total || 0}`}
-            gradientFrom="from-purple-500/10"
-            gradientVia="via-purple-500/5"
-            borderColor="border-purple-500/20"
-            iconGradientFrom="from-purple-500"
-            iconGradientTo="to-purple-600"
-          />
-        </div>
+        <DashboardCardState
+          Icon={Users}
+          label="Total Users"
+          value={dashboardStats?.users?.total || 0}
+          gradientFrom="from-blue-500/10"
+          gradientVia="via-blue-500/5"
+          borderColor="border-blue-500/20"
+          iconGradientFrom="from-blue-500"
+          iconGradientTo="to-blue-600"
+          onClick={() => navigate("/admin/users")}
+        />
+        <DashboardCardState
+          Icon={Trophy}
+          label="Tournaments"
+          value={dashboardStats?.tournaments?.total || 0}
+          gradientFrom="from-amber-500/10"
+          gradientVia="via-amber-500/5"
+          borderColor="border-amber-500/20"
+          iconGradientFrom="from-amber-500"
+          iconGradientTo="to-amber-600"
+          onClick={() => navigate("/admin/tournaments")}
+        />
+        <DashboardCardState
+          Icon={Shield}
+          label="Teams"
+          value={dashboardStats?.teams?.total || 0}
+          gradientFrom="from-green-500/10"
+          gradientVia="via-green-500/5"
+          borderColor="border-green-500/20"
+          iconGradientFrom="from-green-500"
+          iconGradientTo="to-green-600"
+          onClick={() => navigate("/admin/teams")}
+        />
+        <DashboardCardState
+          Icon={DollarSign}
+          label="Total Revenue"
+          value={`₹${dashboardStats?.revenue?.total || 0}`}
+          gradientFrom="from-purple-500/10"
+          gradientVia="via-purple-500/5"
+          borderColor="border-purple-500/20"
+          iconGradientFrom="from-purple-500"
+          iconGradientTo="to-purple-600"
+          onClick={() => navigate("/admin/payments")}
+        />
       </GridContainer>
 
       {/* Additional Stats */}

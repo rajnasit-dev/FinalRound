@@ -9,6 +9,8 @@ import RadioGroup from "../../components/ui/RadioGroup";
 import Button from "../../components/ui/Button";
 import Spinner from "../../components/ui/Spinner";
 import BackButton from "../../components/ui/BackButton";
+import BannerUpload from "../../components/ui/BannerUpload";
+import defaultTournamentBanner from "../../assets/defaultTournamentCoverImage.png";
 import { fetchTournamentById, updateTournament } from "../../store/slices/tournamentSlice";
 import { fetchAllSports } from "../../store/slices/sportSlice";
 
@@ -101,7 +103,6 @@ const EditTournament = () => {
       registrationType: selectedTournament.registrationType || "Team",
       description: selectedTournament.description || "",
       teamLimit: selectedTournament.teamLimit || "",
-      playersPerTeam: selectedTournament.playersPerTeam || "",
       registrationStart: formatDate(selectedTournament.registrationStart),
       registrationEnd: formatDate(selectedTournament.registrationEnd),
       startDate: formatDate(selectedTournament.startDate),
@@ -118,6 +119,10 @@ const EditTournament = () => {
         ? selectedTournament.rules
         : [""]
     );
+
+    // Set existing banner
+    setBannerPreview(selectedTournament.bannerUrl || null);
+    setBannerFile(null);
   }, [selectedTournament, reset]);
 
   const sportOptions = [
@@ -138,29 +143,31 @@ const EditTournament = () => {
 
   const onSubmit = async (data) => {
     try {
-      const updateData = {
-        name: data.name,
-        sport: data.sport,
-        format: data.format,
-        registrationType: data.registrationType,
-        description: data.description || "",
-        teamLimit: data.teamLimit,
-        playersPerTeam: data.playersPerTeam || undefined,
-        registrationStart: data.registrationStart,
-        registrationEnd: data.registrationEnd,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        entryFee: data.entryFee || 0,
-        prizePool: data.prizePool || "",
-        ground: {
-          name: data.groundName || "",
-          city: data.groundCity || "",
-          address: data.groundAddress || "",
-        },
-        rules: rules.filter((rule) => rule.trim() !== ""),
-      };
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("sport", data.sport);
+      formData.append("format", data.format);
+      formData.append("registrationType", data.registrationType);
+      formData.append("description", data.description || "");
+      formData.append("teamLimit", data.teamLimit);
+      formData.append("registrationStart", data.registrationStart);
+      formData.append("registrationEnd", data.registrationEnd);
+      formData.append("startDate", data.startDate);
+      formData.append("endDate", data.endDate);
+      formData.append("entryFee", data.entryFee || 0);
+      if (data.prizePool) formData.append("prizePool", data.prizePool);
+      if (data.groundName) formData.append("ground[name]", data.groundName);
+      if (data.groundCity) formData.append("ground[city]", data.groundCity);
+      if (data.groundAddress) formData.append("ground[address]", data.groundAddress);
 
-      const result = await dispatch(updateTournament({ id: tournamentId, data: updateData })).unwrap();
+      const filteredRules = rules.filter((rule) => rule.trim() !== "");
+      formData.append("rules", JSON.stringify(filteredRules));
+
+      if (bannerFile) {
+        formData.append("banner", bannerFile);
+      }
+
+      const result = await dispatch(updateTournament({ id: tournamentId, data: formData })).unwrap();
 
       if (result) {
         navigate("/organizer/tournaments");
@@ -274,16 +281,6 @@ const EditTournament = () => {
                 },
               })}
             />
-
-            {registrationType === "Team" && (
-              <Input
-                label="Players Per Team"
-                type="number"
-                placeholder="Enter players per team"
-                error={errors.playersPerTeam?.message}
-                {...register("playersPerTeam", { min: { value: 1, message: "Minimum 1 player required" } })}
-              />
-            )}
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium mb-2">Description</label>
@@ -513,6 +510,25 @@ const EditTournament = () => {
               )}
             </div>
           )}
+        </div>
+
+        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
+          <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Tournament Banner</h2>
+          <BannerUpload
+            bannerUrl={bannerPreview}
+            defaultBanner={defaultTournamentBanner}
+            onUpload={(file) => {
+              setBannerFile(file);
+              setBannerPreview(URL.createObjectURL(file));
+            }}
+            onDelete={() => {
+              setBannerFile(null);
+              setBannerPreview(null);
+            }}
+            showDelete={!!bannerPreview}
+            height="h-48"
+            alt="Tournament Banner"
+          />
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-end">

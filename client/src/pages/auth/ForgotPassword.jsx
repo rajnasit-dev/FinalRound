@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
 import axios from "axios";
+import toast from "react-hot-toast";
 import Container from "../../components/container/Container";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
@@ -13,7 +14,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000
 const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
 
   const {
     register,
@@ -36,7 +36,7 @@ const ForgotPassword = () => {
         { withCredentials: true }
       );
 
-      setSuccess(true);
+      toast.success("Password reset link sent! Check your email inbox.");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to send reset link. Please try again.");
     } finally {
@@ -67,8 +67,7 @@ const ForgotPassword = () => {
             </p>
           </div>
 
-          {!success ? (
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {/* Email */}
               <Input
                 label="Email Address"
@@ -93,34 +92,16 @@ const ForgotPassword = () => {
                 Send Reset Link
               </Button>
             </form>
-          ) : (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
-              </div>
-              <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
-                Check Your Email
-              </h3>
-              <p className="text-text-primary dark:text-text-primary-dark mb-6">
-                We've sent a password reset link to your email address. Please check your inbox and follow the instructions.
-              </p>
-              <Button as={Link} to="/login" variant="primary">
-                Back to Login
-              </Button>
-              </div>
-              
-          )}
         </Container>
 
         {/* Additional Help */}
-        {!success && (
+        
           <p className="text-center mt-6 text-text-primary dark:text-text-primary-dark text-sm">
             Remember your password?{" "}
             <Link to="/login" className="text-secondary dark:text-primary-dark hover:underline font-semibold">
               Sign in
             </Link>
           </p>
-        )}
       </div>
     </div>
   );

@@ -6,27 +6,19 @@ import {
   rejectOrganizer,
 } from "../../store/slices/adminSlice";
 import BackButton from "../../components/ui/BackButton";
-import { CheckCircle, XCircle, FileText, Trash2, Mail, Phone, User } from "lucide-react";
+import { CheckCircle, XCircle, FileText, Mail, Phone, User } from "lucide-react";
 import toast from "react-hot-toast";
 import Spinner from "../../components/ui/Spinner";
 import Button from "../../components/ui/Button";
-import Modal from "../../components/ui/Modal";
 import SearchBar from "../../components/ui/SearchBar";
 import DataTable from "../../components/ui/DataTable";
 import defaultAvatar from "../../assets/defaultAvatar.png";
-import axios from "axios";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
 const OrganizerRequests = () => {
   const dispatch = useDispatch();
   const { pendingOrganizers, loading, error } = useSelector((state) => state.admin);
-  const [selectedOrganizer, setSelectedOrganizer] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [actionType, setActionType] = useState(""); // 'approve' or 'reject'
   const [searchQuery, setSearchQuery] = useState("");
-  const [deletingId, setDeletingId] = useState(null);
+  const [processingId, setProcessingId] = useState(null);
 
   useEffect(() => {
     dispatch(getPendingOrganizerRequests());
@@ -37,47 +29,33 @@ const OrganizerRequests = () => {
     organizer.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleApprove = (organizer) => {
-    setSelectedOrganizer(organizer);
-    setActionType("approve");
-    setShowModal(true);
-  };
-
-  const handleReject = (organizer) => {
-    setSelectedOrganizer(organizer);
-    setActionType("reject");
-    setShowModal(true);
-  };
-
-  const confirmAction = async () => {
-    if (actionType === "approve") {
-      await dispatch(authorizeOrganizer(selectedOrganizer._id));
-    } else {
-      await dispatch(
-        rejectOrganizer({ organizerId: selectedOrganizer._id, reason: rejectionReason })
-      );
-    }
-    setShowModal(false);
-    setSelectedOrganizer(null);
-    setRejectionReason("");
-    dispatch(getPendingOrganizerRequests());
-  };
-
-  const handleDelete = async (e, organizer) => {
+  const handleApprove = async (e, organizer) => {
     e.stopPropagation();
-    if (!window.confirm(`Are you sure you want to delete ${organizer.fullName}? This action cannot be undone.`)) return;
-
-    setDeletingId(organizer._id);
+    setProcessingId(organizer._id);
     try {
-      await axios.delete(`${API_BASE_URL}/admin/users/${organizer._id}`, {
-        withCredentials: true,
-      });
-      toast.success(`Organizer ${organizer.fullName} deleted successfully`);
+      await dispatch(authorizeOrganizer(organizer._id)).unwrap();
+      toast.success(`${organizer.fullName} has been approved`);
       dispatch(getPendingOrganizerRequests());
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete organizer");
+    } catch (error) {
+      toast.error(error?.message || "Failed to approve organizer");
     } finally {
-      setDeletingId(null);
+      setProcessingId(null);
+    }
+  };
+
+  const handleReject = async (e, organizer) => {
+    e.stopPropagation();
+    setProcessingId(organizer._id);
+    try {
+      await dispatch(
+        rejectOrganizer({ organizerId: organizer._id })
+      ).unwrap();
+      toast.success(`${organizer.fullName}'s request has been rejected`);
+      dispatch(getPendingOrganizerRequests());
+    } catch (error) {
+      toast.error(error?.message || "Failed to reject organizer");
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -162,33 +140,22 @@ const OrganizerRequests = () => {
       render: (organizer) => (
         <div className="flex gap-2 justify-end">
           <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleApprove(organizer);
-            }}
+            onClick={(e) => handleApprove(e, organizer)}
+            disabled={processingId === organizer._id}
             className="!bg-green-600 hover:!bg-green-700 !text-white px-3 py-2 text-sm"
           >
-            <CheckCircle className="w-4 h-4" />
+            {processingId === organizer._id ? (
+              <Spinner size="sm" />
+            ) : (
+              <CheckCircle className="w-4 h-4" />
+            )}
           </Button>
           <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleReject(organizer);
-            }}
+            onClick={(e) => handleReject(e, organizer)}
+            disabled={processingId === organizer._id}
             className="!bg-red-600 hover:!bg-red-700 !text-white px-3 py-2 text-sm"
           >
             <XCircle className="w-4 h-4" />
-          </Button>
-          <Button
-            onClick={(e) => handleDelete(e, organizer)}
-            disabled={deletingId === organizer._id}
-            className="!bg-gray-600 hover:!bg-gray-700 !text-white px-3 py-2 text-sm"
-          >
-            {deletingId === organizer._id ? (
-              <Spinner size="sm" />
-            ) : (
-              <Trash2 className="w-4 h-4" />
-            )}
           </Button>
         </div>
       ),
@@ -204,9 +171,9 @@ const OrganizerRequests = () => {
   }
 
   return (
-    <div className="min-h-screen pb-16 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
-      <BackButton className="mb-6" />
-      <div className="mb-6">
+    <div className="space-y-8">
+      <BackButton />
+      <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Organizer Authorization Requests
         </h1>
@@ -231,7 +198,6 @@ const OrganizerRequests = () => {
             placeholder="Search by name or email..."
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            className="mb-8"
           />
 
           <DataTable
@@ -242,56 +208,6 @@ const OrganizerRequests = () => {
             emptyMessage="No organizer requests found"
           />
         </>
-      )}
-
-      {/* Confirmation Modal */}
-      {showModal && (
-        <Modal onClose={() => setShowModal(false)}>
-          <div className="p-6 space-y-4">
-            <h2 className="text-2xl font-bold">
-              {actionType === "approve" ? "Approve Organizer" : "Reject Organizer"}
-            </h2>
-            <p className="text-base dark:text-base-dark">
-              {actionType === "approve"
-                ? `Are you sure you want to approve ${selectedOrganizer?.fullName} as an authorized tournament organizer?`
-                : `Are you sure you want to reject ${selectedOrganizer?.fullName}'s request?`}
-            </p>
-
-            {actionType === "reject" && (
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Rejection Reason
-                </label>
-                <textarea
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
-                  className="w-full px-4 py-2 border border-base-dark dark:border-base rounded-lg bg-base-dark dark:bg-base focus:outline-none focus:ring-2 focus:ring-secondary"
-                  rows="4"
-                  placeholder="Enter reason for rejection..."
-                  required
-                />
-              </div>
-            )}
-
-            <div className="flex gap-3 pt-4">
-              <Button
-                variant="secondary"
-                onClick={() => setShowModal(false)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant={actionType === "approve" ? "primary" : "danger"}
-                onClick={confirmAction}
-                className="flex-1"
-                disabled={actionType === "reject" && !rejectionReason.trim()}
-              >
-                {actionType === "approve" ? "Approve" : "Reject"}
-              </Button>
-            </div>
-          </div>
-        </Modal>
       )}
     </div>
   );

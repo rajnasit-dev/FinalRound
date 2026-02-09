@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Lock, ArrowLeft, CheckCircle } from "lucide-react";
 import axios from "axios";
+import toast from "react-hot-toast";
 import Container from "../../components/container/Container";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
@@ -17,7 +18,6 @@ const ResetPassword = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
 
   const {
     register,
@@ -50,7 +50,7 @@ const ResetPassword = () => {
         { withCredentials: true }
       );
 
-      setSuccess(true);
+      toast.success("Password reset successful!");
       
       // Redirect to login after 3 seconds
       setTimeout(() => {
@@ -89,8 +89,7 @@ const ResetPassword = () => {
             </p>
           </div>
 
-          {!success ? (
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {/* New Password */}
               <Input
                 label="New Password"
@@ -138,29 +137,10 @@ const ResetPassword = () => {
                 Reset Password
               </Button>
             </form>
-          ) : (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
-              </div>
-              <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
-                Password Reset Successful!
-              </h3>
-              <p className="text-text-secondary dark:text-text-secondary-dark mb-6">
-                Your password has been successfully reset. You will be redirected to the login page shortly.
-              </p>
-              <Link
-                to="/login"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary dark:bg-primary-dark text-white rounded-lg hover:bg-primary/90 dark:hover:bg-primary-dark/90 transition-colors"
-              >
-                Go to Login
-              </Link>
-            </div>
-          )}
         </Container>
 
         {/* Additional Help */}
-        {!success && (
+        
           <p className="text-center mt-6 text-text-secondary dark:text-text-secondary-dark text-sm">
             Didn't receive the email?{" "}
             <Link
@@ -170,7 +150,6 @@ const ResetPassword = () => {
               Resend link
             </Link>
           </p>
-        )}
       </div>
     </div>
   );

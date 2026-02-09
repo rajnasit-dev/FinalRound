@@ -69,8 +69,8 @@ export const deleteFeedback = createAsyncThunk(
   "feedback/delete",
   async (feedbackId, { rejectWithValue }) => {
     try {
-      const response = await axios.delete(`${API_BASE_URL}/feedback/${feedbackId}`, { withCredentials: true });
-      return response.data.data;
+      await axios.delete(`${API_BASE_URL}/feedback/${feedbackId}`, { withCredentials: true });
+      return feedbackId;
     } catch (error) {
       return rejectWithValue(error?.response?.data?.message || error.message || "Request failed");
     }
@@ -197,7 +197,7 @@ const feedbackSlice = createSlice({
       })
       .addCase(deleteFeedback.fulfilled, (state, action) => {
         state.loading = false;
-        state.feedbacks = state.feedbacks.filter((f) => f._id !== action.payload._id);
+        state.feedbacks = state.feedbacks.filter((f) => f._id !== action.payload);
         state.deleteSuccess = true;
       })
       .addCase(deleteFeedback.rejected, (state, action) => {

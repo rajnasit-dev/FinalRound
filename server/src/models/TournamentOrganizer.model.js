@@ -28,8 +28,9 @@ const tournamentOrganizerSchema = new Schema({
   authorizedAt: {
     type: Date,
   },
-  rejectionReason: {
-    type: String,
+  isRejected: {
+    type: Boolean,
+    default: false,
   },
   documents: String,
 });

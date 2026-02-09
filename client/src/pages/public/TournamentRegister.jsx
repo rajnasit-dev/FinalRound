@@ -74,9 +74,9 @@ const TournamentRegister = () => {
     if (tournament?.playersPerTeam && Number.isFinite(tournament.playersPerTeam)) {
       return tournament.playersPerTeam;
     }
-    // fall back to sport.minPlayers if available
-    const sportMin = tournament?.sport?.minPlayers;
-    return Number.isFinite(sportMin) ? sportMin : undefined;
+    // Use playersPerTeam from sport data
+    const sportPlayers = tournament?.sport?.playersPerTeam;
+    return Number.isFinite(sportPlayers) ? sportPlayers : undefined;
   };
 
   const findSelectedTeam = () => availableTeams.find((t) => t._id === selectedTeam);

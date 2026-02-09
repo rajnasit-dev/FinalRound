@@ -16,6 +16,10 @@ const sportSchema = new Schema(
       type: [String],
       default: ["Player"], // Available roles for this sport
     },
+    playersPerTeam: {
+      type: Number,
+      default: null, // Number of players per team for team-based sports
+    },
     isActive: {
       type: Boolean,
       default: true, // Admin can disable a sport

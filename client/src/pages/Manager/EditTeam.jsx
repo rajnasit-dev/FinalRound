@@ -57,7 +57,6 @@ const EditTeam = () => {
   const { selectedTeam, loading } = useSelector((state) => state.team);
 
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null); // Used for image preview
   const [bannerFile, setBannerFile] = useState(null);
@@ -342,7 +341,6 @@ const EditTeam = () => {
 
   const onSubmit = async (data) => {
     setError(null);
-    setSuccess(false);
     setIsSubmitting(true);
 
     try {
@@ -379,7 +377,7 @@ const EditTeam = () => {
         });
       }
 
-      setSuccess(true);
+      toast.success("Team updated successfully!");
       setTimeout(() => navigate("/manager/teams"), 1500);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update team. Please try again.");
@@ -409,14 +407,6 @@ const EditTeam = () => {
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
               <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
-            </div>
-          )}
-
-          {success && (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-              <p className="text-green-600 dark:text-green-400 text-sm">
-                Team updated successfully! Redirecting...
-              </p>
             </div>
           )}
 

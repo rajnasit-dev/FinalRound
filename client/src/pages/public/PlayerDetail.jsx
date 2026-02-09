@@ -21,6 +21,7 @@ import Container from "../../components/container/Container";
 import Spinner from "../../components/ui/Spinner";
 import AchievementCard from "../../components/ui/AchievementCard";
 import BackButton from "../../components/ui/BackButton";
+import toast from "react-hot-toast";
 import { fetchPlayerById } from "../../store/slices/playerSlice";
 import { fetchManagerTeams } from "../../store/slices/teamSlice";
 import { sendPlayerRequest } from "../../store/slices/requestSlice";
@@ -42,7 +43,6 @@ const PlayerDetail = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
-  const [inviteSuccess, setInviteSuccess] = useState(false);
   const [inviteError, setInviteError] = useState("");
 
   useEffect(() => {
@@ -68,7 +68,6 @@ const PlayerDetail = () => {
   const handleOpenInviteModal = () => {
     setShowInviteModal(true);
     setSelectedTeam("");
-    setInviteSuccess(false);
     setInviteError("");
   };
 
@@ -84,11 +83,8 @@ const PlayerDetail = () => {
 
     try {
       await dispatch(sendPlayerRequest({ playerId: id, teamId: selectedTeam })).unwrap();
-      setInviteSuccess(true);
-      setTimeout(() => {
-        setShowInviteModal(false);
-        setInviteSuccess(false);
-      }, 2000);
+      toast.success("Invite sent successfully!");
+      setShowInviteModal(false);
     } catch (error) {
       setInviteError(error || "Failed to send invite");
     } finally {
@@ -133,16 +129,6 @@ const PlayerDetail = () => {
         {/* Back Button and Invite Button */}
         <div className="absolute top-6 left-6 flex items-center gap-3">
           <BackButton className="bg-black/50 dark:bg-black/70 border-white/20 text-white hover:bg-black/70 dark:hover:bg-black/90" />
-          {canInvitePlayer && (
-            <button
-              onClick={handleOpenInviteModal}
-              className="flex items-center gap-2 px-4 py-2 bg-secondary dark:bg-secondary-dark text-white rounded-lg hover:opacity-90 transition-all font-semibold shadow-lg"
-            >
-              <UserPlus size={18} />
-              <span className="hidden sm:inline">Request to Join Team</span>
-              <span className="sm:hidden">Invite</span>
-            </button>
-          )}
         </div>
 
         {/* Player Info Overlay */}
@@ -397,22 +383,7 @@ const PlayerDetail = () => {
               </button>
             </div>
 
-            {/* Success State */}
-            {inviteSuccess ? (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
-                  <Check size={32} className="text-green-600" />
-                </div>
-                <h4 className="text-lg font-semibold text-text-primary dark:text-text-primary-dark mb-2">
-                  Invite Sent Successfully!
-                </h4>
-                <p className="text-base dark:text-base-dark">
-                  {player?.fullName} will receive your team invitation.
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Player Info */}
+            {/* Player Info */}
                 <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
                   <img
                     src={player?.avatarUrl || defaultAvatar}
@@ -484,8 +455,6 @@ const PlayerDetail = () => {
                     )}
                   </button>
                 </div>
-              </>
-            )}
           </div>
         </div>
       )}

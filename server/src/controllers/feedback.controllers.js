@@ -69,7 +69,7 @@ export const getFeedbackById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   const feedback = await Feedback.findById(id)
-    .populate("user", "fullName email avatar phone city");
+    .populate("user", "fullName email avatar phone city role");
 
   if (!feedback) {
     throw new ApiError(404, "Review not found.");

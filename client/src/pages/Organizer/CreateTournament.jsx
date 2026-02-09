@@ -9,6 +9,8 @@ import Select from "../../components/ui/Select";
 import RadioGroup from "../../components/ui/RadioGroup";
 import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
+import BannerUpload from "../../components/ui/BannerUpload";
+import defaultTournamentBanner from "../../assets/defaultTournamentCoverImage.png";
 import { createTournament } from "../../store/slices/tournamentSlice";
 import { fetchAllSports } from "../../store/slices/sportSlice";
 
@@ -90,6 +92,7 @@ const CreateTournament = () => {
   const { sports } = useSelector((state) => state.sport);
   const { loading } = useSelector((state) => state.tournament);
   const [bannerFile, setBannerFile] = useState(null);
+  const [bannerPreview, setBannerPreview] = useState(null);
   const [rules, setRules] = useState([""]);
   const [processingPayment, setProcessingPayment] = useState(false);
 
@@ -128,8 +131,7 @@ const CreateTournament = () => {
     { value: "Player", label: "Individual Player" },
   ];
 
-  const handleBannerChange = (e) => {
-    const file = e.target.files?.[0];
+  const handleBannerChange = (file) => {
     if (!file) return;
 
     const typeValidation = validateImageFile(file);
@@ -145,6 +147,15 @@ const CreateTournament = () => {
     }
 
     setBannerFile(file);
+    setBannerPreview(URL.createObjectURL(file));
+  };
+
+  const handleBannerDelete = () => {
+    setBannerFile(null);
+    if (bannerPreview) {
+      URL.revokeObjectURL(bannerPreview);
+      setBannerPreview(null);
+    }
   };
 
   const loadRazorpayScript = () => {
@@ -167,7 +178,6 @@ const CreateTournament = () => {
       formData.append("registrationType", data.registrationType);
       formData.append("description", data.description || "");
       formData.append("teamLimit", data.teamLimit);
-      if (data.playersPerTeam) formData.append("playersPerTeam", data.playersPerTeam);
       formData.append("registrationStart", data.registrationStart);
       formData.append("registrationEnd", data.registrationEnd);
       formData.append("startDate", data.startDate);
@@ -384,16 +394,6 @@ const CreateTournament = () => {
                 },
               })}
             />
-
-            {registrationType === "Team" && (
-              <Input
-                label="Players Per Team"
-                type="number"
-                placeholder="Enter players per team"
-                error={errors.playersPerTeam?.message}
-                {...register("playersPerTeam", { min: { value: 1, message: "Minimum 1 player required" } })}
-              />
-            )}
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium mb-2">Description</label>
@@ -620,13 +620,15 @@ const CreateTournament = () => {
 
         <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
           <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">Tournament Banner</h2>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleBannerChange}
-            className="w-full py-3 px-4 bg-card-background dark:bg-card-background-dark rounded-lg border border-base-dark dark:border-base dark:focus:border-base-dark/50 focus:border-base/50 focus:outline-none"
+          <BannerUpload
+            bannerUrl={bannerPreview}
+            defaultBanner={defaultTournamentBanner}
+            onUpload={handleBannerChange}
+            onDelete={handleBannerDelete}
+            showDelete={!!bannerFile}
+            height="h-48"
+            alt="Tournament Banner"
           />
-          {bannerFile && <p className="text-sm text-base dark:text-base-dark mt-2">Selected: {bannerFile.name}</p>}
         </div>
 
         <div className="flex gap-4">

@@ -215,9 +215,9 @@ const AdminTournaments = () => {
   }
 
   return (
-    <div className="min-h-screen pb-16 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
-      <BackButton className="mb-6" />
-      <div className="mb-6">
+    <div className="space-y-8">
+      <BackButton />
+      <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Tournament Management
         </h1>
@@ -227,7 +227,7 @@ const AdminTournaments = () => {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SearchBar
           placeholder="Search by tournament name..."
           searchQuery={search}

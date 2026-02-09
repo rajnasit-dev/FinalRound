@@ -47,13 +47,6 @@ body .dark {
   color: var(--color-text-primary-dark);
 }
 
-/* Toast notifications - ensure they appear on top */
-[data-sonner-toaster],
-.react-hot-toast-container,
-[data-react-hot-toast] {
-  z-index: 9999 !important;
-}
-
 /* Autofill styles for inputs */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,

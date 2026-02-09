@@ -99,6 +99,21 @@ export const updateUserProfile = createAsyncThunk(
   }
 );
 
+export const fetchCurrentUser = createAsyncThunk(
+  "auth/fetchCurrentUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/users/profile`,
+        { withCredentials: true }
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Request failed");
+    }
+  }
+);
+
 const initialState = {
   user: loadUserFromStorage(),
   token: null,
@@ -216,6 +231,19 @@ const authSlice = createSlice({
       .addCase(updateUserProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      });
+
+    // Fetch Current User (silent refresh)
+    builder
+      .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+        state.user = action.payload;
+        localStorage.setItem("user", JSON.stringify(action.payload));
+      })
+      .addCase(fetchCurrentUser.rejected, (state) => {
+        // If fetching fails (e.g. token expired), log the user out
+        state.user = null;
+        state.isAuthenticated = false;
+        localStorage.removeItem("user");
       });
   },
 });

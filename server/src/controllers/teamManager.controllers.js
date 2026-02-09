@@ -114,7 +114,7 @@ export const addAchievement = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Team manager not found.");
   }
 
-  manager.achievements = { title, year };
+  manager.achievements.push({ title, year });
   await manager.save();
 
   const updatedManager = await TeamManager.findById(managerId)

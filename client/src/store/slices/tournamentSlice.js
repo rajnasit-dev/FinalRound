@@ -68,9 +68,10 @@ export const updateTournament = createAsyncThunk(
   "tournament/update",
   async ({ id, data }, { rejectWithValue }) => {
     try {
+      const isFormData = data instanceof FormData;
       const response = await axios.put(`${API_BASE_URL}/tournaments/${id}`, data, {
         withCredentials: true,
-        headers: { "Content-Type": "application/json" },
+        headers: isFormData ? { "Content-Type": "multipart/form-data" } : { "Content-Type": "application/json" },
       });
       return response.data.data;
     } catch (error) {

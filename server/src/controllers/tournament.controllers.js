@@ -23,7 +23,6 @@ export const createTournament = asyncHandler(async (req, res) => {
     format,
     description,
     teamLimit,
-    playersPerTeam,
     registrationType,
     registrationStart,
     registrationEnd,
@@ -106,7 +105,7 @@ export const createTournament = asyncHandler(async (req, res) => {
     format: format || "League",
     description,
     teamLimit,
-    playersPerTeam,
+    playersPerTeam: sportDoc.playersPerTeam || undefined,
     registrationType: registrationType || "Team",
     registrationStart: new Date(registrationStart),
     registrationEnd: new Date(registrationEnd),
@@ -226,7 +225,6 @@ export const updateTournament = asyncHandler(async (req, res) => {
     format,
     description,
     teamLimit,
-    playersPerTeam,
     registrationStart,
     registrationEnd,
     startDate,
@@ -252,7 +250,6 @@ export const updateTournament = asyncHandler(async (req, res) => {
   if (format) tournament.format = format;
   if (description !== undefined) tournament.description = description;
   if (teamLimit) tournament.teamLimit = teamLimit;
-  if (playersPerTeam) tournament.playersPerTeam = playersPerTeam;
   if (registrationStart) tournament.registrationStart = new Date(registrationStart);
   if (registrationEnd) tournament.registrationEnd = new Date(registrationEnd);
   if (startDate) tournament.startDate = new Date(startDate);
@@ -275,6 +272,16 @@ export const updateTournament = asyncHandler(async (req, res) => {
     } catch (error) {
       throw new ApiError(400, "Invalid ground format.");
     }
+  }
+
+  // Handle banner upload
+  const bannerLocalPath = req.file?.path;
+  if (bannerLocalPath) {
+    const bannerResponse = await uploadOnCloudinary(bannerLocalPath);
+    if (!bannerResponse) {
+      throw new ApiError(500, "Failed to upload banner to Cloudinary.");
+    }
+    tournament.bannerUrl = bannerResponse.url;
   }
 
   await tournament.save();
@@ -483,9 +490,10 @@ export const deleteTournament = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Tournament not found.");
   }
 
-  // Verify user is the tournament organizer
-  if (tournament.organizer.toString() !== organizerId.toString()) {
-    throw new ApiError(403, "Only the tournament organizer can delete this tournament.");
+  // Verify user is the tournament organizer or an admin
+  const isAdmin = req.user.role === "Admin";
+  if (!isAdmin && tournament.organizer.toString() !== organizerId.toString()) {
+    throw new ApiError(403, "Only the tournament organizer or an admin can delete this tournament.");
   }
 
   // Can't delete if status is Live (compute status dynamically)
@@ -559,8 +567,8 @@ export const registerTeam = asyncHandler(async (req, res) => {
     .populate("approvedTeams", "name logoUrl");
 
   res
-    .status(200)
-    .json(new ApiResponse(200, updatedTournament, "Team registered successfully."));
+    .status(201)
+    .json(new ApiResponse(201, updatedTournament, "Team registered successfully."));
 });
 
 // Approve team registration
@@ -684,7 +692,7 @@ export const registerPlayer = asyncHandler(async (req, res) => {
     .populate("registeredPlayers", "fullName avatar email")
     .populate("approvedPlayers", "fullName avatar email");
 
-  res.status(200).json(new ApiResponse(200, updated, "Player registered successfully."));
+  res.status(201).json(new ApiResponse(201, updated, "Player registered successfully."));
 });
 
 // Approve player registration

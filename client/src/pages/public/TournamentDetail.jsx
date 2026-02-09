@@ -253,7 +253,7 @@ const TournamentDetail = () => {
                   Icon={Users}
                   iconColor="text-orange-600"
                   label="Players Per Team"
-                  value={tournament.playersPerTeam}
+                  value={tournament.playersPerTeam || tournament.sport?.playersPerTeam}
                 />
                 <CardStat
                   Icon={Clock}

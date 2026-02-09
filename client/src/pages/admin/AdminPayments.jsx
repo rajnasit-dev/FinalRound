@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllPayments } from "../../store/slices/adminSlice";
 import {
@@ -7,13 +7,18 @@ import {
   CreditCard,
   Users,
   Building2,
-  Search,
+  FileDown,
 } from "lucide-react";
 import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
 import DashboardCardState from "../../components/ui/DashboardCardState";
 import DataTable from "../../components/ui/DataTable";
+import SearchBar from "../../components/ui/SearchBar";
+import Select from "../../components/ui/Select";
 import useDateFormat from "../../hooks/useDateFormat";
+import { generatePaymentPDF } from "../../utils/generatePaymentPDF";
+import toast from "react-hot-toast";
+import PaymentDetailModal from "../../components/ui/PaymentDetailModal";
 
 const AdminPayments = () => {
   const dispatch = useDispatch();
@@ -21,24 +26,91 @@ const AdminPayments = () => {
   const { payments, paymentsPagination, paymentsStats, loading } = useSelector(
     (state) => state.admin
   );
+  const { user } = useSelector((state) => state.auth);
+  const [selectedPaymentId, setSelectedPaymentId] = useState(null);
 
-  const [currentPage, setCurrentPage] = useState(1);
   const [payerTypeFilter, setPayerTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [monthFilter, setMonthFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
 
-  // Fetch payments whenever filters or pagination changes
+  // Fetch payments whenever filters change
   useEffect(() => {
     dispatch(
       getAllPayments({
-        page: currentPage,
-        limit: 10,
+        page: 1,
+        limit: 100,
         payerType: payerTypeFilter,
         status: statusFilter,
         searchTerm: searchTerm || undefined,
       })
     );
-  }, [dispatch, currentPage, payerTypeFilter, statusFilter, searchTerm]);
+  }, [dispatch, payerTypeFilter, statusFilter, searchTerm]);
+
+  // Get available years from payment data
+  const availableYears = useMemo(() => {
+    if (!payments || payments.length === 0) return [];
+    const years = [...new Set(payments.map((p) => new Date(p.createdAt).getFullYear()))];
+    return years.sort((a, b) => b - a);
+  }, [payments]);
+
+  // Filter by month/year on top of server filters
+  const filteredPayments = useMemo(() => {
+    return payments.filter((p) => {
+      const date = new Date(p.createdAt);
+      if (monthFilter !== "all" && date.getMonth() !== parseInt(monthFilter)) return false;
+      if (yearFilter !== "all" && date.getFullYear() !== parseInt(yearFilter)) return false;
+      return true;
+    });
+  }, [payments, monthFilter, yearFilter]);
+
+  // Filtered stats
+  const filteredStats = useMemo(() => {
+    const successful = filteredPayments.filter((p) => p.status === "Success");
+    const platformFees = successful
+      .filter((p) => p.payerType === "Organizer")
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    const registrationPayments = successful
+      .filter((p) => p.payerType !== "Organizer")
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    return {
+      platformFees,
+      registrationPayments,
+      totalTransactions: filteredPayments.length,
+    };
+  }, [filteredPayments]);
+
+  // Build filter subtitle for PDF
+  const getFilterSubtitle = () => {
+    const parts = [];
+    if (monthFilter !== "all") {
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      parts.push(monthNames[parseInt(monthFilter)]);
+    }
+    if (yearFilter !== "all") parts.push(yearFilter);
+    if (payerTypeFilter !== "all") parts.push(`Type: ${payerTypeFilter === "Organizer" ? "Platform Fees" : payerTypeFilter + " Registration"}`);
+    if (statusFilter !== "all") parts.push(`Status: ${statusFilter}`);
+    return parts.length ? `Filtered by: ${parts.join(" | ")}` : "All Payments";
+  };
+
+  const handleGenerateReport = () => {
+    if (filteredPayments.length === 0) {
+      return toast.error("No payment data to generate report");
+    }
+    generatePaymentPDF(filteredPayments, {
+      title: "Admin Payments Report",
+      subtitle: getFilterSubtitle(),
+      summary: {
+        "Total Transactions": filteredPayments.length,
+        "Platform Fees": `Rs.${filteredStats.platformFees.toLocaleString("en-IN")}`,
+        "Registration Payments": `Rs.${filteredStats.registrationPayments.toLocaleString("en-IN")}`,
+        "Success": filteredPayments.filter((p) => p.status === "Success").length,
+        "Pending": filteredPayments.filter((p) => p.status === "Pending").length,
+      },
+    });
+    toast.success("Payment report downloaded!");
+  };
 
   // Define table columns
   const columns = [
@@ -160,7 +232,7 @@ const AdminPayments = () => {
 
   return (
     <div className="space-y-8">
-      <BackButton className="mb-6" />
+      <BackButton />
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Payments Management
@@ -174,8 +246,8 @@ const AdminPayments = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <DashboardCardState
           Icon={DollarSign}
-          label="Admin Revenue"
-          value={`₹${(paymentsStats?.adminRevenue || 0).toLocaleString("en-IN")}`}
+          label="Platform Fees (Admin Revenue)"
+          value={`₹${(filteredStats.platformFees || 0).toLocaleString("en-IN")}`}
           gradientFrom="from-green-500/10"
           gradientVia="via-green-500/5"
           borderColor="border-green-500/20"
@@ -184,8 +256,8 @@ const AdminPayments = () => {
         />
         <DashboardCardState
           Icon={Trophy}
-          label="Platform Fees Collected"
-          value={`₹${(paymentsStats?.platformFeesCollected || 0).toLocaleString("en-IN")}`}
+          label="Registration Payments"
+          value={`₹${(filteredStats.registrationPayments || 0).toLocaleString("en-IN")}`}
           gradientFrom="from-blue-500/10"
           gradientVia="via-blue-500/5"
           borderColor="border-blue-500/20"
@@ -195,7 +267,7 @@ const AdminPayments = () => {
         <DashboardCardState
           Icon={CreditCard}
           label="Total Transactions"
-          value={paymentsPagination?.total || paymentsStats?.totalTransactions || 0}
+          value={filteredStats.totalTransactions || 0}
           gradientFrom="from-purple-500/10"
           gradientVia="via-purple-500/5"
           borderColor="border-purple-500/20"
@@ -205,132 +277,98 @@ const AdminPayments = () => {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="flex items-end gap-4 flex-wrap bg-card-background dark:bg-card-background-dark rounded-xl p-6 border border-base-dark dark:border-base">
-        {/* Search Bar - Left Side */}
-        <div className="flex-1 min-w-xs">
-          <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-            Search
-          </label>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Tournament, organizer, or player..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full pl-10 pr-4 py-2 border border-base-dark dark:border-base rounded-lg bg-white dark:bg-gray-800 text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary"
-            />
-          </div>
-        </div>
-
-        {/* Dropdowns - Right Side */}
-        <div className="flex items-end gap-3">
-          <div>
-            <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-              Payer Type
-            </label>
-            <select
-              value={payerTypeFilter}
-              onChange={(e) => {
-                setPayerTypeFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="px-4 py-2 border border-base-dark dark:border-base rounded-lg bg-white dark:bg-gray-800 text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary"
-            >
-              <option value="all">All Types</option>
-              <option value="Organizer">Platform Fees</option>
-              <option value="Team">Team Registration</option>
-              <option value="Player">Player Registration</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-              Status
-            </label>
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="px-4 py-2 border border-base-dark dark:border-base rounded-lg bg-white dark:bg-gray-800 text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary"
-            >
-              <option value="all">All Statuses</option>
-              <option value="Success">Success</option>
-              <option value="Pending">Pending</option>
-              <option value="Failed">Failed</option>
-              <option value="Refunded">Refunded</option>
-            </select>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <SearchBar
+          placeholder="Tournament, organizer, or player..."
+          searchQuery={searchTerm}
+          setSearchQuery={setSearchTerm}
+        />
+        <Select
+          options={[
+            { value: "all", label: "All Types" },
+            { value: "Organizer", label: "Platform Fees" },
+            { value: "Team", label: "Team Registration" },
+            { value: "Player", label: "Player Registration" },
+          ]}
+          value={payerTypeFilter}
+          onChange={(e) => setPayerTypeFilter(e.target.value)}
+        />
+        <Select
+          options={[
+            { value: "all", label: "All Statuses" },
+            { value: "Success", label: "Success" },
+            { value: "Pending", label: "Pending" },
+            { value: "Failed", label: "Failed" },
+            { value: "Refunded", label: "Refunded" },
+          ]}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        />
+        <Select
+          options={[
+            { value: "all", label: "All Months" },
+            { value: "0", label: "January" },
+            { value: "1", label: "February" },
+            { value: "2", label: "March" },
+            { value: "3", label: "April" },
+            { value: "4", label: "May" },
+            { value: "5", label: "June" },
+            { value: "6", label: "July" },
+            { value: "7", label: "August" },
+            { value: "8", label: "September" },
+            { value: "9", label: "October" },
+            { value: "10", label: "November" },
+            { value: "11", label: "December" },
+          ]}
+          value={monthFilter}
+          onChange={(e) => setMonthFilter(e.target.value)}
+        />
+        <Select
+          options={[
+            { value: "all", label: "All Years" },
+            ...availableYears.map((y) => ({ value: String(y), label: String(y) })),
+          ]}
+          value={yearFilter}
+          onChange={(e) => setYearFilter(e.target.value)}
+        />
+        <button
+          onClick={handleGenerateReport}
+          className="flex items-center justify-center gap-2 px-4 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg font-medium transition-colors cursor-pointer"
+        >
+          <FileDown className="w-4 h-4" />
+          Generate Report
+        </button>
       </div>
 
       {/* Payments Table */}
-      <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base overflow-hidden">
-        <div className="p-6 border-b border-base-dark dark:border-base">
-          <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
-            All Transactions
+      {filteredPayments.length === 0 ? (
+        <div className="text-center py-12">
+          <CreditCard className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            No Transactions Found
           </h3>
-          <p className="text-sm text-base dark:text-base-dark mt-1">
-            Complete transaction history with detailed payment information
+          <p className="text-gray-600 dark:text-gray-400">
+            No transactions match your filters.
           </p>
         </div>
+      ) : (
         <DataTable
           columns={columns}
-          data={payments}
+          data={filteredPayments}
+          onRowClick={(payment) => setSelectedPaymentId(payment._id)}
           itemsPerPage={10}
-          emptyMessage={
-            <div className="text-center py-12">
-              <CreditCard className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                No Transactions Found
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                No transactions match your filters.
-              </p>
-            </div>
-          }
+          emptyMessage="No transactions found"
         />
+      )}
 
-        {/* Pagination */}
-        {paymentsPagination && paymentsPagination.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 p-6 border-t border-base-dark dark:border-base">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-            >
-              Previous
-            </button>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-text-primary dark:text-text-primary-dark">
-                Page{" "}
-                <span className="font-bold">
-                  {paymentsPagination.page || 1}
-                </span>{" "}
-                of{" "}
-                <span className="font-bold">
-                  {paymentsPagination.totalPages}
-                </span>
-              </span>
-            </div>
-            <button
-              onClick={() =>
-                setCurrentPage(
-                  Math.min(paymentsPagination.totalPages, currentPage + 1)
-                )
-              }
-              disabled={currentPage === paymentsPagination.totalPages}
-              className="px-4 py-2 border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-            >
-              Next
-            </button>
-          </div>
-        )}
-      </div>
+      {/* Payment Detail Modal */}
+      {selectedPaymentId && (
+        <PaymentDetailModal
+          paymentId={selectedPaymentId}
+          onClose={() => setSelectedPaymentId(null)}
+          currentUserId={user?._id}
+        />
+      )}
     </div>
   );
 };

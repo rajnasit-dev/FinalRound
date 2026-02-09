@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
 import { User, Mail, Phone, MapPin, Save, X, Ruler, Weight, Plus } from "lucide-react";
+import toast from "react-hot-toast";
 import AddAchievements from "../../components/ui/AddAchievements";
 import SportsRolesInput from "../../components/ui/SportsRolesInput";
 import { updatePlayerProfile, fetchPlayerProfile, clearError } from "../../store/slices/playerSlice";
@@ -16,7 +17,6 @@ const EditPlayerProfile = () => {
   const { user } = useSelector((state) => state.auth);
   const { profile, loading } = useSelector((state) => state.player);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
 
   // Fetch latest player profile on mount
   useEffect(() => {
@@ -105,7 +105,6 @@ const EditPlayerProfile = () => {
 
   const onSubmit = async (data) => {
     setError(null);
-    setSuccess(false);
     
     try {
       // Format sports data for backend
@@ -130,7 +129,7 @@ const EditPlayerProfile = () => {
 
       await dispatch(updatePlayerProfile(dataToSubmit)).unwrap();
       await dispatch(fetchPlayerProfile());
-      setSuccess(true);
+      toast.success("Profile updated successfully!");
       
       setTimeout(() => {
         navigate("/player/profile");
@@ -171,13 +170,6 @@ const EditPlayerProfile = () => {
         {error && (
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
-          </div>
-        )}
-
-        {/* Success Message */}
-        {success && (
-          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-            <p className="text-green-600 dark:text-green-400 text-sm">Profile updated successfully! Redirecting...</p>
           </div>
         )}
 

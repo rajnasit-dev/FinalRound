@@ -12,7 +12,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000
 const ChangePassword = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -35,7 +34,6 @@ const ChangePassword = () => {
 
   const onSubmit = async (data) => {
     setError(null);
-    setSuccess(false);
 
     try {
       const response = await axios.post(
@@ -47,7 +45,6 @@ const ChangePassword = () => {
         { withCredentials: true }
       );
 
-      setSuccess(true);
       toast.success("Password changed successfully!");
       reset();
 
@@ -88,14 +85,6 @@ const ChangePassword = () => {
           {error && (
             <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-              <p className="text-green-600 dark:text-green-400 text-sm">
-                Password changed successfully! Redirecting...
-              </p>
             </div>
           )}
 

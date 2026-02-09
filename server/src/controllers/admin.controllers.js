@@ -16,6 +16,7 @@ const TOURNAMENT_LISTING_FEE = 100; // 100 rupees per tournament
 export const getPendingOrganizerRequests = asyncHandler(async (req, res) => {
   const pendingOrganizers = await TournamentOrganizer.find({
     isAuthorized: false,
+    isRejected: { $ne: true },
     verificationDocumentUrl: { $exists: true, $ne: null },
   })
     .select("-password -refreshToken")
@@ -64,9 +65,9 @@ export const authorizeOrganizer = asyncHandler(async (req, res) => {
   }
 
   organizer.isAuthorized = true;
+  organizer.isRejected = false;
   organizer.authorizedBy = req.user._id;
   organizer.authorizedAt = new Date();
-  organizer.rejectionReason = undefined;
 
   await organizer.save({ validateBeforeSave: false });
 
@@ -80,7 +81,6 @@ export const authorizeOrganizer = asyncHandler(async (req, res) => {
 // Reject an organizer authorization
 export const rejectOrganizer = asyncHandler(async (req, res) => {
   const { organizerId } = req.params;
-  const { reason } = req.body;
 
   const organizer = await TournamentOrganizer.findById(organizerId);
   if (!organizer) {
@@ -88,7 +88,7 @@ export const rejectOrganizer = asyncHandler(async (req, res) => {
   }
 
   organizer.isAuthorized = false;
-  organizer.rejectionReason = reason || "Authorization denied by admin";
+  organizer.isRejected = true;
   organizer.authorizedBy = undefined;
   organizer.authorizedAt = undefined;
 
@@ -143,7 +143,7 @@ export const getAllTournaments = asyncHandler(async (req, res) => {
 
   const tournaments = await Tournament.find(filter)
     .populate("sport", "name")
-    .populate("organizer", "fullName email orgName")
+    .populate("organizer", "fullName email phone orgName")
     .populate("approvedTeams", "name")
     .sort({ createdAt: -1 });
 
@@ -201,8 +201,7 @@ export const getRevenue = asyncHandler(async (req, res) => {
     } : {})
   });
   
-  const adminRevenue = (totalTournaments * TOURNAMENT_LISTING_FEE) + 
-                       (await Payment.aggregate([
+  const platformFeeResult = await Payment.aggregate([
                          {
                            $match: {
                              payerType: "Organizer",
@@ -221,7 +220,9 @@ export const getRevenue = asyncHandler(async (req, res) => {
                              totalAmount: { $sum: "$amount" }
                            }
                          }
-                       ])).then(result => result[0]?.totalAmount || 0);
+                       ]);
+  const adminRevenue = (totalTournaments * TOURNAMENT_LISTING_FEE) + 
+                       (platformFeeResult[0]?.totalAmount || 0);
 
   // ORGANIZER REVENUE: Registration fees from players/managers (exclude organizer platform fees)
   const organizerRevenueStats = await Payment.aggregate([
@@ -392,6 +393,7 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     Tournament.countDocuments({ status: { $in: ["Upcoming", "Live"] } }),
     TournamentOrganizer.countDocuments({
       isAuthorized: false,
+      isRejected: { $ne: true },
       verificationDocumentUrl: { $exists: true, $ne: null },
     }),
     Payment.find({ status: "Success" })
@@ -531,7 +533,7 @@ export const getAllPayments = asyncHandler(async (req, res) => {
       })
       .populate({
         path: "team",
-        select: "teamName",
+        select: "name",
       })
       .sort({ createdAt: -1 })
       .exec();
@@ -556,8 +558,8 @@ export const getAllPayments = asyncHandler(async (req, res) => {
           payment.player.fullName
             .toLowerCase()
             .includes(searchTerm.toLowerCase())) ||
-        (payment.team?.teamName &&
-          payment.team.teamName
+        (payment.team?.name &&
+          payment.team.name
             .toLowerCase()
             .includes(searchTerm.toLowerCase()))
     );
@@ -598,7 +600,7 @@ export const getAllPayments = asyncHandler(async (req, res) => {
     })
     .populate({
       path: "team",
-      select: "teamName",
+      select: "name",
     })
     .sort({ createdAt: -1 })
     .skip(skip)

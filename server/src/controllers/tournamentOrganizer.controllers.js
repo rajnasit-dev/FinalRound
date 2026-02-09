@@ -248,7 +248,7 @@ export const requestAuthorization = asyncHandler(async (req, res) => {
   // Update organizer with document and request date
   organizer.verificationDocumentUrl = documentResponse.url;
   organizer.authorizationRequestDate = new Date();
-  organizer.rejectionReason = undefined; // Clear any previous rejection reason
+  organizer.isRejected = false; // Clear any previous rejection
   
   await organizer.save();
 
@@ -265,7 +265,7 @@ export const getAuthorizationStatus = asyncHandler(async (req, res) => {
   const organizerId = req.user._id;
 
   const organizer = await TournamentOrganizer.findById(organizerId)
-    .select("isAuthorized verificationDocumentUrl authorizationRequestDate rejectionReason authorizedAt");
+    .select("isAuthorized isRejected verificationDocumentUrl authorizationRequestDate authorizedAt");
 
   if (!organizer) {
     throw new ApiError(404, "Tournament organizer not found.");
@@ -275,15 +275,14 @@ export const getAuthorizationStatus = asyncHandler(async (req, res) => {
     isAuthorized: organizer.isAuthorized,
     verificationDocumentUrl: organizer.verificationDocumentUrl,
     authorizationRequestDate: organizer.authorizationRequestDate,
-    rejectionReason: organizer.rejectionReason,
     authorizedAt: organizer.authorizedAt,
     status: organizer.isAuthorized 
       ? "authorized" 
-      : organizer.verificationDocumentUrl 
-        ? organizer.rejectionReason 
-          ? "rejected" 
-          : "pending"
-        : "not_requested"
+      : organizer.isRejected
+        ? "rejected"
+        : organizer.verificationDocumentUrl 
+          ? "pending"
+          : "not_requested"
   };
 
   res

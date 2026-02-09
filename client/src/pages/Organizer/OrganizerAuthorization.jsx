@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { FileText, Upload, CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
 import axios from "axios";
+import toast from "react-hot-toast";
 import Button from "../../components/ui/Button";
 import Spinner from "../../components/ui/Spinner";
 import ErrorMessage from "../../components/ui/ErrorMessage";
@@ -15,7 +16,6 @@ const OrganizerAuthorization = () => {
   const [loading, setLoading] = useState(false);
   const [authStatus, setAuthStatus] = useState(null);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
@@ -26,7 +26,7 @@ const OrganizerAuthorization = () => {
   const fetchAuthorizationStatus = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/organizer/authorization-status`, {
+      const response = await axios.get(`${API_BASE_URL}/tournament-organizers/authorization-status`, {
         withCredentials: true,
       });
       setAuthStatus(response.data.data);
@@ -72,7 +72,7 @@ const OrganizerAuthorization = () => {
       formData.append("document", file);
 
       const response = await axios.post(
-        `${API_BASE_URL}/organizer/request-authorization`,
+        `${API_BASE_URL}/tournament-organizers/request-authorization`,
         formData,
         {
           withCredentials: true,
@@ -82,7 +82,7 @@ const OrganizerAuthorization = () => {
         }
       );
 
-      setSuccess(true);
+      toast.success("Authorization request submitted successfully!");
       setFile(null);
       fetchAuthorizationStatus();
 
@@ -202,12 +202,7 @@ const OrganizerAuthorization = () => {
               </p>
             </div>
           </div>
-          {authStatus?.rejectionReason && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg mb-4">
-              <p className="text-sm font-semibold text-red-800 dark:text-red-400 mb-1">Reason:</p>
-              <p className="text-sm text-red-700 dark:text-red-300">{authStatus.rejectionReason}</p>
-            </div>
-          )}
+
           <p className="text-base dark:text-base-dark mb-6">
             You can submit a new request with updated documentation.
           </p>
@@ -254,14 +249,6 @@ const OrganizerAuthorization = () => {
 
       <div className="bg-card-background dark:bg-card-background-dark rounded-xl p-8 border border-base-dark dark:border-base">
         {error && <ErrorMessage message={error} type="error" className="mb-6" />}
-
-        {success && (
-          <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-            <p className="text-green-600 dark:text-green-400 text-sm">
-              Authorization request submitted successfully! Redirecting...
-            </p>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -335,18 +322,10 @@ const OrganizerAuthorization = () => {
               type="submit"
               className="flex-1 bg-secondary dark:bg-secondary-dark hover:opacity-90"
               disabled={!file || uploading}
+              loading={uploading}
             >
-              {uploading ? (
-                <>
-                  <Spinner size="sm" />
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-5 h-5" />
-                  Submit Request
-                </>
-              )}
+              <CheckCircle className="w-5 h-5" />
+              Submit Request
             </Button>
           </div>
         </form>

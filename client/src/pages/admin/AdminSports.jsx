@@ -7,6 +7,7 @@ import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import DataTable from "../../components/ui/DataTable";
+import SearchBar from "../../components/ui/SearchBar";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
 import Input from "../../components/ui/Input";
@@ -28,6 +29,7 @@ const AdminSports = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingSport, setEditingSport] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const {
     register: registerAdd,
@@ -210,10 +212,10 @@ const AdminSports = () => {
   }
 
   return (
-    <div className="min-h-screen pb-16 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
-      <BackButton className="mb-6" />
+    <div className="space-y-8">
+      <BackButton />
       
-      <div className="mb-6 flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
             Sports Management
@@ -236,9 +238,15 @@ const AdminSports = () => {
           message={error} 
           type="error" 
           onDismiss={() => setError(null)} 
-          className="mb-6"
         />
       )}
+
+      {/* Search */}
+      <SearchBar
+        placeholder="Search sports by name..."
+        searchQuery={searchTerm}
+        setSearchQuery={setSearchTerm}
+      />
 
       {sports.length === 0 ? (
         <div className="text-center py-12">
@@ -253,7 +261,11 @@ const AdminSports = () => {
       ) : (
         <DataTable
           columns={columns}
-          data={sports}
+          data={sports.filter((s) =>
+            searchTerm
+              ? s.name?.toLowerCase().includes(searchTerm.toLowerCase())
+              : true
+          )}
           itemsPerPage={10}
           emptyMessage="No sports found"
         />

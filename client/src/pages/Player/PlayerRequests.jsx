@@ -45,10 +45,10 @@ const PlayerRequests = () => {
     e.stopPropagation(); // Prevent row click
     try {
       await dispatch(acceptRequest(requestId)).unwrap();
-      toast.success("Request accepted successfully! You've joined the team.");
+      toast.success("Invitation accepted! You've joined the team.");
       dispatch(getReceivedRequests());
     } catch (error) {
-      toast.error(error?.message || "Failed to accept request");
+      toast.error(error?.message || "Failed to accept invitation");
     }
   };
 
@@ -56,10 +56,10 @@ const PlayerRequests = () => {
     e.stopPropagation(); // Prevent row click
     try {
       await dispatch(rejectRequest(requestId)).unwrap();
-      toast.success("Request rejected");
+      toast.success("Invitation rejected successfully");
       dispatch(getReceivedRequests());
     } catch (error) {
-      toast.error(error?.message || "Failed to reject request");
+      toast.error(error?.message || "Failed to reject invitation");
     }
   };
 
@@ -67,10 +67,10 @@ const PlayerRequests = () => {
     e.stopPropagation(); // Prevent row click
     try {
       await dispatch(cancelRequest(requestId)).unwrap();
-      toast.success("Request deleted successfully");
+      toast.success("Request cancelled successfully");
       dispatch(getSentRequests());
     } catch (error) {
-      toast.error(error?.message || "Failed to delete request");
+      toast.error(error?.message || "Failed to cancel request");
     }
   };
 

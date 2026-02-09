@@ -16,6 +16,7 @@ import { Match } from './src/models/Match.model.js';
 import { Payment } from './src/models/Payment.model.js';
 import { Request } from './src/models/Request.model.js';
 import Booking from './src/models/Booking.model.js';
+import { Feedback } from './src/models/Feedback.model.js';
 
 // Same password for all users
 const DEFAULT_PASSWORD = 'Password123!';
@@ -44,6 +45,7 @@ async function clearDatabase() {
   await Payment.deleteMany({});
   await Request.deleteMany({});
   await Booking.deleteMany({});
+  await Feedback.deleteMany({});
   console.log('✅ Database cleared');
 }
 
@@ -51,18 +53,18 @@ async function seedSports() {
   console.log('🏃 Seeding sports...');
   
   const sports = [
-    { name: 'Cricket', teamBased: true, roles: ['Batsman', 'Bowler', 'All-rounder', 'Wicketkeeper'] },
-    { name: 'Football', teamBased: true, roles: ['Striker', 'Midfielder', 'Defender', 'Goalkeeper'] },
-    { name: 'Basketball', teamBased: true, roles: ['Point Guard', 'Shooting Guard', 'Small Forward', 'Power Forward', 'Center'] },
-    { name: 'Volleyball', teamBased: true, roles: ['Setter', 'Outside Hitter', 'Middle Blocker', 'Opposite Hitter', 'Libero'] },
-    { name: 'Hockey', teamBased: true, roles: ['Forward', 'Midfielder', 'Defender', 'Goalkeeper'] },
-    { name: 'Badminton', teamBased: false, roles: ['Singles Player', 'Doubles Player'] },
-    { name: 'Tennis', teamBased: false, roles: ['Singles Player', 'Doubles Player'] },
-    { name: 'Table Tennis', teamBased: false, roles: ['Singles Player', 'Doubles Player'] },
-    { name: 'Chess', teamBased: false, roles: ['Player'] },
-    { name: 'Kabaddi', teamBased: true, roles: ['Raider', 'Defender', 'All-rounder'] },
-    { name: 'Rugby', teamBased: true, roles: ['Forward', 'Back', 'Scrum-half', 'Fly-half'] },
-    { name: 'Baseball', teamBased: true, roles: ['Pitcher', 'Catcher', 'Infielder', 'Outfielder'] },
+    { name: 'Cricket', teamBased: true, playersPerTeam: 11, roles: ['Batsman', 'Bowler', 'All-rounder', 'Wicketkeeper'] },
+    { name: 'Football', teamBased: true, playersPerTeam: 11, roles: ['Striker', 'Midfielder', 'Defender', 'Goalkeeper'] },
+    { name: 'Basketball', teamBased: true, playersPerTeam: 5, roles: ['Point Guard', 'Shooting Guard', 'Small Forward', 'Power Forward', 'Center'] },
+    { name: 'Volleyball', teamBased: true, playersPerTeam: 6, roles: ['Setter', 'Outside Hitter', 'Middle Blocker', 'Opposite Hitter', 'Libero'] },
+    { name: 'Hockey', teamBased: true, playersPerTeam: 11, roles: ['Forward', 'Midfielder', 'Defender', 'Goalkeeper'] },
+    { name: 'Badminton', teamBased: false, playersPerTeam: 1, roles: ['Singles Player', 'Doubles Player'] },
+    { name: 'Tennis', teamBased: false, playersPerTeam: 1, roles: ['Singles Player', 'Doubles Player'] },
+    { name: 'Table Tennis', teamBased: false, playersPerTeam: 1, roles: ['Singles Player', 'Doubles Player'] },
+    { name: 'Chess', teamBased: false, playersPerTeam: 1, roles: ['Player'] },
+    { name: 'Kabaddi', teamBased: true, playersPerTeam: 7, roles: ['Raider', 'Defender', 'All-rounder'] },
+    { name: 'Rugby', teamBased: true, playersPerTeam: 15, roles: ['Forward', 'Back', 'Scrum-half', 'Fly-half'] },
+    { name: 'Baseball', teamBased: true, playersPerTeam: 9, roles: ['Pitcher', 'Catcher', 'Infielder', 'Outfielder'] },
   ];
 
   const createdSports = await Sport.insertMany(sports);
@@ -202,7 +204,14 @@ async function seedOrganizer() {
     },
   ];
 
-  await TournamentOrganizer.insertMany(unauthorizedOrganizers);
+  // Hash passwords before insertMany (insertMany doesn't trigger pre-save middleware)
+  const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+  const unauthorizedOrganizersWithHash = unauthorizedOrganizers.map(org => ({
+    ...org,
+    password: hashedPassword,
+  }));
+
+  await TournamentOrganizer.insertMany(unauthorizedOrganizersWithHash);
 
   console.log('✅ Seeded 1 authorized + 3 unauthorized organizers');
   return organizer;
@@ -899,6 +908,33 @@ async function seedOrganizerRequests(organizer, admin) {
   return requests;
 }
 
+async function seedFeedbacks(player, manager, organizer, additionalPlayers) {
+  console.log('💬 Seeding feedbacks...');
+
+  const feedbackData = [
+    { user: player._id, rating: 5, comment: 'Amazing platform! Made it so easy to find and join tournaments in Gujarat. The registration process is seamless.' },
+    { user: player._id, rating: 4, comment: 'Great experience overall. Love the match fixtures feature. Would be nice to have live score updates too.' },
+    { user: manager._id, rating: 5, comment: 'Managing my team has never been easier. The player invitation system works flawlessly. Highly recommended!' },
+    { user: manager._id, rating: 4, comment: 'Very useful for organizing team rosters. The dashboard gives a clear overview of all team activities.' },
+    { user: organizer._id, rating: 5, comment: 'Best tournament management platform I have used. Creating fixtures and managing registrations is a breeze.' },
+    { user: organizer._id, rating: 4, comment: 'The payment integration for platform fees is very smooth. Would love to see more analytics for tournaments.' },
+    { user: additionalPlayers[0]._id, rating: 5, comment: 'Found some great cricket tournaments in Ahmedabad through this platform. The UI is clean and intuitive.' },
+    { user: additionalPlayers[1]._id, rating: 3, comment: 'Decent platform. Sometimes the search could be more responsive, but overall it gets the job done.' },
+    { user: additionalPlayers[2]._id, rating: 5, comment: 'Love how easy it is to browse tournaments by sport. Joined a football league and had a fantastic experience!' },
+    { user: additionalPlayers[3]._id, rating: 4, comment: 'Good platform for connecting with local sports communities. The team detail pages are very informative.' },
+    { user: additionalPlayers[4]._id, rating: 5, comment: 'SportsHub is a game changer for amateur players like me. Finally a proper platform to find competitive matches!' },
+    { user: additionalPlayers[5]._id, rating: 4, comment: 'Really enjoying the platform. The notification system keeps me updated about my team requests and match schedules.' },
+    { user: additionalPlayers[6]._id, rating: 3, comment: 'Nice concept and execution. A mobile app would make it even better for on-the-go access.' },
+    { user: additionalPlayers[7]._id, rating: 5, comment: 'Excellent platform for sports enthusiasts in Gujarat. The tournament bracket system is very well designed.' },
+    { user: additionalPlayers[8]._id, rating: 4, comment: 'Very professional platform. Helped our badminton club organize inter-city tournaments effortlessly.' },
+    { user: additionalPlayers[9]._id, rating: 5, comment: 'Absolutely love it! The fact that it supports both team and individual sports is brilliant. Keep up the great work!' },
+  ];
+
+  const feedbacks = await Feedback.insertMany(feedbackData);
+  console.log(`✅ Seeded ${feedbacks.length} feedbacks`);
+  return feedbacks;
+}
+
 async function seed() {
   try {
     await connectDB();
@@ -918,6 +954,7 @@ async function seed() {
     const requests = await seedRequests(player, manager, teams, tournaments);
     const bookings = await seedBookings(tournaments, organizer);
     const authRequests = await seedOrganizerRequests(organizer, admin);
+    const feedbacks = await seedFeedbacks(player, manager, organizer, additionalPlayers);
 
     console.log('\n🎉 Database seeded successfully!');
     console.log('\n📊 Summary:');
@@ -929,6 +966,7 @@ async function seed() {
     console.log(`- Payments: ${payments.length}`);
     console.log(`- Requests: ${requests.length}`);
     console.log(`- Bookings: ${bookings.length}`);
+    console.log(`- Feedbacks: ${feedbacks.length}`);
     
     console.log('\n🔑 Test Credentials:');
     console.log('Admin: admin@gmail.com / Password123!');

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
 import { User, Mail, Phone, MapPin, Save, X } from "lucide-react";
+import toast from "react-hot-toast";
 import { updateUserProfile, clearError } from "../../store/slices/authSlice";
 import Spinner from "../../components/ui/Spinner";
 import Container from "../../components/container/Container";
@@ -14,7 +15,6 @@ const EditOrganizerProfile = () => {
   const dispatch = useDispatch();
   const { user, loading } = useSelector((state) => state.auth);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
 
   const {
     register,
@@ -50,7 +50,6 @@ const EditOrganizerProfile = () => {
 
   const onSubmit = async (data) => {
     setError(null);
-    setSuccess(false);
 
     try {
       const dataToSubmit = {
@@ -61,7 +60,7 @@ const EditOrganizerProfile = () => {
       };
 
       await dispatch(updateUserProfile(dataToSubmit)).unwrap();
-      setSuccess(true);
+      toast.success("Profile updated successfully!");
 
       setTimeout(() => {
         navigate("/organizer/profile");
@@ -102,15 +101,6 @@ const EditOrganizerProfile = () => {
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
               <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
-            </div>
-          )}
-
-          {/* Success Message */}
-          {success && (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-              <p className="text-green-600 dark:text-green-400 text-sm">
-                Profile updated successfully! Redirecting...
-              </p>
             </div>
           )}
 

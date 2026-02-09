@@ -71,11 +71,11 @@ export const authorizeOrganizer = createAsyncThunk(
 // Reject organizer
 export const rejectOrganizer = createAsyncThunk(
   "admin/rejectOrganizer",
-  async ({ organizerId, reason }, { rejectWithValue }) => {
+  async ({ organizerId }, { rejectWithValue }) => {
     try {
       const response = await axios.patch(
         `${API_BASE_URL}/admin/organizers/${organizerId}/reject`,
-        { reason },
+        {},
         { withCredentials: true }
       );
       return response.data.data;

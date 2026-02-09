@@ -1,10 +1,10 @@
-const DashboardCardState = ({ Icon, label, value, gradientFrom, gradientVia, borderColor, iconGradientFrom, iconGradientTo, onClick }) => {
+const DashboardCardState = ({ Icon, label, value, gradientFrom, gradientVia, borderColor, iconGradientFrom, iconGradientTo, onClick, className = "" }) => {
   const Component = onClick ? 'button' : 'div';
   
   return (
     <Component 
       onClick={onClick}
-      className={`group relative bg-card-background dark:bg-card-background-dark border-2 ${borderColor} rounded-2xl p-6 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-opacity-100 ${onClick ? 'cursor-pointer w-full text-left' : ''}`}
+      className={`group relative bg-card-background dark:bg-card-background-dark border-2 ${borderColor} rounded-2xl p-6 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-opacity-100 ${onClick ? 'cursor-pointer w-full text-left' : ''} ${className}`}
     >
       {/* Background gradient overlay */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientVia} to-transparent opacity-5 group-hover:opacity-10 transition-opacity duration-300`}></div>

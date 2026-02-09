@@ -1,218 +1,311 @@
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserPayments } from "../../store/slices/paymentSlice";
-import { DollarSign, Calendar, Trophy, Users, CheckCircle, Clock, XCircle, Download } from "lucide-react";
+import {
+  DollarSign,
+  Trophy,
+  Users,
+  CreditCard,
+  Clock,
+  CheckCircle,
+  XCircle,
+  FileDown,
+} from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import DashboardCardState from "../../components/ui/DashboardCardState";
 import DataTable from "../../components/ui/DataTable";
+import SearchBar from "../../components/ui/SearchBar";
+import Select from "../../components/ui/Select";
 import useDateFormat from "../../hooks/useDateFormat";
-import { Link } from "react-router-dom";
+import { generatePaymentPDF } from "../../utils/generatePaymentPDF";
+import toast from "react-hot-toast";
+import PaymentDetailModal from "../../components/ui/PaymentDetailModal";
 
 const ManagerPayments = () => {
   const dispatch = useDispatch();
   const { payments, loading, error } = useSelector((state) => state.payment);
+  const { user } = useSelector((state) => state.auth);
   const { formatDate, formatTime } = useDateFormat();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [monthFilter, setMonthFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
+  const [selectedPaymentId, setSelectedPaymentId] = useState(null);
 
   useEffect(() => {
     dispatch(fetchUserPayments());
   }, [dispatch]);
 
+  // Available years
+  const availableYears = useMemo(() => {
+    if (!payments || payments.length === 0) return [];
+    const years = [...new Set(payments.map((p) => new Date(p.createdAt).getFullYear()))];
+    return years.sort((a, b) => b - a);
+  }, [payments]);
+
+  // Filtered payments
+  const filteredPayments = useMemo(() => {
+    return (payments || []).filter((p) => {
+      if (statusFilter !== "all" && p.status?.toLowerCase() !== statusFilter.toLowerCase()) return false;
+      const date = new Date(p.createdAt);
+      if (monthFilter !== "all" && date.getMonth() !== parseInt(monthFilter)) return false;
+      if (yearFilter !== "all" && date.getFullYear() !== parseInt(yearFilter)) return false;
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const tournamentName = p.tournament?.name?.toLowerCase() || "";
+        const teamName = p.team?.name?.toLowerCase() || "";
+        if (!tournamentName.includes(term) && !teamName.includes(term)) return false;
+      }
+      return true;
+    });
+  }, [payments, statusFilter, monthFilter, yearFilter, searchTerm]);
+
+  // Filtered stats
+  const filteredStats = useMemo(() => {
+    const successful = filteredPayments.filter((p) => p.status?.toLowerCase() === "success");
+    const totalPaid = successful.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const pending = filteredPayments
+      .filter((p) => p.status?.toLowerCase() === "pending")
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    return { totalPaid, pending, totalTransactions: filteredPayments.length };
+  }, [filteredPayments]);
+
+  // PDF subtitle
+  const getFilterSubtitle = () => {
+    const parts = [];
+    if (monthFilter !== "all") {
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      parts.push(monthNames[parseInt(monthFilter)]);
+    }
+    if (yearFilter !== "all") parts.push(yearFilter);
+    if (statusFilter !== "all") parts.push(`Status: ${statusFilter}`);
+    return parts.length ? `Filtered by: ${parts.join(" | ")}` : "All Payments";
+  };
+
+  const handleGenerateReport = () => {
+    if (filteredPayments.length === 0) return toast.error("No payment data to generate report");
+    generatePaymentPDF(filteredPayments, {
+      title: "Manager Payments Report",
+      subtitle: getFilterSubtitle(),
+      summary: {
+        "Total Paid": `Rs.${filteredStats.totalPaid.toLocaleString("en-IN")}`,
+        "Pending": `Rs.${filteredStats.pending.toLocaleString("en-IN")}`,
+        "Transactions": filteredStats.totalTransactions,
+      },
+    });
+    toast.success("Payment report downloaded!");
+  };
+
+  // Status badge
   const getStatusBadge = (status) => {
-    const statusConfig = {
-      success: {
-        icon: CheckCircle,
-        text: "Completed",
-        bgColor: "bg-green-100 dark:bg-green-900/30",
-        textColor: "text-green-800 dark:text-green-300",
-        iconColor: "text-green-600 dark:text-green-400",
-      },
-      pending: {
-        icon: Clock,
-        text: "Pending",
-        bgColor: "bg-yellow-100 dark:bg-yellow-900/30",
-        textColor: "text-yellow-800 dark:text-yellow-300",
-        iconColor: "text-yellow-600 dark:text-yellow-400",
-      },
-      failed: {
-        icon: XCircle,
-        text: "Failed",
-        bgColor: "bg-red-100 dark:bg-red-900/30",
-        textColor: "text-red-800 dark:text-red-300",
-        iconColor: "text-red-600 dark:text-red-400",
-      },
+    const config = {
+      Success: { icon: CheckCircle, bg: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" },
+      Pending: { icon: Clock, bg: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300" },
+      Failed: { icon: XCircle, bg: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300" },
+      Refunded: { icon: XCircle, bg: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300" },
     };
-
-    const normalizedStatus = status?.toLowerCase();
-    const config = statusConfig[normalizedStatus] || statusConfig.pending;
-    const Icon = config.icon;
-
+    const c = config[status] || config.Pending;
+    const Icon = c.icon;
     return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${config.bgColor} ${config.textColor}`}>
-        <Icon className={`w-3.5 h-3.5 ${config.iconColor}`} />
-        {config.text}
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${c.bg}`}>
+        <Icon className="w-3.5 h-3.5" />
+        {status}
       </span>
     );
   };
 
-  const totalPaid = payments?.filter(p => p.status?.toLowerCase() === "success").reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
-  const pendingAmount = payments?.filter(p => p.status?.toLowerCase() === "pending").reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
-
-  // Define table columns
+  // Table columns
   const columns = [
-    {
-      header: "Transaction ID",
-      accessor: "transactionId",
-      render: (payment) => (
-        <span className="text-sm font-mono text-text-primary dark:text-text-primary-dark">
-          {payment.transactionId || payment._id.slice(-8).toUpperCase()}
-        </span>
-      ),
-    },
     {
       header: "Tournament",
       accessor: "tournament",
-      render: (payment) => (
-        <div className="flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-primary dark:text-primary-dark" />
-          <span className="text-sm text-text-primary dark:text-text-primary-dark">
-            {payment.tournament?.name || "N/A"}
-          </span>
+      render: (item) => (
+        <div className="flex items-center gap-3">
+          <Trophy className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <p className="font-medium text-text-primary dark:text-text-primary-dark">
+            {item.tournament?.name || "Unknown"}
+          </p>
         </div>
       ),
     },
     {
       header: "Team",
       accessor: "team",
-      render: (payment) => (
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-blue-500" />
-          <span className="text-sm text-text-primary dark:text-text-primary-dark">
-            {payment.team?.name || payment.player?.fullName || "Individual"}
-          </span>
+      render: (item) => (
+        <div className="flex items-center gap-3">
+          <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <p className="font-medium text-text-primary dark:text-text-primary-dark">
+            {item.team?.name || item.player?.fullName || "Individual"}
+          </p>
+        </div>
+      ),
+    },
+    {
+      header: "Date & Time",
+      accessor: "createdAt",
+      render: (item) => (
+        <div className="text-sm">
+          <p className="text-text-primary dark:text-text-primary-dark">{formatDate(item.createdAt)}</p>
+          <p className="text-xs text-base dark:text-base-dark">{formatTime(item.createdAt)}</p>
         </div>
       ),
     },
     {
       header: "Amount",
       accessor: "amount",
-      render: (payment) => (
-        <span className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">
-          ₹{payment.amount?.toLocaleString()}
-        </span>
-      ),
-    },
-    {
-      header: "Date",
-      accessor: "createdAt",
-      render: (payment) => (
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-text-primary dark:text-text-primary-dark" />
-          <span className="text-sm text-text-primary dark:text-text-primary-dark">
-            {formatDate(payment.createdAt)}
-          </span>
-        </div>
+      render: (item) => (
+        <p className="font-bold text-green-600 dark:text-green-400 text-lg">
+          ₹{item.amount?.toLocaleString()}
+        </p>
       ),
     },
     {
       header: "Status",
       accessor: "status",
-      render: (payment) => getStatusBadge(payment.status),
-    },
-    {
-      header: "Actions",
-      accessor: "actions",
-      render: (payment) => (
-        payment.status?.toLowerCase() === "success" && (
-          <Link
-            to={`/manager/payments/${payment._id}/receipt`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary dark:bg-secondary-dark text-white text-sm font-medium rounded-lg hover:bg-secondary/90 dark:hover:bg-secondary-dark/90 transition-colors"
-          >
-            <Download className="w-3.5 h-3.5" />
-            Receipt
-          </Link>
-        )
-      ),
+      render: (item) => getStatusBadge(item.status),
     },
   ];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Payment History
         </h1>
-        <p className="text-text-primary dark:text-text-primary-dark mt-2">
+        <p className="text-base dark:text-base-dark mt-2">
           View all your team tournament registration payments
         </p>
       </div>
 
       {error && <ErrorMessage message={error} />}
 
-      {/* Stats Cards */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <DashboardCardState
           Icon={DollarSign}
           label="Total Paid"
-          value={`₹${totalPaid.toLocaleString()}`}
-          gradientFrom="from-green-500/20"
-          gradientVia="via-green-500/10"
-          borderColor="border-green-500/30"
+          value={`₹${(filteredStats.totalPaid || 0).toLocaleString("en-IN")}`}
+          gradientFrom="from-green-500/10"
+          gradientVia="via-green-500/5"
+          borderColor="border-green-500/20"
           iconGradientFrom="from-green-500"
           iconGradientTo="to-green-600"
         />
-        
         <DashboardCardState
           Icon={Clock}
-          label="Pending"
-          value={`₹${pendingAmount.toLocaleString()}`}
-          gradientFrom="from-yellow-500/20"
-          gradientVia="via-yellow-500/10"
-          borderColor="border-yellow-500/30"
+          label="Pending Amount"
+          value={`₹${(filteredStats.pending || 0).toLocaleString("en-IN")}`}
+          gradientFrom="from-yellow-500/10"
+          gradientVia="via-yellow-500/5"
+          borderColor="border-yellow-500/20"
           iconGradientFrom="from-yellow-500"
           iconGradientTo="to-yellow-600"
         />
-        
         <DashboardCardState
-          Icon={Trophy}
-          label="Total Payments"
-          value={payments?.length || 0}
-          gradientFrom="from-blue-500/20"
-          gradientVia="via-blue-500/10"
-          borderColor="border-blue-500/30"
-          iconGradientFrom="from-blue-500"
-          iconGradientTo="to-blue-600"
+          Icon={CreditCard}
+          label="Total Transactions"
+          value={filteredStats.totalTransactions || 0}
+          gradientFrom="from-purple-500/10"
+          gradientVia="via-purple-500/5"
+          borderColor="border-purple-500/20"
+          iconGradientFrom="from-purple-500"
+          iconGradientTo="to-purple-600"
         />
       </div>
 
+      {/* Filter & Search Bar */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <SearchBar
+          placeholder="Search by tournament or team..."
+          searchQuery={searchTerm}
+          setSearchQuery={setSearchTerm}
+        />
+        <Select
+          options={[
+            { value: "all", label: "All Statuses" },
+            { value: "Success", label: "Success" },
+            { value: "Pending", label: "Pending" },
+            { value: "Failed", label: "Failed" },
+            { value: "Refunded", label: "Refunded" },
+          ]}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        />
+        <Select
+          options={[
+            { value: "all", label: "All Months" },
+            { value: "0", label: "January" },
+            { value: "1", label: "February" },
+            { value: "2", label: "March" },
+            { value: "3", label: "April" },
+            { value: "4", label: "May" },
+            { value: "5", label: "June" },
+            { value: "6", label: "July" },
+            { value: "7", label: "August" },
+            { value: "8", label: "September" },
+            { value: "9", label: "October" },
+            { value: "10", label: "November" },
+            { value: "11", label: "December" },
+          ]}
+          value={monthFilter}
+          onChange={(e) => setMonthFilter(e.target.value)}
+        />
+        <Select
+          options={[
+            { value: "all", label: "All Years" },
+            ...availableYears.map((y) => ({ value: String(y), label: String(y) })),
+          ]}
+          value={yearFilter}
+          onChange={(e) => setYearFilter(e.target.value)}
+        />
+        <button
+          onClick={handleGenerateReport}
+          className="flex items-center justify-center gap-2 px-4 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg font-medium transition-colors cursor-pointer"
+        >
+          <FileDown className="w-4 h-4" />
+          Generate Report
+        </button>
+      </div>
+
       {/* Payments Table */}
-      <DataTable
-        columns={columns}
-        data={payments || []}
-        emptyMessage={
-          <div className="flex flex-col items-center gap-3 py-8">
-            <DollarSign className="w-12 h-12 text-base dark:text-base-dark" />
-            <p className="text-text-primary dark:text-text-primary-dark">
-              No payment history found
-            </p>
-            <Link
-              to="/manager/tournaments"
-              className="text-primary dark:text-primary-dark hover:underline text-sm"
-            >
-              Browse Tournaments
-            </Link>
-          </div>
-        }
-      />
+      {filteredPayments.length === 0 ? (
+        <div className="text-center py-12">
+          <CreditCard className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            No Transactions Found
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            No transactions match your filters.
+          </p>
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={filteredPayments}
+          onRowClick={(payment) => setSelectedPaymentId(payment._id)}
+          itemsPerPage={10}
+          emptyMessage="No payment history found"
+        />
+      )}
+
+      {/* Payment Detail Modal */}
+      {selectedPaymentId && (
+        <PaymentDetailModal
+          paymentId={selectedPaymentId}
+          onClose={() => setSelectedPaymentId(null)}
+          currentUserId={user?._id}
+        />
+      )}
     </div>
   );
 };

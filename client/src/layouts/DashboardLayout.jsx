@@ -1,11 +1,22 @@
 import { Outlet, Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { useEffect } from "react";
 import Sidebar from "../components/Sidebar";
+import { fetchCurrentUser } from "../store/slices/authSlice";
 
 const DashboardLayout = () => {
 
+  const dispatch = useDispatch();
+
   // Get user data and authentication status from Redux store
   const { user, isAuthenticated } = useSelector((state) => state.auth);
+
+  // Refresh user data from server on mount / page refresh
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchCurrentUser());
+    }
+  }, [dispatch, isAuthenticated]);
 
   // Redirect to login if not authenticated
   if (!isAuthenticated) {

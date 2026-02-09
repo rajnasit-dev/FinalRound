@@ -386,9 +386,10 @@ export const deleteTeam = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Team not found.");
   }
 
-  // Verify user is the team manager
-  if (team.manager.toString() !== managerId.toString()) {
-    throw new ApiError(403, "Only the team manager can delete this team.");
+  // Verify user is the team manager or an admin
+  const isAdmin = req.user.role === "Admin";
+  if (!isAdmin && team.manager.toString() !== managerId.toString()) {
+    throw new ApiError(403, "Only the team manager or an admin can delete this team.");
   }
 
   // Delete logo from Cloudinary if exists

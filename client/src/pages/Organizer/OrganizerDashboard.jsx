@@ -183,13 +183,24 @@ const OrganizerDashboard = () => {
             <p className="text-base dark:text-base-dark mb-6">
               Create your first tournament to get started
             </p>
-            <Link
-              to="/organizer/tournaments/create"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg transition-colors font-semibold"
-            >
-              <Plus className="w-5 h-5" />
-              Create Tournament
-            </Link>
+            {user?.isAuthorized ? (
+              <Link
+                to="/organizer/tournaments/create"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg transition-colors font-semibold"
+              >
+                <Plus className="w-5 h-5" />
+                Create Tournament
+              </Link>
+            ) : (
+              <button
+                disabled
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gray-400 text-white rounded-lg font-semibold cursor-not-allowed opacity-60"
+                title="Authorization required to create tournaments"
+              >
+                <Plus className="w-5 h-5" />
+                Create Tournament
+              </button>
+            )}
           </div>
         )}
       </div>

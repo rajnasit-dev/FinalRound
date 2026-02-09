@@ -171,7 +171,7 @@ export const registerPlayer = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.files?.avatar?.[0]?.path;
   const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
 
-  if ([fullName || email || password].some((field) => field?.trim() === "")) {
+  if ([fullName, email, password].some((field) => !field?.trim())) {
     throw new ApiError(
       400,
       "fullName, email and password are required fields."
@@ -272,7 +272,7 @@ export const registerTeamManager = asyncHandler(async (req, res) => {
     );
 
   const isUserExist = await User.findOne({ email });
-  if (isUserExist) throw new ApiError(400, "User already exists.");
+  if (isUserExist) throw new ApiError(409, "User already exists.");
 
   const { otp, verifyEmailOtpExpiry } = generateOtpAndExpiry();
 
@@ -316,7 +316,7 @@ export const registerTeamManager = asyncHandler(async (req, res) => {
     html: verificationEmailHtml(createdManager.fullName, otp),
   };
 
-  sendEmail(emailData);
+  await sendEmail(emailData);
 
   res
     .status(201)
@@ -341,7 +341,7 @@ export const registerTournamentOrganizer = asyncHandler(async (req, res) => {
   }
 
   const isUserExist = await User.findOne({ email });
-  if (isUserExist) throw new ApiError(400, "User already exists.");
+  if (isUserExist) throw new ApiError(409, "User already exists.");
 
   const { otp, verifyEmailOtpExpiry } = generateOtpAndExpiry();
 
@@ -429,11 +429,11 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     user._id
   );
 
-  const isProd = process.env.NODE_ENV === "production";
-    const options = {
+  const options = {
       httpOnly: true,
-      secure: true, // required when SameSite=None; allowed on localhost in modern browsers
-      sameSite: "None",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     };
 
@@ -494,7 +494,7 @@ export const resendOtp = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  if ([email || password].some((field) => field?.trim() === "")) {
+  if ([email, password].some((field) => !field?.trim())) {
     throw new ApiError(400, "email and password are required.");
   }
 
@@ -538,11 +538,10 @@ export const logout = asyncHandler(async (req, res) => {
     $set: { refreshToken: undefined },
   });
 
-    const isProd = process.env.NODE_ENV === "production";
     const options = {
       httpOnly: true,
-      secure: true, // required when SameSite=None; allowed on localhost in modern browsers
-      sameSite: "None",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       path: "/",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     };
@@ -579,7 +578,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     email: user.email,
     subject: "Password Reset - SportsHub",
     message: `Please use the following link to reset password : ${resetPasswordUrl}`,
-    html: forgotPasswordEmailHtml(user.name, resetPasswordUrl),
+    html: forgotPasswordEmailHtml(user.fullName, resetPasswordUrl),
   };
 
   await sendEmail(emailData);
@@ -649,8 +648,9 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
 
   const options = {
     httpOnly: true,
-    secure: true, // required when SameSite=None; allowed on localhost in modern browsers
-    sameSite: "None",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+    path: "/",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 

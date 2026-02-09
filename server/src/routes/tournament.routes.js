@@ -39,7 +39,7 @@ tournamentRouter.get("/:id", getTournamentById);
 
 // Protected routes - Tournament Organizer
 tournamentRouter.post("/", authMiddleware, upload.single("banner"), createTournament);
-tournamentRouter.put("/:id", authMiddleware, updateTournament);
+tournamentRouter.put("/:id", authMiddleware, upload.single("banner"), updateTournament);
 tournamentRouter.patch("/:id/banner", authMiddleware, upload.single("banner"), updateTournamentBanner);
 tournamentRouter.patch("/:id/status", authMiddleware, updateTournamentStatus);
 tournamentRouter.post("/:id/generate-fixtures", authMiddleware, generateFixtures);

@@ -13,6 +13,7 @@ import BannerUpload from "../../components/ui/BannerUpload";
 import { fetchAllSports } from "../../store/slices/sportSlice";
 import { clearError } from "../../store/slices/teamSlice";
 import axios from "axios";
+import toast from "react-hot-toast";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import defaultTeamCoverImage from "../../assets/defaultTeamCoverImage.png";
 
@@ -51,7 +52,6 @@ const CreateTeam = () => {
   const dispatch = useDispatch();
   const { sports } = useSelector((state) => state.sport);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
   const [bannerFile, setBannerFile] = useState(null);
@@ -165,7 +165,6 @@ const CreateTeam = () => {
 
   const onSubmit = async (data) => {
     setError(null);
-    setSuccess(false);
     setIsSubmitting(true);
 
     // Ensure sports are loaded
@@ -205,7 +204,7 @@ const CreateTeam = () => {
         // Let axios set the multipart boundary automatically
       });
 
-      setSuccess(true);
+      toast.success("Team created successfully!");
       setTimeout(() => navigate("/manager/teams"), 1500);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create team. Please try again.");
@@ -231,14 +230,6 @@ const CreateTeam = () => {
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
               <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
-            </div>
-          )}
-
-          {success && (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-              <p className="text-green-600 dark:text-green-400 text-sm">
-                Team created successfully! Redirecting...
-              </p>
             </div>
           )}
 

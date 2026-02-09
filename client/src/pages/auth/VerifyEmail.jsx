@@ -17,7 +17,6 @@ const VerifyEmail = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
-  const [success, setSuccess] = useState(false);
 
   const {
     register,
@@ -52,7 +51,7 @@ const VerifyEmail = () => {
     const result = await dispatch(verifyEmail({ email: emailValue, otp: data.otp }));
 
     if (verifyEmail.fulfilled.match(result)) {
-      setSuccess(true);
+      toast.success("Email verified successfully!");
       
       // Redirect after successful verification based on role
       setTimeout(() => {
@@ -80,33 +79,6 @@ const VerifyEmail = () => {
       toast.success("Verification code has been resent to your email!");
     }
   };
-
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center py-12 px-4">
-        <div className="w-full max-w-md">
-          <Container>
-            <div className="text-center py-8">
-              <div className="mb-6 flex justify-center">
-                <div className="bg-green-100 dark:bg-green-900/30 p-4 rounded-full">
-                  <ShieldCheck className="text-green-600 dark:text-green-400" size={48} />
-                </div>
-              </div>
-              <h1 className="text-3xl font-bold mb-3 text-green-600 dark:text-green-400">
-                Email Verified!
-              </h1>
-              <p className="text-base dark:text-base-dark mb-6">
-                Your email has been successfully verified. Redirecting to dashboard...
-              </p>
-              <div className="flex justify-center">
-                <Spinner size="md" />
-              </div>
-            </div>
-          </Container>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4">

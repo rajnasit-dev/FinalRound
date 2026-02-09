@@ -7,7 +7,7 @@ import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js
 export const getUser = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("-password -refreshToken -verifyEmailOtp -verifyEmailOtpExpiry -resetPasswordToken -resetPasswordTokenExpiry");
   if (!user) throw new ApiError(404, "User not found.");
 
   res

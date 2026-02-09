@@ -3,15 +3,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAllTeams } from "../../store/slices/adminSlice";
 import { fetchAllSports } from "../../store/slices/sportSlice";
-import { Users, Trash2, Mail, Phone } from "lucide-react";
+import { Users, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
 import SearchBar from "../../components/ui/SearchBar";
 import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
-import Table from "../../components/ui/Table";
-import Pagination from "../../components/ui/Pagination";
+import DataTable from "../../components/ui/DataTable";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import axios from "axios";
 
@@ -27,8 +26,6 @@ const AdminTeams = () => {
   const [genderFilter, setGenderFilter] = useState("");
   const [filteredTeams, setFilteredTeams] = useState([]);
   const [deletingId, setDeletingId] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
 
   useEffect(() => {
     dispatch(getAllTeams({ search: "", page: 1, limit: 100 }));
@@ -67,19 +64,6 @@ const AdminTeams = () => {
     setFilteredTeams(filtered);
   }, [teams, search, sportFilter, genderFilter]);
 
-  // Pagination logic
-  const totalPages = Math.ceil((filteredTeams?.length || 0) / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedTeams = filteredTeams?.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, sportFilter, genderFilter]);
-
   const handleDelete = async (e, team) => {
     e.stopPropagation();
     
@@ -99,11 +83,7 @@ const AdminTeams = () => {
     }
   };
 
-  const handleRowClick = (e, team) => {
-    // Don't navigate if clicking on the delete button
-    if (e.target.closest('button')) {
-      return;
-    }
+  const handleRowClick = (team) => {
     navigate(`/teams/${team._id}`);
   };
 
@@ -118,22 +98,22 @@ const AdminTeams = () => {
   const columns = [
     {
       header: "Team",
-      accessor: "name",
-      Cell: ({ row }) => (
+      width: "30%",
+      render: (team) => (
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0">
             <img
-              src={row.logo || defaultTeamAvatar}
-              alt={row.name}
+              src={team.logo || defaultTeamAvatar}
+              alt={team.name}
               className="w-full h-full object-cover"
             />
           </div>
           <div className="min-w-0">
             <p className="font-semibold text-text-primary dark:text-text-primary-dark truncate">
-              {row.name}
+              {team.name}
             </p>
             <p className="text-xs text-base dark:text-base-dark truncate">
-              {row.sport?.name || "Unknown Sport"}
+              {team.sport?.name || "Unknown Sport"}
             </p>
           </div>
         </div>
@@ -141,55 +121,57 @@ const AdminTeams = () => {
     },
     {
       header: "Gender",
-      accessor: "gender",
-      Cell: ({ value }) => (
+      width: "15%",
+      render: (team) => (
         <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-          value === "Male"
+          team.gender === "Male"
             ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-            : value === "Female"
+            : team.gender === "Female"
             ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300"
             : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
         }`}>
-          {value}
+          {team.gender}
         </span>
       ),
     },
     {
       header: "Manager",
-      accessor: "manager",
-      Cell: ({ value }) => (
+      width: "25%",
+      render: (team) => (
         <div className="min-w-0">
           <p className="text-sm font-medium text-text-primary dark:text-text-primary-dark truncate">
-            {value?.fullName || "Unknown"}
+            {team.manager?.fullName || "Unknown"}
           </p>
           <p className="text-xs text-base dark:text-base-dark truncate">
-            {value?.email || "N/A"}
+            {team.manager?.email || "N/A"}
           </p>
         </div>
       ),
     },
     {
       header: "Players",
-      accessor: "players",
-      Cell: ({ value }) => (
+      width: "10%",
+      render: (team) => (
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-base dark:text-base-dark" />
           <span className="text-sm text-base dark:text-base-dark">
-            {value?.length || 0}
+            {team.players?.length || 0}
           </span>
         </div>
       ),
     },
     {
       header: "Actions",
-      accessor: "_id",
-      Cell: ({ row }) => (
+      width: "20%",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      render: (team) => (
         <Button
-          onClick={(e) => handleDelete(e, row)}
-          disabled={deletingId === row._id}
+          onClick={(e) => handleDelete(e, team)}
+          disabled={deletingId === team._id}
           className="!bg-red-600 hover:!bg-red-700 !text-white !px-4 !py-2 text-sm flex items-center justify-center gap-2"
         >
-          {deletingId === row._id ? (
+          {deletingId === team._id ? (
             <Spinner size="sm" />
           ) : (
             <>
@@ -203,9 +185,9 @@ const AdminTeams = () => {
   ];
 
   return (
-    <div className="min-h-screen pb-16 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
-      <BackButton className="mb-6" />
-      <div className="mb-6">
+    <div className="space-y-8">
+      <BackButton />
+      <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Teams Management
         </h1>
@@ -215,7 +197,7 @@ const AdminTeams = () => {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <SearchBar
           placeholder="Search teams..."
           searchQuery={search}
@@ -250,65 +232,25 @@ const AdminTeams = () => {
       </div>
 
       {/* Teams Table */}
-      <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base overflow-hidden">
-        {filteredTeams.length === 0 ? (
-          <div className="text-center py-12 bg-card-background dark:bg-card-background-dark">
-            <Users className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              No Teams Found
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              No teams match your search criteria.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-base-dark dark:bg-base">
-                  <tr>
-                    {columns.map((column, index) => (
-                      <th
-                        key={index}
-                        className="px-6 py-4 text-left text-sm font-semibold text-text-primary dark:text-text-primary-dark"
-                      >
-                        {column.header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-base-dark dark:divide-base">
-                  {paginatedTeams.map((row, rowIndex) => (
-                    <tr
-                      key={rowIndex}
-                      onClick={(e) => handleRowClick(e, row)}
-                      className="hover:bg-base-dark dark:hover:bg-base transition-colors cursor-pointer"
-                    >
-                      {columns.map((column, colIndex) => (
-                        <td
-                          key={colIndex}
-                          className="px-6 py-4 text-sm text-text-primary dark:text-text-primary-dark"
-                        >
-                          {column.Cell ? column.Cell({ row, value: row[column.accessor] }) : row[column.accessor]}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {totalPages > 1 && (
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-                itemsPerPage={itemsPerPage}
-                totalItems={filteredTeams?.length || 0}
-              />
-            )}
-          </>
-        )}
-      </div>
+      {filteredTeams.length === 0 ? (
+        <div className="text-center py-12">
+          <Users className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            No Teams Found
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            No teams match your search criteria.
+          </p>
+        </div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={filteredTeams}
+          onRowClick={handleRowClick}
+          itemsPerPage={10}
+          emptyMessage="No teams found"
+        />
+      )}
     </div>
   );
 };
