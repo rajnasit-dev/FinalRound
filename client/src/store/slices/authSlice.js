@@ -239,11 +239,19 @@ const authSlice = createSlice({
         state.user = action.payload;
         localStorage.setItem("user", JSON.stringify(action.payload));
       })
-      .addCase(fetchCurrentUser.rejected, (state) => {
-        // If fetching fails (e.g. token expired), log the user out
-        state.user = null;
-        state.isAuthenticated = false;
-        localStorage.removeItem("user");
+      .addCase(fetchCurrentUser.rejected, (state, action) => {
+        // Only log out on explicit 401 (token expired/invalid)
+        // Don't wipe auth state on network errors or other failures
+        const msg = action.payload || "";
+        if (
+          msg.includes("Unauthorized") ||
+          msg.includes("Invalid Access Token") ||
+          msg.includes("Token not found")
+        ) {
+          state.user = null;
+          state.isAuthenticated = false;
+          localStorage.removeItem("user");
+        }
       });
   },
 });
