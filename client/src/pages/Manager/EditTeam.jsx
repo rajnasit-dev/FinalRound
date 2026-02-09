@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
-import { Users, MapPin, FileText, Globe, Save, X, Trash2, Mail, Phone } from "lucide-react";
+import { Users, MapPin, FileText, Globe, Save, X, Trash2, Mail, Phone, Lock } from "lucide-react";
 import toast from "react-hot-toast";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
@@ -126,6 +126,12 @@ const EditTeam = () => {
 
   const handleCancel = () => {
     navigate("/manager/teams");
+  };
+
+  const getRoleForTeamSport = (player) => {
+    const teamSportId = selectedTeam?.sport?._id || selectedTeam?.sport;
+    const matched = player.sports?.find((s) => (s.sport?._id || s.sport) === teamSportId);
+    return matched?.role || "";
   };
 
   const handleRemovePlayer = async (playerId) => {
@@ -346,7 +352,6 @@ const EditTeam = () => {
     try {
       const payload = {
         name: data.name,
-        sport: data.sport,
         city: data.city || undefined,
         description: data.description || "",
         gender: data.gender,
@@ -432,15 +437,19 @@ const EditTeam = () => {
                 })}
               />
 
-              <Select
-                label="Sport"
-                options={sportOptions}
-                icon={<Users size={18} />}
-                error={errors.sport?.message}
-                {...register("sport", {
-                  required: "Please select a sport",
-                })}
-              />
+              <div>
+                <Select
+                  label="Sport"
+                  options={sportOptions}
+                  icon={<Lock size={18} />}
+                  error={errors.sport?.message}
+                  disabled
+                  {...register("sport", {
+                    required: "Please select a sport",
+                  })}
+                />
+                <p className="text-xs text-base dark:text-base-dark mt-1">Sport cannot be changed after team creation.</p>
+              </div>
 
               <Controller
                 name="gender"
@@ -515,40 +524,87 @@ const EditTeam = () => {
 
           {/* Team Members Management */}
           <div className="bg-card-background dark:bg-card-background-dark rounded-2xl p-8 shadow-md">
-            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-6">Team Members</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">Team Members</h2>
+              {selectedTeam?.players?.length > 0 && (
+                <span className="text-sm text-base dark:text-base-dark">{selectedTeam.players.length} player{selectedTeam.players.length !== 1 ? 's' : ''}</span>
+              )}
+            </div>
             {selectedTeam?.players?.length ? (
-              <div className="space-y-3">
-                {selectedTeam.players.map((player) => (
-                  <div key={player._id} className="flex items-center justify-between gap-4 p-4 rounded-xl border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img src={player.avatar || defaultTeamAvatar} alt={player.fullName} className="w-10 h-10 rounded-full object-cover shrink-0" />
-                      <div className="min-w-0">
-                        <p className="font-semibold text-text-primary dark:text-text-primary-dark truncate">{player.fullName}</p>
-                        <div className="flex items-center gap-3 text-sm text-base dark:text-base-dark">
-                          <span className="flex items-center gap-1 truncate">
-                            <Mail className="w-4 h-4 text-secondary" />
-                            <span className="truncate">{player.email}</span>
+              <div className="overflow-x-auto rounded-xl border border-base-dark dark:border-base">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-primary dark:bg-primary-dark border-b border-base-dark dark:border-base">
+                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-text-primary dark:text-text-primary-dark">Player</th>
+                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-text-primary dark:text-text-primary-dark hidden sm:table-cell">Contact</th>
+                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-text-primary dark:text-text-primary-dark hidden md:table-cell">Gender</th>
+                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-text-primary dark:text-text-primary-dark text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-base-dark dark:divide-base">
+                    {selectedTeam.players.map((player) => (
+                      <tr
+                        key={player._id}
+                        onClick={() => navigate(`/players/${player._id}`)}
+                        className="hover:bg-primary dark:hover:bg-primary-dark transition-colors cursor-pointer"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={player.avatar || defaultTeamAvatar}
+                              alt={player.fullName}
+                              className="w-10 h-10 rounded-full object-cover shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <p className="font-semibold text-text-primary dark:text-text-primary-dark truncate">{player.fullName}</p>
+                              <p className="text-sm text-base dark:text-base-dark truncate">{getRoleForTeamSport(player)}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 hidden sm:table-cell">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
+                              <Mail size={14} className="text-secondary shrink-0" />
+                              <span className="truncate">{player.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
+                              <Phone size={14} className="text-secondary shrink-0" />
+                              <span className="truncate">{player.phone || 'N/A'}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
+                              <MapPin size={14} className="text-secondary shrink-0" />
+                              <span className="truncate">{player.city || 'N/A'}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          <span
+                            className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                              player.gender === 'Female'
+                                ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300'
+                                : 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                            }`}
+                          >
+                            {player.gender}
                           </span>
-                          {player.phone && (
-                            <span className="flex items-center gap-1">
-                              <Phone className="w-4 h-4 text-secondary" />
-                              <span className="font-num">{player.phone}</span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="w-auto"
-                      onClick={() => handleRemovePlayer(player._id)}
-                    >
-                      <Trash2 size={18} />
-                      Remove
-                    </Button>
-                  </div>
-                ))}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemovePlayer(player._id);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                          >
+                            <Trash2 size={15} />
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <p className="text-base dark:text-base-dark">No members in this team yet.</p>

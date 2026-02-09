@@ -151,7 +151,7 @@ export const getReceivedRequests = asyncHandler(async (req, res) => {
     status: "PENDING",
   })
     .populate("sender", "fullName avatarUrl role")
-    .populate("team", "name logoUrl")
+    .populate({ path: "team", select: "name logoUrl sport", populate: { path: "sport", select: "name" } })
     .sort({ createdAt: -1 });
 
   res
@@ -173,8 +173,8 @@ export const getSentRequests = asyncHandler(async (req, res) => {
     sender: userId,
     status: "PENDING",
   })
-    .populate("receiver", "fullName")
-    .populate("team", "name logoUrl")
+    .populate("receiver", "fullName email")
+    .populate({ path: "team", select: "name logoUrl sport", populate: { path: "sport", select: "name" } })
     .sort({ createdAt: -1 });
 
   res

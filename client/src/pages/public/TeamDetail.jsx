@@ -29,24 +29,6 @@ import AchievementCard from "../../components/ui/AchievementCard";
 import { toast } from "react-hot-toast";
 import useDateFormat from "../../hooks/useDateFormat";
 
-// Helpers
-const computeAge = (dateOfBirth) => {
-  if (!dateOfBirth) return null;
-  try {
-    const dob = new Date(dateOfBirth);
-    if (isNaN(dob.getTime())) return null;
-    const today = new Date();
-    let age = today.getFullYear() - dob.getFullYear();
-    const monthDiff = today.getMonth() - dob.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-      age--;
-    }
-    return age >= 0 ? age : null;
-  } catch (err) {
-    return null;
-  }
-};
-
 const TeamDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
@@ -124,7 +106,7 @@ const TeamDetail = () => {
   const playerColumns = [
     {
       header: "Player",
-      width: "28%",
+      width: "25%",
       render: (player) => (
         <div className="flex items-center gap-3">
           <img
@@ -137,73 +119,44 @@ const TeamDetail = () => {
               {player.fullName}
             </p>
             <p className="text-sm text-base dark:text-base-dark truncate">
-              {player.email}
+              {getRoleForTeamSport(player)}
             </p>
           </div>
         </div>
       ),
     },
     {
-      header: "Role",
-      width: "16%",
-      render: (player) => (
-        <span className="text-sm text-text-primary dark:text-text-primary-dark">
-          {getRoleForTeamSport(player)}
-        </span>
-      ),
-    },
-    {
-      header: "Gender",
-      width: "10%",
-      render: (player) => (
-        <span
-          className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${player.gender === "Female"
-              ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300"
-              : "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
-            }`}
-        >
-          {player.gender}
-        </span>
-      ),
-    },
-    {
-      header: "Age",
-      width: "8%",
-      render: (player) => {
-        const age = computeAge(player.dateOfBirth);
-        return (
-          <span className="text-sm text-text-primary dark:text-text-primary-dark">
-            {age ?? "-"}
-          </span>
-        );
-      },
-    },
-    {
-      header: "Location",
-      width: "15%",
-      render: (player) => (
-        <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark truncate">
-          <MapPin className="w-4 h-4 text-secondary shrink-0" />
-          <span className="truncate">{player.city || "N/A"}</span>
-        </div>
-      ),
-    },
-    {
       header: "Contact",
-      width: "23%",
+      width: "35%",
       render: (player) => (
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
             <Mail className="w-4 h-4 text-secondary shrink-0" />
             <span className="truncate">{player.email}</span>
           </div>
-          {player.phone && (
-            <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
-              <Phone className="w-4 h-4 text-secondary shrink-0" />
-              <span className="truncate">{player.phone}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
+            <Phone className="w-4 h-4 text-secondary shrink-0" />
+            <span className="truncate">{player.phone || "N/A"}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
+            <MapPin className="w-4 h-4 text-secondary shrink-0" />
+            <span className="truncate">{player.city || "N/A"}</span>
+          </div>
         </div>
+      ),
+    },
+    {
+      header: "Gender",
+      width: "12%",
+      render: (player) => (
+        <span
+          className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${player.gender === "Female"
+              ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300"
+              : "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+            }`}
+        >
+          {player.gender}
+        </span>
       ),
     },
   ];

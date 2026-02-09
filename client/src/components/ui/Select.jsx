@@ -1,6 +1,6 @@
 import React from "react";
 
-const Select = React.forwardRef(({ options, label, error, id, icon, required = false, ...rest }, ref) => {
+const Select = React.forwardRef(({ options, label, error, id, icon, required = false, disabled = false, ...rest }, ref) => {
   const inputId = id || `select-${label?.replace(/\s+/g, '-').toLowerCase()}`;
   
   return (
@@ -20,10 +20,11 @@ const Select = React.forwardRef(({ options, label, error, id, icon, required = f
         <select
           ref={ref}
           id={inputId}
+          disabled={disabled}
           {...rest}
-          className={`w-full h-full py-3 bg-card-background dark:bg-card-background-dark border border-base-dark dark:border-base rounded-lg dark:focus:border-base-dark/50 focus:border-base/50 focus:outline-none cursor-pointer ${
-            icon ? "pl-10 pr-4" : "px-4"
-          }`}
+          className={`w-full h-full py-3 bg-card-background dark:bg-card-background-dark border border-base-dark dark:border-base rounded-lg dark:focus:border-base-dark/50 focus:border-base/50 focus:outline-none ${
+            disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+          } ${icon ? "pl-10 pr-4" : "px-4"}`}
         >
           {options?.map((option) => (
             <option key={option.value} value={option.value}>

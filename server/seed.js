@@ -813,7 +813,7 @@ async function seedRequests(player, manager, teams, tournaments) {
   
   const requests = [];
   
-  // Player join team requests
+  // Player requests to join a team
   for (let i = 0; i < Math.min(10, teams.length); i++) {
     const team = teams[i];
     
@@ -821,22 +821,22 @@ async function seedRequests(player, manager, teams, tournaments) {
       requestType: 'PLAYER_TO_TEAM',
       sender: player._id,
       receiver: manager._id,
-      team: team._id,
+      team: team._id, // The team player wants to join
       status: i % 3 === 0 ? 'PENDING' : (i % 3 === 1 ? 'ACCEPTED' : 'REJECTED'),
     });
     
     requests.push(request);
   }
 
-  // Team invite player requests
+  // Team invitations to player (player receives request from team)
   for (let i = 0; i < Math.min(10, teams.length); i++) {
     const team = teams[i];
     
     const request = await Request.create({
       requestType: 'TEAM_TO_PLAYER',
-      sender: manager._id,
+      sender: manager._id, // Manager sends on behalf of team
       receiver: player._id,
-      team: team._id,
+      team: team._id, // The team inviting the player
       status: i % 3 === 0 ? 'PENDING' : (i % 3 === 1 ? 'ACCEPTED' : 'REJECTED'),
     });
     

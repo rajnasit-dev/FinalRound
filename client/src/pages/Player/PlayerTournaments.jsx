@@ -1,24 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
-import { fetchUserBookings, cancelBooking } from "../../store/slices/bookingSlice";
+import { fetchUserBookings } from "../../store/slices/bookingSlice";
 import Spinner from "../../components/ui/Spinner";
 import TournamentCard from "../../components/ui/TournamentCard";
 import GridContainer from "../../components/ui/GridContainer";
-import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
-import { Trophy, CheckCircle, Clock, XCircle, X, AlertTriangle } from "lucide-react";
+import { Trophy, CheckCircle, Clock } from "lucide-react";
 
 const PlayerTournaments = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const { tournaments, loading } = useSelector((state) => state.tournament);
   const { bookings, loading: bookingsLoading } = useSelector((state) => state.booking);
-  
-  const [cancelModal, setCancelModal] = useState({ open: false, booking: null });
-  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     dispatch(fetchAllTournaments({}));
@@ -64,40 +57,6 @@ const PlayerTournaments = () => {
     return null;
   };
 
-  const handleCancelClick = (e, booking) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCancelModal({ open: true, booking });
-  };
-
-  const handleConfirmCancel = async () => {
-    if (!cancelModal.booking) return;
-    
-    setCancelling(true);
-    try {
-      await dispatch(cancelBooking(cancelModal.booking._id)).unwrap();
-      setCancelModal({ open: false, booking: null });
-    } catch (error) {
-      toast.error(error || "Failed to cancel booking");
-    } finally {
-      setCancelling(false);
-    }
-  };
-
-  const canCancelBooking = (booking) => {
-    // Can cancel if booking is pending or confirmed but tournament hasn't started
-    if (!booking || booking.status === "Cancelled") return false;
-    
-    const tournament = tournaments.find(t => t._id === booking.tournament?._id);
-    if (!tournament) return true;
-    
-    const tournamentStartDate = new Date(tournament.startDate);
-    const now = new Date();
-    
-    // Can only cancel before tournament starts
-    return now < tournamentStartDate;
-  };
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <BackButton className="mb-4" />
@@ -137,72 +96,14 @@ const PlayerTournaments = () => {
           {myTournaments.map((tournament) => {
             const booking = getBooking(tournament._id);
             return (
-              <div key={tournament._id} className="relative space-y-3">
-                {/* Tournament Card with Registration Status */}
-                <TournamentCard 
-                  tournament={tournament} 
-                  registrationStatusBadge={getRegistrationStatusBadge(booking)}
-                />
-                
-                {/* Cancel Button */}
-                {booking && canCancelBooking(booking) && (
-                  <button
-                    onClick={(e) => handleCancelClick(e, booking)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors shadow-md"
-                  >
-                    <X className="w-4 h-4" />
-                    Cancel Registration
-                  </button>
-                )}
-              </div>
+              <TournamentCard
+                key={tournament._id}
+                tournament={tournament}
+                registrationStatusBadge={getRegistrationStatusBadge(booking)}
+              />
             );
           })}
         </GridContainer>
-      )}
-
-      {/* Cancel Confirmation Modal */}
-      {cancelModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                Cancel Registration
-              </h3>
-            </div>
-            
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to cancel your registration for this tournament? 
-              {cancelModal.booking?.paymentStatus === "Success" && (
-                <span className="block mt-2 text-yellow-600 dark:text-yellow-400 text-sm">
-                  Note: Refund policy will apply as per tournament rules.
-                </span>
-              )}
-            </p>
-            
-            <div className="flex gap-3">
-              <Button
-                onClick={() => setCancelModal({ open: false, booking: null })}
-                disabled={cancelling}
-                variant="primary"
-                className="w-auto flex-1"
-              >
-                Keep Registration
-              </Button>
-              <Button
-                onClick={handleConfirmCancel}
-                disabled={cancelling}
-                loading={cancelling}
-                variant="primary"
-                className="w-auto flex-1 bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
-              >
-                Yes, Cancel
-              </Button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

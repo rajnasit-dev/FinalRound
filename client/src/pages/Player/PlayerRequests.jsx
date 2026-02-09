@@ -15,7 +15,7 @@ import ErrorMessage from "../../components/ui/ErrorMessage";
 import BackButton from "../../components/ui/BackButton";
 import Button from "../../components/ui/Button";
 import DataTable from "../../components/ui/DataTable";
-import { Inbox, Send, CheckCircle2, XCircle, User, Trophy } from "lucide-react";
+import { Inbox, Send, CheckCircle2, XCircle, User, Trophy, Trash2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import defaultAvatar from "../../assets/defaultAvatar.png";
@@ -81,46 +81,28 @@ const PlayerRequests = () => {
     }
   };
 
-  // Columns for Received Requests
+  // Columns for Received Requests (invitations from teams)
   const receivedColumns = [
     {
-      header: "Player",
+      header: "Team",
       width: "40%",
       render: (request) => (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
-            <img
-              src={request.sender?.avatarUrl || defaultAvatar}
-              alt={request.sender?.fullName}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="min-w-0">
-            <p className="font-semibold text-text-primary dark:text-text-primary-dark truncate">
-              {request.sender?.fullName}
-            </p>
-            <p className="text-xs text-base dark:text-base-dark truncate">
-              {request.sender?.email}
-            </p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: "Team",
-      width: "20%",
-      render: (request) => (
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0">
+          <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0">
             <img
               src={request.team?.logoUrl || defaultTeamAvatar}
               alt={request.team?.name}
               className="w-full h-full object-cover"
             />
           </div>
-          <span className="text-sm text-text-primary dark:text-text-primary-dark truncate">
-            {request.team?.name}
-          </span>
+          <div className="min-w-0">
+            <p className="font-semibold text-text-primary dark:text-text-primary-dark truncate">
+              {request.team?.name}
+            </p>
+            <p className="text-xs text-base dark:text-base-dark truncate">
+              {request.team?.sport?.name}
+            </p>
+          </div>
         </div>
       ),
     },
@@ -193,15 +175,14 @@ const PlayerRequests = () => {
       header: "Actions",
       width: "30%",
       render: (request) => (
-        <Button
+        <button
           onClick={(e) => handleCancel(e, request._id)}
           disabled={loading}
-          variant="outline"
-          className="w-auto px-4 py-2 text-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
         >
-          <XCircle className="w-4 h-4" />
+          <Trash2 className="w-4 h-4" />
           Delete Request
-        </Button>
+        </button>
       ),
     },
   ];

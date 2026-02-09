@@ -72,7 +72,7 @@ const ManagePlayers = () => {
   const columns = [
     {
       header: "Player",
-      width: "30%",
+      width: "25%",
       render: (player) => (
         <div className="flex items-center gap-3">
           <img
@@ -81,7 +81,7 @@ const ManagePlayers = () => {
             className="w-10 h-10 rounded-full object-cover shrink-0"
           />
           <div className="min-w-0">
-            <p className="font-medium text-text-primary dark:text-text-primary-dark truncate">
+            <p className="font-semibold text-text-primary dark:text-text-primary-dark truncate">
               {player.fullName}
             </p>
             <p className="text-sm text-base dark:text-base-dark truncate">
@@ -93,7 +93,7 @@ const ManagePlayers = () => {
     },
     {
       header: "Contact",
-      width: "25%",
+      width: "35%",
       render: (player) => (
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
@@ -104,16 +104,10 @@ const ManagePlayers = () => {
             <Phone size={14} className="text-secondary shrink-0" />
             <span className="truncate">{player.phone || "N/A"}</span>
           </div>
-        </div>
-      ),
-    },
-    {
-      header: "Location",
-      width: "15%",
-      render: (player) => (
-        <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
-          <MapPin size={16} className="text-secondary shrink-0" />
-          <span className="truncate">{player.city || "N/A"}</span>
+          <div className="flex items-center gap-2 text-sm text-base dark:text-base-dark">
+            <MapPin size={14} className="text-secondary shrink-0" />
+            <span className="truncate">{player.city || "N/A"}</span>
+          </div>
         </div>
       ),
     },
@@ -136,7 +130,7 @@ const ManagePlayers = () => {
       header: "Action",
       headerClassName: "text-right",
       cellClassName: "text-right",
-      width: "18%",
+      width: "20%",
       render: (player) => (
         <button
           onClick={(e) => {
@@ -144,16 +138,16 @@ const ManagePlayers = () => {
             handleRemovePlayer(player._id);
           }}
           disabled={removingPlayerId === player._id}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {removingPlayerId === player._id ? (
             <>
-              <Loader size={16} className="animate-spin" />
+              <Loader size={15} className="animate-spin" />
               Removing...
             </>
           ) : (
             <>
-              <UserMinus size={16} />
+              <UserMinus size={15} />
               Remove
             </>
           )}

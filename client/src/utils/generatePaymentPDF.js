@@ -95,6 +95,12 @@ export const generatePaymentPDF = (payments, options = {}) => {
     startY: y,
     head: [["Type", "Tournament", "Payer", "Date", "Amount", "Status"]],
     body: tableData,
+    foot: [[
+      { content: "Total", colSpan: 4, styles: { halign: "right", fontStyle: "bold", fillColor: [45, 55, 72], textColor: [255, 255, 255], fontSize: 9 } },
+      { content: `Rs.${payments.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString("en-IN")}`, styles: { halign: "right", fontStyle: "bold", fillColor: [45, 55, 72], textColor: [255, 255, 255], fontSize: 9 } },
+      { content: `${payments.length} records`, styles: { halign: "center", fontStyle: "bold", fillColor: [45, 55, 72], textColor: [255, 255, 255], fontSize: 9 } },
+    ]],
+    showFoot: "lastPage",
     theme: "grid",
     headStyles: {
       fillColor: [45, 55, 72],

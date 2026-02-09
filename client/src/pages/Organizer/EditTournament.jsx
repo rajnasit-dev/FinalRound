@@ -66,6 +66,8 @@ const EditTournament = () => {
   const { sports } = useSelector((state) => state.sport);
   const { selectedTournament, loading } = useSelector((state) => state.tournament);
   const [rules, setRules] = useState([""]);
+  const [bannerPreview, setBannerPreview] = useState(null);
+  const [bannerFile, setBannerFile] = useState(null);
 
   const {
     register,

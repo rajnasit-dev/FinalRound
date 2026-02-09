@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Trophy, CheckCircle, Clock } from "lucide-react";
+import { Trophy, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import GridContainer from "../../components/ui/GridContainer";
 import TournamentCard from "../../components/ui/TournamentCard";
@@ -50,11 +50,6 @@ const ManagerTournaments = () => {
     return registeredTeamIds.length > 0 || approvedTeamIds.length > 0;
   });
 
-  const getTeamNameById = (id) => {
-    const team = (managerTeams || []).find((t) => t._id?.toString() === id || t._id === id);
-    return team?.name || "Team";
-  };
-
   const loading = tournamentsLoading || teamsLoading;
 
   return (
@@ -89,40 +84,35 @@ const ManagerTournaments = () => {
       )}
 
       {!loading && myTournaments.length > 0 && (
-        <GridContainer cols={3}>
+        <GridContainer cols={2}>
           {myTournaments.map((tournament) => {
             const { registeredTeamIds, approvedTeamIds } = getManagerTeamsInTournament(tournament);
-            const chips = [
-              ...approvedTeamIds.map((id) => ({ id, status: "Approved" })),
-              ...registeredTeamIds
-                .filter((id) => !approvedTeamIds.includes(id))
-                .map((id) => ({ id, status: "Pending" })),
-            ];
+            const allApproved = registeredTeamIds.length > 0 && registeredTeamIds.every((id) => approvedTeamIds.includes(id));
+            const someApproved = approvedTeamIds.length > 0;
+            const approvalBadge = allApproved ? (
+              <div className="flex items-center justify-center gap-2 py-2 px-3 bg-green-500 dark:bg-green-600 text-white text-sm font-semibold rounded-lg shadow-md">
+                <CheckCircle className="w-4 h-4" />
+                <span>Approved by Organizer</span>
+              </div>
+            ) : someApproved ? (
+              <div className="flex items-center justify-center gap-2 py-2 px-3 bg-yellow-500 dark:bg-yellow-600 text-white text-sm font-semibold rounded-lg shadow-md">
+                <AlertCircle className="w-4 h-4" />
+                <span>Partially Approved</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 py-2 px-3 bg-orange-500 dark:bg-orange-600 text-white text-sm font-semibold rounded-lg shadow-md">
+                <Clock className="w-4 h-4" />
+                <span>Pending Approval</span>
+              </div>
+            );
 
             return (
-              <div key={tournament._id} className="relative">
-                {/* Status chips for teams */}
-                <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-2">
-                  {chips.map((chip) => (
-                    <div
-                      key={`${tournament._id}-${chip.id}`}
-                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs shadow-sm ${chip.status === "Approved"
-                          ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                          : "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400"
-                        }`}
-                    >
-                      {chip.status === "Approved" ? (
-                        <CheckCircle className="w-3 h-3" />
-                      ) : (
-                        <Clock className="w-3 h-3" />
-                      )}
-                      <span>{getTeamNameById(chip.id)} • {chip.status}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <TournamentCard tournament={tournament} isManager={true} />
-              </div>
+              <TournamentCard
+                key={tournament._id}
+                tournament={tournament}
+                isManager={true}
+                registrationStatusBadge={approvalBadge}
+              />
             );
           })}
         </GridContainer>
