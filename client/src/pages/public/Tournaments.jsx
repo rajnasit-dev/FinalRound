@@ -163,16 +163,23 @@ const Tournaments = () => {
             />
 
             {/* Registration Open Toggle */}
-            <button
+            <label
+              className="flex items-center gap-2 cursor-pointer select-none whitespace-nowrap"
               onClick={() => setRegistrationOpenOnly((prev) => !prev)}
-              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors whitespace-nowrap ${
-                registrationOpenOnly
-                  ? "bg-green-600 text-white border-green-600 dark:bg-green-700 dark:border-green-700"
-                  : "bg-card-background dark:bg-card-background-dark border-base-dark dark:border-base text-text-primary dark:text-text-primary-dark hover:border-secondary"
-              }`}
             >
-              Registration Open
-            </button>
+              <span className="text-sm font-medium text-text-primary dark:text-text-primary-dark">
+                Registration Open
+              </span>
+              <div className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                registrationOpenOnly
+                  ? "bg-blue-500 dark:bg-blue-600"
+                  : "bg-gray-300 dark:bg-gray-600"
+              }`}>
+                <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                  registrationOpenOnly ? "translate-x-5" : "translate-x-0"
+                }`} />
+              </div>
+            </label>
           </div>
         </div>
       </div>
