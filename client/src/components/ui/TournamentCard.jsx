@@ -5,7 +5,6 @@ import {
   IndianRupee,
   MapPin,
   Trophy,
-  Users,
   Edit,
   Trash2,
   Settings,
@@ -106,15 +105,11 @@ const TournamentCard = ({
           {/* Tournament Stats */}
           <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
             <CardStat
-              Icon={Users}
+              Icon={IndianRupee}
               iconColor="text-blue-600 dark:text-blue-400"
               bgColor="bg-blue-50 dark:bg-blue-900/20"
-              label={tournament.registrationType === "Player" ? "Players" : "Teams"}
-              value={
-                tournament.registrationType === "Player"
-                  ? tournament.registeredPlayers?.length || 0
-                  : tournament.registeredTeams?.length || 0
-              }
+              label="Entry Fee"
+              value={tournament.entryFee ? `₹${tournament.entryFee}` : "Free"}
             />
 
             <CardStat

@@ -30,6 +30,7 @@ const Tournaments = () => {
   const [selectedSport, setSelectedSport] = useState("All");
   const [selectedRegistrationType, setSelectedRegistrationType] = useState("All");
   const [selectedGender, setSelectedGender] = useState("All");
+  const [registrationOpenOnly, setRegistrationOpenOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [liveCurrentPage, setLiveCurrentPage] = useState(1);
   const [upcomingCurrentPage, setUpcomingCurrentPage] = useState(1);
@@ -59,7 +60,12 @@ const Tournaments = () => {
         tournament?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         tournament?.ground?.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         tournament?.location?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSport && matchesRegistrationType && matchesGender && matchesSearch;
+      const matchesRegistrationOpen = !registrationOpenOnly || (() => {
+        if (!tournament?.registrationStart || !tournament?.registrationEnd) return false;
+        const now = new Date();
+        return now >= new Date(tournament.registrationStart) && now <= new Date(tournament.registrationEnd);
+      })();
+      return matchesSport && matchesRegistrationType && matchesGender && matchesSearch && matchesRegistrationOpen;
     });
   };
 
@@ -92,7 +98,7 @@ const Tournaments = () => {
     setUpcomingCurrentPage(1);
     setCompletedCurrentPage(1);
     setCancelledCurrentPage(1);
-  }, [selectedSport, selectedRegistrationType, selectedGender, searchQuery]);
+  }, [selectedSport, selectedRegistrationType, selectedGender, searchQuery, registrationOpenOnly]);
 
   if (loading) {
     return (
@@ -155,6 +161,18 @@ const Tournaments = () => {
                 label: gender === "All" ? "All Genders" : gender,
               }))}
             />
+
+            {/* Registration Open Toggle */}
+            <button
+              onClick={() => setRegistrationOpenOnly((prev) => !prev)}
+              className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors whitespace-nowrap ${
+                registrationOpenOnly
+                  ? "bg-green-600 text-white border-green-600 dark:bg-green-700 dark:border-green-700"
+                  : "bg-card-background dark:bg-card-background-dark border-base-dark dark:border-base text-text-primary dark:text-text-primary-dark hover:border-secondary"
+              }`}
+            >
+              Registration Open
+            </button>
           </div>
         </div>
       </div>

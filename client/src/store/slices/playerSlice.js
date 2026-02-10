@@ -286,6 +286,7 @@ const playerSlice = createSlice({
         const idx = state.players.findIndex((p) => p._id === action.payload._id);
         if (idx !== -1) state.players[idx] = action.payload;
       })
+      .addCase(updatePlayerAvatar.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -302,6 +303,7 @@ const playerSlice = createSlice({
         const idx = state.players.findIndex((p) => p._id === action.payload._id);
         if (idx !== -1) state.players[idx] = action.payload;
       })
+      .addCase(deletePlayerAvatar.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
