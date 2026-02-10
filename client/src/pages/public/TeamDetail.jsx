@@ -234,7 +234,7 @@ const TeamDetail = () => {
                   className="bg-accent/50 text-black/50 px-8 py-4 rounded-xl font-bold text-lg shadow-2xl whitespace-nowrap cursor-not-allowed"
                   disabled
                 >
-                  Team Registration Closed
+                  Team Not Open to Join
                 </button>
               ) : (
                 <button
