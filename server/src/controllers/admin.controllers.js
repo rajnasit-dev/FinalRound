@@ -156,7 +156,7 @@ export const getAllTournaments = asyncHandler(async (req, res) => {
 export const getAllTeams = asyncHandler(async (req, res) => {
   const { search } = req.query;
 
-  const filter = {};
+  const filter = { isActive: true };
   if (search) {
     filter.$or = [
       { name: { $regex: search, $options: "i" } },

@@ -21,10 +21,11 @@ const VerifyEmail = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
     watch,
     reset,
   } = useForm({
+    mode: "onChange",
     defaultValues: {
       email: location.state?.email || "",
       otp: "",
@@ -129,7 +130,7 @@ const VerifyEmail = () => {
 
             <ErrorMessage message={error} type="error" />
 
-            <Button type="submit" loading={loading} variant="primary">
+            <Button type="submit" loading={loading} variant="primary" disabled={!isValid || loading}>
               <span className="flex items-center justify-center gap-2">
                 Verify Email
                 <ArrowRight size={18} />

@@ -7,11 +7,7 @@ import {
   updateTournamentBanner,
   deleteTournament,
   registerTeam,
-  approveTeamRegistration,
-  rejectTeamRegistration,
   registerPlayer,
-  approvePlayerRegistration,
-  rejectPlayerRegistration,
   getTournamentParticipants,
   getTournamentsBySport,
   getUpcomingTournaments,
@@ -47,17 +43,13 @@ tournamentRouter.post("/:tournamentId/complete-payment", authMiddleware, complet
 tournamentRouter.get("/:id/participants", authMiddleware, getTournamentParticipants);
 tournamentRouter.delete("/:id", authMiddleware, deleteTournament);
 
-// Team registration management
+// Team registration
 tournamentRouter.post("/:id/register", authMiddleware, registerTeam);
-tournamentRouter.patch("/:id/approve/:teamId", authMiddleware, approveTeamRegistration);
-tournamentRouter.patch("/:id/reject/:teamId", authMiddleware, rejectTeamRegistration);
 
 // Get requests for a tournament
 tournamentRouter.get("/:id/requests", authMiddleware, getTournamentRequests);
 
-// Player registration management (for single-player tournaments)
+// Player registration (for individual tournaments)
 tournamentRouter.post("/:id/register-player", authMiddleware, registerPlayer);
-tournamentRouter.patch("/:id/approve-player/:playerId", authMiddleware, approvePlayerRegistration);
-tournamentRouter.patch("/:id/reject-player/:playerId", authMiddleware, rejectPlayerRegistration);
 
 export default tournamentRouter;

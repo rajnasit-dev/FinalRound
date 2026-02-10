@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Trophy, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Trophy, CheckCircle } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import GridContainer from "../../components/ui/GridContainer";
 import TournamentCard from "../../components/ui/TournamentCard";
@@ -25,7 +25,6 @@ const ManagerTournaments = () => {
   const managerTeamIds = new Set((managerTeams || []).map((t) => t._id?.toString() || t._id));
 
   const getManagerTeamsInTournament = (tournament) => {
-    // Handle both populated objects and plain ObjectIds
     const getIdString = (item) => {
       if (!item) return null;
       if (typeof item === 'string') return item;
@@ -36,18 +35,12 @@ const ManagerTournaments = () => {
     const registered = (tournament.registeredTeams || [])
       .map(getIdString)
       .filter((id) => id && managerTeamIds.has(id));
-    const approved = (tournament.approvedTeams || [])
-      .map(getIdString)
-      .filter((id) => id && managerTeamIds.has(id));
-    return {
-      registeredTeamIds: registered,
-      approvedTeamIds: approved,
-    };
+    return registered;
   };
 
   const myTournaments = (tournaments || []).filter((t) => {
-    const { registeredTeamIds, approvedTeamIds } = getManagerTeamsInTournament(t);
-    return registeredTeamIds.length > 0 || approvedTeamIds.length > 0;
+    const registeredTeamIds = getManagerTeamsInTournament(t);
+    return registeredTeamIds.length > 0;
   });
 
   const loading = tournamentsLoading || teamsLoading;
@@ -60,7 +53,7 @@ const ManagerTournaments = () => {
           My Tournaments
         </h1>
         <p className="text-base dark:text-base-dark">
-          View tournaments where your teams are registered or approved
+          View tournaments where your teams are registered
           {myTournaments.length > 0 && ` (${myTournaments.length})`}
         </p>
       </div>
@@ -86,23 +79,10 @@ const ManagerTournaments = () => {
       {!loading && myTournaments.length > 0 && (
         <GridContainer cols={2}>
           {myTournaments.map((tournament) => {
-            const { registeredTeamIds, approvedTeamIds } = getManagerTeamsInTournament(tournament);
-            const allApproved = registeredTeamIds.length > 0 && registeredTeamIds.every((id) => approvedTeamIds.includes(id));
-            const someApproved = approvedTeamIds.length > 0;
-            const approvalBadge = allApproved ? (
+            const registeredBadge = (
               <div className="flex items-center justify-center gap-2 py-2 px-3 bg-green-500 dark:bg-green-600 text-white text-sm font-semibold rounded-lg shadow-md">
                 <CheckCircle className="w-4 h-4" />
-                <span>Approved by Organizer</span>
-              </div>
-            ) : someApproved ? (
-              <div className="flex items-center justify-center gap-2 py-2 px-3 bg-yellow-500 dark:bg-yellow-600 text-white text-sm font-semibold rounded-lg shadow-md">
-                <AlertCircle className="w-4 h-4" />
-                <span>Partially Approved</span>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2 py-2 px-3 bg-orange-500 dark:bg-orange-600 text-white text-sm font-semibold rounded-lg shadow-md">
-                <Clock className="w-4 h-4" />
-                <span>Pending Approval</span>
+                <span>Registered</span>
               </div>
             );
 
@@ -111,7 +91,7 @@ const ManagerTournaments = () => {
                 key={tournament._id}
                 tournament={tournament}
                 isManager={true}
-                registrationStatusBadge={approvalBadge}
+                registrationStatusBadge={registeredBadge}
               />
             );
           })}

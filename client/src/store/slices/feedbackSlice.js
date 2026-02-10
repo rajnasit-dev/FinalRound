@@ -182,6 +182,10 @@ const feedbackSlice = createSlice({
           state.feedbacks[index] = action.payload;
         }
         state.selectedFeedback = action.payload;
+        // Update userFeedback if it matches
+        if (state.userFeedback?._id === action.payload._id) {
+          state.userFeedback = action.payload;
+        }
         state.updateSuccess = true;
       })
       .addCase(updateFeedback.rejected, (state, action) => {

@@ -26,11 +26,12 @@ const EditPlayerProfile = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
     watch,
     setValue,
     reset,
   } = useForm({
+    mode: "onChange",
     defaultValues: {
       fullName: "",
       email: "",
@@ -447,7 +448,7 @@ const EditPlayerProfile = () => {
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting || loading}
+            disabled={!isValid || isSubmitting || loading}
             className="bg-secondary dark:bg-secondary-dark hover:opacity-90 px-6 py-3 flex items-center justify-center gap-2"
           >
             {isSubmitting || loading ? (

@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { ArrowLeft, Calendar, Trophy, DollarSign, X, Save, MapPin, Plus, Trash2, FileText } from "lucide-react";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
-import RadioGroup from "../../components/ui/RadioGroup";
 import Button from "../../components/ui/Button";
 import Spinner from "../../components/ui/Spinner";
 import BackButton from "../../components/ui/BackButton";
@@ -72,18 +71,19 @@ const EditTournament = () => {
   const {
     register,
     handleSubmit,
-    control,
     watch,
     reset,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm({
+    mode: "onChange",
     defaultValues: {
-      registrationType: "Team",
       format: "League",
     },
   });
 
-  const registrationType = watch("registrationType", "Team");
+  const selectedSportId = watch("sport");
+  const selectedSport = sports?.find((s) => s._id === selectedSportId);
+  const isTeamBased = selectedSport?.teamBased ?? true;
 
   useEffect(() => {
     dispatch(fetchAllSports());
@@ -102,7 +102,6 @@ const EditTournament = () => {
       name: selectedTournament.name || "",
       sport: selectedTournament.sport?._id || "",
       format: selectedTournament.format || "League",
-      registrationType: selectedTournament.registrationType || "Team",
       description: selectedTournament.description || "",
       teamLimit: selectedTournament.teamLimit || "",
       registrationStart: formatDate(selectedTournament.registrationStart),
@@ -135,12 +134,6 @@ const EditTournament = () => {
   const formatOptions = [
     { value: "League", label: "League" },
     { value: "Knockout", label: "Knockout" },
-    { value: "Round Robin", label: "Round Robin" },
-  ];
-
-  const registrationTypeOptions = [
-    { value: "Team", label: "Team Based" },
-    { value: "Player", label: "Individual Player" },
   ];
 
   const onSubmit = async (data) => {
@@ -149,7 +142,6 @@ const EditTournament = () => {
       formData.append("name", data.name);
       formData.append("sport", data.sport);
       formData.append("format", data.format);
-      formData.append("registrationType", data.registrationType);
       formData.append("description", data.description || "");
       formData.append("teamLimit", data.teamLimit);
       formData.append("registrationStart", data.registrationStart);
@@ -252,22 +244,8 @@ const EditTournament = () => {
               {...register("format", { required: "Format is required" })}
             />
 
-            <Controller
-              name="registrationType"
-              control={control}
-              rules={{ required: "Registration type is required" }}
-              render={({ field }) => (
-                <RadioGroup
-                  label="Registration Type"
-                  options={registrationTypeOptions}
-                  {...field}
-                  error={errors.registrationType?.message}
-                />
-              )}
-            />
-
             <Input
-              label={registrationType === "Team" ? "Team Limit" : "Player Limit"}
+              label={isTeamBased ? "Team Limit" : "Player Limit"}
               type="number"
               placeholder="Enter limit"
               error={errors.teamLimit?.message}
@@ -544,7 +522,7 @@ const EditTournament = () => {
           </Button>
           <Button
             type="submit"
-            disabled={loading}
+            disabled={!isValid || loading}
             className="bg-secondary dark:bg-secondary-dark hover:opacity-90 px-6 py-3 flex items-center justify-center gap-2"
           >
             {loading ? (

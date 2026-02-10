@@ -138,6 +138,13 @@ const paymentSlice = createSlice({
         state.loading = false;
         state.currentPayment = action.payload;
         state.paymentSuccess = true;
+        // Update in payments array or add if not present
+        const idx = state.payments.findIndex((p) => p._id === action.payload._id);
+        if (idx !== -1) {
+          state.payments[idx] = action.payload;
+        } else {
+          state.payments.unshift(action.payload);
+        }
       })
       .addCase(verifyPayment.rejected, (state, action) => {
         state.loading = false;

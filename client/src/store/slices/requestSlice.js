@@ -236,6 +236,11 @@ const requestSlice = createSlice({
         state.receivedRequests = state.receivedRequests.filter(
           (req) => req._id !== action.payload._id
         );
+        // Also update in teamRequests
+        const tIdx = state.teamRequests.findIndex((req) => req._id === action.payload._id);
+        if (tIdx !== -1) {
+          state.teamRequests[tIdx] = action.payload;
+        }
       })
       .addCase(acceptRequest.rejected, (state, action) => {
         state.loading = false;
@@ -253,6 +258,11 @@ const requestSlice = createSlice({
         state.receivedRequests = state.receivedRequests.filter(
           (req) => req._id !== action.payload._id
         );
+        // Also update in teamRequests
+        const tIdx = state.teamRequests.findIndex((req) => req._id === action.payload._id);
+        if (tIdx !== -1) {
+          state.teamRequests[tIdx] = action.payload;
+        }
       })
       .addCase(rejectRequest.rejected, (state, action) => {
         state.loading = false;
@@ -268,6 +278,10 @@ const requestSlice = createSlice({
       .addCase(cancelRequest.fulfilled, (state, action) => {
         state.loading = false;
         state.sentRequests = state.sentRequests.filter(
+          (req) => req._id !== action.payload
+        );
+        // Also remove from teamRequests
+        state.teamRequests = state.teamRequests.filter(
           (req) => req._id !== action.payload
         );
       })

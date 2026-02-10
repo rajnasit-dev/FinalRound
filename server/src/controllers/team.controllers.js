@@ -425,7 +425,7 @@ export const deleteTeam = asyncHandler(async (req, res) => {
   await team.save();
 
   // Remove team from manager's teams array
-  await TeamManager.findByIdAndUpdate(managerId, {
+  await TeamManager.findByIdAndUpdate(team.manager, {
     $pull: { teams: id }
   });
 
@@ -513,7 +513,35 @@ export const removePlayerFromTeam = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedTeam, "Player removed from team successfully."));
 });
 
+// Leave team (player self-removal)
+export const leaveTeam = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const playerId = req.user._id;
 
+  const team = await Team.findById(id);
+
+  if (!team) {
+    throw new ApiError(404, "Team not found.");
+  }
+
+  // Check if player is in team
+  if (!team.players.includes(playerId)) {
+    throw new ApiError(400, "You are not a member of this team.");
+  }
+
+  // Remove player from team
+  team.players = team.players.filter(p => p.toString() !== playerId.toString());
+  await team.save();
+
+  const updatedTeam = await Team.findById(id)
+    .populate("sport", "name teamBased iconUrl")
+    .populate("manager", "fullName email avatar")
+    .populate("players", "fullName email avatar");
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, updatedTeam, "You have successfully left the team."));
+});
 
 // Get teams by sport
 export const getTeamsBySport = asyncHandler(async (req, res) => {

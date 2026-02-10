@@ -22,9 +22,10 @@ const ResetPassword = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
     watch,
   } = useForm({
+    mode: "onChange",
     defaultValues: {
       password: "",
       confirmPassword: "",
@@ -132,7 +133,7 @@ const ResetPassword = () => {
                 type="submit"
                 variant="primary"
                 loading={loading}
-                disabled={!token}
+                disabled={!token || !isValid || loading}
               >
                 Reset Password
               </Button>

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
+import { fetchAllSports as fetchAllSportsThunk } from "../../store/slices/sportSlice";
 import axios from "axios";
 import { Dumbbell, Edit2, Trash2, Plus } from "lucide-react";
 import toast from "react-hot-toast";
@@ -21,6 +23,7 @@ const teamBasedOptions = [
 ];
 
 const AdminSports = () => {
+  const dispatch = useDispatch();
   const [sports, setSports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,10 +37,11 @@ const AdminSports = () => {
   const {
     register: registerAdd,
     handleSubmit: handleSubmitAdd,
-    formState: { errors: errorsAdd },
+    formState: { errors: errorsAdd, isValid: isValidAdd },
     reset: resetAdd,
     control: controlAdd,
   } = useForm({
+    mode: "onChange",
     defaultValues: {
       name: "",
       teamBased: "false",
@@ -48,10 +52,12 @@ const AdminSports = () => {
   const {
     register: registerEdit,
     handleSubmit: handleSubmitEdit,
-    formState: { errors: errorsEdit },
+    formState: { errors: errorsEdit, isValid: isValidEdit },
     reset: resetEdit,
     control: controlEdit,
-  } = useForm();
+  } = useForm({
+    mode: "onChange",
+  });
 
   useEffect(() => {
     fetchSports();
@@ -83,6 +89,7 @@ const AdminSports = () => {
       });
       toast.success("Sport deleted successfully");
       fetchSports();
+      dispatch(fetchAllSportsThunk());
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to delete sport");
     } finally {
@@ -117,6 +124,7 @@ const AdminSports = () => {
       resetAdd();
       setShowAddModal(false);
       fetchSports();
+      dispatch(fetchAllSportsThunk());
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to create sport");
     } finally {
@@ -140,6 +148,7 @@ const AdminSports = () => {
       setShowEditModal(false);
       setEditingSport(null);
       fetchSports();
+      dispatch(fetchAllSportsThunk());
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to update sport");
     } finally {
@@ -330,7 +339,7 @@ const AdminSports = () => {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={!isValidAdd || isSubmitting}>
                   {isSubmitting ? <Spinner size="sm" /> : "Add Sport"}
                 </Button>
               </div>
@@ -398,7 +407,7 @@ const AdminSports = () => {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={!isValidEdit || isSubmitting}>
                   {isSubmitting ? <Spinner size="sm" /> : "Update Sport"}
                 </Button>
               </div>

@@ -23,7 +23,6 @@ export const createTournament = asyncHandler(async (req, res) => {
     format,
     description,
     teamLimit,
-    registrationType,
     registrationStart,
     registrationEnd,
     startDate,
@@ -106,7 +105,7 @@ export const createTournament = asyncHandler(async (req, res) => {
     description,
     teamLimit,
     playersPerTeam: sportDoc.playersPerTeam || undefined,
-    registrationType: registrationType || "Team",
+    registrationType: sportDoc.teamBased ? "Team" : "Player",
     registrationStart: new Date(registrationStart),
     registrationEnd: new Date(registrationEnd),
     startDate: new Date(startDate),
@@ -159,6 +158,8 @@ export const getAllTournaments = asyncHandler(async (req, res) => {
     .populate("organizer", "fullName email phone avatar orgName")
     .populate("registeredTeams", "name logoUrl")
     .populate("approvedTeams", "name logoUrl")
+    .populate("registeredPlayers", "fullName avatar email")
+    .populate("approvedPlayers", "fullName avatar email")
     .sort({ startDate: -1 });
 
   // Add computed status to all tournaments
@@ -203,7 +204,9 @@ export const getTournamentById = asyncHandler(async (req, res) => {
         path: "sport manager players",
         select: "name teamBased iconUrl fullName email avatar"
       }
-    });
+    })
+    .populate("registeredPlayers", "fullName avatar email")
+    .populate("approvedPlayers", "fullName avatar email");
 
   if (!tournament) {
     throw new ApiError(404, "Tournament not found.");
@@ -558,6 +561,7 @@ export const registerTeam = asyncHandler(async (req, res) => {
   }
 
   tournament.registeredTeams.push(teamId);
+  tournament.approvedTeams.push(teamId);
   await tournament.save();
 
   const updatedTournament = await Tournament.findById(id)
@@ -569,85 +573,6 @@ export const registerTeam = asyncHandler(async (req, res) => {
   res
     .status(201)
     .json(new ApiResponse(201, updatedTournament, "Team registered successfully."));
-});
-
-// Approve team registration
-export const approveTeamRegistration = asyncHandler(async (req, res) => {
-  const { id, teamId } = req.params;
-  const organizerId = req.user._id;
-
-  const tournament = await Tournament.findById(id);
-
-  if (!tournament) {
-    throw new ApiError(404, "Tournament not found.");
-  }
-
-  // Verify user is the tournament organizer
-  if (tournament.organizer.toString() !== organizerId.toString()) {
-    throw new ApiError(403, "Only the tournament organizer can approve teams.");
-  }
-
-  // Check if team is registered
-  if (!tournament.registeredTeams.includes(teamId)) {
-    throw new ApiError(400, "Team is not registered for this tournament.");
-  }
-
-  // Check if team already approved
-  if (tournament.approvedTeams.includes(teamId)) {
-    throw new ApiError(400, "Team already approved.");
-  }
-
-  tournament.approvedTeams.push(teamId);
-  await tournament.save();
-
-  const updatedTournament = await Tournament.findById(id)
-    .populate("sport", "name teamBased iconUrl")
-    .populate("organizer", "fullName email avatar orgName")
-    .populate("registeredTeams", "name logoUrl")
-    .populate("approvedTeams", "name logoUrl");
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, updatedTournament, "Team approved successfully."));
-});
-
-// Reject team registration
-export const rejectTeamRegistration = asyncHandler(async (req, res) => {
-  const { id, teamId } = req.params;
-  const organizerId = req.user._id;
-
-  const tournament = await Tournament.findById(id);
-
-  if (!tournament) {
-    throw new ApiError(404, "Tournament not found.");
-  }
-
-  // Verify user is the tournament organizer
-  if (tournament.organizer.toString() !== organizerId.toString()) {
-    throw new ApiError(403, "Only the tournament organizer can reject teams.");
-  }
-
-  // Remove from registered teams
-  tournament.registeredTeams = tournament.registeredTeams.filter(
-    t => t.toString() !== teamId
-  );
-
-  // Remove from approved teams if present
-  tournament.approvedTeams = tournament.approvedTeams.filter(
-    t => t.toString() !== teamId
-  );
-
-  await tournament.save();
-
-  const updatedTournament = await Tournament.findById(id)
-    .populate("sport", "name teamBased")
-    .populate("organizer", "fullName email avatar orgName")
-    .populate("registeredTeams", "name logoUrl")
-    .populate("approvedTeams", "name logoUrl");
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, updatedTournament, "Team registration rejected."));
 });
 
 // Register player for tournament (for single-player tournaments)
@@ -684,6 +609,7 @@ export const registerPlayer = asyncHandler(async (req, res) => {
   }
 
   tournament.registeredPlayers.push(userId);
+  tournament.approvedPlayers.push(userId);
   await tournament.save();
 
   const updated = await Tournament.findById(id)
@@ -693,83 +619,6 @@ export const registerPlayer = asyncHandler(async (req, res) => {
     .populate("approvedPlayers", "fullName avatar email");
 
   res.status(201).json(new ApiResponse(201, updated, "Player registered successfully."));
-});
-
-// Approve player registration
-export const approvePlayerRegistration = asyncHandler(async (req, res) => {
-  const { id, playerId } = req.params;
-  const organizerId = req.user._id;
-
-  const tournament = await Tournament.findById(id);
-
-  if (!tournament) {
-    throw new ApiError(404, "Tournament not found.");
-  }
-
-  if (tournament.registrationType !== "Player") {
-    throw new ApiError(400, "This tournament accepts team registrations only.");
-  }
-
-  if (tournament.organizer.toString() !== organizerId.toString()) {
-    throw new ApiError(403, "Only the tournament organizer can approve players.");
-  }
-
-  if (!tournament.registeredPlayers.includes(playerId)) {
-    throw new ApiError(400, "Player is not registered for this tournament.");
-  }
-
-  if (tournament.approvedPlayers.includes(playerId)) {
-    throw new ApiError(400, "Player already approved.");
-  }
-
-  tournament.approvedPlayers.push(playerId);
-  await tournament.save();
-
-  const updated = await Tournament.findById(id)
-    .populate("sport", "name teamBased iconUrl")
-    .populate("organizer", "fullName email avatar orgName")
-    .populate("registeredPlayers", "fullName avatar email")
-    .populate("approvedPlayers", "fullName avatar email");
-
-  res.status(200).json(new ApiResponse(200, updated, "Player approved successfully."));
-});
-
-// Reject player registration
-export const rejectPlayerRegistration = asyncHandler(async (req, res) => {
-  const { id, playerId } = req.params;
-  const organizerId = req.user._id;
-
-  const tournament = await Tournament.findById(id);
-
-  if (!tournament) {
-    throw new ApiError(404, "Tournament not found.");
-  }
-
-  if (tournament.registrationType !== "Player") {
-    throw new ApiError(400, "This tournament accepts team registrations only.");
-  }
-
-  if (tournament.organizer.toString() !== organizerId.toString()) {
-    throw new ApiError(403, "Only the tournament organizer can reject players.");
-  }
-
-  tournament.registeredPlayers = tournament.registeredPlayers.filter(
-    (p) => p.toString() !== playerId
-  );
-
-  tournament.approvedPlayers = tournament.approvedPlayers.filter(
-    (p) => p.toString() !== playerId
-  );
-
-  await tournament.save();
-
-  const updated = await Tournament.findById(id)
-    .populate("sport", "name teamBased iconUrl")
-    .populate("organizer", "fullName email avatar orgName")
-    .populate("registeredPlayers", "fullName avatar email")
-    .populate("approvedPlayers", "fullName avatar email");
-
-  res.status(200).json(new ApiResponse(200, updated, "Player registration rejected."));
 });
 
 // Get participants (teams or players) for organizer dashboard
@@ -834,6 +683,8 @@ export const getLiveTournaments = asyncHandler(async (req, res) => {
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar orgName")
     .populate("approvedTeams", "name logoUrl")
+    .populate("registeredPlayers", "fullName avatar email")
+    .populate("approvedPlayers", "fullName avatar email")
     .sort({ startDate: -1 });
 
   const tournamentsWithStatus = addTournamentStatuses(tournaments);
@@ -914,6 +765,8 @@ export const getTrendingTournaments = asyncHandler(async (req, res) => {
     .populate("organizer", "fullName email avatar orgName")
     .populate("registeredTeams", "name logoUrl")
     .populate("approvedTeams", "name logoUrl")
+    .populate("registeredPlayers", "fullName avatar email")
+    .populate("approvedPlayers", "fullName avatar email")
     .sort({ registeredTeams: -1, startDate: 1 })
     .limit(parseInt(limit));
 

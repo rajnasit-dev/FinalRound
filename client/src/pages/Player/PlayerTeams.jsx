@@ -1,23 +1,55 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Users } from "lucide-react";
+import { Users, LogOut } from "lucide-react";
 import TeamCard from "../../components/ui/TeamCard";
 import Spinner from "../../components/ui/Spinner";
 import GridContainer from "../../components/ui/GridContainer";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import BackButton from "../../components/ui/BackButton";
-import { fetchPlayerTeams } from "../../store/slices/teamSlice";
+import Modal from "../../components/ui/Modal";
+import Button from "../../components/ui/Button";
+import { fetchPlayerTeams, leaveTeam } from "../../store/slices/teamSlice";
+import toast from "react-hot-toast";
 
 const PlayerTeams = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { playerTeams, loading, error } = useSelector((state) => state.team);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
     if (user?._id) {
       dispatch(fetchPlayerTeams(user._id));
     }
   }, [dispatch, user?._id]);
+
+  const handleLeaveClick = (team) => {
+    setSelectedTeam(team);
+    setShowLeaveModal(true);
+  };
+
+  const handleLeaveTeam = async () => {
+    if (!selectedTeam) return;
+
+    setIsLeaving(true);
+    try {
+      await dispatch(leaveTeam(selectedTeam._id)).unwrap();
+      toast.success(`You have left ${selectedTeam.name}`);
+      setShowLeaveModal(false);
+      setSelectedTeam(null);
+    } catch (error) {
+      toast.error(error || "Failed to leave team");
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
+  const handleCancelLeave = () => {
+    setShowLeaveModal(false);
+    setSelectedTeam(null);
+  };
 
   if (loading) {
     return (
@@ -53,7 +85,20 @@ const PlayerTeams = () => {
           </p>
           <GridContainer cols={2}>
             {playerTeams.map((team) => (
-              <TeamCard key={team._id} team={team} />
+              <div key={team._id} className="relative">
+                <TeamCard team={team} />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLeaveClick(team);
+                  }}
+                  className="absolute bottom-4 right-4 flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded-lg transition-colors font-semibold text-sm shadow-lg"
+                  title="Leave Team"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Leave Team
+                </button>
+              </div>
             ))}
           </GridContainer>
         </>
@@ -70,6 +115,48 @@ const PlayerTeams = () => {
             or wait for a team manager to add you.
           </p>
         </div>
+      )}
+
+      {/* Leave Team Confirmation Modal */}
+      {showLeaveModal && selectedTeam && (
+        <Modal onClose={handleCancelLeave}>
+          <div className="p-6">
+            <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
+              Leave Team
+            </h2>
+            <p className="text-text-secondary dark:text-text-secondary-dark mb-6">
+              Are you sure you want to leave <span className="font-semibold text-text-primary dark:text-text-primary-dark">{selectedTeam.name}</span>? 
+              You will need to be re-added by the team manager to rejoin.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="secondary"
+                onClick={handleCancelLeave}
+                disabled={isLeaving}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleLeaveTeam}
+                disabled={isLeaving}
+                className="flex items-center gap-2"
+              >
+                {isLeaving ? (
+                  <>
+                    <Spinner size="sm" />
+                    Leaving...
+                  </>
+                ) : (
+                  <>
+                    <LogOut className="w-4 h-4" />
+                    Leave Team
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAllTeams } from "../../store/slices/adminSlice";
+import { fetchAllTeams } from "../../store/slices/teamSlice";
 import { fetchAllSports } from "../../store/slices/sportSlice";
 import { Users, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -76,6 +77,7 @@ const AdminTeams = () => {
       });
       toast.success(`Team ${team.name} deleted successfully`);
       dispatch(getAllTeams({ search: "", page: 1, limit: 100 }));
+      dispatch(fetchAllTeams());
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to delete team");
     } finally {

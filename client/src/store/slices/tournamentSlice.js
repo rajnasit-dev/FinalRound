@@ -112,70 +112,6 @@ export const fetchTournamentParticipants = createAsyncThunk(
   }
 );
 
-export const approveTeamForTournament = createAsyncThunk(
-  "tournament/approveTeam",
-  async ({ tournamentId, teamId }, { rejectWithValue }) => {
-    try {
-      const response = await axios.patch(
-        `${API_BASE_URL}/tournaments/${tournamentId}/approve/${teamId}`,
-        {},
-        { withCredentials: true, headers: { "Content-Type": "application/json" } }
-      );
-      return response.data.data;
-    } catch (error) {
-      return rejectWithValue(error?.response?.data?.message || error.message || "Request failed");
-    }
-  }
-);
-
-export const rejectTeamForTournament = createAsyncThunk(
-  "tournament/rejectTeam",
-  async ({ tournamentId, teamId }, { rejectWithValue }) => {
-    try {
-      const response = await axios.patch(
-        `${API_BASE_URL}/tournaments/${tournamentId}/reject/${teamId}`,
-        {},
-        { withCredentials: true, headers: { "Content-Type": "application/json" } }
-      );
-      return response.data.data;
-    } catch (error) {
-      return rejectWithValue(error?.response?.data?.message || error.message || "Request failed");
-    }
-  }
-);
-
-export const approvePlayerForTournament = createAsyncThunk(
-  "tournament/approvePlayer",
-  async ({ tournamentId, playerId }, { rejectWithValue }) => {
-    try {
-      const response = await axios.patch(
-        `${API_BASE_URL}/tournaments/${tournamentId}/approve-player/${playerId}`,
-        {},
-        { withCredentials: true, headers: { "Content-Type": "application/json" } }
-      );
-      return response.data.data;
-    } catch (error) {
-      return rejectWithValue(error?.response?.data?.message || error.message || "Request failed");
-    }
-  }
-);
-
-export const rejectPlayerForTournament = createAsyncThunk(
-  "tournament/rejectPlayer",
-  async ({ tournamentId, playerId }, { rejectWithValue }) => {
-    try {
-      const response = await axios.patch(
-        `${API_BASE_URL}/tournaments/${tournamentId}/reject-player/${playerId}`,
-        {},
-        { withCredentials: true, headers: { "Content-Type": "application/json" } }
-      );
-      return response.data.data;
-    } catch (error) {
-      return rejectWithValue(error?.response?.data?.message || error.message || "Request failed");
-    }
-  }
-);
-
 export const deleteTournament = createAsyncThunk(
   "tournament/delete",
   async (tournamentId, { rejectWithValue }) => {
@@ -283,6 +219,11 @@ const tournamentSlice = createSlice({
         if (state.selectedTournament?._id === action.payload._id) {
           state.selectedTournament = action.payload;
         }
+        // Also update in trending array
+        const tIdx = state.trendingTournaments.findIndex((t) => t._id === action.payload._id);
+        if (tIdx !== -1) {
+          state.trendingTournaments[tIdx] = action.payload;
+        }
       })
       .addCase(updateTournament.rejected, (state, action) => {
         state.loading = false;
@@ -298,6 +239,16 @@ const tournamentSlice = createSlice({
         state.loading = false;
         state.selectedTournament = action.payload;
         state.registrationSuccess = true;
+        // Also update in tournaments array
+        const idx = state.tournaments.findIndex((t) => t._id === action.payload._id);
+        if (idx !== -1) {
+          state.tournaments[idx] = action.payload;
+        }
+        // Also update in trending array
+        const tIdx = state.trendingTournaments.findIndex((t) => t._id === action.payload._id);
+        if (tIdx !== -1) {
+          state.trendingTournaments[tIdx] = action.payload;
+        }
       })
       .addCase(registerForTournament.rejected, (state, action) => {
         state.loading = false;
@@ -317,58 +268,6 @@ const tournamentSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Approve team
-      .addCase(approveTeamForTournament.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(approveTeamForTournament.fulfilled, (state, action) => {
-        state.loading = false;
-        state.selectedTournament = action.payload;
-      })
-      .addCase(approveTeamForTournament.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-      // Reject team
-      .addCase(rejectTeamForTournament.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(rejectTeamForTournament.fulfilled, (state, action) => {
-        state.loading = false;
-        state.selectedTournament = action.payload;
-      })
-      .addCase(rejectTeamForTournament.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-      // Approve player
-      .addCase(approvePlayerForTournament.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(approvePlayerForTournament.fulfilled, (state, action) => {
-        state.loading = false;
-        state.selectedTournament = action.payload;
-      })
-      .addCase(approvePlayerForTournament.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-      // Reject player
-      .addCase(rejectPlayerForTournament.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(rejectPlayerForTournament.fulfilled, (state, action) => {
-        state.loading = false;
-        state.selectedTournament = action.payload;
-      })
-      .addCase(rejectPlayerForTournament.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
       // Delete tournament
       .addCase(deleteTournament.pending, (state) => {
         state.loading = true;
@@ -377,6 +276,7 @@ const tournamentSlice = createSlice({
       .addCase(deleteTournament.fulfilled, (state, action) => {
         state.loading = false;
         state.tournaments = state.tournaments.filter((t) => t._id !== action.payload);
+        state.trendingTournaments = state.trendingTournaments.filter((t) => t._id !== action.payload);
         if (state.selectedTournament?._id === action.payload) {
           state.selectedTournament = null;
         }

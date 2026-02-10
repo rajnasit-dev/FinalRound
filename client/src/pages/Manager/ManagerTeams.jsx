@@ -7,7 +7,7 @@ import { toast } from "react-hot-toast";
 import Spinner from "../../components/ui/Spinner";
 import TeamCard from "../../components/ui/TeamCard";
 import BackButton from "../../components/ui/BackButton";
-import { fetchManagerTeams } from "../../store/slices/teamSlice";
+import { fetchManagerTeams, fetchAllTeams } from "../../store/slices/teamSlice";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
@@ -49,6 +49,7 @@ const ManagerTeams = () => {
       toast.success("Team deleted successfully!");
       // Refresh the teams list
       dispatch(fetchManagerTeams(user._id));
+      dispatch(fetchAllTeams());
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to delete team");
     } finally {

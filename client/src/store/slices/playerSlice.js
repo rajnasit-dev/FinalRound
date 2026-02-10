@@ -264,6 +264,9 @@ const playerSlice = createSlice({
         state.profile = action.payload;
         state.currentPlayer = action.payload;
         state.updateSuccess = true;
+        // Update in players list
+        const idx = state.players.findIndex((p) => p._id === action.payload._id);
+        if (idx !== -1) state.players[idx] = action.payload;
       })
       .addCase(updatePlayerProfile.rejected, (state, action) => {
         state.loading = false;
@@ -279,8 +282,10 @@ const playerSlice = createSlice({
         state.loading = false;
         state.profile = action.payload;
         state.currentPlayer = action.payload;
+        // Update in players list
+        const idx = state.players.findIndex((p) => p._id === action.payload._id);
+        if (idx !== -1) state.players[idx] = action.payload;
       })
-      .addCase(updatePlayerAvatar.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -293,8 +298,10 @@ const playerSlice = createSlice({
         state.loading = false;
         state.profile = action.payload;
         state.currentPlayer = action.payload;
+        // Update in players list
+        const idx = state.players.findIndex((p) => p._id === action.payload._id);
+        if (idx !== -1) state.players[idx] = action.payload;
       })
-      .addCase(deletePlayerAvatar.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -305,8 +312,11 @@ const playerSlice = createSlice({
       })
       .addCase(addSport.fulfilled, (state, action) => {
         state.loading = false;
+        state.profile = action.payload;
         state.currentPlayer = action.payload;
         state.updateSuccess = true;
+        const idx = state.players.findIndex((p) => p._id === action.payload._id);
+        if (idx !== -1) state.players[idx] = action.payload;
       })
       .addCase(addSport.rejected, (state, action) => {
         state.loading = false;
@@ -319,8 +329,11 @@ const playerSlice = createSlice({
       })
       .addCase(updateSportRole.fulfilled, (state, action) => {
         state.loading = false;
+        state.profile = action.payload;
         state.currentPlayer = action.payload;
         state.updateSuccess = true;
+        const idx = state.players.findIndex((p) => p._id === action.payload._id);
+        if (idx !== -1) state.players[idx] = action.payload;
       })
       .addCase(updateSportRole.rejected, (state, action) => {
         state.loading = false;
@@ -333,8 +346,11 @@ const playerSlice = createSlice({
       })
       .addCase(removeSport.fulfilled, (state, action) => {
         state.loading = false;
+        state.profile = action.payload;
         state.currentPlayer = action.payload;
         state.updateSuccess = true;
+        const idx = state.players.findIndex((p) => p._id === action.payload._id);
+        if (idx !== -1) state.players[idx] = action.payload;
       })
       .addCase(removeSport.rejected, (state, action) => {
         state.loading = false;
@@ -347,8 +363,11 @@ const playerSlice = createSlice({
       })
       .addCase(addAchievement.fulfilled, (state, action) => {
         state.loading = false;
+        state.profile = action.payload;
         state.currentPlayer = action.payload;
         state.updateSuccess = true;
+        const idx = state.players.findIndex((p) => p._id === action.payload._id);
+        if (idx !== -1) state.players[idx] = action.payload;
       })
       .addCase(addAchievement.rejected, (state, action) => {
         state.loading = false;
@@ -361,8 +380,11 @@ const playerSlice = createSlice({
       })
       .addCase(updateAchievement.fulfilled, (state, action) => {
         state.loading = false;
+        state.profile = action.payload;
         state.currentPlayer = action.payload;
         state.updateSuccess = true;
+        const idx = state.players.findIndex((p) => p._id === action.payload._id);
+        if (idx !== -1) state.players[idx] = action.payload;
       })
       .addCase(updateAchievement.rejected, (state, action) => {
         state.loading = false;
@@ -375,8 +397,11 @@ const playerSlice = createSlice({
       })
       .addCase(deleteAchievement.fulfilled, (state, action) => {
         state.loading = false;
+        state.profile = action.payload;
         state.currentPlayer = action.payload;
         state.updateSuccess = true;
+        const idx = state.players.findIndex((p) => p._id === action.payload._id);
+        if (idx !== -1) state.players[idx] = action.payload;
       })
       .addCase(deleteAchievement.rejected, (state, action) => {
         state.loading = false;

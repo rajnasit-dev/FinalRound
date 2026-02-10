@@ -18,8 +18,9 @@ const ForgotPassword = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm({
+    mode: "onChange",
     defaultValues: {
       email: "",
     },
@@ -88,7 +89,7 @@ const ForgotPassword = () => {
               <ErrorMessage message={error} type="error" />
 
               {/* Submit Button */}
-              <Button type="submit" variant="primary" loading={loading}>
+              <Button type="submit" variant="primary" loading={loading} disabled={!isValid || loading}>
                 Send Reset Link
               </Button>
             </form>

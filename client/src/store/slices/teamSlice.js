@@ -54,6 +54,18 @@ export const fetchTeamById = createAsyncThunk(
   }
 );
 
+export const leaveTeam = createAsyncThunk(
+  "team/leaveTeam",
+  async (teamId, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/teams/${teamId}/leave`, {}, { withCredentials: true });
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to leave team");
+    }
+  }
+);
+
 const initialState = {
   teams: [],
   playerTeams: [],
@@ -125,6 +137,29 @@ const teamSlice = createSlice({
         state.selectedTeam = action.payload;
       })
       .addCase(fetchTeamById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Leave team
+      .addCase(leaveTeam.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(leaveTeam.fulfilled, (state, action) => {
+        state.loading = false;
+        // Remove the team from playerTeams
+        state.playerTeams = state.playerTeams.filter(team => team._id !== action.payload._id);
+        // Update the team in the main teams array (player count changed)
+        const idx = state.teams.findIndex(t => t._id === action.payload._id);
+        if (idx !== -1) {
+          state.teams[idx] = action.payload;
+        }
+        // Update selectedTeam if it's the same team
+        if (state.selectedTeam?._id === action.payload._id) {
+          state.selectedTeam = action.payload;
+        }
+      })
+      .addCase(leaveTeam.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

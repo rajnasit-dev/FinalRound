@@ -19,10 +19,11 @@ const ChangePassword = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
     watch,
     reset,
   } = useForm({
+    mode: "onChange",
     defaultValues: {
       currentPassword: "",
       newPassword: "",
@@ -227,7 +228,7 @@ const ChangePassword = () => {
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={!isValid || isSubmitting}
                 className="bg-secondary dark:bg-secondary-dark hover:opacity-90 px-6 py-3 flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (

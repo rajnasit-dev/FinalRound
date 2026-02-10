@@ -225,6 +225,9 @@ const sportSlice = createSlice({
         if (index !== -1) {
           state.sports[index] = action.payload;
         }
+        if (state.selectedSport?._id === action.payload._id) {
+          state.selectedSport = action.payload;
+        }
         state.updateSuccess = true;
       })
       .addCase(updateSport.rejected, (state, action) => {
@@ -241,6 +244,9 @@ const sportSlice = createSlice({
       .addCase(deleteSport.fulfilled, (state, action) => {
         state.loading = false;
         state.sports = state.sports.filter((s) => s._id !== action.payload._id);
+        if (state.selectedSport?._id === action.payload._id) {
+          state.selectedSport = null;
+        }
         state.deleteSuccess = true;
       })
       .addCase(deleteSport.rejected, (state, action) => {

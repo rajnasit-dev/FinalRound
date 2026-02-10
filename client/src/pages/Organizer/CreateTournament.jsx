@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { ArrowLeft, Calendar, Trophy, DollarSign, MapPin, Plus, Trash2, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
-import RadioGroup from "../../components/ui/RadioGroup";
 import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
 import BannerUpload from "../../components/ui/BannerUpload";
@@ -93,23 +92,24 @@ const CreateTournament = () => {
   const { loading } = useSelector((state) => state.tournament);
   const [bannerFile, setBannerFile] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
-  const [rules, setRules] = useState([""]);
+  const [rules, setRules] = useState([]);
   const [processingPayment, setProcessingPayment] = useState(false);
 
   const {
     register,
     handleSubmit,
-    control,
     watch,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm({
+    mode: "onChange",
     defaultValues: {
-      registrationType: "Team",
       format: "League",
     },
   });
 
-  const registrationType = watch("registrationType", "Team");
+  const selectedSportId = watch("sport");
+  const selectedSport = sports?.find((s) => s._id === selectedSportId);
+  const isTeamBased = selectedSport?.teamBased ?? true;
 
   useEffect(() => {
     dispatch(fetchAllSports());
@@ -123,12 +123,6 @@ const CreateTournament = () => {
   const formatOptions = [
     { value: "League", label: "League" },
     { value: "Knockout", label: "Knockout" },
-    { value: "Round Robin", label: "Round Robin" },
-  ];
-
-  const registrationTypeOptions = [
-    { value: "Team", label: "Team Based" },
-    { value: "Player", label: "Individual Player" },
   ];
 
   const handleBannerChange = (file) => {
@@ -175,7 +169,6 @@ const CreateTournament = () => {
       formData.append("name", data.name);
       formData.append("sport", data.sport);
       formData.append("format", data.format);
-      formData.append("registrationType", data.registrationType);
       formData.append("description", data.description || "");
       formData.append("teamLimit", data.teamLimit);
       formData.append("registrationStart", data.registrationStart);
@@ -363,22 +356,8 @@ const CreateTournament = () => {
               {...register("format", { required: "Format is required" })}
             />
 
-            <Controller
-              name="registrationType"
-              control={control}
-              rules={{ required: "Registration type is required" }}
-              render={({ field }) => (
-                <RadioGroup
-                  label="Registration Type"
-                  options={registrationTypeOptions}
-                  {...field}
-                  error={errors.registrationType?.message}
-                />
-              )}
-            />
-
             <Input
-              label={registrationType === "Team" ? "Team Limit" : "Player Limit"}
+              label={isTeamBased ? "Team Limit" : "Player Limit"}
               type="number"
               placeholder="Enter limit"
               error={errors.teamLimit?.message}
@@ -632,7 +611,7 @@ const CreateTournament = () => {
         </div>
 
         <div className="flex gap-4">
-          <Button type="submit" disabled={loading || processingPayment} className="bg-secondary hover:bg-secondary/90">
+          <Button type="submit" disabled={!isValid || loading || processingPayment} className="bg-secondary hover:bg-secondary/90">
             {loading ? "Creating..." : processingPayment ? "Processing Payment..." : "Create Tournament"}
           </Button>
 

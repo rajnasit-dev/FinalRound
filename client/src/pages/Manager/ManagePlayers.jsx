@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import BackButton from "../../components/ui/BackButton";
 import DataTable from "../../components/ui/DataTable";
 import defaultAvatar from "../../assets/defaultAvatar.png";
-import { fetchTeamById } from "../../store/slices/teamSlice";
+import { fetchTeamById, fetchAllTeams } from "../../store/slices/teamSlice";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
@@ -52,6 +52,7 @@ const ManagePlayers = () => {
       setTeamPlayers(teamPlayers.filter((p) => p._id !== playerId));
       // Refresh team data
       dispatch(fetchTeamById(teamId));
+      dispatch(fetchAllTeams());
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to remove player");
     } finally {

@@ -43,7 +43,7 @@ const PlayerTournaments = () => {
       return (
         <div className="flex items-center justify-center gap-2 py-2 px-3 bg-green-500 dark:bg-green-600 text-white text-sm font-semibold rounded-lg shadow-md">
           <CheckCircle className="w-4 h-4" />
-          <span>Registration Approved</span>
+          <span>Registration Confirmed</span>
         </div>
       );
     } else if (booking.status === "Pending") {

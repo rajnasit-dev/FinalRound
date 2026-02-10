@@ -11,6 +11,7 @@ import {
   deleteTeamBanner,
   addPlayerToTeam,
   removePlayerFromTeam,
+  leaveTeam,
   getTeamsBySport,
   getTeamsByCity,
   searchTeams,
@@ -43,5 +44,8 @@ teamRouter.delete("/:id", authMiddleware, deleteTeam);
 // Team player management
 teamRouter.post("/:id/players", authMiddleware, addPlayerToTeam);
 teamRouter.delete("/:id/players/:playerId", authMiddleware, removePlayerFromTeam);
+
+// Player self-removal from team
+teamRouter.post("/:id/leave", authMiddleware, leaveTeam);
 
 export default teamRouter;

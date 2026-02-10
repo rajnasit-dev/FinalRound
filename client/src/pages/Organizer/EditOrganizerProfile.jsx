@@ -19,9 +19,10 @@ const EditOrganizerProfile = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
     reset,
   } = useForm({
+    mode: "onChange",
     defaultValues: {
       fullName: user?.fullName || "",
       email: user?.email || "",
@@ -240,7 +241,7 @@ const EditOrganizerProfile = () => {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || loading}
+              disabled={!isValid || isSubmitting || loading}
               className="bg-secondary dark:bg-secondary-dark hover:opacity-90 px-6 py-3 flex items-center justify-center gap-2"
             >
               {isSubmitting || loading ? (

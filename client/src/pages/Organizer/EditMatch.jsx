@@ -20,8 +20,10 @@ const EditMatch = () => {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
-  } = useForm();
+    formState: { errors, isValid },
+  } = useForm({
+    mode: "onChange",
+  });
 
   useEffect(() => {
     dispatch(fetchMatchById(matchId));
@@ -247,7 +249,7 @@ const EditMatch = () => {
         <div className="flex gap-4">
           <Button
             type="submit"
-            disabled={loading}
+            disabled={!isValid || loading}
             className="bg-secondary hover:bg-secondary/90"
           >
             {loading ? "Updating..." : "Update Match"}

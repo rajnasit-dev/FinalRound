@@ -11,7 +11,7 @@ import BackButton from "../../components/ui/BackButton";
 import AvatarUpload from "../../components/ui/AvatarUpload";
 import BannerUpload from "../../components/ui/BannerUpload";
 import { fetchAllSports } from "../../store/slices/sportSlice";
-import { clearError } from "../../store/slices/teamSlice";
+import { clearError, fetchAllTeams } from "../../store/slices/teamSlice";
 import axios from "axios";
 import toast from "react-hot-toast";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
@@ -61,10 +61,11 @@ const CreateTeam = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
     control,
     reset,
   } = useForm({
+    mode: "onChange",
     defaultValues: {
       name: "",
       sport: "",
@@ -100,7 +101,7 @@ const CreateTeam = () => {
 
   const sportOptions = [
     { value: "", label: "Select Sport" },
-    ...(sports?.map((sport) => ({ value: sport._id, label: sport.name })) || []),
+    ...(sports?.filter(sport => sport.teamBased).map((sport) => ({ value: sport._id, label: sport.name })) || []),
   ];
 
   const handleCancel = () => {
@@ -205,6 +206,7 @@ const CreateTeam = () => {
       });
 
       toast.success("Team created successfully!");
+      dispatch(fetchAllTeams());
       setTimeout(() => navigate("/manager/teams"), 1500);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create team. Please try again.");
@@ -376,7 +378,7 @@ const CreateTeam = () => {
             <Button type="button" onClick={handleCancel} variant="primary" disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" isLoading={isSubmitting} disabled={isSubmitting}>
+            <Button type="submit" isLoading={isSubmitting} disabled={!isValid || isSubmitting}>
               Create Team
             </Button>
           </div>

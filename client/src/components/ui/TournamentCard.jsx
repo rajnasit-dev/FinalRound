@@ -20,7 +20,6 @@ const TournamentCard = ({
   tournament, 
   isManager = false, 
   registrationStatusBadge = null,
-  approvalStatus = null,
   showOrganizerButtons = false,
   onEdit,
   onDelete,
@@ -83,26 +82,6 @@ const TournamentCard = ({
 
         {/* Content Section */}
         <div className="pt-12 px-6 pb-5">
-          {/* Approval Status Badge */}
-          {approvalStatus && (
-            <div className="mb-4 -mt-8">
-              <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-                  approvalStatus === "Approved"
-                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                    : approvalStatus === "Partially Approved"
-                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                    : "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                }`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${
-                  approvalStatus === "Approved" ? "bg-green-500" : approvalStatus === "Partially Approved" ? "bg-yellow-500" : "bg-orange-500"
-                }`}></span>
-                {approvalStatus === "Approved" ? "Approved by Organizer" : approvalStatus === "Partially Approved" ? "Partially Approved" : "Pending Approval"}
-              </span>
-            </div>
-          )}
-
           {/* Registration Status Badge */}
           {registrationStatusBadge && (
             <div className="mb-4 -mt-8">
@@ -130,8 +109,12 @@ const TournamentCard = ({
               Icon={Users}
               iconColor="text-blue-600 dark:text-blue-400"
               bgColor="bg-blue-50 dark:bg-blue-900/20"
-              label="Teams"
-              value={tournament.registeredTeams?.length || 0}
+              label={tournament.registrationType === "Player" ? "Players" : "Teams"}
+              value={
+                tournament.registrationType === "Player"
+                  ? tournament.registeredPlayers?.length || 0
+                  : tournament.registeredTeams?.length || 0
+              }
             />
 
             <CardStat

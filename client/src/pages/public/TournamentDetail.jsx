@@ -281,14 +281,12 @@ const TournamentDetail = () => {
                 <CardStat
                   Icon={CheckCircle2}
                   iconColor="text-blue-600"
-                  label="Registered teams"
-                  value={tournament.registeredTeams?.length || 0}
-                />
-                <CardStat
-                  Icon={CheckCircle2}
-                  iconColor="text-emerald-600"
-                  label="Approved teams"
-                  value={tournament.approvedTeams?.length || 0}
+                  label={tournament.registrationType === "Player" ? "Registered players" : "Registered teams"}
+                  value={
+                    tournament.registrationType === "Player"
+                      ? tournament.registeredPlayers?.length || 0
+                      : tournament.registeredTeams?.length || 0
+                  }
                 />
               </div>
             </Container>
@@ -414,11 +412,15 @@ const TournamentDetail = () => {
               <div className="bg-secondary/30 dark:bg-secondary/50 p-4 rounded-lg mb-6 border border-base-dark/10 dark:border-base/10">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Users className="w-6 h-6" />
-                  <span className="text-sm">Registered Teams</span>
+                  <span className="text-sm">
+                    {tournament.registrationType === "Player" ? "Registered Players" : "Registered Teams"}
+                  </span>
                 </div>
                 <div className="text-center">
                   <span className="text-2xl font-num">
-                    {tournament.registeredTeams?.length || 0}/{tournament.teamLimit}
+                    {tournament.registrationType === "Player"
+                      ? tournament.registeredPlayers?.length || 0
+                      : tournament.registeredTeams?.length || 0}/{tournament.teamLimit}
                   </span>
                   <span className="text-sm text-base dark:text-base-dark ml-2">
                     {tournament.registrationType}s

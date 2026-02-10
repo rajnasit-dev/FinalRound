@@ -42,10 +42,11 @@ const Register = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
     watch,
     setValue,
   } = useForm({
+    mode: "onChange",
     defaultValues: {
       fullName: "",
       email: "",
@@ -459,7 +460,7 @@ const Register = () => {
             <ErrorMessage message={error} type="error" />
 
             {/* Submit Button */}
-            <Button type="submit" loading={isSubmitting} variant="primary">
+            <Button type="submit" loading={isSubmitting} variant="primary" disabled={!isValid || isSubmitting}>
               Create Account
             </Button>
           </form>

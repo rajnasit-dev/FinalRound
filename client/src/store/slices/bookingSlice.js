@@ -184,6 +184,10 @@ const bookingSlice = createSlice({
         if (index !== -1) {
           state.bookings[index] = action.payload;
         }
+        // Update currentBooking if it matches
+        if (state.currentBooking?._id === action.payload._id) {
+          state.currentBooking = action.payload;
+        }
       })
       .addCase(cancelBooking.rejected, (state, action) => {
         state.loading = false;

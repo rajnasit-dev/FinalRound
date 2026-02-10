@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAllTournaments } from "../../store/slices/adminSlice";
+import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
 import { Trophy, Trash2, Mail, Phone } from "lucide-react";
 import toast from "react-hot-toast";
 import BackButton from "../../components/ui/BackButton";
@@ -111,6 +112,7 @@ const AdminTournaments = () => {
       });
       toast.success(`Tournament ${tournament.name} deleted successfully`);
       dispatch(getAllTournaments({ status: "", search: "", page: 1, limit: 100 }));
+      dispatch(fetchAllTournaments());
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to delete tournament");
     } finally {

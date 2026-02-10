@@ -150,8 +150,8 @@
 |-------|------------|
 | **name** | • Required: "Tournament name is required"<br>• Min Length: 3 characters<br>• Max Length: 100 characters |
 | **sport** | • Required: "Please select a sport" |
-| **format** | • Required: "Format is required"<br>• Options: League, Knockout, Round Robin |
-| **registrationType** | • Required<br>• Options: Team, Player |
+| **format** | • Required: "Format is required"<br>• Options: League, Knockout |
+| **registrationType** | • Auto-derived from sport's `teamBased` field (not user input) |
 | **description** | • Max Length: 500 characters<br>• Optional field |
 | **teamLimit** | • Required: "Team limit is required"<br>• Min: 2 teams<br>• Max: 1000 teams |
 | **playersPerTeam** | • Required (if Team-based)<br>• Min: 1 player<br>• Max: 50 players |

@@ -7,6 +7,8 @@ const Button = ({ children, type = "button", variant = "primary", disabled = fal
   const variants = {
     primary: "bg-secondary hover:bg-secondary/90 text-white focus:ring-secondary/50 dark:bg-accent dark:hover:bg-accent/90 dark:text-black dark:focus:ring-accent/50",
     outline: "bg-transparent border-2 border-secondary dark:border-accent text-secondary dark:text-accent hover:bg-secondary/10 dark:hover:bg-accent/10 focus:ring-secondary/50 dark:focus:ring-accent/50",
+    secondary: "bg-gray-200 hover:bg-gray-300 text-gray-800 focus:ring-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white dark:focus:ring-gray-600",
+    danger: "bg-red-500 hover:bg-red-600 text-white focus:ring-red-500/50 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-600/50",
   };
 
   // Support both isLoading and loading props

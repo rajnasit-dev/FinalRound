@@ -19,7 +19,7 @@ const tournamentSchema = new Schema(
     },
     format: {
       type: String,
-      enum: ["League", "Knockout", "Round Robin"],
+      enum: ["League", "Knockout"],
       default: "League",
     },
     description: {

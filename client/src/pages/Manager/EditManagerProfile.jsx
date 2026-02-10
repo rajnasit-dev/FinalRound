@@ -19,9 +19,10 @@ const EditManagerProfile = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
     reset,
   } = useForm({
+    mode: "onChange",
     defaultValues: {
       fullName: user?.fullName || "",
       email: user?.email || "",
@@ -243,7 +244,7 @@ const EditManagerProfile = () => {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || loading}
+              disabled={!isValid || isSubmitting || loading}
               loading={isSubmitting || loading}
               variant="primary"
               className="w-auto"

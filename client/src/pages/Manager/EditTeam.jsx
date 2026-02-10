@@ -13,7 +13,7 @@ import BackButton from "../../components/ui/BackButton";
 import AvatarUpload from "../../components/ui/AvatarUpload";
 import BannerUpload from "../../components/ui/BannerUpload";
 import { fetchAllSports } from "../../store/slices/sportSlice";
-import { fetchTeamById, clearError, clearSelectedTeam } from "../../store/slices/teamSlice";
+import { fetchTeamById, fetchAllTeams, clearError, clearSelectedTeam } from "../../store/slices/teamSlice";
 import Spinner from "../../components/ui/Spinner";
 import axios from "axios";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
@@ -73,10 +73,11 @@ const EditTeam = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
     control,
     reset,
   } = useForm({
+    mode: "onChange",
     defaultValues: {
       name: "",
       sport: "",
@@ -121,7 +122,7 @@ const EditTeam = () => {
 
   const sportOptions = [
     { value: "", label: "Select Sport" },
-    ...(sports?.map((sport) => ({ value: sport._id, label: sport.name })) || []),
+    ...(sports?.filter(sport => sport.teamBased).map((sport) => ({ value: sport._id, label: sport.name })) || []),
   ];
 
   const handleCancel = () => {
@@ -383,6 +384,8 @@ const EditTeam = () => {
       }
 
       toast.success("Team updated successfully!");
+      dispatch(fetchTeamById(teamId));
+      dispatch(fetchAllTeams());
       setTimeout(() => navigate("/manager/teams"), 1500);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update team. Please try again.");
@@ -672,7 +675,7 @@ const EditTeam = () => {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={!isValid || isSubmitting}
               className="bg-secondary dark:bg-secondary-dark hover:opacity-90 px-6 py-3 flex items-center justify-center gap-2"
             >
               {isSubmitting ? (

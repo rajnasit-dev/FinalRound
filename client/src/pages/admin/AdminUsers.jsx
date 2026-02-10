@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAllUsers } from "../../store/slices/adminSlice";
+import { fetchAllPlayers } from "../../store/slices/playerSlice";
 import { fetchAllSports } from "../../store/slices/sportSlice";
 import { Users, Trash2, MapPin, Mail, Phone } from "lucide-react";
 import toast from "react-hot-toast";
@@ -93,6 +94,7 @@ const AdminUsers = () => {
       toast.success(`User ${user.fullName} deleted successfully`);
       // Refresh users list
       dispatch(getAllUsers({ role: "", search: "", page: 1, limit: 100 }));
+      dispatch(fetchAllPlayers());
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to delete user");
     } finally {

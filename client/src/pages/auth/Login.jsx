@@ -18,9 +18,10 @@ const Login = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
     reset,
   } = useForm({
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",
@@ -152,6 +153,7 @@ const Login = () => {
               type="submit"
               variant="primary"
               loading={loading}
+              disabled={!isValid || loading}
             >
               Login
             </Button>

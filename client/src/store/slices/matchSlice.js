@@ -301,6 +301,10 @@ const matchSlice = createSlice({
       .addCase(createMatch.fulfilled, (state, action) => {
         state.loading = false;
         state.matches.push(action.payload);
+        // New matches are typically upcoming
+        if (action.payload.status === "upcoming" || action.payload.status === "scheduled") {
+          state.upcomingMatches.push(action.payload);
+        }
         state.createSuccess = true;
       })
       .addCase(createMatch.rejected, (state, action) => {
@@ -329,10 +333,17 @@ const matchSlice = createSlice({
       })
       .addCase(updateMatch.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.matches.findIndex((m) => m._id === action.payload._id);
-        if (index !== -1) {
-          state.matches[index] = action.payload;
-        }
+        const id = action.payload._id;
+        const index = state.matches.findIndex((m) => m._id === id);
+        if (index !== -1) state.matches[index] = action.payload;
+        const uIdx = state.upcomingMatches.findIndex((m) => m._id === id);
+        if (uIdx !== -1) state.upcomingMatches[uIdx] = action.payload;
+        const lIdx = state.liveMatches.findIndex((m) => m._id === id);
+        if (lIdx !== -1) state.liveMatches[lIdx] = action.payload;
+        const cIdx = state.completedMatches.findIndex((m) => m._id === id);
+        if (cIdx !== -1) state.completedMatches[cIdx] = action.payload;
+        const tIdx = state.teamMatches.findIndex((m) => m._id === id);
+        if (tIdx !== -1) state.teamMatches[tIdx] = action.payload;
         state.selectedMatch = action.payload;
         state.updateSuccess = true;
       })
@@ -348,10 +359,17 @@ const matchSlice = createSlice({
       })
       .addCase(updateMatchResult.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.matches.findIndex((m) => m._id === action.payload._id);
-        if (index !== -1) {
-          state.matches[index] = action.payload;
-        }
+        const id = action.payload._id;
+        const index = state.matches.findIndex((m) => m._id === id);
+        if (index !== -1) state.matches[index] = action.payload;
+        const uIdx = state.upcomingMatches.findIndex((m) => m._id === id);
+        if (uIdx !== -1) state.upcomingMatches[uIdx] = action.payload;
+        const lIdx = state.liveMatches.findIndex((m) => m._id === id);
+        if (lIdx !== -1) state.liveMatches[lIdx] = action.payload;
+        const cIdx = state.completedMatches.findIndex((m) => m._id === id);
+        if (cIdx !== -1) state.completedMatches[cIdx] = action.payload;
+        const tIdx = state.teamMatches.findIndex((m) => m._id === id);
+        if (tIdx !== -1) state.teamMatches[tIdx] = action.payload;
         state.selectedMatch = action.payload;
         state.updateSuccess = true;
       })
@@ -366,10 +384,23 @@ const matchSlice = createSlice({
       })
       .addCase(updateMatchStatus.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.matches.findIndex((m) => m._id === action.payload._id);
-        if (index !== -1) {
-          state.matches[index] = action.payload;
+        const id = action.payload._id;
+        const index = state.matches.findIndex((m) => m._id === id);
+        if (index !== -1) state.matches[index] = action.payload;
+        // Remove from all status arrays and re-add to correct one
+        state.upcomingMatches = state.upcomingMatches.filter((m) => m._id !== id);
+        state.liveMatches = state.liveMatches.filter((m) => m._id !== id);
+        state.completedMatches = state.completedMatches.filter((m) => m._id !== id);
+        const status = action.payload.status?.toLowerCase();
+        if (status === "upcoming" || status === "scheduled") {
+          state.upcomingMatches.push(action.payload);
+        } else if (status === "live" || status === "in_progress") {
+          state.liveMatches.push(action.payload);
+        } else if (status === "completed" || status === "finished") {
+          state.completedMatches.push(action.payload);
         }
+        const tIdx = state.teamMatches.findIndex((m) => m._id === id);
+        if (tIdx !== -1) state.teamMatches[tIdx] = action.payload;
         state.selectedMatch = action.payload;
         state.updateSuccess = true;
       })
@@ -385,7 +416,15 @@ const matchSlice = createSlice({
       })
       .addCase(deleteMatch.fulfilled, (state, action) => {
         state.loading = false;
-        state.matches = state.matches.filter((m) => m._id !== action.payload._id);
+        const id = action.payload._id;
+        state.matches = state.matches.filter((m) => m._id !== id);
+        state.upcomingMatches = state.upcomingMatches.filter((m) => m._id !== id);
+        state.liveMatches = state.liveMatches.filter((m) => m._id !== id);
+        state.completedMatches = state.completedMatches.filter((m) => m._id !== id);
+        state.teamMatches = state.teamMatches.filter((m) => m._id !== id);
+        if (state.selectedMatch?._id === id) {
+          state.selectedMatch = null;
+        }
         state.deleteSuccess = true;
       })
       .addCase(deleteMatch.rejected, (state, action) => {
