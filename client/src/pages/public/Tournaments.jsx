@@ -168,7 +168,7 @@ const Tournaments = () => {
               onClick={() => setRegistrationOpenOnly((prev) => !prev)}
             >
               <span className="text-sm font-medium text-text-primary dark:text-text-primary-dark">
-                Registration Open
+                Open Registrations
               </span>
               <div className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
                 registrationOpenOnly
