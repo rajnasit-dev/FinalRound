@@ -51,7 +51,10 @@ const userSchema = new Schema(
     },
 
     verifyEmailOtp: String,
-    verifyEmailOtpExpiry: Date,
+    verifyEmailOtpExpiry: {
+      type: Date,
+      index: { expires: 0 },
+    },
 
     resetPasswordToken: String,
     resetPasswordTokenExpiry: Date,

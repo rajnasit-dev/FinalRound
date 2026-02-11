@@ -196,6 +196,39 @@ export const getAllPayments = createAsyncThunk(
   }
 );
 
+// Get OTP verification setting
+export const getOtpSetting = createAsyncThunk(
+  "admin/getOtpSetting",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/admin/settings/otp`,
+        { withCredentials: true }
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch OTP setting");
+    }
+  }
+);
+
+// Toggle OTP verification setting
+export const toggleOtpSetting = createAsyncThunk(
+  "admin/toggleOtpSetting",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(
+        `${API_BASE_URL}/admin/settings/otp/toggle`,
+        {},
+        { withCredentials: true }
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to toggle OTP setting");
+    }
+  }
+);
+
 const initialState = {
   dashboardStats: {
     users: { total: 0, players: 0, managers: 0, organizers: 0 },
@@ -221,6 +254,8 @@ const initialState = {
     successCount: 0,
     pendingCount: 0,
   },
+  otpVerificationRequired: true,
+  otpSettingLoading: false,
   loading: false,
   error: null,
   pagination: null,
@@ -365,6 +400,27 @@ const adminSlice = createSlice({
       .addCase(getAllPayments.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.message || "Failed to fetch payments";
+      })
+      // OTP Setting
+      .addCase(getOtpSetting.pending, (state) => {
+        state.otpSettingLoading = true;
+      })
+      .addCase(getOtpSetting.fulfilled, (state, action) => {
+        state.otpSettingLoading = false;
+        state.otpVerificationRequired = action.payload.otpVerificationRequired;
+      })
+      .addCase(getOtpSetting.rejected, (state) => {
+        state.otpSettingLoading = false;
+      })
+      .addCase(toggleOtpSetting.pending, (state) => {
+        state.otpSettingLoading = true;
+      })
+      .addCase(toggleOtpSetting.fulfilled, (state, action) => {
+        state.otpSettingLoading = false;
+        state.otpVerificationRequired = action.payload.otpVerificationRequired;
+      })
+      .addCase(toggleOtpSetting.rejected, (state) => {
+        state.otpSettingLoading = false;
       });
   },
 });

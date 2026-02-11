@@ -5,6 +5,7 @@ import { Team } from "../models/Team.model.js";
 import { Player } from "../models/Player.model.js";
 import { TeamManager } from "../models/TeamManager.model.js";
 import { Payment } from "../models/Payment.model.js";
+import { Settings } from "../models/Settings.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -686,4 +687,27 @@ export const updateUser = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, user, "User updated successfully"));
+});
+
+// Get OTP verification setting
+export const getOtpSetting = asyncHandler(async (req, res) => {
+  const otpRequired = await Settings.getSetting("otpVerificationRequired", true);
+  res
+    .status(200)
+    .json(new ApiResponse(200, { otpVerificationRequired: otpRequired }, "OTP setting fetched successfully"));
+});
+
+// Toggle OTP verification setting
+export const toggleOtpSetting = asyncHandler(async (req, res) => {
+  const current = await Settings.getSetting("otpVerificationRequired", true);
+  const updated = await Settings.setSetting("otpVerificationRequired", !current);
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { otpVerificationRequired: updated.value },
+        `OTP verification ${updated.value ? "enabled" : "disabled"} successfully`
+      )
+    );
 });

@@ -125,12 +125,18 @@ const Login = () => {
               {...register("password", {
                 required: "Password is required",
                 minLength: {
-                  value: 6,
-                  message: "Password must be at least 6 characters",
+                  value: 8,
+                  message: "Password must be at least 8 characters",
                 },
                 maxLength: {
                   value: 64,
                   message: "Password must be under 64 characters",
+                },
+                pattern: {
+                  value:
+                    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]/,
+                  message:
+                    "Password must include uppercase, lowercase, number, and special character (@$!%*?&#)",
                 },
               })}
             />

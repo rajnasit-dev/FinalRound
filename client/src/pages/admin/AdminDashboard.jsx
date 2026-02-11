@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { getDashboardStats } from "../../store/slices/adminSlice";
+import { getDashboardStats, getOtpSetting, toggleOtpSetting } from "../../store/slices/adminSlice";
 import { formatINR } from "../../utils/formatINR";
 import {
   Users,
@@ -10,6 +10,7 @@ import {
   DollarSign,
   UserCheck,
   TrendingUp,
+  Settings,
 } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import DashboardCardState from "../../components/ui/DashboardCardState";
@@ -18,11 +19,16 @@ import GridContainer from "../../components/ui/GridContainer";
 const AdminDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { dashboardStats, loading } = useSelector((state) => state.admin);
+  const { dashboardStats, loading, otpVerificationRequired, otpSettingLoading } = useSelector((state) => state.admin);
 
   useEffect(() => {
     dispatch(getDashboardStats());
+    dispatch(getOtpSetting());
   }, [dispatch]);
+
+  const handleToggleOtp = () => {
+    dispatch(toggleOtpSetting());
+  };
 
   if (loading) {
     return (
@@ -93,6 +99,42 @@ const AdminDashboard = () => {
 
       {/* Additional Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Platform Settings */}
+        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Settings className="w-6 h-6 text-indigo-600" />
+            <h3 className="text-xl font-bold">Platform Settings</h3>
+          </div>
+          <div className="flex items-center justify-between p-4 bg-base-dark dark:bg-base rounded-lg">
+            <div>
+              <p className="font-medium text-text-primary dark:text-text-primary-dark">
+                OTP Email Verification
+              </p>
+              <p className="text-sm text-base dark:text-base-dark mt-1">
+                {otpVerificationRequired
+                  ? "Users must verify their email via OTP before account activation."
+                  : "Users are registered and logged in directly without OTP verification."}
+              </p>
+            </div>
+            <button
+              onClick={handleToggleOtp}
+              disabled={otpSettingLoading}
+              className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                otpVerificationRequired ? "bg-secondary" : "bg-gray-400 dark:bg-gray-600"
+              }`}
+              role="switch"
+              aria-checked={otpVerificationRequired}
+              aria-label="Toggle OTP verification"
+            >
+              <span
+                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  otpVerificationRequired ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
         {/* Pending Requests */}
         <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
           <div className="flex items-center gap-3 mb-4">

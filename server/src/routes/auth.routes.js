@@ -11,6 +11,7 @@ import {
   registerTournamentOrganizer,
   refreshAccessToken,
   changePassword,
+  getOtpVerificationStatus,
 } from "../controllers/auth.controllers.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -31,6 +32,7 @@ authRouter.post("/organizer", upload.fields([
 
 authRouter.post("/verify-email", verifyEmail);
 authRouter.post("/resend-otp", resendOtp);
+authRouter.get("/otp-setting", getOtpVerificationStatus);
 
 authRouter.post("/login", login);
 

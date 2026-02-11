@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
+import { setUser } from "../../store/slices/authSlice";
 import {
   User,
   Mail,
@@ -36,6 +38,7 @@ const ALLOWED_IMAGE_TYPES = [
 
 const Register = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [role, setRole] = useState("player");
   const [error, setError] = useState(null);
 
@@ -131,7 +134,21 @@ const Register = () => {
         throw new Error(responseData?.message || "Registration failed");
       }
 
-      // Pass email to verify page
+      const result = responseData?.data;
+
+      // If OTP is not required, user is already verified & logged in
+      if (result?.otpRequired === false && result?.user) {
+        dispatch(setUser(result.user));
+        const roleRoutes = {
+          Player: "/player/tournaments",
+          TeamManager: "/manager/teams",
+          TournamentOrganizer: "/organizer/dashboard",
+        };
+        navigate(roleRoutes[result.user.role] || "/", { replace: true });
+        return;
+      }
+
+      // OTP required — redirect to verify page
       navigate("/verify-email", {
         replace: true,
         state: { email: data.email },

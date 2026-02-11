@@ -11,6 +11,7 @@ import { sendEmail } from "../middlewares/sendEmail.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import crypto from "crypto";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { Settings } from "../models/Settings.model.js";
 import jwt from "jsonwebtoken";
 
 const OTP_EXPIRES_MINUTES = 5 * 60 * 1000; //5 min
@@ -239,6 +240,16 @@ export const registerPlayer = asyncHandler(async (req, res) => {
     verifyEmailOtpExpiry,
   });
 
+  // Check if OTP verification is required
+  const otpRequired = await Settings.getSetting("otpVerificationRequired", true);
+
+  if (!otpRequired) {
+    // Skip OTP — mark as verified immediately
+    player.isVerified = true;
+    player.verifyEmailOtp = undefined;
+    player.verifyEmailOtpExpiry = undefined;
+  }
+
   await player.save();
 
   const createdPlayer = await Player.findById(player._id).select(
@@ -247,6 +258,23 @@ export const registerPlayer = asyncHandler(async (req, res) => {
 
   if (!createdPlayer)
     throw new ApiError(500, "Something went wrong while registering the user.");
+
+  if (!otpRequired) {
+    // Auto-login: generate tokens and send cookies
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(player._id);
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+    return res
+      .status(201)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(new ApiResponse(201, { user: createdPlayer, otpRequired: false }, "User registered and logged in successfully."));
+  }
 
   const emailData = {
     email: createdPlayer.email,
@@ -259,7 +287,7 @@ export const registerPlayer = asyncHandler(async (req, res) => {
 
   res
     .status(201)
-    .json(new ApiResponse(201, createdPlayer, "User registered successfully."));
+    .json(new ApiResponse(201, { user: createdPlayer, otpRequired: true }, "User registered successfully."));
 });
 
 export const registerTeamManager = asyncHandler(async (req, res) => {
@@ -297,6 +325,15 @@ export const registerTeamManager = asyncHandler(async (req, res) => {
     verifyEmailOtpExpiry,
   });
 
+  // Check if OTP verification is required
+  const otpRequired = await Settings.getSetting("otpVerificationRequired", true);
+
+  if (!otpRequired) {
+    manager.isVerified = true;
+    manager.verifyEmailOtp = undefined;
+    manager.verifyEmailOtpExpiry = undefined;
+  }
+
   await manager.save();
 
   const createdManager = await TeamManager.findById(manager._id).select(
@@ -308,6 +345,28 @@ export const registerTeamManager = asyncHandler(async (req, res) => {
       500,
       "Something went wrong while registering the team manager."
     );
+  }
+
+  if (!otpRequired) {
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(manager._id);
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+    return res
+      .status(201)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(
+        new ApiResponse(
+          201,
+          { user: createdManager, otpRequired: false },
+          "Team Manager registered and logged in successfully."
+        )
+      );
   }
 
   const emailData = {
@@ -324,7 +383,7 @@ export const registerTeamManager = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         201,
-        createdManager,
+        { user: createdManager, otpRequired: true },
         "Team Manager registered successfully."
       )
     );
@@ -367,6 +426,15 @@ export const registerTournamentOrganizer = asyncHandler(async (req, res) => {
     verifyEmailOtpExpiry,
   });
 
+  // Check if OTP verification is required
+  const otpRequired = await Settings.getSetting("otpVerificationRequired", true);
+
+  if (!otpRequired) {
+    organizer.isVerified = true;
+    organizer.verifyEmailOtp = undefined;
+    organizer.verifyEmailOtpExpiry = undefined;
+  }
+
   await organizer.save();
 
   const createdOrganizer = await TournamentOrganizer.findById(
@@ -378,6 +446,28 @@ export const registerTournamentOrganizer = asyncHandler(async (req, res) => {
       500,
       "Something went wrong while registering the organizer."
     );
+  }
+
+  if (!otpRequired) {
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(organizer._id);
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    };
+    return res
+      .status(201)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(
+        new ApiResponse(
+          201,
+          { user: createdOrganizer, otpRequired: false },
+          "Organizer registered and logged in successfully."
+        )
+      );
   }
 
   const emailData = {
@@ -394,7 +484,7 @@ export const registerTournamentOrganizer = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         201,
-        createdOrganizer,
+        { user: createdOrganizer, otpRequired: true },
         "Organizer registered successfully. Please verify your email."
       )
     );
@@ -417,9 +507,12 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     throw new ApiError(400, "No OTP found. Please request a new one.");
   }
 
+  if (user.verifyEmailOtpExpiry < Date.now()) {
+    await User.findByIdAndDelete(user._id);
+    throw new ApiError(410, "OTP is expired. Your registration has been removed. Please register again.");
+  }
+
   if (user.verifyEmailOtp !== otp) throw new ApiError(400, "Invalid OTP.");
-  if (user.verifyEmailOtpExpiry < Date.now())
-    throw new ApiError(410, "OTP is expired.");
 
   user.verifyEmailOtp = undefined;
   user.verifyEmailOtpExpiry = undefined;
@@ -468,6 +561,12 @@ export const resendOtp = asyncHandler(async (req, res) => {
     return res
       .status(200)
       .json(new ApiResponse(200, null, "Email already verified"));
+  }
+
+  // If OTP has expired, delete the user and ask them to re-register
+  if (user.verifyEmailOtpExpiry && user.verifyEmailOtpExpiry < Date.now()) {
+    await User.findByIdAndDelete(user._id);
+    throw new ApiError(410, "OTP expired. Your registration has been removed. Please register again.");
   }
 
   // Generate new OTP
@@ -700,4 +799,12 @@ export const changePassword = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, {}, "Password changed successfully."));
+});
+
+// Public: check if OTP verification is enabled
+export const getOtpVerificationStatus = asyncHandler(async (req, res) => {
+  const otpRequired = await Settings.getSetting("otpVerificationRequired", true);
+  res
+    .status(200)
+    .json(new ApiResponse(200, { otpVerificationRequired: otpRequired }, "OTP setting fetched"));
 });

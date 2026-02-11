@@ -13,6 +13,8 @@ import {
   getAllPayments,
   deleteUser,
   updateUser,
+  getOtpSetting,
+  toggleOtpSetting,
 } from "../controllers/admin.controllers.js";
 
 const router = Router();
@@ -57,5 +59,9 @@ router.get("/revenue", getRevenue);
 
 // Payments management
 router.get("/payments", getAllPayments);
+
+// Settings
+router.get("/settings/otp", getOtpSetting);
+router.patch("/settings/otp/toggle", toggleOtpSetting);
 
 export default router;

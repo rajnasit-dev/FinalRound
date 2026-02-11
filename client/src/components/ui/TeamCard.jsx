@@ -77,12 +77,6 @@ const TeamCard = ({ team, showEditButton = false, onEdit, onManagePlayers, onAdd
             />
           </div>
 
-          {/* Description */}
-          {team.description && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed mb-4">
-              {team.description}
-            </p>
-          )}
 
           {/* Buttons */}
           {showEditButton ? (
