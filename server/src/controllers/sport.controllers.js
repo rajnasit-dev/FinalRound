@@ -11,9 +11,18 @@ export const createSport = asyncHandler(async (req, res) => {
     throw new ApiError(400, "name, and teamBased are required fields.");
   }
 
-  // Check if sport already exists
+  // Check if sport already exists (including inactive ones)
   const existingSport = await Sport.findOne({ name });
   if (existingSport) {
+    // If sport exists but was deactivated, reactivate it
+    if (!existingSport.isActive) {
+      existingSport.isActive = true;
+      if (teamBased !== undefined) existingSport.teamBased = teamBased;
+      await existingSport.save();
+      return res
+        .status(200)
+        .json(new ApiResponse(200, existingSport, "Sport reactivated successfully."));
+    }
     throw new ApiError(409, "Sport with this name already exists.");
   }
 
@@ -78,7 +87,7 @@ export const updateSport = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { name, teamBased } = req.body;
 
-  const sport = await Sport.findById(id);
+  const sport = await Sport.findOne({ _id: id, isActive: true });
 
   if (!sport) {
     throw new ApiError(404, "Sport not found.");
@@ -86,7 +95,7 @@ export const updateSport = asyncHandler(async (req, res) => {
 
   // Check if name is being changed and if new name already exists
   if (name && name !== sport.name) {
-    const existingSport = await Sport.findOne({ name });
+    const existingSport = await Sport.findOne({ name, isActive: true });
     if (existingSport) {
       throw new ApiError(409, "Sport with this name already exists.");
     }

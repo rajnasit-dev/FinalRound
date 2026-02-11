@@ -27,6 +27,7 @@ import { fetchManagerTeams } from "../../store/slices/teamSlice";
 import { sendPlayerRequest } from "../../store/slices/requestSlice";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 import defaultCoverImage from "../../assets/defaultCoverImage.png";
+import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import useDateFormat from "../../hooks/useDateFormat";
 import useAge from "../../hooks/useAge";
 
@@ -266,20 +267,14 @@ const PlayerDetail = () => {
                     <Link
                       key={team._id}
                       to={`/teams/${team._id}`}
-                      className="group flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-750 transition-all border border-gray-200 dark:border-gray-700 hover:border-secondary dark:hover:border-secondary hover:shadow-md"
+                      className="group flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all border border-gray-200 dark:border-gray-700 hover:border-secondary dark:hover:border-secondary hover:shadow-md"
                     >
-                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-linear-to-br from-blue-500 to-purple-600 shrink-0">
-                        {team.logoUrl ? (
-                          <img
-                            src={team.logoUrl}
-                            alt={team.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-white font-bold">
-                            <Shield className="w-8 h-8" />
-                          </div>
-                        )}
+                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-white dark:bg-gray-700 shrink-0">
+                        <img
+                          src={team.logoUrl || defaultTeamAvatar}
+                          alt={team.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold truncate group-hover:text-secondary transition-colors">

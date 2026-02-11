@@ -205,9 +205,10 @@ export const registerPlayer = asyncHandler(async (req, res) => {
       
       // Process each sport to get the Sport ObjectId
       for (const sportItem of sportsData) {
-        // Find sport by name (case-insensitive)
+        // Find active sport by name (case-insensitive)
         const sportDoc = await Sport.findOne({ 
-          name: { $regex: new RegExp(`^${sportItem.sport}$`, 'i') } 
+          name: { $regex: new RegExp(`^${sportItem.sport}$`, 'i') },
+          isActive: true
         });
         
         if (sportDoc) {
@@ -501,6 +502,11 @@ export const login = asyncHandler(async (req, res) => {
   // Find user by email
   const user = await User.findOne({ email });
   if (!user) throw new ApiError(404, "User not found");
+
+  // Check if account is active
+  if (!user.isActive) {
+    throw new ApiError(403, "Your account has been deactivated. Please contact support.");
+  }
 
   // Check password
   const isPasswordCorrect = await user.isPasswordCorrect(password);

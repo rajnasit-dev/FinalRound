@@ -215,8 +215,8 @@ export const getUserPayments = asyncHandler(async (req, res) => {
   if (userRole === "Player") {
     filter.player = userId;
   } else if (userRole === "TeamManager") {
-    // Get all teams managed by this user
-    const teams = await Team.find({ manager: userId }).select('_id');
+    // Get all teams managed by this user (only active teams)
+    const teams = await Team.find({ manager: userId, isActive: true }).select('_id');
     const teamIds = teams.map(t => t._id);
     
     // Show both team payments AND any individual player payments they made

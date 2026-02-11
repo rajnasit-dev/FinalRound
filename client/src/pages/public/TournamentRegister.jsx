@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { formatINR } from "../../utils/formatINR";
 import toast from "react-hot-toast";
 import { fetchTournamentById } from "../../store/slices/tournamentSlice";
 import { fetchPlayerTeams, fetchManagerTeams } from "../../store/slices/teamSlice";
@@ -290,13 +291,13 @@ const TournamentRegister = () => {
                 Icon={IndianRupee}
                 iconColor="text-green-600"
                 label="Entry Fee"
-                value={`₹${tournament.entryFee?.toLocaleString()}`}
+                value={`₹${formatINR(tournament.entryFee)}`}
               />
               <CardStat
                 Icon={Trophy}
                 iconColor="text-yellow-600"
                 label="Prize Pool"
-                value={`₹${tournament.prizePool?.toLocaleString()}`}
+                value={`₹${formatINR(tournament.prizePool)}`}
               />
               <CardStat
                 Icon={Calendar}
@@ -393,7 +394,7 @@ const TournamentRegister = () => {
                   ) : (
                     <>
                       <CreditCard className="w-6 h-6" />
-                      Pay <span className="font-num">₹{tournament.entryFee?.toLocaleString()}</span>
+                      Pay <span className="font-num">₹{formatINR(tournament.entryFee)}</span>
                     </>
                   )}
                 </Button>
@@ -460,7 +461,7 @@ const TournamentRegister = () => {
                   ) : (
                     <>
                       <CreditCard className="w-6 h-6" />
-                      Pay <span className="font-num">₹{tournament.entryFee?.toLocaleString()}</span>
+                      Pay <span className="font-num">₹{formatINR(tournament.entryFee)}</span>
                     </>
                   )}
                 </Button>

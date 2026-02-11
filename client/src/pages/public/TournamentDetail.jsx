@@ -2,6 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTournamentById } from "../../store/slices/tournamentSlice";
+import { formatINR } from "../../utils/formatINR";
 import { fetchMatchesByTournament } from "../../store/slices/matchSlice";
 import CardStat from "../../components/ui/CardStat";
 import Container from "../../components/container/Container";
@@ -53,6 +54,24 @@ const TournamentDetail = () => {
     const startDate = new Date(tournament.registrationStart);
     const endDate = new Date(tournament.registrationEnd);
     return currentDate >= startDate && currentDate <= endDate;
+  };
+
+  // Helper function to get registration status
+  const getRegistrationStatus = (tournament) => {
+    if (!tournament?.registrationStart || !tournament?.registrationEnd) {
+      return { status: 'closed', message: 'Registration Closed' };
+    }
+    const currentDate = new Date();
+    const startDate = new Date(tournament.registrationStart);
+    const endDate = new Date(tournament.registrationEnd);
+    
+    if (currentDate < startDate) {
+      return { status: 'not-started', message: 'Registration Not Started', date: startDate };
+    } else if (currentDate > endDate) {
+      return { status: 'closed', message: 'Registration Closed' };
+    } else {
+      return { status: 'open', message: 'Registration Open', date: endDate };
+    }
   };
 
   // Helper function to check if user should see register button on banner
@@ -270,13 +289,13 @@ const TournamentDetail = () => {
                   Icon={Clock}
                   iconColor="text-green-600"
                   label="Entry Fee"
-                  value={`₹${tournament.entryFee?.toLocaleString()}`}
+                  value={`₹${formatINR(tournament.entryFee)}`}
                 />
                 <CardStat
                   Icon={IndianRupeeIcon}
                   iconColor="text-emerald-600"
                   label="Prize Pool"
-                  value={`₹${tournament.prizePool?.toLocaleString()}`}
+                  value={`₹${formatINR(tournament.prizePool)}`}
                 />
                 <CardStat
                   Icon={CheckCircle2}
@@ -388,7 +407,7 @@ const TournamentDetail = () => {
                 <div className="inline-flex items-center gap-2 bg-secondary/50 px-4 py-2 rounded-full mb-4">
                   <IndianRupeeIcon className="w-5 h-5" />
                   <p className="text-2xl font-num">
-                    {tournament.entryFee?.toLocaleString()}
+                    {formatINR(tournament.entryFee)}
                   </p>
                 </div>
                 <p className="text-sm text-base dark:text-base-dark">
@@ -404,7 +423,7 @@ const TournamentDetail = () => {
                 </div>
                 <div className="text-3xl font-num flex items-center justify-center gap-2 mb-1">
                   <IndianRupeeIcon className="w-7 h-7" />
-                  {tournament.prizePool?.toLocaleString()}
+                  {formatINR(tournament.prizePool)}
                 </div>
               </div>
 
@@ -454,8 +473,13 @@ const TournamentDetail = () => {
               ) : (
                 <div className="bg-base-dark/70 dark:bg-base/70 text-center py-4 rounded-lg border border-base-dark dark:border-base">
                   <p className="font-semibold text-base dark:text-base-dark">
-                    Registration Closed
+                    {getRegistrationStatus(tournament).message}
                   </p>
+                  {getRegistrationStatus(tournament).status === 'not-started' && (
+                    <p className="text-xs mt-2 text-base dark:text-base-dark">
+                      Opens on <span className="font-num">{formatDate(tournament.registrationStart)}</span>
+                    </p>
+                  )}
                 </div>
               )}
             </Container>

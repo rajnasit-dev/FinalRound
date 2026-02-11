@@ -50,8 +50,8 @@ export const createTournament = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Your organization must be authorized before creating tournaments. Please submit authorization request.");
   }
 
-  // Verify sport exists
-  const sportDoc = await Sport.findById(sport);
+  // Verify sport exists and is active
+  const sportDoc = await Sport.findOne({ _id: sport, isActive: true });
   if (!sportDoc) {
     throw new ApiError(404, "Sport not found.");
   }
@@ -505,7 +505,10 @@ export const deleteTournament = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Cannot delete a live tournament.");
   }
 
-  await Tournament.findByIdAndDelete(id);
+  // Soft delete - cancel and unpublish the tournament
+  tournament.isCancelled = true;
+  tournament.isPublished = false;
+  await tournament.save();
 
   res
     .status(200)
@@ -539,8 +542,8 @@ export const registerTeam = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Tournament has reached its team limit.");
   }
 
-  // Verify team exists
-  const team = await Team.findById(teamId);
+  // Verify team exists and is active
+  const team = await Team.findOne({ _id: teamId, isActive: true });
   if (!team) {
     throw new ApiError(404, "Team not found.");
   }
@@ -640,7 +643,7 @@ export const getTournamentParticipants = asyncHandler(async (req, res) => {
 export const getTournamentsBySport = asyncHandler(async (req, res) => {
   const { sportId } = req.params;
 
-  const tournaments = await Tournament.find({ sport: sportId })
+  const tournaments = await Tournament.find({ sport: sportId, isPublished: true })
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar orgName")
     .sort({ startDate: -1 });
@@ -656,7 +659,8 @@ export const getTournamentsBySport = asyncHandler(async (req, res) => {
 export const getUpcomingTournaments = asyncHandler(async (req, res) => {
   const tournaments = await Tournament.find({ 
     startDate: { $gte: new Date() },
-    isCancelled: false
+    isCancelled: false,
+    isPublished: true
   })
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar orgName")
@@ -678,7 +682,8 @@ export const getLiveTournaments = asyncHandler(async (req, res) => {
   const tournaments = await Tournament.find({ 
     startDate: { $lte: now },
     endDate: { $gte: now },
-    isCancelled: false
+    isCancelled: false,
+    isPublished: true
   })
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar orgName")
@@ -703,7 +708,8 @@ export const searchTournaments = asyncHandler(async (req, res) => {
   }
 
   const tournaments = await Tournament.find({
-    name: { $regex: query, $options: 'i' }
+    name: { $regex: query, $options: 'i' },
+    isPublished: true
   })
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar orgName")

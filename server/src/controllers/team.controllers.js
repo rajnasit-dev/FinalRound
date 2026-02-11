@@ -5,6 +5,9 @@ import { Team } from "../models/Team.model.js";
 import { Player } from "../models/Player.model.js";
 import { Sport } from "../models/Sport.model.js";
 import { TeamManager } from "../models/TeamManager.model.js";
+import { Request } from "../models/Request.model.js";
+import { Match } from "../models/Match.model.js";
+import Booking from "../models/Booking.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 
 // Create a new team
@@ -24,9 +27,9 @@ export const createTeam = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Gender must be 'Male', 'Female', or 'Mixed'.");
   }
 
-  // Verify sport exists
+  // Verify sport exists and is active
   console.log("Creating team with sport ID:", sport);
-  const sportDoc = await Sport.findById(sport);
+  const sportDoc = await Sport.findOne({ _id: sport, isActive: true });
   if (!sportDoc) {
     console.log("Sport not found for ID:", sport);
     throw new ApiError(404, "Sport not found.");
@@ -420,7 +423,36 @@ export const deleteTeam = asyncHandler(async (req, res) => {
     }
   }
 
-  // Soft delete
+  // Delete all related requests (where this team is involved)
+  await Request.deleteMany({
+    $or: [
+      { team: id },
+      { bookingEntity: id }
+    ]
+  });
+
+  // Cancel all matches involving this team
+  await Match.updateMany(
+    {
+      $or: [
+        { teamA: id },
+        { teamB: id }
+      ]
+    },
+    {
+      $set: { isCancelled: true }
+    }
+  );
+
+  // Cancel all bookings related to this team
+  await Booking.updateMany(
+    { team: id },
+    {
+      $set: { status: "Cancelled" }
+    }
+  );
+
+  // Soft delete team
   team.isActive = false;
   await team.save();
 
@@ -431,7 +463,7 @@ export const deleteTeam = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new ApiResponse(200, null, "Team deleted successfully."));
+    .json(new ApiResponse(200, null, "Team and all related data deleted successfully."));
 });
 
 // Add player to team
@@ -444,7 +476,7 @@ export const addPlayerToTeam = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Player ID is required.");
   }
 
-  const team = await Team.findById(id);
+  const team = await Team.findOne({ _id: id, isActive: true });
 
   if (!team) {
     throw new ApiError(404, "Team not found.");
@@ -455,8 +487,8 @@ export const addPlayerToTeam = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only the team manager can add players.");
   }
 
-  // Verify player exists
-  const player = await Player.findById(playerId);
+  // Verify player exists and is active
+  const player = await Player.findOne({ _id: playerId, isActive: true });
   if (!player) {
     throw new ApiError(404, "Player not found.");
   }

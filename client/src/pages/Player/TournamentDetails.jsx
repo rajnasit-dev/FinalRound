@@ -1,4 +1,5 @@
 import useDateFormat from "../../hooks/useDateFormat";
+import { formatINR } from "../../utils/formatINR";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -74,6 +75,21 @@ const TournamentDetails = () => {
     const regStart = new Date(selectedTournament.registrationStart);
     const regEnd = new Date(selectedTournament.registrationEnd);
     return now >= regStart && now <= regEnd;
+  };
+
+  const getRegistrationStatusMessage = () => {
+    if (!selectedTournament) return null;
+    const now = new Date();
+    const regStart = new Date(selectedTournament.registrationStart);
+    const regEnd = new Date(selectedTournament.registrationEnd);
+    
+    if (now < regStart) {
+      return { message: 'Registration Not Started', type: 'not-started' };
+    } else if (now > regEnd) {
+      return { message: 'Registration Closed', type: 'closed' };
+    } else {
+      return { message: 'Registration Open', type: 'open' };
+    }
   };
 
   const isAlreadyRegistered = () => {
@@ -209,7 +225,7 @@ const TournamentDetails = () => {
               <div>
                 <p className="text-sm text-gray-600">Entry Fee</p>
                 <p className="font-semibold text-gray-800 font-num">
-                  ₹{selectedTournament.entryFee.toLocaleString()}
+                  ₹{formatINR(selectedTournament.entryFee)}
                 </p>
               </div>
             </div>
@@ -220,7 +236,7 @@ const TournamentDetails = () => {
                 <div>
                   <p className="text-sm text-gray-600">Prize Pool</p>
                   <p className="font-semibold text-gray-800 font-num">
-                    {selectedTournament.prizePool}
+                    ₹{formatINR(selectedTournament.prizePool)}
                   </p>
                 </div>
               </div>
@@ -305,8 +321,17 @@ const TournamentDetails = () => {
           )}
 
           {!isRegistrationOpen() && selectedTournament.status === "Upcoming" && (
-            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg text-center">
-              Registration is not open yet
+            <div className={`px-4 py-3 rounded-lg text-center border ${
+              getRegistrationStatusMessage()?.type === 'not-started' 
+                ? 'bg-blue-50 border-blue-200 text-blue-800' 
+                : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+            }`}>
+              {getRegistrationStatusMessage()?.message}
+              {getRegistrationStatusMessage()?.type === 'not-started' && (
+                <p className="text-sm mt-1">
+                  Opens on {new Date(selectedTournament.registrationStart).toLocaleDateString()}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -365,7 +390,7 @@ const TournamentDetails = () => {
 
                 <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-4">
                   <p className="text-sm">
-                    Entry Fee: <span>₹{selectedTournament.entryFee.toLocaleString()}</span>
+                    Entry Fee: <span>₹{formatINR(selectedTournament.entryFee)}</span>
                   </p>
                   <p className="text-xs mt-1">You will be redirected to payment after registration</p>
                 </div>

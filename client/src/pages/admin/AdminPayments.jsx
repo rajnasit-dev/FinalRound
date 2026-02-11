@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllPayments } from "../../store/slices/adminSlice";
+import { formatINR } from "../../utils/formatINR";
 import {
   DollarSign,
   Trophy,
@@ -197,7 +198,7 @@ const AdminPayments = () => {
       accessor: "amount",
       render: (item) => (
         <p className="font-bold text-green-600 dark:text-green-400 text-lg">
-          ₹{item.amount.toLocaleString()}
+          ₹{formatINR(item.amount)}
         </p>
       ),
     },

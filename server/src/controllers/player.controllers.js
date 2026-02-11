@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Player } from "../models/Player.model.js";
 import { Sport } from "../models/Sport.model.js";
+import { Team } from "../models/Team.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import fs from "fs";
 
@@ -29,9 +30,29 @@ export const getPlayerById = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Player not found.");
   }
 
+  // Fetch teams where this player is a member
+  const teams = await Team.find({ players: id, isActive: true })
+    .populate("sport", "name")
+    .populate("manager", "fullName")
+    .select("name sport logoUrl bannerUrl city gender");
+
+  // Add teams to player data
+  const playerWithTeams = {
+    ...player.toObject(),
+    teams: teams.map(team => ({
+      _id: team._id,
+      name: team.name,
+      sport: team.sport,
+      logoUrl: team.logoUrl,
+      city: team.city,
+      // Find player's role in this team (we'll add this later if needed)
+      role: "Member" // Default role, can be enhanced based on your team structure
+    }))
+  };
+
   res
     .status(200)
-    .json(new ApiResponse(200, player, "Player retrieved successfully."));
+    .json(new ApiResponse(200, playerWithTeams, "Player retrieved successfully."));
 });
 
 // Get current player profile
@@ -105,7 +126,7 @@ export const addSport = asyncHandler(async (req, res) => {
     throw new ApiError(400, "sportId and role are required.");
   }
 
-  const sport = await Sport.findById(sportId);
+  const sport = await Sport.findOne({ _id: sportId, isActive: true });
   if (!sport) {
     throw new ApiError(404, "Sport not found.");
   }
@@ -371,8 +392,8 @@ export const getPlayersBySportAndGender = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Sport ID and gender are required.");
   }
 
-  // Verify sport exists
-  const sport = await Sport.findById(sportId);
+  // Verify sport exists and is active
+  const sport = await Sport.findOne({ _id: sportId, isActive: true });
   if (!sport) {
     throw new ApiError(404, "Sport not found.");
   }

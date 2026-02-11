@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getDashboardStats } from "../../store/slices/adminSlice";
+import { formatINR } from "../../utils/formatINR";
 import {
   Users,
   Trophy,
@@ -80,7 +81,7 @@ const AdminDashboard = () => {
         <DashboardCardState
           Icon={DollarSign}
           label="Total Revenue"
-          value={`₹${dashboardStats?.revenue?.total || 0}`}
+          value={`₹${formatINR(dashboardStats?.revenue?.total || 0)}`}
           gradientFrom="from-purple-500/10"
           gradientVia="via-purple-500/5"
           borderColor="border-purple-500/20"
@@ -127,7 +128,7 @@ const AdminDashboard = () => {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-green-600">₹{payment.amount}</p>
+                  <p className="font-bold text-green-600">₹{formatINR(payment.amount)}</p>
                   <p className="text-xs text-base dark:text-base-dark">
                     {payment.status}
                   </p>

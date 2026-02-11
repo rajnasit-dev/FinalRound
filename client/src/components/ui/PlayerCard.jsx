@@ -107,7 +107,7 @@ const PlayerCard = ({ player }) => {
                 iconColor="text-green-600 dark:text-green-400"
                 bgColor="bg-green-50 dark:bg-green-900/20"
                 label="Height"
-                value={`${player.height} cm`}
+                value={`${player.height} ft`}
               />
             )}
 
@@ -131,13 +131,6 @@ const PlayerCard = ({ player }) => {
               />
             )}
           </div>
-
-          {/* Bio */}
-          {player.bio && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed mb-4">
-              {player.bio}
-            </p>
-          )}
 
           {/* View Details Button */}
           <div className="flex items-center justify-between pt-3 text-secondary font-semibold group-hover:translate-x-2 transition-transform">

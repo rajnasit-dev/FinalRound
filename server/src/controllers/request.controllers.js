@@ -15,8 +15,8 @@ export const sendTeamRequest = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Team ID is required");
   }
 
-  // Check if team exists
-  const team = await Team.findById(teamId);
+  // Check if team exists and is active
+  const team = await Team.findOne({ _id: teamId, isActive: true });
   if (!team) {
     throw new ApiError(404, "Team not found");
   }
@@ -68,9 +68,9 @@ export const sendPlayerRequest = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Player ID and Team ID are required");
   }
 
-  // Check if team exists and manager is the owner
+  // Check if team exists and is active
   const team = await Team.findById(teamId).populate("sport", "name _id");
-  if (!team) {
+  if (!team || !team.isActive) {
     throw new ApiError(404, "Team not found");
   }
 
@@ -78,9 +78,9 @@ export const sendPlayerRequest = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only team manager can send requests");
   }
 
-  // Check if player exists and populate sports with Sport details
+  // Check if player exists and is active
   const player = await User.findById(playerId).populate("sports.sport", "name _id");
-  if (!player || player.role !== "Player") {
+  if (!player || player.role !== "Player" || !player.isActive) {
     throw new ApiError(404, "Player not found");
   }
 
@@ -228,8 +228,11 @@ export const acceptRequest = asyncHandler(async (req, res) => {
     throw new ApiError(400, `Request is already ${request.status.toLowerCase()}`);
   }
 
-  // Check if player is already in team
+  // Check if team exists and is active
   const team = await Team.findById(request.team);
+  if (!team || !team.isActive) {
+    throw new ApiError(404, "Team not found or is no longer active");
+  }
   if (team.players.includes(request.sender)) {
     throw new ApiError(400, "Player is already a member of this team");
   }
@@ -330,9 +333,9 @@ export const sendOrganizerAuthorizationRequest = asyncHandler(async (req, res) =
     throw new ApiError(400, "Organizer ID is required");
   }
 
-  // Check if organizer exists
+  // Check if organizer exists and is active
   const organizer = await User.findById(organizerId);
-  if (!organizer || organizer.role !== "TournamentOrganizer") {
+  if (!organizer || organizer.role !== "TournamentOrganizer" || !organizer.isActive) {
     throw new ApiError(404, "Organizer not found");
   }
 
@@ -391,8 +394,8 @@ export const sendTournamentBookingRequest = asyncHandler(async (req, res) => {
     if (tournament.registrationType !== "Team") {
       throw new ApiError(400, "This tournament is only for players");
     }
-    // Get the manager's team
-    const team = await Team.findOne({ manager: senderId });
+    // Get the manager's active team
+    const team = await Team.findOne({ manager: senderId, isActive: true });
     if (!team) {
       throw new ApiError(404, "Team not found for this manager");
     }

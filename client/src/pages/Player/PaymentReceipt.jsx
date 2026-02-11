@@ -1,4 +1,5 @@
 import useDateFormat from "../../hooks/useDateFormat";
+import { formatINR } from "../../utils/formatINR";
 import { useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -235,7 +236,7 @@ const PaymentReceipt = () => {
               <div className="flex justify-between">
                 <span className="text-gray-700">Entry Fee:</span>
                 <span className="font-medium text-gray-800 font-num">
-                  ₹{receipt.amount.toLocaleString()}
+                  ₹{formatINR(receipt.amount)}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -245,7 +246,7 @@ const PaymentReceipt = () => {
               <div className="flex justify-between text-xl">
                 <span className="font-bold text-gray-800">Total Paid:</span>
                 <span className="font-bold text-black font-num">
-                  ₹{receipt.amount.toLocaleString()}
+                  ₹{formatINR(receipt.amount)}
                 </span>
               </div>
             </div>

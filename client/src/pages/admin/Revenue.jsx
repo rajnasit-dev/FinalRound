@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getRevenue } from "../../store/slices/adminSlice";
+import { formatINR } from "../../utils/formatINR";
 import {
   DollarSign,
   Trophy,
@@ -55,7 +56,7 @@ const Revenue = () => {
         <DashboardCardState
           Icon={DollarSign}
           label="Admin Revenue"
-          value={`₹${revenue?.adminRevenue || 0}`}
+          value={`₹${formatINR(revenue?.adminRevenue || 0)}`}
           gradientFrom="from-green-500/10"
           gradientVia="via-green-500/5"
           borderColor={selectedFilter === "admin" ? "border-green-500" : "border-green-500/20"}
@@ -67,7 +68,7 @@ const Revenue = () => {
         <DashboardCardState
           Icon={Trophy}
           label="Organizer Revenue"
-          value={`₹${revenue?.organizerRevenue || 0}`}
+          value={`₹${formatINR(revenue?.organizerRevenue || 0)}`}
           gradientFrom="from-blue-500/10"
           gradientVia="via-blue-500/5"
           borderColor={selectedFilter === "organizer" ? "border-blue-500" : "border-blue-500/20"}
@@ -161,7 +162,7 @@ const Revenue = () => {
               width: "15%",
               render: (transaction) => (
                 <p className="font-bold text-green-600 dark:text-green-400 text-lg">
-                  ₹{transaction.amount}
+                  ₹{formatINR(transaction.amount)}
                 </p>
               ),
             },

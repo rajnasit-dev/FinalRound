@@ -42,10 +42,10 @@ export const createMatch = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Both teams are required for team-based matches.");
     }
 
-    // Verify teams exist
+    // Verify teams exist and are active
     const [teamADoc, teamBDoc] = await Promise.all([
-      Team.findById(teamA),
-      Team.findById(teamB)
+      Team.findOne({ _id: teamA, isActive: true }),
+      Team.findOne({ _id: teamB, isActive: true })
     ]);
 
     if (!teamADoc || !teamBDoc) {
@@ -61,10 +61,10 @@ export const createMatch = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Both players are required for player-based matches.");
     }
 
-    // Verify players exist
+    // Verify players exist and are active
     const [playerADoc, playerBDoc] = await Promise.all([
-      Player.findById(playerA),
-      Player.findById(playerB)
+      Player.findOne({ _id: playerA, isActive: true }),
+      Player.findOne({ _id: playerB, isActive: true })
     ]);
 
     if (!playerADoc || !playerBDoc) {

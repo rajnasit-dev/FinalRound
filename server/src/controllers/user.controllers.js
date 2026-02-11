@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/User.model.js";
+import { Team } from "../models/Team.model.js";
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 
 export const getUser = asyncHandler(async (req, res) => {
@@ -318,6 +319,11 @@ export const deleteUser = asyncHandler(async (req, res) => {
   // Soft delete - set isActive to false
   user.isActive = false;
   await user.save();
+
+  // If user is a TeamManager, deactivate all their teams
+  if (user.role === "TeamManager") {
+    await Team.updateMany({ manager: userId }, { isActive: false });
+  }
 
   const deletedUser = await User.findById(userId).select("-password -refreshToken");
 

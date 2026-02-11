@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { formatINR } from "../../utils/formatINR";
 import {
   ArrowRight,
   CalendarClock,
@@ -105,37 +106,51 @@ const TournamentCard = ({
           {/* Tournament Stats */}
           <div className="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
             <CardStat
-              Icon={IndianRupee}
+              Icon={CalendarClock}
               iconColor="text-blue-600 dark:text-blue-400"
               bgColor="bg-blue-50 dark:bg-blue-900/20"
-              label="Entry Fee"
-              value={tournament.entryFee ? `₹${tournament.entryFee}` : "Free"}
-            />
-
-            <CardStat
-              Icon={IndianRupee}
-              iconColor="text-green-600 dark:text-green-400"
-              bgColor="bg-green-50 dark:bg-green-900/20"
-              label="Prize Pool"
-              value={`₹${tournament.prizePool || 0}`}
-            />
-
-            <CardStat
-              Icon={CalendarClock}
-              iconColor="text-amber-600 dark:text-amber-400"
-              bgColor="bg-amber-50 dark:bg-amber-900/20"
-              label={registrationOpen ? "Reg. Closes" : "Start Date"}
-              value={registrationOpen && tournament.registrationEnd 
-                ? formatDate(tournament.registrationEnd) 
-                : formatDate(tournament.startDate)}
+              label="Reg. Start"
+              value={tournament.registrationStart ? formatDate(tournament.registrationStart) : "TBA"}
             />
 
             <CardStat
               Icon={CalendarClock}
               iconColor="text-purple-600 dark:text-purple-400"
               bgColor="bg-purple-50 dark:bg-purple-900/20"
+              label="Reg. End"
+              value={tournament.registrationEnd ? formatDate(tournament.registrationEnd) : "TBA"}
+            />
+
+            <CardStat
+              Icon={CalendarClock}
+              iconColor="text-green-600 dark:text-green-400"
+              bgColor="bg-green-50 dark:bg-green-900/20"
+              label="Start Date"
+              value={formatDate(tournament.startDate)}
+            />
+
+            <CardStat
+              Icon={CalendarClock}
+              iconColor="text-amber-600 dark:text-amber-400"
+              bgColor="bg-amber-50 dark:bg-amber-900/20"
               label="End Date"
               value={formatDate(tournament.endDate)}
+            />
+
+            <CardStat
+              Icon={IndianRupee}
+              iconColor="text-cyan-600 dark:text-cyan-400"
+              bgColor="bg-cyan-50 dark:bg-cyan-900/20"
+              label="Entry Fee"
+              value={tournament.entryFee ? `₹${formatINR(tournament.entryFee)}` : "Free"}
+            />
+
+            <CardStat
+              Icon={IndianRupee}
+              iconColor="text-emerald-600 dark:text-emerald-400"
+              bgColor="bg-emerald-50 dark:bg-emerald-900/20"
+              label="Prize Pool"
+              value={`₹${formatINR(tournament.prizePool || 0)}`}
             />
           </div>
 

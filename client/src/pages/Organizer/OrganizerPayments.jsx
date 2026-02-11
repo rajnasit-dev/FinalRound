@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
+import { formatINR } from "../../utils/formatINR";
 import {
   DollarSign,
   Trophy,
@@ -273,7 +274,7 @@ const OrganizerPayments = () => {
           }`}
         >
           {item.payerType === "Organizer" ? "-" : "+"}₹
-          {item.amount?.toLocaleString()}
+          {formatINR(item.amount)}
         </p>
       ),
     },

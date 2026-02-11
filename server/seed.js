@@ -105,7 +105,7 @@ async function seedPlayer(sports) {
     ],
     gender: 'Male',
     dateOfBirth: new Date('1998-05-15'),
-    height: 180,
+    height: 5.9, // feet
     weight: 75,
     bio: 'Passionate multi-sport athlete from Gujarat with 10+ years of experience',
     achievements: [
@@ -393,7 +393,7 @@ async function seedAdditionalPlayers(sports) {
       sports: [{ sport: sports[template.sport]._id, role: template.role }],
       gender: template.gender,
       dateOfBirth: new Date(1995 + (i % 10), (i % 12), (i % 28) + 1),
-      height: 160 + (i % 30),
+      height: 5 + (i % 20) / 10, // feet (range 5.0 to 6.9 ft)
       weight: 60 + (i % 30),
     });
     players.push(player);

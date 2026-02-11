@@ -15,6 +15,7 @@ const TOURNAMENT_LISTING_FEE = 100; // 100 rupees per tournament
 // Get all pending organizer authorization requests
 export const getPendingOrganizerRequests = asyncHandler(async (req, res) => {
   const pendingOrganizers = await TournamentOrganizer.find({
+    isActive: true,
     isAuthorized: false,
     isRejected: { $ne: true },
     verificationDocumentUrl: { $exists: true, $ne: null },
@@ -37,7 +38,7 @@ export const getPendingOrganizerRequests = asyncHandler(async (req, res) => {
 export const getAllOrganizers = asyncHandler(async (req, res) => {
   const { status } = req.query;
 
-  const filter = {};
+  const filter = { isActive: true };
   if (status === "authorized") {
     filter.isAuthorized = true;
   } else if (status === "pending") {
@@ -103,7 +104,7 @@ export const rejectOrganizer = asyncHandler(async (req, res) => {
 export const getAllUsers = asyncHandler(async (req, res) => {
   const { role, search } = req.query;
 
-  const filter = {};
+  const filter = { isActive: true };
   if (role && role !== "all") {
     filter.role = role;
   }
@@ -384,14 +385,15 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     pendingOrganizerRequests,
     recentPayments,
   ] = await Promise.all([
-    User.countDocuments(),
-    Player.countDocuments(),
-    TeamManager.countDocuments(),
-    TournamentOrganizer.countDocuments(),
+    User.countDocuments({ isActive: true }),
+    Player.countDocuments({ isActive: true }),
+    TeamManager.countDocuments({ isActive: true }),
+    TournamentOrganizer.countDocuments({ isActive: true }),
     Tournament.countDocuments(),
-    Team.countDocuments(),
+    Team.countDocuments({ isActive: true }),
     Tournament.countDocuments({ status: { $in: ["Upcoming", "Live"] } }),
     TournamentOrganizer.countDocuments({
+      isActive: true,
       isAuthorized: false,
       isRejected: { $ne: true },
       verificationDocumentUrl: { $exists: true, $ne: null },
@@ -649,10 +651,17 @@ export const deleteUser = asyncHandler(async (req, res) => {
     }
   }
 
-  // Delete the user
-  await User.findByIdAndDelete(userId);
+  // Soft delete - set isActive to false
+  user.isActive = false;
+  user.refreshToken = undefined;
+  await user.save({ validateBeforeSave: false });
 
-  res.status(200).json(new ApiResponse(200, null, "User deleted successfully"));
+  // If user is a TeamManager, deactivate all their teams
+  if (user.role === "TeamManager") {
+    await Team.updateMany({ manager: userId }, { isActive: false });
+  }
+
+  res.status(200).json(new ApiResponse(200, null, "User deactivated successfully"));
 });
 
 // Update user status or details

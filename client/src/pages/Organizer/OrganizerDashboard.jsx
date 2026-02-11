@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
+import { formatINR } from "../../utils/formatINR";
 import {
   Trophy,
   Users,
@@ -105,7 +106,7 @@ const OrganizerDashboard = () => {
         <DashboardCardState
           Icon={DollarSign}
           label="Payments Received"
-          value={`₹${paymentsReceived}`}
+          value={`₹${formatINR(paymentsReceived)}`}
           gradientFrom="from-green-500/10"
           gradientVia="via-green-500/5"
           borderColor="border-green-500/30"

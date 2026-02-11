@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { formatINR } from "../../utils/formatINR";
 import toast from "react-hot-toast";
 import { createPayment, verifyPayment, clearError, clearCurrentPayment, clearPaymentSuccess } from "../../store/slices/paymentSlice";
 import { CreditCard, CheckCircle, XCircle, Loader } from "lucide-react";
@@ -175,7 +176,7 @@ const TournamentPayment = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Entry Fee:</span>
                 <span className="font-medium text-gray-800 font-num">
-                  ₹{tournament.entryFee.toLocaleString()}
+                  ₹{formatINR(tournament.entryFee)}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -186,7 +187,7 @@ const TournamentPayment = () => {
                 <div className="flex justify-between text-lg">
                   <span className="font-semibold text-gray-800">Total Amount:</span>
                   <span className="font-bold text-blue-600 font-num">
-                    ₹{tournament.entryFee.toLocaleString()}
+                    ₹{formatINR(tournament.entryFee)}
                   </span>
                 </div>
               </div>
@@ -205,7 +206,7 @@ const TournamentPayment = () => {
             className="text-lg"
           >
             <CreditCard className="w-5 h-5" />
-            Pay ₹{tournament.entryFee.toLocaleString()}
+            Pay ₹{formatINR(tournament.entryFee)}
           </Button>
 
           <p className="text-center text-sm text-gray-500 mt-4">
