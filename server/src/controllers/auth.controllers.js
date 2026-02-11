@@ -663,7 +663,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) throw new ApiError(404, "user not Found.");
 
-  const token = crypto.randomBytes(20).toString();
+  const token = crypto.randomBytes(32).toString("hex");
   if (!token)
     throw new ApiError(
       400,
