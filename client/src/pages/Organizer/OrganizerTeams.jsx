@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { Users, Trophy, ArrowRight } from "lucide-react";
+import { Users, Trophy, ArrowRight, Briefcase, Stethoscope } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
 
@@ -27,14 +27,14 @@ const OrganizerTeams = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
@@ -95,7 +95,7 @@ const OrganizerTeams = () => {
         {allTeams.length === 0 ? (
           <div className="p-12 text-center">
             <Users className="w-16 h-16 mx-auto mb-4 text-base dark:text-base-dark" />
-            <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+            <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
               No teams yet
             </h3>
             <p className="text-base dark:text-base-dark mb-6">
@@ -126,6 +126,12 @@ const OrganizerTeams = () => {
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-text-primary dark:text-text-primary-dark">
                     Players
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-text-primary dark:text-text-primary-dark">
+                    Coach
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-text-primary dark:text-text-primary-dark">
+                    Medical Staff
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-text-primary dark:text-text-primary-dark">
                     Actions
@@ -161,6 +167,26 @@ const OrganizerTeams = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-text-primary dark:text-text-primary-dark">
                       {team.players?.length || 0}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-text-primary dark:text-text-primary-dark">
+                      {team.coach?.name ? (
+                        <div className="flex items-center gap-2">
+                          <Briefcase className="w-4 h-4 text-green-600 shrink-0" />
+                          <span>{team.coach.name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-base dark:text-base-dark">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-text-primary dark:text-text-primary-dark">
+                      {team.medicalTeam?.length > 0 ? (
+                        <div className="flex items-center gap-2">
+                          <Stethoscope className="w-4 h-4 text-red-500 shrink-0" />
+                          <span>{team.medicalTeam.length} staff</span>
+                        </div>
+                      ) : (
+                        <span className="text-base dark:text-base-dark">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <Link

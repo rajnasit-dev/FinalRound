@@ -40,7 +40,7 @@ const Revenue = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <BackButton />
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
@@ -138,8 +138,8 @@ const Revenue = () => {
               render: (transaction) => (
                 <p className="text-sm text-text-primary dark:text-text-primary-dark">
                   {transaction.type === "Platform Fee" 
-                    ? transaction.organizer?.fullName || transaction.organizer?.orgName || "Unknown"
-                    : transaction.team?.name || transaction.player?.fullName || "Unknown"}
+                    ? transaction.organizer?.fullName || transaction.organizer?.orgName || transaction.payerName || "Unknown"
+                    : transaction.team?.name || transaction.player?.fullName || transaction.payerName || "Unknown"}
                 </p>
               ),
             },

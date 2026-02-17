@@ -9,13 +9,11 @@ import {
   Lock,
   Phone,
   MapPin,
-  Upload,
   Calendar,
   Trophy,
   Building2,
-  Image,
-  X,
-  Plus,
+  Ruler,
+  Weight,
 } from "lucide-react";
 import Container from "../../components/container/Container";
 import Input from "../../components/ui/Input";
@@ -27,14 +25,6 @@ import SportsRolesInput from "../../components/ui/SportsRolesInput";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
-
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/jpg",
-];
 
 const Register = () => {
   const navigate = useNavigate();
@@ -57,16 +47,21 @@ const Register = () => {
       confirmPassword: "",
       phone: "",
       city: "",
-      avatar: null,
-      coverImage: null,
       dateOfBirth: "",
       gender: "",
+      height: "",
+      weight: "",
       orgName: "",
       sports: [],
     },
   });
 
   const selectedSports = watch("sports");
+
+  // Register gender field for validation (used with RadioGroup + setValue)
+  useEffect(() => {
+    register("gender", { required: role === "player" ? "Gender is required" : false });
+  }, [role, register]);
 
   // Clear error on unmount
   useEffect(() => {
@@ -98,20 +93,12 @@ const Register = () => {
       fd.append("phone", data.phone);
       fd.append("city", data.city);
 
-      // Handle avatar file
-      if (data.avatar && data.avatar[0]) {
-        fd.append("avatar", data.avatar[0]);
-      }
-
-      // Handle coverImage file (only for player)
-      if (role === "player" && data.coverImage && data.coverImage[0]) {
-        fd.append("coverImage", data.coverImage[0]);
-      }
-
       // Player-specific fields
       if (role === "player") {
         if (data.dateOfBirth) fd.append("dateOfBirth", data.dateOfBirth);
         if (data.gender) fd.append("gender", data.gender);
+        if (data.height) fd.append("height", data.height);
+        if (data.weight) fd.append("weight", data.weight);
         // Append selected sports with roles as JSON
         if (data.sports && data.sports.length > 0) {
           fd.append("sports", JSON.stringify(data.sports));
@@ -220,8 +207,8 @@ const Register = () => {
                     message: "Full name must be at least 2 characters",
                   },
                   maxLength: {
-                    value: 100,
-                    message: "Full name must be under 100 characters",
+                    value: 25,
+                    message: "Full name must be under 25 characters",
                   },
                 })}
               />
@@ -240,8 +227,8 @@ const Register = () => {
                     message: "Invalid email address",
                   },
                   maxLength: {
-                    value: 120,
-                    message: "Email must be under 120 characters",
+                    value: 50,
+                    message: "Email must be under 50 characters",
                   },
                 })}
               />
@@ -260,8 +247,8 @@ const Register = () => {
                     message: "Password must be at least 8 characters",
                   },
                   maxLength: {
-                    value: 64,
-                    message: "Password must be under 64 characters",
+                    value: 25,
+                    message: "Password must be under 25 characters",
                   },
                   pattern: {
                     value:
@@ -284,8 +271,8 @@ const Register = () => {
                   validate: (value) =>
                     value === watch("password") || "Passwords do not match",
                   maxLength: {
-                    value: 64,
-                    message: "Password must be under 64 characters",
+                    value: 25,
+                    message: "Password must be under 25 characters",
                   },
                 })}
               />
@@ -318,8 +305,8 @@ const Register = () => {
                     message: "City must be at least 2 characters",
                   },
                   maxLength: {
-                    value: 60,
-                    message: "City must be under 60 characters",
+                    value: 20,
+                    message: "City must be under 20 characters",
                   },
                   pattern: {
                     value: /^[a-zA-Z\s'-]+$/,
@@ -327,113 +314,106 @@ const Register = () => {
                   },
                 })}
               />
-
-              <Input
-                label="Avatar (optional)"
-                type="file"
-                id="avatar"
-                accept="image/*"
-                icon={<Upload size={20} />}
-                error={errors.avatar?.message}
-                {...register("avatar", {
-                  validate: {
-                    fileSize: (files) =>
-                      !files?.length ||
-                      files[0].size <= MAX_IMAGE_SIZE ||
-                      "Avatar must be 5MB or smaller",
-                    fileType: (files) =>
-                      !files?.length ||
-                      ALLOWED_IMAGE_TYPES.includes(files[0].type) ||
-                      "Avatar must be an image (jpg, png, webp)",
-                  },
-                })}
-              />
-
-              {/* Date of Birth - Required for all users */}
-              <div>
-                <Input
-                  label="Date of Birth"
-                  type="date"
-                  icon={<Calendar size={20} />}
-                  error={errors.dateOfBirth?.message}
-                  required={true}
-                  {...register("dateOfBirth", {
-                    required: "Date of birth is required",
-                    validate: {
-                      notFuture: (value) => {
-                        if (!value) return true;
-                        const dob = new Date(value);
-                        const today = new Date();
-                        return (
-                          dob <= today ||
-                          "Date of birth cannot be in the future"
-                        );
-                      },
-                      minAge: (value) => {
-                        if (!value) return true;
-                        const dob = new Date(value);
-                        const today = new Date();
-                        let age = today.getFullYear() - dob.getFullYear();
-                        const monthDiff = today.getMonth() - dob.getMonth();
-                        if (
-                          monthDiff < 0 ||
-                          (monthDiff === 0 && today.getDate() < dob.getDate())
-                        ) {
-                          age--;
-                        }
-                        return age >= 18 || "You must be at least 18 years old";
-                      },
-                      maxAge: (value) => {
-                        if (!value) return true;
-                        const dob = new Date(value);
-                        const today = new Date();
-                        const age = today.getFullYear() - dob.getFullYear();
-                        return (
-                          age <= 120 || "Please enter a valid date of birth"
-                        );
-                      },
-                    },
-                  })}
-                />
-              </div>
             </div>
 
             {/* Player-specific fields */}
             {role === "player" && (
               <>
+                {/* DOB + Gender in a row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Cover Image (optional)"
-                    type="file"
-                    id="coverImage"
-                    accept="image/*"
-                    icon={<Image size={20} />}
-                    error={errors.coverImage?.message}
-                    {...register("coverImage", {
+                    label="Date of Birth"
+                    type="date"
+                    icon={<Calendar size={20} />}
+                    error={errors.dateOfBirth?.message}
+                    required={true}
+                    {...register("dateOfBirth", {
+                      required: "Date of birth is required",
                       validate: {
-                        fileSize: (files) =>
-                          !files?.length ||
-                          files[0].size <= MAX_IMAGE_SIZE ||
-                          "Cover image must be 5MB or smaller",
-                        fileType: (files) =>
-                          !files?.length ||
-                          ALLOWED_IMAGE_TYPES.includes(files[0].type) ||
-                          "Cover image must be an image (jpg, png, webp)",
+                        notFuture: (value) => {
+                          if (!value) return true;
+                          const dob = new Date(value);
+                          const today = new Date();
+                          return (
+                            dob <= today ||
+                            "Date of birth cannot be in the future"
+                          );
+                        },
+                        minAge: (value) => {
+                          if (!value) return true;
+                          const dob = new Date(value);
+                          const today = new Date();
+                          let age = today.getFullYear() - dob.getFullYear();
+                          const monthDiff = today.getMonth() - dob.getMonth();
+                          if (
+                            monthDiff < 0 ||
+                            (monthDiff === 0 && today.getDate() < dob.getDate())
+                          ) {
+                            age--;
+                          }
+                          return age >= 18 || "You must be at least 18 years old";
+                        },
+                        maxAge: (value) => {
+                          if (!value) return true;
+                          const dob = new Date(value);
+                          const today = new Date();
+                          const age = today.getFullYear() - dob.getFullYear();
+                          return (
+                            age <= 120 || "Please enter a valid date of birth"
+                          );
+                        },
+                      },
+                    })}
+                  />
+                  <RadioGroup
+                    label="Gender"
+                    name="gender"
+                    options={genderOptions}
+                    error={errors.gender?.message}
+                    value={watch("gender")}
+                    onChange={(value) => setValue("gender", value, { shouldValidate: true })}
+                    required={true}
+                  />
+                </div>
+
+                {/* Height & Weight (optional) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    label="Height in ft (optional)"
+                    type="number"
+                    placeholder="e.g. 5.9"
+                    step="0.1"
+                    icon={<Ruler size={20} />}
+                    error={errors.height?.message}
+                    {...register("height", {
+                      min: {
+                        value: 3,
+                        message: "Height must be at least 3 ft",
+                      },
+                      max: {
+                        value: 8,
+                        message: "Height must be at most 8 ft",
+                      },
+                    })}
+                  />
+                  <Input
+                    label="Weight in kg (optional)"
+                    type="number"
+                    placeholder="e.g. 70"
+                    icon={<Weight size={20} />}
+                    error={errors.weight?.message}
+                    {...register("weight", {
+                      min: {
+                        value: 30,
+                        message: "Weight must be at least 30 kg",
+                      },
+                      max: {
+                        value: 200,
+                        message: "Weight must be under 200 kg",
                       },
                     })}
                   />
                 </div>
-
-                {/* Gender Selection */}
-                <RadioGroup
-                  label="Gender"
-                  name="gender"
-                  options={genderOptions}
-                  error={errors.gender?.message}
-                  value={watch("gender")}
-                  onChange={(value) => setValue("gender", value)}
-                  required={true}
-                />
 
                 {/* Sports Selection with Tags */}
                 <div>

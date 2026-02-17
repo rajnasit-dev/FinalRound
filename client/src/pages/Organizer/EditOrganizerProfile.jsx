@@ -84,8 +84,8 @@ const EditOrganizerProfile = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <BackButton className="mb-4" />
+    <div className="space-y-6">
+      <BackButton className="mb-6" />
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
@@ -128,6 +128,10 @@ const EditOrganizerProfile = () => {
                         value: 2,
                         message: "Full name must be at least 2 characters",
                       },
+                      maxLength: {
+                        value: 25,
+                        message: "Full name must be under 25 characters",
+                      },
                     })}
                     className="w-full pl-10 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark"
                   />
@@ -150,21 +154,11 @@ const EditOrganizerProfile = () => {
                   />
                   <input
                     type="email"
-                    {...register("email", {
-                      required: "Email is required",
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: "Invalid email address",
-                      },
-                    })}
-                    className="w-full pl-10 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark"
+                    {...register("email")}
+                    disabled
+                    className="w-full pl-10 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark opacity-50 cursor-not-allowed"
                   />
                 </div>
-                {errors.email && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.email.message}
-                  </p>
-                )}
               </div>
 
               <div>
@@ -180,8 +174,8 @@ const EditOrganizerProfile = () => {
                     type="tel"
                     {...register("phone", {
                       pattern: {
-                        value: /^[0-9]{10}$/,
-                        message: "Phone number must be 10 digits",
+                        value: /^\+?[0-9]{7,15}$/,
+                        message: "Enter a valid phone number",
                       },
                     })}
                     placeholder="Enter 10-digit phone number"
@@ -212,8 +206,12 @@ const EditOrganizerProfile = () => {
                         message: "City must be at least 2 characters",
                       },
                       maxLength: {
-                        value: 50,
-                        message: "City must not exceed 50 characters",
+                        value: 20,
+                        message: "City must be under 20 characters",
+                      },
+                      pattern: {
+                        value: /^[a-zA-Z\s'-]+$/,
+                        message: "City can only contain letters and spaces",
                       },
                     })}
                     placeholder="Enter your city"
@@ -234,7 +232,7 @@ const EditOrganizerProfile = () => {
             <Button
               type="button"
               onClick={handleCancel}
-              className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 px-6 py-3 flex items-center justify-center gap-2"
+              variant="secondary"
             >
               <X size={18} />
               Cancel
@@ -242,16 +240,11 @@ const EditOrganizerProfile = () => {
             <Button
               type="submit"
               disabled={!isValid || isSubmitting || loading}
+              loading={isSubmitting || loading}
               className="bg-secondary dark:bg-secondary-dark hover:opacity-90 px-6 py-3 flex items-center justify-center gap-2"
             >
-              {isSubmitting || loading ? (
-                <Spinner size="sm" />
-              ) : (
-                <>
-                  <Save size={18} />
-                  Save Changes
-                </>
-              )}
+              <Save size={18} />
+              Save Changes
             </Button>
           </div>
         </form>

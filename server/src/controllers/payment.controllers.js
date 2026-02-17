@@ -31,6 +31,8 @@ export const createPayment = asyncHandler(async (req, res) => {
   }
 
   // Validate payer type and references
+  let payerName = "Unknown";
+
   if (payerType === "Team") {
     if (!team) {
       throw new ApiError(400, "Team ID is required for team payment.");
@@ -43,6 +45,7 @@ export const createPayment = asyncHandler(async (req, res) => {
     if (teamDoc.manager.toString() !== userId.toString()) {
       throw new ApiError(403, "Only the team manager can make team payments.");
     }
+    payerName = teamDoc.name;
   } else if (payerType === "Player") {
     if (!player) {
       throw new ApiError(400, "Player ID is required for player payment.");
@@ -55,6 +58,9 @@ export const createPayment = asyncHandler(async (req, res) => {
     if (playerDoc._id.toString() !== userId.toString()) {
       throw new ApiError(403, "You can only make payment for yourself.");
     }
+    payerName = playerDoc.fullName;
+  } else if (payerType === "Organizer") {
+    payerName = req.user.orgName || req.user.fullName || "Organizer";
   }
 
   const payment = await Payment.create({
@@ -62,6 +68,7 @@ export const createPayment = asyncHandler(async (req, res) => {
     team: payerType === "Team" ? team : undefined,
     player: payerType === "Player" ? player : undefined,
     payerType,
+    payerName,
     organizer: tournamentDoc.organizer,
     amount,
     currency: currency || "INR",

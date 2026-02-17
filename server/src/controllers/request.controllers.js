@@ -26,6 +26,15 @@ export const sendTeamRequest = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Player is already a member of this team");
   }
 
+  // Check if player plays the team's sport
+  const player = await User.findById(playerId);
+  const playsSport = player?.sports?.some(
+    (s) => s.sport.toString() === team.sport.toString()
+  );
+  if (!playsSport) {
+    throw new ApiError(400, "You can't join this team as you don't play this sport.");
+  }
+
   // Check if request already exists
   const existingRequest = await Request.findOne({
     sender: playerId,
@@ -233,14 +242,20 @@ export const acceptRequest = asyncHandler(async (req, res) => {
   if (!team || !team.isActive) {
     throw new ApiError(404, "Team not found or is no longer active");
   }
-  if (team.players.includes(request.sender)) {
+
+  // Determine the player to add based on request type
+  // PLAYER_TO_TEAM: sender is the player, receiver is the manager
+  // TEAM_TO_PLAYER: sender is the manager, receiver is the player
+  const playerId = request.requestType === "TEAM_TO_PLAYER" ? request.receiver : request.sender;
+
+  if (team.players.some((p) => p.toString() === playerId.toString())) {
     throw new ApiError(400, "Player is already a member of this team");
   }
 
   // Add player to team
   await Team.findByIdAndUpdate(
     request.team,
-    { $addToSet: { players: request.sender } },
+    { $addToSet: { players: playerId } },
     { new: true }
   );
 
@@ -389,6 +404,15 @@ export const sendTournamentBookingRequest = asyncHandler(async (req, res) => {
   if (req.user.role === "Player") {
     if (tournament.registrationType !== "Player") {
       throw new ApiError(400, "This tournament is only for teams");
+    }
+
+    // Check if player plays the tournament's sport
+    const player = await User.findById(senderId);
+    const playsSport = player?.sports?.some(
+      (s) => s.sport.toString() === tournament.sport.toString()
+    );
+    if (!playsSport) {
+      throw new ApiError(400, "You are not eligible for this tournament as you don't play this sport.");
     }
   } else if (req.user.role === "TeamManager") {
     if (tournament.registrationType !== "Team") {

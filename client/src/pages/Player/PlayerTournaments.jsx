@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
 import { fetchUserBookings } from "../../store/slices/bookingSlice";
+import { fetchPlayerTeams } from "../../store/slices/teamSlice";
 import Spinner from "../../components/ui/Spinner";
 import TournamentCard from "../../components/ui/TournamentCard";
 import GridContainer from "../../components/ui/GridContainer";
@@ -12,11 +13,16 @@ const PlayerTournaments = () => {
   const dispatch = useDispatch();
   const { tournaments, loading } = useSelector((state) => state.tournament);
   const { bookings, loading: bookingsLoading } = useSelector((state) => state.booking);
+  const { playerTeams, loading: teamsLoading } = useSelector((state) => state.team);
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(fetchAllTournaments({}));
     dispatch(fetchUserBookings());
-  }, [dispatch]);
+    if (user?._id) {
+      dispatch(fetchPlayerTeams(user._id));
+    }
+  }, [dispatch, user?._id]);
 
   // Get registered tournament IDs from bookings (not cancelled)
   const registeredTournamentIds = new Set(
@@ -26,10 +32,26 @@ const PlayerTournaments = () => {
       .filter(Boolean) || []
   );
 
-  // Only show registered tournaments
-  const myTournaments = tournaments.filter((t) =>
-    registeredTournamentIds.has(t._id)
+  // Get player's team IDs
+  const playerTeamIds = new Set(
+    playerTeams?.map((t) => String(t._id)).filter(Boolean) || []
   );
+
+  // Show tournaments where:
+  // 1. Player has a direct booking, OR
+  // 2. Player's team is in registeredTeams or approvedTeams
+  const myTournaments = tournaments.filter((t) => {
+    if (registeredTournamentIds.has(t._id)) return true;
+
+    const teamRegistered = t.registeredTeams?.some((team) =>
+      playerTeamIds.has(String(team._id || team))
+    );
+    const teamApproved = t.approvedTeams?.some((team) =>
+      playerTeamIds.has(String(team._id || team))
+    );
+
+    return teamRegistered || teamApproved;
+  });
 
   // Get booking for a tournament
   const getBooking = (tournamentId) => {
@@ -57,41 +79,44 @@ const PlayerTournaments = () => {
     return null;
   };
 
+  if (loading || bookingsLoading || teamsLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <BackButton className="mb-4" />
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+    <div className="space-y-6">
+      <BackButton className="mb-6" />
+      <div>
+        <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
           My Tournaments
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-base dark:text-base-dark">
           View and manage your registered tournaments
           {myTournaments.length > 0 && ` (${myTournaments.length})`}
         </p>
       </div>
 
-      {/* Loading State */}
-      {(loading || bookingsLoading) && (
-        <div className="flex justify-center items-center py-12">
-          <Spinner size="lg" />
-        </div>
-      )}
-
       {/* Empty State */}
-      {!loading && !bookingsLoading && myTournaments.length === 0 && (
-        <div className="text-center py-12">
-          <Trophy className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-600 dark:text-gray-400 text-lg mb-2">
-            No registered tournaments found.
-          </p>
-          <p className="text-gray-500 dark:text-gray-500 text-sm">
+      {myTournaments.length === 0 && (
+        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+            <Trophy className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+            No registered tournaments
+          </h3>
+          <p className="text-base dark:text-base-dark">
             Browse available tournaments and register to participate.
           </p>
         </div>
       )}
 
       {/* Tournaments Grid */}
-      {!loading && !bookingsLoading && myTournaments.length > 0 && (
+      {myTournaments.length > 0 && (
         <GridContainer cols={2}>
           {myTournaments.map((tournament) => {
             const booking = getBooking(tournament._id);
@@ -99,7 +124,7 @@ const PlayerTournaments = () => {
               <TournamentCard
                 key={tournament._id}
                 tournament={tournament}
-                registrationStatusBadge={getRegistrationStatusBadge(booking)}
+                registrationStatusBadge={null}
               />
             );
           })}

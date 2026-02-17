@@ -45,10 +45,18 @@ const ManagerTournaments = () => {
 
   const loading = tournamentsLoading || teamsLoading;
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="space-y-6">
       <BackButton className="mb-6" />
-      <div className="mb-8">
+      <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
           My Tournaments
         </h1>
@@ -58,25 +66,21 @@ const ManagerTournaments = () => {
         </p>
       </div>
 
-      {loading && (
-        <div className="flex justify-center items-center py-12">
-          <Spinner size="lg" />
-        </div>
-      )}
-
-      {!loading && myTournaments.length === 0 && (
-        <div className="text-center py-12">
-          <Trophy className="w-16 h-16 mx-auto text-base dark:text-base-dark mb-4" />
-          <p className="text-base dark:text-base-dark text-lg mb-2">
-            No registered tournaments found.
-          </p>
-          <p className="text-base dark:text-base-dark/80 text-sm">
+      {myTournaments.length === 0 && (
+        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+            <Trophy className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+            No registered tournaments
+          </h3>
+          <p className="text-base dark:text-base-dark">
             Register your teams to tournaments to see them here.
           </p>
         </div>
       )}
 
-      {!loading && myTournaments.length > 0 && (
+      {myTournaments.length > 0 && (
         <GridContainer cols={2}>
           {myTournaments.map((tournament) => {
             const registeredBadge = (

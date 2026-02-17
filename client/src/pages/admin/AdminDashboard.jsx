@@ -39,7 +39,7 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Admin Dashboard
@@ -166,7 +166,7 @@ const AdminDashboard = () => {
                     {payment.tournament?.name || "Unknown Tournament"}
                   </p>
                   <p className="text-sm text-base dark:text-base-dark">
-                    {payment.team?.name || "Unknown Team"}
+                    {payment.team?.name || payment.player?.fullName || payment.payerName || "Unknown"}
                   </p>
                 </div>
                 <div className="text-right">

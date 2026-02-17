@@ -15,7 +15,7 @@ import ErrorMessage from "../../components/ui/ErrorMessage";
 import BackButton from "../../components/ui/BackButton";
 import Button from "../../components/ui/Button";
 import DataTable from "../../components/ui/DataTable";
-import { Inbox, Send, CheckCircle2, XCircle, User, Trophy, Trash2 } from "lucide-react";
+import { Inbox, Send, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "react-hot-toast";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import defaultAvatar from "../../assets/defaultAvatar.png";
@@ -107,6 +107,20 @@ const PlayerRequests = () => {
       ),
     },
     {
+      header: "Manager",
+      width: "25%",
+      render: (request) => (
+        <div className="min-w-0">
+          <p className="text-sm text-text-primary dark:text-text-primary-dark truncate">
+            {request.sender?.fullName}
+          </p>
+          <p className="text-xs text-base dark:text-base-dark truncate">
+            {request.sender?.email}
+          </p>
+        </div>
+      ),
+    },
+    {
       header: "Actions",
       width: "30%",
       render: (request) => (
@@ -114,7 +128,8 @@ const PlayerRequests = () => {
           <Button
             onClick={(e) => handleAccept(e, request._id)}
             disabled={loading}
-            className="!bg-green-600 hover:!bg-green-700 !text-white px-4 py-2 flex items-center gap-2 text-sm w-auto"
+            variant="success"
+            size="sm"
           >
             <CheckCircle2 className="w-4 h-4" />
             Accept
@@ -122,7 +137,8 @@ const PlayerRequests = () => {
           <Button
             onClick={(e) => handleReject(e, request._id)}
             disabled={loading}
-            className="!bg-red-600 hover:!bg-red-700 !text-white px-4 py-2 flex items-center gap-2 text-sm w-auto"
+            variant="danger"
+            size="sm"
           >
             <XCircle className="w-4 h-4" />
             Reject
@@ -175,30 +191,34 @@ const PlayerRequests = () => {
       header: "Actions",
       width: "30%",
       render: (request) => (
-        <button
+        <Button
           onClick={(e) => handleCancel(e, request._id)}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+          variant="danger"
+          size="sm"
         >
-          <Trash2 className="w-4 h-4" />
-          Delete Request
-        </button>
+          <XCircle className="w-4 h-4" />
+          Cancel Request
+        </Button>
       ),
     },
   ];
 
   if (loading && receivedRequests.length === 0 && sentRequests.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-16 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
-      <BackButton className="mb-4" />
-      <h1 className="text-3xl font-bold mb-6">Team Requests</h1>
+    <div className="space-y-6">
+      <BackButton className="mb-6" />
+      <div>
+        <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">Team Requests</h1>
+        <p className="text-base dark:text-base-dark">Manage your team invitations and join requests</p>
+      </div>
 
         {error && <ErrorMessage message={error} type="error" onDismiss={() => dispatch(clearError())} />}
 
@@ -232,12 +252,14 @@ const PlayerRequests = () => {
         {activeTab === "received" && (
           <>
             {receivedRequests.length === 0 ? (
-              <div className="text-center py-12">
-                <Inbox className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                  <Inbox className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                </div>
+                <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
                   No Received Requests
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-base dark:text-base-dark">
                   You don't have any team invitations at the moment.
                 </p>
               </div>
@@ -257,12 +279,14 @@ const PlayerRequests = () => {
         {activeTab === "sent" && (
           <>
             {sentRequests.length === 0 ? (
-              <div className="text-center py-12">
-                <Send className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                  <Send className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                </div>
+                <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
                   No Sent Requests
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-base dark:text-base-dark">
                   You haven't sent any join requests yet.
                 </p>
               </div>

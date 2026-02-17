@@ -105,8 +105,8 @@ const ResetPassword = () => {
                     message: "Password must be at least 8 characters",
                   },
                   maxLength: {
-                    value: 64,
-                    message: "Password must be under 64 characters",
+                    value: 25,
+                    message: "Password must be under 25 characters",
                   },
                   pattern: {
                     value:
@@ -128,6 +128,10 @@ const ResetPassword = () => {
                   required: "Please confirm your password",
                   validate: (value) =>
                     value === password || "Passwords do not match",
+                  maxLength: {
+                    value: 25,
+                    message: "Password must be under 25 characters",
+                  },
                 })}
               />
 

@@ -463,6 +463,32 @@ async function seedTeams(manager, player, allPlayers, sports) {
         { title: `${template.city} District Championship`, year: 2023 },
         { title: 'Gujarat State Cup Winner', year: 2024 },
       ],
+      coach: {
+        name: `Coach ${template.name.split(' ')[1] || template.name.split(' ')[0]}`,
+        phone: `+91 ${9800000000 + i * 11}`,
+        email: `coach.${template.name.toLowerCase().replace(/\s+/g, '')}@sportshub.com`,
+        experience: `${5 + (i % 10)} years of professional coaching in ${sports[template.sport].name}`,
+      },
+      medicalTeam: [
+        {
+          name: `Dr. ${['Rajesh Patel', 'Priya Shah', 'Amit Desai', 'Neha Joshi', 'Vikram Singh', 'Meera Trivedi', 'Karan Mehta', 'Sonal Bhatt', 'Harsh Raval', 'Disha Pandya'][i % 10]}`,
+          phone: `+91 ${9700000000 + i * 7}`,
+          email: `doctor.team${i + 1}@sportshub.com`,
+          role: 'Doctor',
+        },
+        {
+          name: `${['Ravi Kumar', 'Sneha Rao', 'Arjun Nair', 'Pooja Sharma', 'Deepak Verma', 'Kavita Iyer', 'Nikhil Gupta', 'Anita Reddy', 'Suresh Pillai', 'Megha Kulkarni'][i % 10]}`,
+          phone: `+91 ${9600000000 + i * 13}`,
+          email: `physio.team${i + 1}@sportshub.com`,
+          role: 'Physiotherapist',
+        },
+        {
+          name: `${['Aakash Mishra', 'Swati Jain', 'Manish Tiwari', 'Ritika Saxena', 'Gaurav Chauhan', 'Nisha Agarwal', 'Pranav Sinha', 'Divya Kapoor', 'Rohan Malhotra', 'Ishita Banerjee'][i % 10]}`,
+          phone: `+91 ${9500000000 + i * 17}`,
+          email: `nutrition.team${i + 1}@sportshub.com`,
+          role: 'Nutritionist',
+        },
+      ],
     });
 
     teams.push(team);

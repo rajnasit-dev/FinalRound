@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import Spinner from "../../components/ui/Spinner";
 import TeamCard from "../../components/ui/TeamCard";
 import BackButton from "../../components/ui/BackButton";
+import GridContainer from "../../components/ui/GridContainer";
 import { fetchManagerTeams, fetchAllTeams } from "../../store/slices/teamSlice";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
@@ -59,15 +60,15 @@ const ManagerTeams = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      <BackButton className="mb-4" />
+    <div className="space-y-6">
+      <BackButton className="mb-6" />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -76,6 +77,7 @@ const ManagerTeams = () => {
           </h1>
           <p className="text-base dark:text-base-dark">
             Manage your teams and roster
+            {managerTeams && managerTeams.length > 0 && ` (${managerTeams.length})`}
           </p>
         </div>
         <Link
@@ -89,7 +91,7 @@ const ManagerTeams = () => {
 
       {/* Teams Grid */}
       {managerTeams && managerTeams.length > 0 ? (
-        <div className="grid md:grid-cols-2 gap-6">
+        <GridContainer cols={2}>
           {managerTeams.map((team) => (
             <TeamCard 
               key={team._id} 
@@ -101,13 +103,13 @@ const ManagerTeams = () => {
               onDeleteTeam={handleDeleteTeam}
             />
           ))}
-        </div>
+        </GridContainer>
       ) : (
         <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
             <Plus className="w-8 h-8 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+          <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
             No teams yet
           </h3>
           <p className="text-base dark:text-base-dark mb-6">

@@ -2,12 +2,12 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, Calendar, MapPin, Award } from "lucide-react";
+import { Calendar, MapPin } from "lucide-react";
 import Input from "../../components/ui/Input";
-import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
 import Spinner from "../../components/ui/Spinner";
 import BackButton from "../../components/ui/BackButton";
+import toast from "react-hot-toast";
 import { fetchMatchById, updateMatch } from "../../store/slices/matchSlice";
 
 const EditMatch = () => {
@@ -43,10 +43,6 @@ const EditMatch = () => {
         groundName: selectedMatch.ground?.name || "",
         groundCity: selectedMatch.ground?.city || "",
         groundAddress: selectedMatch.ground?.address || "",
-        status: selectedMatch.status || "Scheduled",
-        scoreA: selectedMatch.scoreA || "",
-        scoreB: selectedMatch.scoreB || "",
-        resultText: selectedMatch.resultText || "",
       });
     }
   }, [selectedMatch, reset]);
@@ -56,38 +52,26 @@ const EditMatch = () => {
       const updateData = {
         scheduledAt: data.scheduledAt,
         ground: {
-          name: data.groundName || "",
-          city: data.groundCity || "",
-          address: data.groundAddress || "",
+          name: data.groundName?.trim() || "",
+          city: data.groundCity?.trim() || "",
+          address: data.groundAddress?.trim() || "",
         },
-        status: data.status,
-        scoreA: data.scoreA || "",
-        scoreB: data.scoreB || "",
-        resultText: data.resultText || "",
       };
 
-      const result = await dispatch(
-        updateMatch({ id: matchId, data: updateData })
+      await dispatch(
+        updateMatch({ matchId, matchData: updateData })
       ).unwrap();
 
-      if (result) {
-        navigate("/organizer/matches");
-      }
+      toast.success("Match updated successfully!");
+      navigate(-1);
     } catch (error) {
-      console.error("Failed to update match:", error);
+      toast.error(error || "Failed to update match");
     }
   };
 
-  const statusOptions = [
-    { value: "Scheduled", label: "Scheduled" },
-    { value: "Live", label: "Live" },
-    { value: "Completed", label: "Completed" },
-    { value: "Cancelled", label: "Cancelled" },
-  ];
-
   if (loading && !selectedMatch) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
@@ -97,21 +81,13 @@ const EditMatch = () => {
     <div className="space-y-6">
       <BackButton className="mb-6" />
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate("/organizer/matches")}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
-            Edit Match
-          </h1>
-          <p className="text-base dark:text-base-dark">
-            Update match details, scores, and results
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
+          Edit Match
+        </h1>
+        <p className="text-base dark:text-base-dark">
+          Update match schedule and venue details
+        </p>
       </div>
 
       {/* Match Info Card */}
@@ -155,7 +131,7 @@ const EditMatch = () => {
         <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
           <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-secondary" />
-            Schedule & Status
+            Schedule
           </h2>
 
           <div className="grid md:grid-cols-2 gap-4">
@@ -164,16 +140,13 @@ const EditMatch = () => {
               type="datetime-local"
               {...register("scheduledAt", {
                 required: "Scheduled date & time is required",
+                validate: (value) => {
+                  const selected = new Date(value);
+                  if (isNaN(selected.getTime())) return "Invalid date";
+                  return true;
+                },
               })}
               error={errors.scheduledAt?.message}
-              required
-            />
-
-            <Select
-              label="Status"
-              options={statusOptions}
-              {...register("status", { required: "Status is required" })}
-              error={errors.status?.message}
               required
             />
           </div>
@@ -190,14 +163,24 @@ const EditMatch = () => {
             <Input
               label="Ground Name"
               placeholder="Enter ground name"
-              {...register("groundName")}
+              {...register("groundName", {
+                minLength: { value: 2, message: "Ground name must be at least 2 characters" },
+                maxLength: { value: 50, message: "Ground name must be under 50 characters" },
+              })}
               error={errors.groundName?.message}
             />
 
             <Input
               label="City"
               placeholder="Enter city"
-              {...register("groundCity")}
+              {...register("groundCity", {
+                minLength: { value: 2, message: "City must be at least 2 characters" },
+                maxLength: { value: 20, message: "City must be under 20 characters" },
+                pattern: {
+                  value: /^[a-zA-Z\s'-]+$/,
+                  message: "City can only contain letters and spaces",
+                },
+              })}
               error={errors.groundCity?.message}
             />
 
@@ -205,41 +188,11 @@ const EditMatch = () => {
               <Input
                 label="Address"
                 placeholder="Enter full address"
-                {...register("groundAddress")}
+                {...register("groundAddress", {
+                  minLength: { value: 5, message: "Address must be at least 5 characters" },
+                  maxLength: { value: 100, message: "Address must be under 100 characters" },
+                })}
                 error={errors.groundAddress?.message}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Score & Result Card */}
-        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
-          <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4 flex items-center gap-2">
-            <Award className="w-5 h-5 text-secondary" />
-            Score & Result
-          </h2>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <Input
-              label={`Score ${selectedMatch?.teamA ? "Team A" : "Player A"}`}
-              placeholder="e.g., 150/7 in 20 ov"
-              {...register("scoreA")}
-              error={errors.scoreA?.message}
-            />
-
-            <Input
-              label={`Score ${selectedMatch?.teamB ? "Team B" : "Player B"}`}
-              placeholder="e.g., 145/10 in 19.4 ov"
-              {...register("scoreB")}
-              error={errors.scoreB?.message}
-            />
-
-            <div className="md:col-span-2">
-              <Input
-                label="Result Text"
-                placeholder="e.g., Team A won by 5 runs"
-                {...register("resultText")}
-                error={errors.resultText?.message}
               />
             </div>
           </div>
@@ -257,8 +210,8 @@ const EditMatch = () => {
 
           <Button
             type="button"
-            onClick={() => navigate("/organizer/matches")}
-            className="bg-gray-600 hover:bg-gray-700"
+            onClick={() => navigate(-1)}
+            variant="secondary"
           >
             Cancel
           </Button>

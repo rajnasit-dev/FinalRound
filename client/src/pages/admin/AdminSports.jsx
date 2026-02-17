@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
 import { fetchAllSports as fetchAllSportsThunk } from "../../store/slices/sportSlice";
 import axios from "axios";
-import { Dumbbell, Edit2, Trash2, Plus } from "lucide-react";
+import { Dumbbell, Edit2, Trash2, Plus, X, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
@@ -33,6 +33,10 @@ const AdminSports = () => {
   const [editingSport, setEditingSport] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [addRoleInput, setAddRoleInput] = useState("");
+  const [addRoles, setAddRoles] = useState(["Player"]);
+  const [editRoleInput, setEditRoleInput] = useState("");
+  const [editRoles, setEditRoles] = useState([]);
 
   const {
     register: registerAdd,
@@ -40,12 +44,13 @@ const AdminSports = () => {
     formState: { errors: errorsAdd, isValid: isValidAdd },
     reset: resetAdd,
     control: controlAdd,
+    watch: watchAdd,
   } = useForm({
     mode: "onChange",
     defaultValues: {
       name: "",
       teamBased: "false",
-      description: "",
+      playersPerTeam: "",
     },
   });
 
@@ -55,6 +60,7 @@ const AdminSports = () => {
     formState: { errors: errorsEdit, isValid: isValidEdit },
     reset: resetEdit,
     control: controlEdit,
+    watch: watchEdit,
   } = useForm({
     mode: "onChange",
   });
@@ -103,25 +109,30 @@ const AdminSports = () => {
     resetEdit({
       name: sport.name,
       teamBased: sport.teamBased ? "true" : "false",
-      description: sport.description || "",
+      playersPerTeam: sport.playersPerTeam || "",
     });
+    setEditRoles(sport.roles || ["Player"]);
     setShowEditModal(true);
   };
 
   const onSubmitAdd = async (data) => {
     setIsSubmitting(true);
     try {
+      const isTeamBased = data.teamBased === "true";
       await axios.post(
         `${API_BASE_URL}/sports`,
         {
           name: data.name,
-          teamBased: data.teamBased === "true",
-          description: data.description,
+          teamBased: isTeamBased,
+          roles: addRoles.length > 0 ? addRoles : ["Player"],
+          playersPerTeam: isTeamBased && data.playersPerTeam ? Number(data.playersPerTeam) : null,
         },
         { withCredentials: true }
       );
       toast.success("Sport created successfully");
       resetAdd();
+      setAddRoles(["Player"]);
+      setAddRoleInput("");
       setShowAddModal(false);
       fetchSports();
       dispatch(fetchAllSportsThunk());
@@ -135,12 +146,14 @@ const AdminSports = () => {
   const onSubmitEdit = async (data) => {
     setIsSubmitting(true);
     try {
+      const isTeamBased = data.teamBased === "true";
       await axios.put(
         `${API_BASE_URL}/sports/${editingSport._id}`,
         {
           name: data.name,
-          teamBased: data.teamBased === "true",
-          description: data.description,
+          teamBased: isTeamBased,
+          roles: editRoles.length > 0 ? editRoles : ["Player"],
+          playersPerTeam: isTeamBased && data.playersPerTeam ? Number(data.playersPerTeam) : null,
         },
         { withCredentials: true }
       );
@@ -159,7 +172,7 @@ const AdminSports = () => {
   const columns = [
     {
       header: "Sport",
-      width: "35%",
+      width: "20%",
       render: (sport) => (
         <p className="font-semibold text-text-primary dark:text-text-primary-dark">
           {sport.name}
@@ -168,14 +181,36 @@ const AdminSports = () => {
     },
     {
       header: "Type",
-      width: "35%",
+      width: "15%",
       render: (sport) => (
         <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
           sport.teamBased
             ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
             : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
         }`}>
-          {sport.teamBased ? "Team-Based" : "Individual"}
+          {sport.teamBased ? "Team" : "Individual"}
+        </span>
+      ),
+    },
+    {
+      header: "Roles",
+      width: "25%",
+      render: (sport) => (
+        <div className="flex flex-wrap gap-1">
+          {(sport.roles || ["Player"]).map((role) => (
+            <span key={role} className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+              {role}
+            </span>
+          ))}
+        </div>
+      ),
+    },
+    {
+      header: "Players/Team",
+      width: "15%",
+      render: (sport) => (
+        <span className="text-text-primary dark:text-text-primary-dark">
+          {sport.teamBased ? (sport.playersPerTeam || "—") : "N/A"}
         </span>
       ),
     },
@@ -188,24 +223,20 @@ const AdminSports = () => {
         <div className="flex gap-2 justify-end">
           <Button
             onClick={(e) => handleEdit(e, sport)}
-            className="!px-3 !py-2 flex items-center justify-center gap-2"
+            size="sm"
           >
             <Edit2 className="w-4 h-4" />
-            <span className="text-sm font-semibold">Edit</span>
+            Edit
           </Button>
           <Button
             onClick={(e) => handleDelete(e, sport._id)}
             disabled={deletingId === sport._id}
-            className="!bg-red-600 hover:!bg-red-700 !text-white !px-3 !py-2 flex items-center justify-center gap-2"
+            loading={deletingId === sport._id}
+            variant="danger"
+            size="sm"
           >
-            {deletingId === sport._id ? (
-              <Spinner size="sm" />
-            ) : (
-              <>
-                <Trash2 className="w-4 h-4" />
-                <span className="text-sm font-semibold">Delete</span>
-              </>
-            )}
+            <Trash2 className="w-4 h-4" />
+            <span className="text-sm font-semibold">Delete</span>
           </Button>
         </div>
       ),
@@ -221,7 +252,7 @@ const AdminSports = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <BackButton />
       
       <div className="flex items-center justify-between">
@@ -258,12 +289,14 @@ const AdminSports = () => {
       />
 
       {sports.length === 0 ? (
-        <div className="text-center py-12">
-          <Dumbbell className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+            <Dumbbell className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
             No Sports Found
           </h3>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-base dark:text-base-dark">
             No sports are currently available in the system.
           </p>
         </div>
@@ -291,10 +324,11 @@ const AdminSports = () => {
               <Input
                 label="Sport Name"
                 type="text"
-                placeholder="Enter sport name"
+                placeholder="e.g. Cricket, Football, Chess"
                 {...registerAdd("name", {
                   required: "Sport name is required",
                   minLength: { value: 2, message: "Name must be at least 2 characters" },
+                  maxLength: { value: 20, message: "Name must be under 20 characters" },
                 })}
                 error={errorsAdd.name?.message}
                 required
@@ -318,29 +352,89 @@ const AdminSports = () => {
                 )}
               />
 
+              {watchAdd("teamBased") === "true" && (
+                <Input
+                  label="Players Per Team"
+                  type="number"
+                  placeholder="e.g. 11"
+                  {...registerAdd("playersPerTeam", {
+                    min: { value: 1, message: "Must be at least 1" },
+                    max: { value: 50, message: "Must be 50 or less" },
+                  })}
+                  error={errorsAdd.playersPerTeam?.message}
+                />
+              )}
+
+              {/* Roles */}
               <div>
                 <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                  Description (Optional)
+                  Roles
                 </label>
-                <textarea
-                  {...registerAdd("description")}
-                  rows={4}
-                  className="w-full px-4 py-2 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Enter sport description"
-                />
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={addRoleInput}
+                    onChange={(e) => setAddRoleInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const role = addRoleInput.trim();
+                        if (role && !addRoles.includes(role)) {
+                          setAddRoles([...addRoles, role]);
+                          setAddRoleInput("");
+                        }
+                      }
+                    }}
+                    className="flex-1 px-4 py-2 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                    placeholder="Type a role and press Enter"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const role = addRoleInput.trim();
+                      if (role && !addRoles.includes(role)) {
+                        setAddRoles([...addRoles, role]);
+                        setAddRoleInput("");
+                      }
+                    }}
+                    className="px-3 py-2 bg-secondary text-white rounded-lg text-sm hover:opacity-90 transition-opacity"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {addRoles.map((role) => (
+                    <span
+                      key={role}
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    >
+                      {role}
+                      <button
+                        type="button"
+                        onClick={() => setAddRoles(addRoles.filter((r) => r !== role))}
+                        className="hover:text-red-500 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                {addRoles.length === 0 && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">At least one role is recommended</p>
+                )}
               </div>
 
               <div className="flex gap-3 justify-end">
                 <Button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="!bg-gray-500 hover:!bg-gray-600"
+                  variant="secondary"
                   disabled={isSubmitting}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={!isValidAdd || isSubmitting}>
-                  {isSubmitting ? <Spinner size="sm" /> : "Add Sport"}
+                <Button type="submit" disabled={!isValidAdd || isSubmitting} loading={isSubmitting}>
+                  Add Sport
                 </Button>
               </div>
             </form>
@@ -359,10 +453,11 @@ const AdminSports = () => {
               <Input
                 label="Sport Name"
                 type="text"
-                placeholder="Enter sport name"
+                placeholder="e.g. Cricket, Football, Chess"
                 {...registerEdit("name", {
                   required: "Sport name is required",
                   minLength: { value: 2, message: "Name must be at least 2 characters" },
+                  maxLength: { value: 20, message: "Name must be under 20 characters" },
                 })}
                 error={errorsEdit.name?.message}
                 required
@@ -377,7 +472,7 @@ const AdminSports = () => {
                     ref={ref}
                     label="Sport Type"
                     options={teamBasedOptions}
-                    name="teamBased"
+                    name="teamBasedEdit"
                     value={value}
                     onChange={onChange}
                     error={errorsEdit.teamBased?.message}
@@ -386,29 +481,89 @@ const AdminSports = () => {
                 )}
               />
 
+              {watchEdit("teamBased") === "true" && (
+                <Input
+                  label="Players Per Team"
+                  type="number"
+                  placeholder="e.g. 11"
+                  {...registerEdit("playersPerTeam", {
+                    min: { value: 1, message: "Must be at least 1" },
+                    max: { value: 50, message: "Must be 50 or less" },
+                  })}
+                  error={errorsEdit.playersPerTeam?.message}
+                />
+              )}
+
+              {/* Roles */}
               <div>
                 <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
-                  Description (Optional)
+                  Roles
                 </label>
-                <textarea
-                  {...registerEdit("description")}
-                  rows={4}
-                  className="w-full px-4 py-2 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Enter sport description"
-                />
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={editRoleInput}
+                    onChange={(e) => setEditRoleInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const role = editRoleInput.trim();
+                        if (role && !editRoles.includes(role)) {
+                          setEditRoles([...editRoles, role]);
+                          setEditRoleInput("");
+                        }
+                      }
+                    }}
+                    className="flex-1 px-4 py-2 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                    placeholder="Type a role and press Enter"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const role = editRoleInput.trim();
+                      if (role && !editRoles.includes(role)) {
+                        setEditRoles([...editRoles, role]);
+                        setEditRoleInput("");
+                      }
+                    }}
+                    className="px-3 py-2 bg-secondary text-white rounded-lg text-sm hover:opacity-90 transition-opacity"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {editRoles.map((role) => (
+                    <span
+                      key={role}
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    >
+                      {role}
+                      <button
+                        type="button"
+                        onClick={() => setEditRoles(editRoles.filter((r) => r !== role))}
+                        className="hover:text-red-500 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                {editRoles.length === 0 && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">At least one role is recommended</p>
+                )}
               </div>
 
               <div className="flex gap-3 justify-end">
                 <Button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="!bg-gray-500 hover:!bg-gray-600"
+                  variant="secondary"
                   disabled={isSubmitting}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={!isValidEdit || isSubmitting}>
-                  {isSubmitting ? <Spinner size="sm" /> : "Update Sport"}
+                <Button type="submit" disabled={!isValidEdit || isSubmitting} loading={isSubmitting}>
+                  Update Sport
                 </Button>
               </div>
             </form>

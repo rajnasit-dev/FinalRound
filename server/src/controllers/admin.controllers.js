@@ -9,7 +9,7 @@ import { Settings } from "../models/Settings.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
+import { deleteFromCloudinary, uploadOnCloudinary, getCloudinaryPublicId } from "../utils/cloudinary.js";
 
 const TOURNAMENT_LISTING_FEE = 100; // 100 rupees per tournament
 
@@ -634,21 +634,23 @@ export const deleteUser = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User not found");
   }
 
-  // Delete avatar from cloudinary if exists
-  if (user.avatarUrl) {
+  // Delete avatar from Cloudinary if exists
+  if (user.avatar) {
     try {
-      await deleteFromCloudinary(user.avatarUrl);
+      const publicId = getCloudinaryPublicId(user.avatar);
+      await deleteFromCloudinary(publicId);
     } catch (error) {
-      console.error("Error deleting avatar from cloudinary:", error);
+      console.error("Error deleting avatar from Cloudinary:", error);
     }
   }
 
-  // Delete banner from cloudinary if exists
-  if (user.bannerUrl) {
+  // Delete cover image from Cloudinary if exists
+  if (user.coverImage) {
     try {
-      await deleteFromCloudinary(user.bannerUrl);
+      const publicId = getCloudinaryPublicId(user.coverImage);
+      await deleteFromCloudinary(publicId);
     } catch (error) {
-      console.error("Error deleting banner from cloudinary:", error);
+      console.error("Error deleting cover image from Cloudinary:", error);
     }
   }
 
@@ -657,8 +659,25 @@ export const deleteUser = asyncHandler(async (req, res) => {
   user.refreshToken = undefined;
   await user.save({ validateBeforeSave: false });
 
-  // If user is a TeamManager, deactivate all their teams
+  // If user is a TeamManager, deactivate all their teams and clean up images
   if (user.role === "TeamManager") {
+    const teams = await Team.find({ manager: userId });
+    for (const team of teams) {
+      if (team.logoUrl) {
+        try {
+          await deleteFromCloudinary(getCloudinaryPublicId(team.logoUrl));
+        } catch (error) {
+          console.log("Failed to delete team logo from Cloudinary:", error.message);
+        }
+      }
+      if (team.bannerUrl) {
+        try {
+          await deleteFromCloudinary(getCloudinaryPublicId(team.bannerUrl));
+        } catch (error) {
+          console.log("Failed to delete team banner from Cloudinary:", error.message);
+        }
+      }
+    }
     await Team.updateMany({ manager: userId }, { isActive: false });
   }
 

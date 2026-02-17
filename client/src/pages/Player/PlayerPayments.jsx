@@ -164,7 +164,7 @@ const PlayerPayments = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Payment History
@@ -176,122 +176,140 @@ const PlayerPayments = () => {
 
       {error && <ErrorMessage message={error} />}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <DashboardCardState
-          Icon={DollarSign}
-          label="Total Paid"
-          value={`₹${(filteredStats.totalPaid || 0).toLocaleString("en-IN")}`}
-          gradientFrom="from-green-500/10"
-          gradientVia="via-green-500/5"
-          borderColor="border-green-500/20"
-          iconGradientFrom="from-green-500"
-          iconGradientTo="to-green-600"
-        />
-        <DashboardCardState
-          Icon={Clock}
-          label="Pending Amount"
-          value={`₹${(filteredStats.pending || 0).toLocaleString("en-IN")}`}
-          gradientFrom="from-yellow-500/10"
-          gradientVia="via-yellow-500/5"
-          borderColor="border-yellow-500/20"
-          iconGradientFrom="from-yellow-500"
-          iconGradientTo="to-yellow-600"
-        />
-        <DashboardCardState
-          Icon={CreditCard}
-          label="Total Transactions"
-          value={filteredStats.totalTransactions || 0}
-          gradientFrom="from-purple-500/10"
-          gradientVia="via-purple-500/5"
-          borderColor="border-purple-500/20"
-          iconGradientFrom="from-purple-500"
-          iconGradientTo="to-purple-600"
-        />
-      </div>
-
-      {/* Filter & Search Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <SearchBar
-          placeholder="Search by tournament name..."
-          searchQuery={searchTerm}
-          setSearchQuery={setSearchTerm}
-        />
-        <Select
-          options={[
-            { value: "all", label: "All Statuses" },
-            { value: "Success", label: "Success" },
-            { value: "Pending", label: "Pending" },
-            { value: "Failed", label: "Failed" },
-            { value: "Refunded", label: "Refunded" },
-          ]}
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        />
-        <Select
-          options={[
-            { value: "all", label: "All Months" },
-            { value: "0", label: "January" },
-            { value: "1", label: "February" },
-            { value: "2", label: "March" },
-            { value: "3", label: "April" },
-            { value: "4", label: "May" },
-            { value: "5", label: "June" },
-            { value: "6", label: "July" },
-            { value: "7", label: "August" },
-            { value: "8", label: "September" },
-            { value: "9", label: "October" },
-            { value: "10", label: "November" },
-            { value: "11", label: "December" },
-          ]}
-          value={monthFilter}
-          onChange={(e) => setMonthFilter(e.target.value)}
-        />
-        <Select
-          options={[
-            { value: "all", label: "All Years" },
-            ...availableYears.map((y) => ({ value: String(y), label: String(y) })),
-          ]}
-          value={yearFilter}
-          onChange={(e) => setYearFilter(e.target.value)}
-        />
-        <button
-          onClick={handleGenerateReport}
-          className="flex items-center justify-center gap-2 px-4 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg font-medium transition-colors cursor-pointer"
-        >
-          <FileDown className="w-4 h-4" />
-          Generate Report
-        </button>
-      </div>
-
-      {/* Payments Table */}
-      {filteredPayments.length === 0 ? (
-        <div className="text-center py-12">
-          <CreditCard className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            No Transactions Found
+      {!payments || payments.length === 0 ? (
+        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+            <CreditCard className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
+            No Payments Yet
           </h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            No transactions match your filters.
+          <p className="text-base dark:text-base-dark">
+            You haven't made any tournament registration payments yet. Register for a tournament to get started.
           </p>
         </div>
       ) : (
-        <DataTable
-          columns={columns}
-          data={filteredPayments}
-          onRowClick={(payment) => setSelectedPaymentId(payment._id)}
-          itemsPerPage={10}
-          emptyMessage="No payment history found"
-        />
-      )}
+        <>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <DashboardCardState
+              Icon={DollarSign}
+              label="Total Paid"
+              value={`₹${(filteredStats.totalPaid || 0).toLocaleString("en-IN")}`}
+              gradientFrom="from-green-500/10"
+              gradientVia="via-green-500/5"
+              borderColor="border-green-500/20"
+              iconGradientFrom="from-green-500"
+              iconGradientTo="to-green-600"
+            />
+            <DashboardCardState
+              Icon={Clock}
+              label="Pending Amount"
+              value={`₹${(filteredStats.pending || 0).toLocaleString("en-IN")}`}
+              gradientFrom="from-yellow-500/10"
+              gradientVia="via-yellow-500/5"
+              borderColor="border-yellow-500/20"
+              iconGradientFrom="from-yellow-500"
+              iconGradientTo="to-yellow-600"
+            />
+            <DashboardCardState
+              Icon={CreditCard}
+              label="Total Transactions"
+              value={filteredStats.totalTransactions || 0}
+              gradientFrom="from-purple-500/10"
+              gradientVia="via-purple-500/5"
+              borderColor="border-purple-500/20"
+              iconGradientFrom="from-purple-500"
+              iconGradientTo="to-purple-600"
+            />
+          </div>
 
-      {/* Payment Detail Modal */}
-      {selectedPaymentId && (
-        <PaymentDetailModal
-          paymentId={selectedPaymentId}
-          onClose={() => setSelectedPaymentId(null)}
-          currentUserId={user?._id}
-        />
+          {/* Filter & Search Bar */}
+          <div className="space-y-4">
+            <SearchBar
+              placeholder="Search by tournament name..."
+              searchQuery={searchTerm}
+              setSearchQuery={setSearchTerm}
+            />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Select
+              options={[
+                { value: "all", label: "All Statuses" },
+                { value: "Success", label: "Success" },
+                { value: "Pending", label: "Pending" },
+                { value: "Failed", label: "Failed" },
+                { value: "Refunded", label: "Refunded" },
+              ]}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            />
+            <Select
+              options={[
+                { value: "all", label: "All Months" },
+                { value: "0", label: "January" },
+                { value: "1", label: "February" },
+                { value: "2", label: "March" },
+                { value: "3", label: "April" },
+                { value: "4", label: "May" },
+                { value: "5", label: "June" },
+                { value: "6", label: "July" },
+                { value: "7", label: "August" },
+                { value: "8", label: "September" },
+                { value: "9", label: "October" },
+                { value: "10", label: "November" },
+                { value: "11", label: "December" },
+              ]}
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+            />
+            <Select
+              options={[
+                { value: "all", label: "All Years" },
+                ...availableYears.map((y) => ({ value: String(y), label: String(y) })),
+              ]}
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+            />
+            <button
+              onClick={handleGenerateReport}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg font-medium transition-colors cursor-pointer"
+            >
+              <FileDown className="w-4 h-4" />
+              Generate Report
+            </button>
+            </div>
+          </div>
+
+          {/* Payments Table */}
+          {filteredPayments.length === 0 ? (
+            <div className="text-center py-12">
+              <CreditCard className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+              <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                No Transactions Found
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                No transactions match your filters.
+              </p>
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={filteredPayments}
+              onRowClick={(payment) => setSelectedPaymentId(payment._id)}
+              itemsPerPage={10}
+              emptyMessage="No payment history found"
+            />
+          )}
+
+          {/* Payment Detail Modal */}
+          {selectedPaymentId && (
+            <PaymentDetailModal
+              paymentId={selectedPaymentId}
+              onClose={() => setSelectedPaymentId(null)}
+              currentUserId={user?._id}
+            />
+          )}
+        </>
       )}
     </div>
   );

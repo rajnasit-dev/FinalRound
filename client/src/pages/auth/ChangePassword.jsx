@@ -64,8 +64,7 @@ const ChangePassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-primary dark:bg-primary-dark p-6">
-      <div className="max-w-2xl mx-auto">
+    <div className="space-y-6">
         <BackButton />
 
         <div className="bg-card-background dark:bg-card-background-dark rounded-2xl shadow-lg p-8 mt-6">
@@ -144,8 +143,8 @@ const ChangePassword = () => {
                       message: "Password must be at least 8 characters",
                     },
                     maxLength: {
-                      value: 64,
-                      message: "Password must be under 64 characters",
+                      value: 25,
+                      message: "Password must be under 25 characters",
                     },
                     pattern: {
                       value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]/,
@@ -173,7 +172,7 @@ const ChangePassword = () => {
                 </p>
               )}
               <p className="mt-1 text-xs text-base dark:text-base-dark">
-                Must be 8-64 characters with uppercase, lowercase, number, and special character
+                Must be 8-25 characters with uppercase, lowercase, number, and special character
               </p>
             </div>
 
@@ -192,6 +191,10 @@ const ChangePassword = () => {
                     required: "Please confirm your new password",
                     validate: (value) =>
                       value === newPassword || "Passwords do not match",
+                    maxLength: {
+                      value: 25,
+                      message: "Password must be under 25 characters",
+                    },
                   })}
                   className="w-full pl-10 pr-10 py-3 border border-base-dark dark:border-base rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent bg-white dark:bg-gray-800 text-text-primary dark:text-text-primary-dark"
                   placeholder="Confirm new password"
@@ -220,7 +223,7 @@ const ChangePassword = () => {
               <Button
                 type="button"
                 onClick={handleCancel}
-                className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 px-6 py-3 flex items-center justify-center gap-2"
+                variant="secondary"
                 disabled={isSubmitting}
               >
                 <X size={18} />
@@ -246,7 +249,6 @@ const ChangePassword = () => {
             </div>
           </form>
         </div>
-      </div>
     </div>
   );
 };

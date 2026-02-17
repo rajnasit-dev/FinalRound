@@ -9,7 +9,8 @@ import {
   Zap,
   Target,
   Lock,
-  DollarSign
+  DollarSign,
+  Trash2
 } from "lucide-react";
 
 // Player dashboard menu links
@@ -20,6 +21,7 @@ export const playerLinks = [
   { name: "Payments", icon: DollarSign, url: "/player/payments" },
   { name: "Profile", icon: UserCircle, url: "/player/profile" },
   { name: "Change Password", icon: Lock, url: "/player/change-password" },
+  { name: "Delete Account", icon: Trash2, action: "deleteAccount" },
 ];
 
 // Team Manager dashboard menu links
@@ -30,6 +32,7 @@ export const managerLinks = [
   { name: "Payments", icon: DollarSign, url: "/manager/payments" },
   { name: "Profile", icon: UserCircle, url: "/manager/profile" },
   { name: "Change Password", icon: Lock, url: "/manager/change-password" },
+  { name: "Delete Account", icon: Trash2, action: "deleteAccount" },
 ];
 
 // Tournament Organizer dashboard menu links
@@ -39,6 +42,7 @@ export const organizerLinks = [
   { name: "Payments", icon: DollarSign, url: "/organizer/payments" },
   { name: "Profile", icon: UserCircle, url: "/organizer/profile" },
   { name: "Change Password", icon: Lock, url: "/organizer/change-password" },
+  { name: "Delete Account", icon: Trash2, action: "deleteAccount" },
 ];
 
 // Get dashboard links based on user role

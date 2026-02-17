@@ -65,7 +65,7 @@ const PlayerDashboard = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Page Header */}
       <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
         Player Dashboard

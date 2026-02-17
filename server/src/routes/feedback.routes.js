@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createFeedback,
   getAllFeedback,
+  getLatestFeedbackByRole,
   getFeedbackById,
   getUserFeedback,
   updateFeedback,
@@ -13,6 +14,7 @@ const feedbackRouter = Router();
 
 // Public routes
 feedbackRouter.get("/", getAllFeedback);
+feedbackRouter.get("/latest-by-role", getLatestFeedbackByRole);
 feedbackRouter.get("/:id", getFeedbackById);
 
 // Protected routes

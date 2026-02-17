@@ -171,23 +171,19 @@ const AdminTeams = () => {
         <Button
           onClick={(e) => handleDelete(e, team)}
           disabled={deletingId === team._id}
-          className="!bg-red-600 hover:!bg-red-700 !text-white !px-4 !py-2 text-sm flex items-center justify-center gap-2"
+          loading={deletingId === team._id}
+          variant="danger"
+          size="sm"
         >
-          {deletingId === team._id ? (
-            <Spinner size="sm" />
-          ) : (
-            <>
-              <Trash2 className="w-4 h-4" />
-              <span>Delete</span>
-            </>
-          )}
+          <Trash2 className="w-4 h-4" />
+          <span>Delete</span>
         </Button>
       ),
     },
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <BackButton />
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">

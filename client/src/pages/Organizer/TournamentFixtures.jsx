@@ -1,16 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus, ArrowLeft, Edit, Trash2, Play, Calendar, Trophy, Users } from "lucide-react";
+import { Plus, Edit, Trash2, Play, Calendar, Trophy, Users, Ban } from "lucide-react";
 import toast from "react-hot-toast";
 import Spinner from "../../components/ui/Spinner";
 import DataTable from "../../components/ui/DataTable";
 import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
+import MatchDetailModal from "../../components/ui/MatchDetailModal";
 import useDateFormat from "../../hooks/useDateFormat";
 import useStatusColor from "../../hooks/useStatusColor";
 import { fetchTournamentById } from "../../store/slices/tournamentSlice";
-import { fetchMatchesByTournament, deleteMatch } from "../../store/slices/matchSlice";
+import { fetchMatchesByTournament, deleteMatch, updateMatchStatus } from "../../store/slices/matchSlice";
 
 const TournamentFixtures = () => {
   const { tournamentId } = useParams();
@@ -22,7 +23,8 @@ const TournamentFixtures = () => {
   const { selectedTournament: tournament, loading: tournamentLoading } = useSelector(
     (state) => state.tournament
   );
-  const { matches, loading: matchesLoading } = useSelector((state) => state.match);
+  const { tournamentMatches: matches, loading: matchesLoading } = useSelector((state) => state.match);
+  const [selectedMatch, setSelectedMatch] = useState(null);
 
   useEffect(() => {
     if (tournamentId) {
@@ -46,9 +48,22 @@ const TournamentFixtures = () => {
     }
   };
 
+  const handleCancelMatch = async (matchId, isCancelled) => {
+    const action = isCancelled ? "reinstate" : "cancel";
+    if (!window.confirm(`Are you sure you want to ${action} this match?`)) return;
+    
+    try {
+      await dispatch(updateMatchStatus({ matchId, isCancelled: !isCancelled })).unwrap();
+      toast.success(`Match ${isCancelled ? "reinstated" : "cancelled"} successfully!`);
+      dispatch(fetchMatchesByTournament(tournamentId));
+    } catch (error) {
+      toast.error(error?.message || error || `Failed to ${action} match`);
+    }
+  };
+
   if (tournamentLoading || matchesLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
@@ -86,20 +101,13 @@ const TournamentFixtures = () => {
   const liveMatches = matches?.filter((m) => m.status === "Live") || [];
   const scheduledMatches = matches?.filter((m) => m.status === "Scheduled") || [];
   const completedMatches = matches?.filter((m) => m.status === "Completed") || [];
+  const cancelledMatches = matches?.filter((m) => m.status === "Cancelled") || [];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <BackButton className="mb-6" />
       {/* Header */}
       <div>
-        <Link
-          to="/organizer/tournaments"
-          className="inline-flex items-center gap-2 mb-4 text-base dark:text-base-dark hover:text-secondary dark:hover:text-secondary transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Tournaments
-        </Link>
-        
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
@@ -123,7 +131,7 @@ const TournamentFixtures = () => {
 
       {/* Tournament Info Card */}
       <div className="bg-card-background dark:bg-card-background-dark rounded-xl p-6 border border-base-dark dark:border-base">
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-5 gap-6">
           <div className="text-center">
             <div className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-1">
               {matches?.length || 0}
@@ -147,6 +155,12 @@ const TournamentFixtures = () => {
               {completedMatches.length}
             </div>
             <div className="text-sm text-base dark:text-base-dark">Completed</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">
+              {cancelledMatches.length}
+            </div>
+            <div className="text-sm text-base dark:text-base-dark">Cancelled</div>
           </div>
         </div>
       </div>
@@ -188,17 +202,6 @@ const TournamentFixtures = () => {
             },
           },
           {
-            header: "Score",
-            accessor: "score",
-            render: (match) => (
-              <div className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">
-                {match.status === "Completed" || match.status === "Live"
-                  ? `${match.scoreA || 0} - ${match.scoreB || 0}`
-                  : "-"}
-              </div>
-            ),
-          },
-          {
             header: "Status",
             accessor: "status",
             render: (match) => {
@@ -216,19 +219,54 @@ const TournamentFixtures = () => {
             accessor: "actions",
             render: (match) => (
               <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => navigate(`/organizer/matches/${match._id}/edit`)}
-                  className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700"
-                >
-                  <Edit className="w-3.5 h-3.5 mr-1" />
-                  {match.status === "Live" ? "Update" : "Edit"}
-                </Button>
+                {match.status !== "Cancelled" && (
+                  <Button
+                    variant="info"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/organizer/matches/${match._id}/edit`);
+                    }}
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    {match.status === "Live" ? "Update" : "Edit"}
+                  </Button>
+                )}
+                {(match.status === "Scheduled" || match.status === "Live") && (
+                  <Button
+                    variant="warning"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancelMatch(match._id, false);
+                    }}
+                  >
+                    <Ban className="w-3.5 h-3.5" />
+                    Cancel
+                  </Button>
+                )}
+                {match.status === "Cancelled" && (
+                  <Button
+                    variant="success"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancelMatch(match._id, true);
+                    }}
+                  >
+                    Reinstate
+                  </Button>
+                )}
                 {match.status === "Scheduled" && (
                   <Button
-                    onClick={() => handleDeleteMatch(match._id)}
-                    className="px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white font-medium"
+                    variant="danger"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteMatch(match._id);
+                    }}
                   >
-                    <Trash2 className="w-3.5 h-3.5 mr-1" />
+                    <Trash2 className="w-3.5 h-3.5" />
                     Delete
                   </Button>
                 )}
@@ -238,8 +276,16 @@ const TournamentFixtures = () => {
         ]}
         data={matches || []}
         itemsPerPage={10}
+        onRowClick={(match) => setSelectedMatch(match)}
         emptyMessage="No matches scheduled yet. Click 'Schedule New Match' to create your first match."
       />
+
+      {selectedMatch && (
+        <MatchDetailModal
+          match={selectedMatch}
+          onClose={() => setSelectedMatch(null)}
+        />
+      )}
     </div>
   );
 };

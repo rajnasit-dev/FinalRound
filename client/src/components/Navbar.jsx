@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Moon, Sun, User, ChevronDown, Menu, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
@@ -14,6 +14,7 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
   
   const { isAuthenticated, user } = useSelector((state) => state.auth);
 
@@ -47,6 +48,12 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, [lastScrollY]);
+
+  // Close dropdown and mobile menu on route change
+  useEffect(() => {
+    setShowDropdown(false);
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   // Close dropdown when clicking outside
   useEffect(() => {

@@ -60,7 +60,7 @@ const PaymentReceipt = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
@@ -68,7 +68,7 @@ const PaymentReceipt = () => {
 
   if (!receipt) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <p className="text-gray-600 mb-4">Receipt not found</p>
           <Button
@@ -84,8 +84,7 @@ const PaymentReceipt = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <BackButton className="mb-6" />
         {/* Success Message */}
         <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6 text-center">
@@ -266,7 +265,6 @@ const PaymentReceipt = () => {
             </p>
           </div>
         </div>
-      </div>
     </div>
   );
 };

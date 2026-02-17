@@ -3,7 +3,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { TournamentOrganizer } from "../models/TournamentOrganizer.model.js";
 import { Tournament } from "../models/Tournament.model.js";
-import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary, getCloudinaryPublicId, getCloudinaryRawPublicId, getPrivateDownloadUrl } from "../utils/cloudinary.js";
+import fs from "fs";
 
 // Get all tournament organizers
 export const getAllTournamentOrganizers = asyncHandler(async (req, res) => {
@@ -87,13 +88,16 @@ export const uploadDocuments = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Tournament organizer not found.");
   }
 
-  const documentResponse = await uploadOnCloudinary(documentLocalPath);
+  const documentResponse = await uploadOnCloudinary(documentLocalPath, {
+    folder: "documents",
+    resource_type: "raw",
+  });
 
   if (!documentResponse) {
     throw new ApiError(500, "Failed to upload document to Cloudinary.");
   }
 
-  organizer.documents = documentResponse.url;
+  organizer.documents = documentResponse.secure_url || documentResponse.url;
   await organizer.save();
 
   const updatedOrganizer = await TournamentOrganizer.findById(organizerId)
@@ -122,19 +126,22 @@ export const updateDocuments = asyncHandler(async (req, res) => {
 
   // Delete old document from Cloudinary if exists
   if (oldDocumentUrl) {
-    const urlParts = oldDocumentUrl.split('/');
-    const publicIdWithExtension = urlParts.at(-1);
-    const publicId = publicIdWithExtension.split('.')[0];
-    await deleteFromCloudinary(publicId);
+    const publicId = getCloudinaryPublicId(oldDocumentUrl);
+    if (publicId) {
+      await deleteFromCloudinary(publicId, "raw");
+    }
   }
 
-  const documentResponse = await uploadOnCloudinary(documentLocalPath);
+  const documentResponse = await uploadOnCloudinary(documentLocalPath, {
+    folder: "documents",
+    resource_type: "raw",
+  });
 
   if (!documentResponse) {
     throw new ApiError(500, "Failed to upload document to Cloudinary.");
   }
 
-  organizer.documents = documentResponse.url;
+  organizer.documents = documentResponse.secure_url || documentResponse.url;
   await organizer.save();
 
   const updatedOrganizer = await TournamentOrganizer.findById(organizerId)
@@ -160,11 +167,10 @@ export const deleteDocuments = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Documents not found.");
   }
 
-  const urlParts = documentUrl.split('/');
-  const publicIdWithExtension = urlParts.at(-1);
-  const publicId = publicIdWithExtension.split('.')[0];
-
-  await deleteFromCloudinary(publicId);
+  const publicId = getCloudinaryPublicId(documentUrl);
+  if (publicId) {
+    await deleteFromCloudinary(publicId, "raw");
+  }
 
   organizer.documents = undefined;
   await organizer.save();
@@ -228,6 +234,16 @@ export const requestAuthorization = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Verification document is required.");
   }
 
+  // Validate PDF file type
+  const mimetype = req.file?.mimetype;
+  if (mimetype !== "application/pdf") {
+    // Clean up the uploaded file
+    if (fs.existsSync(documentLocalPath)) {
+      fs.unlinkSync(documentLocalPath);
+    }
+    throw new ApiError(400, "Only PDF files are accepted.");
+  }
+
   const organizer = await TournamentOrganizer.findById(organizerId);
   if (!organizer) {
     throw new ApiError(404, "Tournament organizer not found.");
@@ -239,14 +255,17 @@ export const requestAuthorization = asyncHandler(async (req, res) => {
   }
 
   // Upload document to cloudinary
-  const documentResponse = await uploadOnCloudinary(documentLocalPath);
+  const documentResponse = await uploadOnCloudinary(documentLocalPath, {
+    folder: "documents",
+    resource_type: "raw",
+  });
 
   if (!documentResponse) {
     throw new ApiError(500, "Failed to upload document to Cloudinary.");
   }
 
   // Update organizer with document and request date
-  organizer.verificationDocumentUrl = documentResponse.url;
+  organizer.verificationDocumentUrl = documentResponse.secure_url || documentResponse.url;
   organizer.authorizationRequestDate = new Date();
   organizer.isRejected = false; // Clear any previous rejection
   
@@ -288,4 +307,33 @@ export const getAuthorizationStatus = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, status, "Authorization status retrieved successfully."));
+});
+
+// Proxy endpoint to serve organizer verification documents
+export const getOrganizerDocument = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const organizer = await TournamentOrganizer.findById(id)
+    .select("verificationDocumentUrl");
+
+  if (!organizer || !organizer.verificationDocumentUrl) {
+    throw new ApiError(404, "Document not found.");
+  }
+
+  const documentUrl = organizer.verificationDocumentUrl;
+
+  // Extract public ID from the stored URL (for raw files, includes extension)
+  const publicId = getCloudinaryRawPublicId(documentUrl);
+  
+  if (!publicId) {
+    throw new ApiError(500, "Could not determine document ID.");
+  }
+
+  // Generate a private download URL that bypasses Cloudinary access restrictions
+  const downloadUrl = getPrivateDownloadUrl(publicId, {
+    resource_type: "raw",
+  });
+
+  // Redirect the user to the authenticated download URL
+  res.redirect(downloadUrl);
 });

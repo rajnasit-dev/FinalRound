@@ -15,7 +15,7 @@ import GridContainer from "../../components/ui/GridContainer";
 import TeamCard from "../../components/ui/TeamCard";
 import FixturesTable from "../../components/ui/FixturesTable";
 import { fetchManagerTeams } from "../../store/slices/teamSlice";
-import { fetchMatchesByTeam } from "../../store/slices/matchSlice";
+import { fetchMatchesByTeam, clearTeamMatches } from "../../store/slices/matchSlice";
 
 const ManagerDashboard = () => {
   const dispatch = useDispatch();
@@ -30,8 +30,9 @@ const ManagerDashboard = () => {
   }, [dispatch, user?._id]);
 
   useEffect(() => {
-    // Fetch matches for all manager's teams
+    // Clear old data and fetch matches for all manager's teams
     if (managerTeams && managerTeams.length > 0) {
+      dispatch(clearTeamMatches());
       managerTeams.forEach(team => {
         dispatch(fetchMatchesByTeam(team._id));
       });
@@ -44,14 +45,14 @@ const ManagerDashboard = () => {
 
   if (teamsLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Welcome Section */}
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
@@ -167,7 +168,7 @@ const ManagerDashboard = () => {
         ) : (
           <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
             <Users className="w-16 h-16 mx-auto mb-4 text-base dark:text-base-dark" />
-            <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+            <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
               No teams yet
             </h3>
             <p className="text-base dark:text-base-dark mb-6">

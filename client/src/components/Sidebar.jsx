@@ -1,17 +1,35 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { Award } from "lucide-react";
 import { getMenuLinks } from "../config/dashboardLinks";
+import { deleteAccount } from "../store/slices/authSlice";
 import LogoutBtn from "./LogoutBtn";
+import { toast } from "react-hot-toast";
 
 const Sidebar = ({ userRole, isMobile = false, onClose }) => {
   // Get the current page URL
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const currentURL = location.pathname;
 
   // Handle link click - close mobile menu if on mobile
   const handleLinkClick = () => {
     if (isMobile && onClose) {
       onClose();
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("Are you sure you want to delete your account? This will permanently remove your account and all related data. This action cannot be undone.")) {
+      return;
+    }
+    try {
+      await dispatch(deleteAccount()).unwrap();
+      toast.success("Your account has been deleted successfully.");
+      navigate("/", { replace: true });
+    } catch (err) {
+      toast.error(err || "Failed to delete account.");
     }
   };
 
@@ -45,6 +63,24 @@ const Sidebar = ({ userRole, isMobile = false, onClose }) => {
         <nav className="space-y-1">
           {menuLinks.map((link) => {
             const Icon = link.icon;
+
+            // Handle action links (like Delete Account)
+            if (link.action) {
+              return (
+                <button
+                  key={link.action}
+                  onClick={() => {
+                    if (link.action === "deleteAccount") handleDeleteAccount();
+                    if (isMobile && onClose) onClose();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <Icon size={20} strokeWidth={2} />
+                  <span className="font-medium text-[15px]">{link.name}</span>
+                </button>
+              );
+            }
+
             const isCurrentPage = currentURL === link.url;
             
             return (

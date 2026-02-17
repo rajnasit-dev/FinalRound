@@ -19,18 +19,20 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const uploadOnCloudinary = async (localFilePath) => {
+const uploadOnCloudinary = async (localFilePath, options = {}) => {
   try {
     if (!localFilePath) {
       console.log("No file path provided to uploadOnCloudinary");
       return null;
     }
 
-    console.log("Uploading file to Cloudinary:", localFilePath);
+    const { folder = "avatars", resource_type = "image" } = options;
+
+    console.log("Uploading file to Cloudinary:", localFilePath, { folder, resource_type });
 
     const response = await cloudinary.uploader.upload(localFilePath, {
-      folder: "avatars",
-      resource_type: "image",
+      folder,
+      resource_type,
     });
 
     console.log("✅ Cloudinary upload successful:", response.url);
@@ -55,11 +57,11 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-const deleteFromCloudinary = async (publicId) => {
+const deleteFromCloudinary = async (publicId, resource_type = "image") => {
   try {
     if (!publicId) return null;
     const response = await cloudinary.uploader.destroy(publicId, {
-      resource_type: "image",
+      resource_type,
     });
     return response;
   } catch (error) {
@@ -68,4 +70,45 @@ const deleteFromCloudinary = async (publicId) => {
   }
 };
 
-export { uploadOnCloudinary, deleteFromCloudinary };
+// Extract public ID from a Cloudinary URL
+// e.g. https://res.cloudinary.com/xxx/image/upload/v123/avatars/abc123.jpg -> avatars/abc123
+const getCloudinaryPublicId = (url) => {
+  if (!url) return null;
+  try {
+    const urlParts = url.split('/');
+    const folder = urlParts.slice(-2, -1)[0];
+    const publicIdWithExtension = urlParts.at(-1);
+    const fileName = publicIdWithExtension.split('.')[0];
+    return `${folder}/${fileName}`;
+  } catch {
+    return null;
+  }
+};
+
+// Extract public ID with extension from a Cloudinary URL (for raw files like PDFs)
+const getCloudinaryRawPublicId = (url) => {
+  if (!url) return null;
+  try {
+    const urlParts = url.split('/');
+    // For raw resources, public_id includes the extension
+    const folder = urlParts.slice(-2, -1)[0];
+    const fileNameWithExt = urlParts.at(-1);
+    return `${folder}/${fileNameWithExt}`;
+  } catch {
+    return null;
+  }
+};
+
+// Generate a private download URL for restricted Cloudinary resources
+const getPrivateDownloadUrl = (publicId, options = {}) => {
+  const { resource_type = "raw" } = options;
+  const timestamp = Math.floor(Date.now() / 1000);
+  return cloudinary.utils.private_download_url(publicId, "", {
+    resource_type,
+    type: "upload",
+    timestamp,
+    expires_at: timestamp + 3600, // 1 hour expiry
+  });
+};
+
+export { uploadOnCloudinary, deleteFromCloudinary, getCloudinaryPublicId, getCloudinaryRawPublicId, getPrivateDownloadUrl };

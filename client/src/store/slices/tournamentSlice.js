@@ -97,6 +97,23 @@ export const registerForTournament = createAsyncThunk(
   }
 );
 
+export const registerPlayerForTournament = createAsyncThunk(
+  "tournament/registerPlayer",
+  async ({ tournamentId }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/tournaments/${tournamentId}/register-player`,
+        {},
+        { withCredentials: true, headers: { "Content-Type": "application/json" } }
+      );
+
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Request failed");
+    }
+  }
+);
+
 export const fetchTournamentParticipants = createAsyncThunk(
   "tournament/fetchParticipants",
   async (tournamentId, { rejectWithValue }) => {
@@ -122,6 +139,22 @@ export const deleteTournament = createAsyncThunk(
       return tournamentId;
     } catch (error) {
       return rejectWithValue(error?.response?.data?.message || error.message || "Failed to delete tournament");
+    }
+  }
+);
+
+export const cancelTournament = createAsyncThunk(
+  "tournament/cancel",
+  async ({ tournamentId, isCancelled }, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(
+        `${API_BASE_URL}/tournaments/${tournamentId}/status`,
+        { isCancelled },
+        { withCredentials: true, headers: { "Content-Type": "application/json" } }
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to update tournament status");
     }
   }
 );
@@ -255,6 +288,30 @@ const tournamentSlice = createSlice({
         state.error = action.payload;
         state.registrationSuccess = false;
       })
+      // Register player for tournament
+      .addCase(registerPlayerForTournament.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.registrationSuccess = false;
+      })
+      .addCase(registerPlayerForTournament.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedTournament = action.payload;
+        state.registrationSuccess = true;
+        const idx = state.tournaments.findIndex((t) => t._id === action.payload._id);
+        if (idx !== -1) {
+          state.tournaments[idx] = action.payload;
+        }
+        const tIdx = state.trendingTournaments.findIndex((t) => t._id === action.payload._id);
+        if (tIdx !== -1) {
+          state.trendingTournaments[tIdx] = action.payload;
+        }
+      })
+      .addCase(registerPlayerForTournament.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.registrationSuccess = false;
+      })
       // Fetch participants
       .addCase(fetchTournamentParticipants.pending, (state) => {
         state.loading = true;
@@ -282,6 +339,26 @@ const tournamentSlice = createSlice({
         }
       })
       .addCase(deleteTournament.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Cancel tournament
+      .addCase(cancelTournament.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(cancelTournament.fulfilled, (state, action) => {
+        state.loading = false;
+        const updated = action.payload;
+        const index = state.tournaments.findIndex((t) => t._id === updated._id);
+        if (index !== -1) state.tournaments[index] = updated;
+        const tIdx = state.trendingTournaments.findIndex((t) => t._id === updated._id);
+        if (tIdx !== -1) state.trendingTournaments[tIdx] = updated;
+        if (state.selectedTournament?._id === updated._id) {
+          state.selectedTournament = updated;
+        }
+      })
+      .addCase(cancelTournament.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

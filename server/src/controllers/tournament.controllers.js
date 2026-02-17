@@ -9,7 +9,8 @@ import { Match } from "../models/Match.model.js";
 import { User } from "../models/User.model.js";
 import { Request } from "../models/Request.model.js";
 import { Payment } from "../models/Payment.model.js";
-import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+import Booking from "../models/Booking.model.js";
+import { uploadOnCloudinary, deleteFromCloudinary, getCloudinaryPublicId } from "../utils/cloudinary.js";
 import { addTournamentStatus, addTournamentStatuses, getTournamentStatus } from "../utils/statusHelpers.js";
 
 const PLATFORM_FEE = 500; // Platform fee in rupees
@@ -131,6 +132,7 @@ export const createTournament = asyncHandler(async (req, res) => {
     amount: platformFee,
     status: "Pending",
     payerType: "Organizer",
+    payerName: req.user.orgName || req.user.fullName || "Organizer",
   });
 
   const populatedTournament = await Tournament.findById(tournament._id)
@@ -506,6 +508,16 @@ export const deleteTournament = asyncHandler(async (req, res) => {
   }
 
   // Soft delete - cancel and unpublish the tournament
+  // Delete banner from Cloudinary if exists
+  if (tournament.bannerUrl) {
+    try {
+      const publicId = getCloudinaryPublicId(tournament.bannerUrl);
+      await deleteFromCloudinary(publicId);
+    } catch (error) {
+      console.log("Failed to delete tournament banner from Cloudinary:", error.message);
+    }
+  }
+
   tournament.isCancelled = true;
   tournament.isPublished = false;
   await tournament.save();
@@ -567,6 +579,30 @@ export const registerTeam = asyncHandler(async (req, res) => {
   tournament.approvedTeams.push(teamId);
   await tournament.save();
 
+  // Auto-create a confirmed booking only if one doesn't already exist
+  const existingBooking = await Booking.findOne({
+    user: userId,
+    tournament: id,
+    status: { $ne: "Cancelled" },
+  });
+
+  if (!existingBooking) {
+    const timestamp = Date.now().toString(36);
+    const randomStr = Math.random().toString(36).substring(2, 7);
+    const bookingId = `BK${timestamp}${randomStr}`.toUpperCase();
+
+    await Booking.create({
+      bookingId,
+      user: userId,
+      tournament: id,
+      team: teamId,
+      registrationType: "Team",
+      amount: tournament.entryFee || 0,
+      status: "Confirmed",
+      paymentStatus: "Success",
+    });
+  }
+
   const updatedTournament = await Tournament.findById(id)
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar orgName")
@@ -607,6 +643,14 @@ export const registerPlayer = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Player not found.");
   }
 
+  // Check if player plays the tournament's sport
+  const playsSport = player.sports?.some(
+    (s) => s.sport.toString() === tournament.sport.toString()
+  );
+  if (!playsSport) {
+    throw new ApiError(400, "You are not eligible for this tournament as you don't play this sport.");
+  }
+
   if (tournament.registeredPlayers.includes(userId)) {
     throw new ApiError(400, "Already registered for this tournament.");
   }
@@ -614,6 +658,30 @@ export const registerPlayer = asyncHandler(async (req, res) => {
   tournament.registeredPlayers.push(userId);
   tournament.approvedPlayers.push(userId);
   await tournament.save();
+
+  // Auto-create a confirmed booking only if one doesn't already exist
+  const existingBooking = await Booking.findOne({
+    user: userId,
+    tournament: id,
+    status: { $ne: "Cancelled" },
+  });
+
+  if (!existingBooking) {
+    const timestamp = Date.now().toString(36);
+    const randomStr = Math.random().toString(36).substring(2, 7);
+    const bookingId = `BK${timestamp}${randomStr}`.toUpperCase();
+
+    await Booking.create({
+      bookingId,
+      user: userId,
+      tournament: id,
+      player: userId,
+      registrationType: "Player",
+      amount: tournament.entryFee || 0,
+      status: "Confirmed",
+      paymentStatus: "Success",
+    });
+  }
 
   const updated = await Tournament.findById(id)
     .populate("sport", "name teamBased iconUrl")

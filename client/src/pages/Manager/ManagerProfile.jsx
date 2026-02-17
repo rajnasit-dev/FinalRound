@@ -91,8 +91,8 @@ const ManagerProfile = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <BackButton className="mb-4" />
+    <div className="space-y-6">
+      <BackButton className="mb-6" />
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">

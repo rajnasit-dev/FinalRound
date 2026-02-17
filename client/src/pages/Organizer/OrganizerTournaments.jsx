@@ -9,7 +9,8 @@ import SearchBar from "../../components/ui/SearchBar";
 import FilterDropdown from "../../components/ui/FilterDropdown";
 import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
-import { fetchAllTournaments, deleteTournament } from "../../store/slices/tournamentSlice";
+import GridContainer from "../../components/ui/GridContainer";
+import { fetchAllTournaments, deleteTournament, cancelTournament } from "../../store/slices/tournamentSlice";
 
 const OrganizerTournaments = () => {
   const dispatch = useDispatch();
@@ -50,14 +51,14 @@ const OrganizerTournaments = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <BackButton className="mb-6" />
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -67,6 +68,7 @@ const OrganizerTournaments = () => {
           </h1>
           <p className="text-base dark:text-base-dark">
             Manage and organize your tournaments
+            {myTournaments.length > 0 && ` (${myTournaments.length})`}
           </p>
         </div>
         {user?.isAuthorized ? (
@@ -107,16 +109,9 @@ const OrganizerTournaments = () => {
         </div>
       )}
 
-      {/* Results Count */}
-      {myTournaments.length > 0 && (
-        <p className="text-base dark:text-base-dark">
-          Showing {filteredTournaments.length} of {myTournaments.length} tournaments
-        </p>
-      )}
-
       {/* Tournaments Grid */}
       {filteredTournaments.length > 0 ? (
-        <div className="grid md:grid-cols-2 gap-6">
+        <GridContainer cols={2}>
           {filteredTournaments.map((tournament) => (
             <TournamentCard 
               key={tournament._id} 
@@ -125,6 +120,17 @@ const OrganizerTournaments = () => {
               onView={(id) => navigate(`/organizer/tournaments/${id}/fixtures`)}
               onEdit={(id) => navigate(`/organizer/tournaments/${id}/edit`)}
               onManage={(id) => navigate(`/organizer/tournaments/${id}`)}
+              onCancel={async (id, isCancelled) => {
+                const action = isCancelled ? 'reinstate' : 'cancel';
+                if (!window.confirm(`Are you sure you want to ${action} this tournament?`)) return;
+                try {
+                  await dispatch(cancelTournament({ tournamentId: id, isCancelled: !isCancelled })).unwrap();
+                  toast.success(`Tournament ${isCancelled ? 'reinstated' : 'cancelled'} successfully!`);
+                  dispatch(fetchAllTournaments({}));
+                } catch (error) {
+                  toast.error(error || `Failed to ${action} tournament`);
+                }
+              }}
               onDelete={async (id) => {
                 if (!window.confirm('Are you sure you want to delete this tournament?')) return;
                 try {
@@ -136,11 +142,13 @@ const OrganizerTournaments = () => {
               }}
             />
           ))}
-        </div>
+        </GridContainer>
       ) : myTournaments.length > 0 ? (
         <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
-          <Search className="w-16 h-16 mx-auto mb-4 text-base dark:text-base-dark" />
-          <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+            <Search className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
             No tournaments found
           </h3>
           <p className="text-base dark:text-base-dark">
@@ -149,10 +157,10 @@ const OrganizerTournaments = () => {
         </div>
       ) : (
         <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
             <Plus className="w-8 h-8 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
+          <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
             No tournaments yet
           </h3>
           <p className="text-base dark:text-base-dark mb-6">

@@ -74,10 +74,10 @@ const ManagerRequests = () => {
   };
 
   const handleRowClick = (request) => {
-    // Navigate to player profile if needed
-    if (request.sender?._id) {
-      // You can add navigation to player profile here if you have that route
-      // navigate(`/players/${request.sender._id}`);
+    // For received requests, the player is the sender; for sent, the receiver
+    const playerId = request.sender?._id || request.receiver?._id;
+    if (playerId) {
+      navigate(`/players/${playerId}`);
     }
   };
 
@@ -125,7 +125,8 @@ const ManagerRequests = () => {
           <Button
             onClick={(e) => handleAccept(e, request._id)}
             disabled={loading}
-            className="!bg-green-600 hover:!bg-green-700 !text-white px-4 py-2 flex items-center gap-2 text-sm w-auto"
+            variant="success"
+            size="sm"
           >
             <CheckCircle2 className="w-4 h-4" />
             Accept
@@ -133,7 +134,8 @@ const ManagerRequests = () => {
           <Button
             onClick={(e) => handleReject(e, request._id)}
             disabled={loading}
-            className="!bg-red-600 hover:!bg-red-700 !text-white px-4 py-2 flex items-center gap-2 text-sm w-auto"
+            variant="danger"
+            size="sm"
           >
             <XCircle className="w-4 h-4" />
             Reject
@@ -186,8 +188,8 @@ const ManagerRequests = () => {
         <Button
           onClick={(e) => handleCancel(e, request._id)}
           disabled={loading}
-          variant="outline"
-          className="w-auto px-4 py-2 text-sm"
+          variant="danger"
+          size="sm"
         >
           <XCircle className="w-4 h-4" />
           Cancel Invitation
@@ -198,16 +200,19 @@ const ManagerRequests = () => {
 
   if (loading && receivedRequests.length === 0 && sentRequests.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-16 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
-      <BackButton className="mb-4" />
-      <h1 className="text-3xl font-bold mb-6">Player Requests</h1>
+    <div className="space-y-6">
+      <BackButton className="mb-6" />
+      <div>
+        <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">Player Requests</h1>
+        <p className="text-base dark:text-base-dark">Manage join requests and invitations for your teams</p>
+      </div>
 
       {error && <ErrorMessage message={error} type="error" onDismiss={() => dispatch(clearError())} />}
 
@@ -241,12 +246,14 @@ const ManagerRequests = () => {
       {activeTab === "received" && (
         <>
           {receivedRequests.length === 0 ? (
-            <div className="text-center py-12">
-              <Inbox className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                <Inbox className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+              </div>
+              <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
                 No Join Requests
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-base dark:text-base-dark">
                 No players have requested to join your teams yet.
               </p>
             </div>
@@ -266,12 +273,14 @@ const ManagerRequests = () => {
       {activeTab === "sent" && (
         <>
           {sentRequests.length === 0 ? (
-            <div className="text-center py-12">
-              <Send className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                <Send className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+              </div>
+              <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">
                 No Sent Invitations
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-base dark:text-base-dark">
                 You haven't invited any players to your teams yet.
               </p>
             </div>

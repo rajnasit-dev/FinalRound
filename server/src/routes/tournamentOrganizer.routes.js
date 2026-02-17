@@ -12,6 +12,7 @@ import {
   getOrganizersByCity,
   requestAuthorization,
   getAuthorizationStatus,
+  getOrganizerDocument,
 } from "../controllers/tournamentOrganizer.controllers.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -22,7 +23,6 @@ const tournamentOrganizerRouter = Router();
 tournamentOrganizerRouter.get("/", getAllTournamentOrganizers);
 tournamentOrganizerRouter.get("/verified", getVerifiedOrganizers);
 tournamentOrganizerRouter.get("/city/:city", getOrganizersByCity);
-tournamentOrganizerRouter.get("/:id", getTournamentOrganizerById);
 
 // Protected routes - Tournament Organizer only
 tournamentOrganizerRouter.get("/profile/me", authMiddleware, getTournamentOrganizerProfile);
@@ -37,5 +37,11 @@ tournamentOrganizerRouter.get("/authorization-status", authMiddleware, getAuthor
 tournamentOrganizerRouter.post("/documents", authMiddleware, upload.single("document"), uploadDocuments);
 tournamentOrganizerRouter.put("/documents", authMiddleware, upload.single("document"), updateDocuments);
 tournamentOrganizerRouter.delete("/documents", authMiddleware, deleteDocuments);
+
+// Proxy endpoint to serve organizer verification documents
+tournamentOrganizerRouter.get("/document/:id", authMiddleware, getOrganizerDocument);
+
+// Dynamic ID route - MUST be last to avoid catching other routes
+tournamentOrganizerRouter.get("/:id", getTournamentOrganizerById);
 
 export default tournamentOrganizerRouter;

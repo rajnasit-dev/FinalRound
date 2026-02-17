@@ -81,8 +81,8 @@ const Teams = () => {
     <section className="container mx-auto px-6 py-4">
       <BackButton className="mb-6" />
       <div className="mb-8">
-        <h1 className="text-4xl font-bold my-5">Explore Teams</h1>
-        <p>Find and join competitive sports teams in your area</p>
+        <h1 className="text-4xl font-bold my-5 text-text-primary dark:text-text-primary-dark">Explore Teams</h1>
+        <p className="text-base dark:text-base-dark">Find and join competitive sports teams in your area</p>
       </div>
 
       {/* Search and Filters */}
@@ -131,9 +131,11 @@ const Teams = () => {
       </div>
 
       {/* Results Count */}
-      <p className="mb-6 text-base dark:text-base-dark">
-        Showing <span className="font-num">{startIndex + 1}</span> to <span className="font-num">{Math.min(startIndex + itemsPerPage, filteredTeams.length)}</span> of <span className="font-num">{filteredTeams.length}</span> teams
-      </p>
+      {filteredTeams.length > 0 && (
+        <p className="mb-6 text-base dark:text-base-dark">
+          Showing <span className="font-num">{startIndex + 1}</span> to <span className="font-num">{Math.min(startIndex + itemsPerPage, filteredTeams.length)}</span> of <span className="font-num">{filteredTeams.length}</span> teams
+        </p>
+      )}
 
       {/* Teams Grid */}
       {filteredTeams.length > 0 ? (
@@ -156,7 +158,13 @@ const Teams = () => {
           )}
         </>
       ) : (
-        <p className="text-center py-16 text-lg mb-2">No teams found</p>
+        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+          <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">No teams found</h3>
+          <p className="text-base dark:text-base-dark">Try adjusting your search or filters</p>
+        </div>
       )}
     </section>
   );

@@ -25,6 +25,11 @@ const paymentSchema = new Schema(
       required: true,
     },
 
+    payerName: {
+      type: String,
+      default: "Unknown",
+    },
+
     organizer: {
       type: Schema.Types.ObjectId,
       ref: "User",

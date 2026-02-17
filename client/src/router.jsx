@@ -49,7 +49,6 @@ import PlayerPayments from "./pages/Player/PlayerPayments";
 import OrganizerDashboard from "./pages/Organizer/OrganizerDashboard";
 import OrganizerTournaments from "./pages/Organizer/OrganizerTournaments";
 import OrganizerPayments from "./pages/Organizer/OrganizerPayments";
-import OrganizerMatches from "./pages/Organizer/OrganizerMatches";
 import OrganizerTeams from "./pages/Organizer/OrganizerTeams";
 import OrganizerAuthorization from "./pages/Organizer/OrganizerAuthorization";
 import CreateTournament from "./pages/Organizer/CreateTournament";
@@ -141,7 +140,6 @@ export const router = createBrowserRouter([
           { path: "tournaments/:tournamentId/edit", element: <EditTournament /> },
           { path: "tournaments/:tournamentId/fixtures", element: <TournamentFixtures /> },
           { path: "tournaments/:tournamentId/fixtures/create", element: <CreateMatch /> },
-          { path: "matches", element: <OrganizerMatches /> },
           { path: "matches/:matchId/edit", element: <EditMatch /> },
           { path: "payments", element: <OrganizerPayments /> },
           { path: "teams", element: <OrganizerTeams /> },

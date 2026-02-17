@@ -67,7 +67,7 @@ const Home = () => {
           withCredentials: true,
         }),
         axios.get(`${API_BASE_URL}/sports`, { withCredentials: true }),
-        axios.get(`${API_BASE_URL}/feedback?limit=3`, {
+        axios.get(`${API_BASE_URL}/feedback/latest-by-role`, {
           withCredentials: true,
         }),
       ]);
@@ -76,7 +76,7 @@ const Home = () => {
       setLiveMatches(liveMatchesRes.data.data || []);
       setUpcomingTournaments(upcomingTournamentsRes.data.data || []);
       setSports(sportsRes.data.data || []);
-      setReviews(reviewsRes.data.data?.feedbacks || reviewsRes.data.data || []);
+      setReviews(reviewsRes.data.data || []);
       setError(null);
     } catch (err) {
       console.error("Error fetching home data:", err);

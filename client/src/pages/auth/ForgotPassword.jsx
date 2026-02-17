@@ -51,7 +51,7 @@ const ForgotPassword = () => {
         {/* Back to Login */}
         <Link
           to="/login"
-          className="inline-flex items-center gap-2 text-text-primary dark:text-text-primary-dark hover:text-primary dark:hover:text-primary-dark mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-text-primary dark:text-text-primary-dark hover:text-base dark:hover:text-base-dark mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Login
@@ -81,6 +81,10 @@ const ForgotPassword = () => {
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                     message: "Invalid email address",
+                  },
+                  maxLength: {
+                    value: 50,
+                    message: "Email must be under 50 characters",
                   },
                 })}
               />

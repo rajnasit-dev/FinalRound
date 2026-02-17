@@ -13,6 +13,8 @@ import {
   Award,
   Send,
   Users2,
+  Stethoscope,
+  Briefcase,
 } from "lucide-react";
 import CardStat from "../../components/ui/CardStat";
 import Container from "../../components/container/Container";
@@ -21,7 +23,7 @@ import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
 import DataTable from "../../components/ui/DataTable";
 import { fetchTeamById, clearSelectedTeam } from "../../store/slices/teamSlice";
-import { sendTeamRequest, getSentRequests } from "../../store/slices/requestSlice";
+import { sendTeamRequest, getSentRequests, getReceivedRequests } from "../../store/slices/requestSlice";
 import defaultTeamCoverImage from "../../assets/defaultTeamCoverImage.png";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import defaultTeamManagerAvatar from "../../assets/defaultTeamManagerAvatar.png";
@@ -35,7 +37,7 @@ const TeamDetail = () => {
   const navigate = useNavigate();
   const { selectedTeam: team, loading } = useSelector((state) => state.team);
   const { user } = useSelector((state) => state.auth);
-  const { sentRequests, loading: requestLoading } = useSelector((state) => state.request);
+  const { sentRequests, receivedRequests, loading: requestLoading } = useSelector((state) => state.request);
   const [requestSent, setRequestSent] = useState(false);
   const { formatDate } = useDateFormat();
 
@@ -46,6 +48,7 @@ const TeamDetail = () => {
     }
     if (user?.role === "Player") {
       dispatch(getSentRequests());
+      dispatch(getReceivedRequests());
     }
   }, [id, dispatch, user?.role]);
 
@@ -73,6 +76,16 @@ const TeamDetail = () => {
   }
 
   const handleJoinRequest = async () => {
+    // Check if player plays the team's sport
+    const teamSportId = String(team.sport?._id || team.sport);
+    const playsSport = user?.sports?.some(
+      (s) => String(s.sport?._id || s.sport) === teamSportId
+    );
+    if (!playsSport) {
+      toast.error(`You can't join this team as you don't play ${team.sport?.name || "this sport"}.`);
+      return;
+    }
+
     try {
       await dispatch(
         sendTeamRequest({
@@ -83,7 +96,7 @@ const TeamDetail = () => {
       setRequestSent(true);
       toast.success("Join request sent successfully!");
     } catch (err) {
-      toast.error(err?.message || "Failed to send request");
+      toast.error(err || "Failed to send request");
     }
   };
 
@@ -92,6 +105,11 @@ const TeamDetail = () => {
 
   // Check if user has already sent a request to this team
   const hasExistingRequest = sentRequests.some(
+    (request) => request.team?._id === team._id && request.status === "PENDING"
+  );
+
+  // Check if manager has already sent a request to this player for this team
+  const hasReceivedRequest = receivedRequests.some(
     (request) => request.team?._id === team._id && request.status === "PENDING"
   );
 
@@ -222,12 +240,12 @@ const TeamDetail = () => {
             {/* Right Overlay - Join Button */}
             {isPlayer &&
               !isTeamMember &&
-              (requestSent || hasExistingRequest ? (
+              (requestSent || hasExistingRequest || hasReceivedRequest ? (
                 <button
                   className="bg-accent/50 text-black/50 px-8 py-4 rounded-xl font-bold text-lg shadow-2xl whitespace-nowrap cursor-not-allowed"
                   disabled
                 >
-                  Request Already Sent
+                  {hasReceivedRequest ? "Request Already Received" : "Request Already Sent"}
                 </button>
               ) : !team.openToJoin ? (
                 <button
@@ -326,6 +344,54 @@ const TeamDetail = () => {
               </Container>
             )}
 
+            {/* Medical Staff */}
+            {team.medicalTeam && team.medicalTeam.length > 0 && (
+              <Container>
+                <h2 className="text-2xl font-bold mb-5 flex items-center gap-2">
+                  <Stethoscope className="w-6 h-6 text-red-500" />
+                  Medical Staff ({team.medicalTeam.length})
+                </h2>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {team.medicalTeam.map((member, index) => (
+                    <div
+                      key={index}
+                      className="bg-background dark:bg-background-dark rounded-xl border border-base-dark dark:border-base p-4"
+                    >
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-lg bg-linear-to-br from-red-500 to-rose-600 flex items-center justify-center shrink-0">
+                          <Stethoscope className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold truncate">{member.name}</p>
+                          <p className="text-xs text-secondary font-medium">{member.role}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5 pl-13">
+                        {member.email && (
+                          <a
+                            href={`mailto:${member.email}`}
+                            className="flex items-center gap-2 text-sm text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary transition-colors"
+                          >
+                            <Mail className="w-4 h-4 text-secondary shrink-0" />
+                            <span className="truncate">{member.email}</span>
+                          </a>
+                        )}
+                        {member.phone && (
+                          <a
+                            href={`tel:${member.phone}`}
+                            className="flex items-center gap-2 text-sm text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary transition-colors"
+                          >
+                            <Phone className="w-4 h-4 text-secondary shrink-0" />
+                            <span className="font-num">{member.phone}</span>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Container>
+            )}
+
             {/* Team Members */}
           </div>
 
@@ -379,7 +445,7 @@ const TeamDetail = () => {
                 </>
               ) : (
                 <div className="text-center py-6">
-                  <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 mx-auto mb-3 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mx-auto mb-3 flex items-center justify-center">
                     <User className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -388,6 +454,47 @@ const TeamDetail = () => {
                 </div>
               )}
             </div>
+
+            {/* Coach Card */}
+            {team.coach?.name && (
+              <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <Briefcase className="w-5 h-5 text-green-600" />
+                  Head Coach
+                </h3>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-14 h-14 rounded-xl bg-linear-to-br from-green-500 to-emerald-600 flex items-center justify-center shrink-0">
+                    <User className="w-7 h-7 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold truncate">{team.coach.name}</h4>
+                    {team.coach.experience && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{team.coach.experience} experience</p>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  {team.coach.email && (
+                    <a
+                      href={`mailto:${team.coach.email}`}
+                      className="flex items-center gap-2 text-sm text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors"
+                    >
+                      <Mail className="w-4 h-4 text-secondary dark:text-secondary-dark shrink-0" />
+                      <span className="truncate">{team.coach.email}</span>
+                    </a>
+                  )}
+                  {team.coach.phone && (
+                    <a
+                      href={`tel:${team.coach.phone}`}
+                      className="flex items-center gap-2 text-sm text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors"
+                    >
+                      <Phone className="w-4 h-4 text-secondary dark:text-secondary-dark shrink-0" />
+                      <span className="font-num">{team.coach.phone}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

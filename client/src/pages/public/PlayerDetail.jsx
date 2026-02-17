@@ -21,6 +21,7 @@ import Container from "../../components/container/Container";
 import Spinner from "../../components/ui/Spinner";
 import AchievementCard from "../../components/ui/AchievementCard";
 import BackButton from "../../components/ui/BackButton";
+import Button from "../../components/ui/Button";
 import toast from "react-hot-toast";
 import { fetchPlayerById } from "../../store/slices/playerSlice";
 import { fetchManagerTeams } from "../../store/slices/teamSlice";
@@ -232,13 +233,19 @@ const PlayerDetail = () => {
 
 
             {/* Achievements */}
-            <Container>
-              <h2 className="text-2xl font-bold mb-5 flex items-center gap-2">
-                <Award className="w-6 h-6 text-amber-600" />
-                Achievements
-              </h2>
-              {player.achievements && player.achievements.length > 0 ? (
-                <div className="space-y-3">
+            {player.achievements && player.achievements.length > 0 && (
+              <Container>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <Award className="w-6 h-6 text-amber-600" />
+                    <h2 className="text-2xl font-bold">Achievements</h2>
+                  </div>
+                  <p className="text-sm text-base dark:text-base-dark">
+                    {player.achievements.length} accomplishment
+                    {player.achievements.length > 1 ? "s" : ""}
+                  </p>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
                   {player.achievements.map((achievement, index) => (
                     <AchievementCard
                       key={`${achievement.title}-${achievement.year || index}`}
@@ -247,10 +254,8 @@ const PlayerDetail = () => {
                     />
                   ))}
                 </div>
-              ) : (
-                <p className="text-base dark:text-base-dark">No achievements added yet.</p>
-              )}
-            </Container>
+              </Container>
+            )}
 
             {/* Teams */}
             {player.teams && player.teams.length > 0 && (
@@ -429,26 +434,22 @@ const PlayerDetail = () => {
 
                 {/* Action Buttons */}
                 <div className="flex gap-3">
-                  <button
+                  <Button
                     onClick={() => setShowInviteModal(false)}
-                    className="flex-1 px-4 py-3 border border-base-dark dark:border-base rounded-xl text-text-primary dark:text-text-primary-dark hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-medium"
+                    variant="secondary"
+                    className="flex-1"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={handleSendInvite}
                     disabled={inviteLoading || !selectedTeam || managerTeams?.length === 0}
-                    className="flex-1 px-4 py-3 bg-secondary dark:bg-secondary-dark text-white rounded-xl hover:opacity-90 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    loading={inviteLoading}
+                    className="flex-1"
                   >
-                    {inviteLoading ? (
-                      <Spinner size="sm" />
-                    ) : (
-                      <>
-                        <UserPlus size={18} />
-                        Send Invite
-                      </>
-                    )}
-                  </button>
+                    <UserPlus size={18} />
+                    Send Invite
+                  </Button>
                 </div>
           </div>
         </div>

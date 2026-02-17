@@ -159,7 +159,7 @@ const ManagePlayers = () => {
 
   if (teamLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Loader className="w-8 h-8 animate-spin text-secondary" />
       </div>
     );
@@ -167,20 +167,17 @@ const ManagePlayers = () => {
 
   if (!selectedTeam) {
     return (
-      <div className="min-h-screen bg-primary dark:bg-primary-dark py-8">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className="space-y-6">
           <BackButton className="mb-6" />
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <p className="text-red-600 dark:text-red-400">Team not found</p>
           </div>
-        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-primary dark:bg-primary-dark py-8">
-      <div className="max-w-6xl mx-auto px-4">
+    <div className="space-y-6">
         <BackButton className="mb-6" />
 
         {/* Header */}
@@ -207,7 +204,6 @@ const ManagePlayers = () => {
             emptyMessage="No players in this team yet"
           />
         )}
-      </div>
     </div>
   );
 };

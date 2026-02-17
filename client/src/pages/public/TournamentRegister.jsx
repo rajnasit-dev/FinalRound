@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { formatINR } from "../../utils/formatINR";
 import toast from "react-hot-toast";
-import { fetchTournamentById } from "../../store/slices/tournamentSlice";
+import { fetchTournamentById, registerForTournament, registerPlayerForTournament } from "../../store/slices/tournamentSlice";
 import { fetchPlayerTeams, fetchManagerTeams } from "../../store/slices/teamSlice";
 import { createBooking, updateBookingPaymentStatus, fetchUserBookings } from "../../store/slices/bookingSlice";
 import { createPayment, updatePaymentStatus } from "../../store/slices/paymentSlice";
@@ -68,6 +68,16 @@ const TournamentRegister = () => {
   const isSinglePlayerTournament = tournament?.registrationType === "Player";
   const isManager = user?.role === "TeamManager";
   const isManagerAndSinglePlayer = isManager && isSinglePlayerTournament;
+
+  // Check if player plays the tournament's sport
+  const tournamentSportId = tournament?.sport?._id || tournament?.sport;
+  const playerPlaysSport = user?.role === "Player" && user?.sports?.some(
+    (s) => String(s.sport?._id || s.sport) === String(tournamentSportId)
+  );
+  const isPlayerAndDoesNotPlaySport = user?.role === "Player" && isSinglePlayerTournament && !playerPlaysSport;
+
+  // Check if tournament is cancelled
+  const isCancelled = tournament?.isCancelled;
 
   const availableTeams = user?.role === "TeamManager" ? (managerTeams || []) : (playerTeams || []);
 
@@ -204,6 +214,13 @@ const TournamentRegister = () => {
               paymentId: payment._id,
               paymentStatus: "Success"
             }));
+
+            // Register team/player in the tournament
+            if (tournament.registrationType === "Team") {
+              await dispatch(registerForTournament({ tournamentId: tournament._id, teamId: selectedTeam }));
+            } else {
+              await dispatch(registerPlayerForTournament({ tournamentId: tournament._id }));
+            }
             
             navigate(`/payments/${payment._id}/receipt`);
           },
@@ -314,6 +331,21 @@ const TournamentRegister = () => {
               {tournament.registrationType === "Team" ? "Select Your Team" : "Player Registration"}
             </h2>
 
+            {/* Tournament Cancelled Warning */}
+            {isCancelled && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                  <div>
+                    <p className="font-semibold text-red-800 dark:text-red-300">Tournament Cancelled</p>
+                    <p className="text-sm text-red-700 dark:text-red-400">
+                      This tournament has been cancelled. Registration is no longer available.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Already Registered Warning */}
             {isAlreadyRegistered && (
               <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
@@ -339,6 +371,21 @@ const TournamentRegister = () => {
                     <p className="font-semibold text-yellow-800 dark:text-yellow-300">Team Registration Required</p>
                     <p className="text-sm text-yellow-700 dark:text-yellow-400">
                       This tournament requires team registration. Players cannot register directly.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Player does not play this sport */}
+            {isPlayerAndDoesNotPlaySport && (
+              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                  <div>
+                    <p className="font-semibold text-red-800 dark:text-red-300">Not Eligible</p>
+                    <p className="text-sm text-red-700 dark:text-red-400">
+                      You are not eligible for this tournament as you don't play {tournament.sport?.name || "this sport"}. Add it to your sports in your profile to register.
                     </p>
                   </div>
                 </div>
@@ -377,11 +424,16 @@ const TournamentRegister = () => {
 
                 <Button
                   onClick={handlePayment}
-                  disabled={processingPayment || paymentLoading || bookingLoading || isAlreadyRegistered || isManagerAndSinglePlayer}
+                  disabled={processingPayment || paymentLoading || bookingLoading || isAlreadyRegistered || isManagerAndSinglePlayer || isPlayerAndDoesNotPlaySport || isCancelled}
                   loading={processingPayment || paymentLoading}
                   variant="primary"
                 >
-                  {isAlreadyRegistered ? (
+                  {isCancelled ? (
+                    <>
+                      <XCircle className="w-6 h-6" />
+                      Tournament Cancelled
+                    </>
+                  ) : isAlreadyRegistered ? (
                     <>
                       <CheckCircle className="w-6 h-6" />
                       Already Registered
@@ -390,6 +442,11 @@ const TournamentRegister = () => {
                     <>
                       <AlertCircle className="w-6 h-6" />
                       Managers cannot register for single-player tournaments
+                    </>
+                  ) : isPlayerAndDoesNotPlaySport ? (
+                    <>
+                      <XCircle className="w-6 h-6" />
+                      Not eligible — you don't play this sport
                     </>
                   ) : (
                     <>
@@ -449,11 +506,16 @@ const TournamentRegister = () => {
 
                 <Button
                   onClick={handlePayment}
-                  disabled={!selectedTeam || !!validationError || processingPayment || paymentLoading || bookingLoading || isAlreadyRegistered}
+                  disabled={!selectedTeam || !!validationError || processingPayment || paymentLoading || bookingLoading || isAlreadyRegistered || isCancelled}
                   loading={processingPayment || paymentLoading}
                   variant="primary"
                 >
-                  {isAlreadyRegistered ? (
+                  {isCancelled ? (
+                    <>
+                      <XCircle className="w-6 h-6" />
+                      Tournament Cancelled
+                    </>
+                  ) : isAlreadyRegistered ? (
                     <>
                       <CheckCircle className="w-6 h-6" />
                       Already Registered

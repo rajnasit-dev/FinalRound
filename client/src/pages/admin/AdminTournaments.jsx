@@ -182,16 +182,12 @@ const AdminTournaments = () => {
         <Button
           onClick={(e) => handleDelete(e, tournament)}
           disabled={deletingId === tournament._id}
-          className="!bg-red-600 hover:!bg-red-700 !text-white !px-4 !py-2 text-sm flex items-center justify-center gap-2"
+          loading={deletingId === tournament._id}
+          variant="danger"
+          size="sm"
         >
-          {deletingId === tournament._id ? (
-            <Spinner size="sm" />
-          ) : (
-            <>
-              <Trash2 className="w-4 h-4" />
-              <span>Delete</span>
-            </>
-          )}
+          <Trash2 className="w-4 h-4" />
+          <span>Delete</span>
         </Button>
       ),
     },
@@ -217,7 +213,7 @@ const AdminTournaments = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <BackButton />
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">

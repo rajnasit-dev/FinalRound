@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, Calendar, Trophy, DollarSign, MapPin, Plus, Trash2, FileText } from "lucide-react";
+import { Calendar, Trophy, DollarSign, MapPin, Plus, Trash2, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
@@ -302,17 +302,9 @@ const CreateTournament = () => {
   return (
     <div className="space-y-6">
       <BackButton className="mb-6" />
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate("/organizer/tournaments")}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">Create Tournament</h1>
-          <p className="text-base dark:text-base-dark">Set up a new competition</p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">Create Tournament</h1>
+        <p className="text-base dark:text-base-dark">Set up a new competition</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -494,19 +486,23 @@ const CreateTournament = () => {
               {...register("groundName", {
                 required: "Ground name is required",
                 minLength: { value: 2, message: "Ground name must be at least 2 characters" },
-                maxLength: { value: 100, message: "Ground name must be under 100 characters" },
+                maxLength: { value: 50, message: "Ground name must be under 50 characters" },
               })}
               error={errors.groundName?.message}
             />
-            <Input
-              label="City"
-              placeholder="Enter city"
-              {...register("groundCity", {
-                minLength: { value: 2, message: "City must be at least 2 characters" },
-                maxLength: { value: 50, message: "City must be under 50 characters" },
-              })}
-              error={errors.groundCity?.message}
-            />
+              <Input
+                label="City"
+                placeholder="Enter city"
+                {...register("groundCity", {
+                  minLength: { value: 2, message: "City must be at least 2 characters" },
+                  maxLength: { value: 20, message: "City must be under 20 characters" },
+                  pattern: {
+                    value: /^[a-zA-Z\s'-]+$/,
+                    message: "City can only contain letters and spaces",
+                  },
+                })}
+                error={errors.groundCity?.message}
+              />
             <div className="md:col-span-2">
               <Input
                 label="Address"
@@ -514,7 +510,7 @@ const CreateTournament = () => {
                 {...register("groundAddress", {
                   required: "Address is required",
                   minLength: { value: 5, message: "Address must be at least 5 characters" },
-                  maxLength: { value: 200, message: "Address must be under 200 characters" },
+                  maxLength: { value: 100, message: "Address must be under 100 characters" },
                 })}
                 error={errors.groundAddress?.message}
               />
@@ -615,7 +611,7 @@ const CreateTournament = () => {
             {loading ? "Creating..." : processingPayment ? "Processing Payment..." : "Create Tournament"}
           </Button>
 
-          <Button type="button" onClick={() => navigate("/organizer/tournaments")} className="bg-gray-600 hover:bg-gray-700">
+          <Button type="button" onClick={() => navigate("/organizer/tournaments")} variant="secondary">
             Cancel
           </Button>
         </div>

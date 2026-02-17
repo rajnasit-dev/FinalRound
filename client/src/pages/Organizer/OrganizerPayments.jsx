@@ -181,27 +181,6 @@ const OrganizerPayments = () => {
   // Table columns
   const columns = [
     {
-      header: "Payment Type",
-      accessor: "payerType",
-      render: (item) => (
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-medium ${
-            item.payerType === "Organizer"
-              ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-              : item.payerType === "Team"
-              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-              : "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300"
-          }`}
-        >
-          {item.payerType === "Organizer"
-            ? "Platform Fee"
-            : item.payerType === "Team"
-            ? "Team Registration"
-            : "Player Registration"}
-        </span>
-      ),
-    },
-    {
       header: "Tournament",
       accessor: "tournament",
       render: (item) => (
@@ -236,7 +215,7 @@ const OrganizerPayments = () => {
               <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <div>
                 <p className="text-sm font-medium text-text-primary dark:text-text-primary-dark">
-                  {item.team?.name || item.player?.fullName || "Unknown"}
+                  {item.team?.name || item.player?.fullName || item.payerName || "Unknown"}
                 </p>
                 <p className="text-xs text-base dark:text-base-dark">
                   {item.team ? "Team" : "Player"}
@@ -244,20 +223,6 @@ const OrganizerPayments = () => {
               </div>
             </>
           )}
-        </div>
-      ),
-    },
-    {
-      header: "Date & Time",
-      accessor: "createdAt",
-      render: (item) => (
-        <div className="text-sm">
-          <p className="text-text-primary dark:text-text-primary-dark">
-            {formatDate(item.createdAt)}
-          </p>
-          <p className="text-xs text-base dark:text-base-dark">
-            {formatTime(item.createdAt)}
-          </p>
         </div>
       ),
     },
@@ -294,7 +259,7 @@ const OrganizerPayments = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
@@ -352,67 +317,71 @@ const OrganizerPayments = () => {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <SearchBar
-          placeholder="Tournament, team, or player..."
-          searchQuery={searchTerm}
-          setSearchQuery={setSearchTerm}
-        />
-        <Select
-          options={[
-            { value: "all", label: "All Types" },
-            { value: "Organizer", label: "Platform Fees" },
-            { value: "Team", label: "Team Registration" },
-            { value: "Player", label: "Player Registration" },
-          ]}
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-        />
-        <Select
-          options={[
-            { value: "all", label: "All Statuses" },
-            { value: "Success", label: "Success" },
-            { value: "Pending", label: "Pending" },
-            { value: "Failed", label: "Failed" },
-            { value: "Refunded", label: "Refunded" },
-          ]}
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        />
-        <Select
-          options={[
-            { value: "all", label: "All Months" },
-            { value: "0", label: "January" },
-            { value: "1", label: "February" },
-            { value: "2", label: "March" },
-            { value: "3", label: "April" },
-            { value: "4", label: "May" },
-            { value: "5", label: "June" },
-            { value: "6", label: "July" },
-            { value: "7", label: "August" },
-            { value: "8", label: "September" },
-            { value: "9", label: "October" },
-            { value: "10", label: "November" },
-            { value: "11", label: "December" },
-          ]}
-          value={monthFilter}
-          onChange={(e) => setMonthFilter(e.target.value)}
-        />
-        <Select
-          options={[
-            { value: "all", label: "All Years" },
-            ...availableYears.map((y) => ({ value: String(y), label: String(y) })),
-          ]}
-          value={yearFilter}
-          onChange={(e) => setYearFilter(e.target.value)}
-        />
-        <button
-          onClick={handleGenerateReport}
-          className="flex items-center justify-center gap-2 px-4 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg font-medium transition-colors cursor-pointer"
-        >
-          <FileDown className="w-4 h-4" />
-          Generate Report
-        </button>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <SearchBar
+            placeholder="Tournament, team, or player..."
+            searchQuery={searchTerm}
+            setSearchQuery={setSearchTerm}
+          />
+          <Select
+            options={[
+              { value: "all", label: "All Types" },
+              { value: "Organizer", label: "Platform Fees" },
+              { value: "Team", label: "Team Registration" },
+              { value: "Player", label: "Player Registration" },
+            ]}
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+          />
+          <Select
+            options={[
+              { value: "all", label: "All Statuses" },
+              { value: "Success", label: "Success" },
+              { value: "Pending", label: "Pending" },
+              { value: "Failed", label: "Failed" },
+              { value: "Refunded", label: "Refunded" },
+            ]}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <Select
+            options={[
+              { value: "all", label: "All Months" },
+              { value: "0", label: "January" },
+              { value: "1", label: "February" },
+              { value: "2", label: "March" },
+              { value: "3", label: "April" },
+              { value: "4", label: "May" },
+              { value: "5", label: "June" },
+              { value: "6", label: "July" },
+              { value: "7", label: "August" },
+              { value: "8", label: "September" },
+              { value: "9", label: "October" },
+              { value: "10", label: "November" },
+              { value: "11", label: "December" },
+            ]}
+            value={monthFilter}
+            onChange={(e) => setMonthFilter(e.target.value)}
+          />
+          <Select
+            options={[
+              { value: "all", label: "All Years" },
+              ...availableYears.map((y) => ({ value: String(y), label: String(y) })),
+            ]}
+            value={yearFilter}
+            onChange={(e) => setYearFilter(e.target.value)}
+          />
+          <button
+            onClick={handleGenerateReport}
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg font-medium transition-colors cursor-pointer"
+          >
+            <FileDown className="w-4 h-4" />
+            Generate Report
+          </button>
+        </div>
       </div>
 
       {/* Payments Table */}

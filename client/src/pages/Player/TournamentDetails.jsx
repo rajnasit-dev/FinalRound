@@ -99,7 +99,7 @@ const TournamentDetails = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
@@ -398,8 +398,8 @@ const TournamentDetails = () => {
                 <div className="flex gap-3">
                   <Button
                     onClick={() => setShowRegistrationModal(false)}
-                    variant="primary"
-                    className="!w-auto flex-1"
+                    variant="secondary"
+                    className="flex-1"
                   >
                     Cancel
                   </Button>
@@ -407,8 +407,7 @@ const TournamentDetails = () => {
                     onClick={handleRegister}
                     disabled={!selectedTeam || isAlreadyRegistered() || loading}
                     loading={loading}
-                    variant="primary"
-                    className="!w-auto flex-1"
+                    className="flex-1"
                   >
                     Proceed to Payment
                   </Button>

@@ -6,6 +6,7 @@ import FilterDropdown from "../../components/ui/FilterDropdown";
 import Spinner from "../../components/ui/Spinner";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import Pagination from "../../components/ui/Pagination";
+import GridContainer from "../../components/ui/GridContainer";
 import BackButton from "../../components/ui/BackButton";
 import { fetchAllPlayers } from "../../store/slices/playerSlice";
 import { fetchAllSports } from "../../store/slices/sportSlice";
@@ -96,9 +97,11 @@ const Players = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Spinner size="lg" />
-      </div>
+      <section className="container mx-auto px-6 py-16">
+        <div className="flex items-center justify-center h-96">
+          <Spinner size="lg" />
+        </div>
+      </section>
     );
   }
 
@@ -156,14 +159,16 @@ const Players = () => {
       </div>
 
       {/* Results Count */}
-      <p className="mb-6 text-base dark:text-base-dark">
-        Showing <span className="font-num">{startIndex + 1}</span> to <span className="font-num">{Math.min(startIndex + itemsPerPage, filteredPlayers.length)}</span> of <span className="font-num">{filteredPlayers.length}</span> players
-      </p>
+      {filteredPlayers.length > 0 && (
+        <p className="mb-6 text-base dark:text-base-dark">
+          Showing <span className="font-num">{startIndex + 1}</span> to <span className="font-num">{Math.min(startIndex + itemsPerPage, filteredPlayers.length)}</span> of <span className="font-num">{filteredPlayers.length}</span> players
+        </p>
+      )}
 
       {/* Players Grid */}
       {filteredPlayers.length > 0 ? (
         <>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <GridContainer cols={3}>
             {paginatedPlayers.map((player) => {
               // Map backend data structure to PlayerCard expected format
               const playerData = {
@@ -176,7 +181,7 @@ const Players = () => {
               };
               return <PlayerCard key={player._id} player={playerData} />;
             })}
-          </div>
+          </GridContainer>
           {totalPages > 1 && (
             <div className="mt-8">
               <Pagination
@@ -190,10 +195,12 @@ const Players = () => {
           )}
         </>
       ) : (
-        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-16 text-center">
-          <p className="text-xl text-base dark:text-base-dark">
-            No players found
-          </p>
+        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+          <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-2">No players found</h3>
+          <p className="text-base dark:text-base-dark">Try adjusting your search or filters</p>
         </div>
       )}
     </section>

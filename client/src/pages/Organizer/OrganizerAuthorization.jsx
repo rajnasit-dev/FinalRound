@@ -40,10 +40,9 @@ const OrganizerAuthorization = () => {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
-      // Validate file type (PDF, images)
-      const validTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
-      if (!validTypes.includes(selectedFile.type)) {
-        setError("Please upload a PDF or image file (JPG, PNG)");
+      // Validate file type (PDF only)
+      if (selectedFile.type !== "application/pdf") {
+        setError("Please upload a PDF file only");
         return;
       }
       // Validate file size (max 5MB)
@@ -99,7 +98,7 @@ const OrganizerAuthorization = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
@@ -163,7 +162,7 @@ const OrganizerAuthorization = () => {
             <div className="mt-4 p-4 bg-primary/50 dark:bg-primary-dark/50 rounded-lg">
               <p className="text-sm text-base dark:text-base-dark mb-2">Submitted Document:</p>
               <a
-                href={authStatus.verificationDocumentUrl}
+                href={`${API_BASE_URL}/tournament-organizers/document/${user._id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-secondary hover:underline inline-flex items-center gap-2"
@@ -208,8 +207,7 @@ const OrganizerAuthorization = () => {
           </p>
           <Button
             onClick={() => {
-              setAuthStatus(null);
-              fetchAuthorizationStatus();
+              setAuthStatus({ status: "not_requested" });
             }}
             className="!w-auto px-6"
           >
@@ -263,7 +261,7 @@ const OrganizerAuthorization = () => {
               <input
                 type="file"
                 id="document-upload"
-                accept=".pdf,.jpg,.jpeg,.png"
+                accept=".pdf"
                 onChange={handleFileChange}
                 className="hidden"
               />
@@ -279,7 +277,7 @@ const OrganizerAuthorization = () => {
                     Click to upload document
                   </p>
                   <p className="text-sm text-base dark:text-base-dark">
-                    PDF, JPG, PNG (Max 5MB)
+                    PDF only (Max 5MB)
                   </p>
                 </div>
               </label>
@@ -313,7 +311,8 @@ const OrganizerAuthorization = () => {
             <Button
               type="button"
               onClick={() => navigate("/organizer/dashboard")}
-              className="flex-1 bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
+              variant="secondary"
+              className="flex-1"
               disabled={uploading}
             >
               Cancel

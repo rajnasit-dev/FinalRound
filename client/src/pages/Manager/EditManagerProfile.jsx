@@ -84,8 +84,8 @@ const EditManagerProfile = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <BackButton className="mb-4" />
+    <div className="space-y-6">
+      <BackButton className="mb-6" />
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
@@ -128,6 +128,10 @@ const EditManagerProfile = () => {
                         value: 2,
                         message: "Full name must be at least 2 characters",
                       },
+                      maxLength: {
+                        value: 25,
+                        message: "Full name must be under 25 characters",
+                      },
                     })}
                     className="w-full pl-10 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark"
                   />
@@ -150,21 +154,11 @@ const EditManagerProfile = () => {
                   />
                   <input
                     type="email"
-                    {...register("email", {
-                      required: "Email is required",
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: "Invalid email address",
-                      },
-                    })}
-                    className="w-full pl-10 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark"
+                    {...register("email")}
+                    disabled
+                    className="w-full pl-10 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark opacity-50 cursor-not-allowed"
                   />
                 </div>
-                {errors.email && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.email.message}
-                  </p>
-                )}
               </div>
 
               <div>
@@ -211,8 +205,8 @@ const EditManagerProfile = () => {
                         message: "City must be at least 2 characters",
                       },
                       maxLength: {
-                        value: 60,
-                        message: "City must be under 60 characters",
+                        value: 20,
+                        message: "City must be under 20 characters",
                       },
                       pattern: {
                         value: /^[a-zA-Z\s'-]+$/,
@@ -236,8 +230,7 @@ const EditManagerProfile = () => {
             <Button
               type="button"
               onClick={handleCancel}
-              variant="primary"
-              className="w-auto"
+              variant="secondary"
             >
               <X size={18} />
               Cancel

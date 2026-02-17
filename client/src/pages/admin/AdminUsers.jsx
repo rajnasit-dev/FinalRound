@@ -23,7 +23,7 @@ const AdminUsers = () => {
   const { users, loading, error } = useSelector((state) => state.admin);
   const { sports } = useSelector((state) => state.sport);
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState("Player");
+  const [activeTab, setActiveTab] = useState("All");
   const [genderFilter, setGenderFilter] = useState("");
   const [sportFilter, setSportFilter] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -43,7 +43,7 @@ const AdminUsers = () => {
     let filtered = [...users];
 
     // Filter by active tab
-    if (activeTab) {
+    if (activeTab && activeTab !== "All") {
       filtered = filtered.filter((u) => u.role === activeTab);
     }
 
@@ -168,16 +168,12 @@ const AdminUsers = () => {
         <Button
           onClick={(e) => handleDelete(e, user)}
           disabled={deletingId === user._id}
-          className="!bg-red-600 hover:!bg-red-700 !text-white !px-4 !py-2 text-sm"
+          loading={deletingId === user._id}
+          variant="danger"
+          size="sm"
         >
-          {deletingId === user._id ? (
-            <Spinner size="sm" />
-          ) : (
-            <>
-              <Trash2 className="w-4 h-4" />
-              <span className="ml-2">Delete</span>
-            </>
-          )}
+          <Trash2 className="w-4 h-4" />
+          <span className="ml-2">Delete</span>
         </Button>
       ),
     },
@@ -203,7 +199,7 @@ const AdminUsers = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <BackButton />
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
@@ -217,7 +213,7 @@ const AdminUsers = () => {
       {/* Tabs */}
       <div>
         <div className="flex items-center gap-2 border-b border-base-dark dark:border-base mb-4">
-          {["Player", "TeamManager", "TournamentOrganizer"].map((tab) => (
+          {["All", "Player", "TeamManager", "TournamentOrganizer"].map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -232,7 +228,7 @@ const AdminUsers = () => {
                   : "border-transparent text-base dark:text-base-dark hover:text-text-primary dark:hover:text-text-primary-dark"
               }`}
             >
-              {tab === "TeamManager" ? "Team Managers" : tab === "TournamentOrganizer" ? "Organizers" : "Players"}
+              {tab === "All" ? "All Users" : tab === "TeamManager" ? "Team Managers" : tab === "TournamentOrganizer" ? "Organizers" : "Players"}
             </button>
           ))}
         </div>
@@ -296,7 +292,7 @@ const AdminUsers = () => {
         <DataTable
           columns={columns}
           data={filteredUsers}
-          onRowClick={activeTab === "Player" ? handleRowClick : undefined}
+          onRowClick={activeTab === "Player" || activeTab === "All" ? handleRowClick : undefined}
           itemsPerPage={10}
           emptyMessage="No users found"
         />

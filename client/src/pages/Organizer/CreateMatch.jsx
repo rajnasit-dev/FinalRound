@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin } from "lucide-react";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
@@ -213,14 +213,24 @@ const CreateMatch = () => {
             <Input
               label="Ground Name"
               placeholder="Enter ground name"
-              {...register("groundName")}
+              {...register("groundName", {
+                minLength: { value: 2, message: "Ground name must be at least 2 characters" },
+                maxLength: { value: 50, message: "Ground name must be under 50 characters" },
+              })}
               error={errors.groundName?.message}
             />
 
             <Input
               label="City"
               placeholder="Enter city"
-              {...register("groundCity")}
+              {...register("groundCity", {
+                minLength: { value: 2, message: "City must be at least 2 characters" },
+                maxLength: { value: 20, message: "City must be under 20 characters" },
+                pattern: {
+                  value: /^[a-zA-Z\s'-]+$/,
+                  message: "City can only contain letters and spaces",
+                },
+              })}
               error={errors.groundCity?.message}
             />
 
@@ -228,7 +238,10 @@ const CreateMatch = () => {
               <Input
                 label="Address"
                 placeholder="Enter full address"
-                {...register("groundAddress")}
+                {...register("groundAddress", {
+                  minLength: { value: 5, message: "Address must be at least 5 characters" },
+                  maxLength: { value: 100, message: "Address must be under 100 characters" },
+                })}
                 error={errors.groundAddress?.message}
               />
             </div>
@@ -264,8 +277,8 @@ const CreateMatch = () => {
 
           <Button
             type="button"
-            onClick={() => navigate("/organizer/matches")}
-            className="bg-gray-600 hover:bg-gray-700"
+            onClick={() => navigate(-1)}
+            variant="secondary"
           >
             Cancel
           </Button>

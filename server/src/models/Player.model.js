@@ -10,8 +10,7 @@ const playerSchema = new Schema({
         required: true,
       },
       role: {
-        type: String,
-        required: true, // e.g., "Batsman", "Bowler", "All-rounder" for Cricket; "Striker", "Midfielder", "Defender", "Goalkeeper" for Football
+        type: String, // e.g., "Batsman", "Bowler", "All-rounder" for Cricket; "Striker", "Midfielder", "Defender", "Goalkeeper" for Football
       }
     },
   ],

@@ -114,6 +114,21 @@ export const fetchCurrentUser = createAsyncThunk(
   }
 );
 
+export const deleteAccount = createAsyncThunk(
+  "auth/deleteAccount",
+  async (_, { rejectWithValue }) => {
+    try {
+      await axios.delete(
+        `${API_BASE_URL}/users/profile`,
+        { withCredentials: true }
+      );
+      return true;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Request failed");
+    }
+  }
+);
+
 const initialState = {
   user: loadUserFromStorage(),
   token: null,
@@ -252,6 +267,25 @@ const authSlice = createSlice({
           state.isAuthenticated = false;
           localStorage.removeItem("user");
         }
+      });
+
+    // Delete Account
+    builder
+      .addCase(deleteAccount.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteAccount.fulfilled, (state) => {
+        state.loading = false;
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        state.error = null;
+        localStorage.removeItem("user");
+      })
+      .addCase(deleteAccount.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

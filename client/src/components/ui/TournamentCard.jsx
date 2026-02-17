@@ -10,6 +10,8 @@ import {
   Trash2,
   Settings,
   Eye,
+  Ban,
+  RotateCcw,
 } from "lucide-react";
 import useStatusColor from "../../hooks/useStatusColor";
 import useDateFormat from "../../hooks/useDateFormat";
@@ -23,6 +25,7 @@ const TournamentCard = ({
   showOrganizerButtons = false,
   onEdit,
   onDelete,
+  onCancel,
   onManage,
   onView,
 }) => {
@@ -81,13 +84,8 @@ const TournamentCard = ({
         </div>
 
         {/* Content Section */}
-        <div className="pt-12 px-6 pb-5">
-          {/* Registration Status Badge */}
-          {registrationStatusBadge && (
-            <div className="mb-4 -mt-8">
-              {registrationStatusBadge}
-            </div>
-          )}
+        <div className="pt-6 px-6 pb-5">
+          
 
           {/* Tournament Name & Sport */}
           <div className="mb-4">
@@ -194,6 +192,33 @@ const TournamentCard = ({
                   <Trophy className="w-4 h-4" />
                   Fixtures
                 </button>
+                {tournament.status !== "Cancelled" ? (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onCancel && onCancel(tournament._id, false);
+                    }}
+                    className="flex items-center justify-center gap-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700 text-white rounded-lg transition-colors font-semibold text-sm"
+                    title="Cancel Tournament"
+                  >
+                    <Ban className="w-4 h-4" />
+                    Cancel
+                  </button>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onCancel && onCancel(tournament._id, true);
+                    }}
+                    className="flex items-center justify-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors font-semibold text-sm"
+                    title="Reinstate Tournament"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reinstate
+                  </button>
+                )}
                 <button
                   onClick={(e) => {
                     e.preventDefault();

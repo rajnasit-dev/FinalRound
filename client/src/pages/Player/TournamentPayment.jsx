@@ -129,7 +129,7 @@ const TournamentPayment = () => {
 
   if (!tournament) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <p className="text-gray-600">Loading payment details...</p>
         </div>
@@ -138,8 +138,7 @@ const TournamentPayment = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="space-y-6">
         <BackButton className="mb-6" />
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
@@ -213,7 +212,6 @@ const TournamentPayment = () => {
             Secured by Razorpay | Your payment information is encrypted
           </p>
         </div>
-      </div>
     </div>
   );
 };

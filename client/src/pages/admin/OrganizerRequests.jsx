@@ -14,6 +14,8 @@ import SearchBar from "../../components/ui/SearchBar";
 import DataTable from "../../components/ui/DataTable";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
+
 const OrganizerRequests = () => {
   const dispatch = useDispatch();
   const { pendingOrganizers, loading, error } = useSelector((state) => state.admin);
@@ -118,7 +120,7 @@ const OrganizerRequests = () => {
       render: (organizer) => (
         organizer.verificationDocumentUrl ? (
           <a
-            href={organizer.verificationDocumentUrl}
+            href={`${API_BASE_URL}/tournament-organizers/document/${organizer._id}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
@@ -142,20 +144,21 @@ const OrganizerRequests = () => {
           <Button
             onClick={(e) => handleApprove(e, organizer)}
             disabled={processingId === organizer._id}
-            className="!bg-green-600 hover:!bg-green-700 !text-white px-3 py-2 text-sm"
+            loading={processingId === organizer._id}
+            variant="success"
+            size="sm"
           >
-            {processingId === organizer._id ? (
-              <Spinner size="sm" />
-            ) : (
-              <CheckCircle className="w-4 h-4" />
-            )}
+            <CheckCircle className="w-4 h-4" />
+            Approve
           </Button>
           <Button
             onClick={(e) => handleReject(e, organizer)}
             disabled={processingId === organizer._id}
-            className="!bg-red-600 hover:!bg-red-700 !text-white px-3 py-2 text-sm"
+            variant="danger"
+            size="sm"
           >
             <XCircle className="w-4 h-4" />
+            Reject
           </Button>
         </div>
       ),
@@ -171,7 +174,7 @@ const OrganizerRequests = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <BackButton />
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">

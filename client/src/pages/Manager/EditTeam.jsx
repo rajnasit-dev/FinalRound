@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
-import { Users, MapPin, FileText, Globe, Save, X, Trash2, Mail, Phone, Lock } from "lucide-react";
+import { Users, MapPin, FileText, Globe, Save, X, Trash2, Mail, Phone, Lock, User, Plus, Stethoscope } from "lucide-react";
 import toast from "react-hot-toast";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
@@ -49,6 +49,14 @@ const genderOptions = [
   { value: "Mixed", label: "Mixed" },
 ];
 
+const medicalRoleOptions = [
+  "Physiotherapist",
+  "Doctor",
+  "Sports Therapist",
+  "Nutritionist",
+  "Trainer",
+];
+
 const EditTeam = () => {
   const { teamId } = useParams();
   const navigate = useNavigate();
@@ -69,6 +77,8 @@ const EditTeam = () => {
   const [achievements, setAchievements] = useState([]);
   const [currentAchievement, setCurrentAchievement] = useState({ title: "", year: "" });
   const [achievementError, setAchievementError] = useState("");
+  const [medicalTeam, setMedicalTeam] = useState([]);
+  const [medicalMember, setMedicalMember] = useState({ name: "", phone: "", email: "", role: "" });
 
   const {
     register,
@@ -104,8 +114,13 @@ const EditTeam = () => {
         description: selectedTeam.description || "",
         gender: selectedTeam.gender || "",
         openToJoin: selectedTeam.openToJoin ? "true" : "false",
+        coachName: selectedTeam.coach?.name || "",
+        coachPhone: selectedTeam.coach?.phone || "",
+        coachEmail: selectedTeam.coach?.email || "",
+        coachExperience: selectedTeam.coach?.experience || "",
       });
       setAchievements(selectedTeam.achievements || []);
+      setMedicalTeam(selectedTeam.medicalTeam || []);
       setLogoPreview(selectedTeam.logoUrl || null);
       setBannerPreview(selectedTeam.bannerUrl || null);
     }
@@ -358,6 +373,13 @@ const EditTeam = () => {
         gender: data.gender,
         openToJoin: data.openToJoin === "true",
         achievements,
+        coach: data.coachName ? {
+          name: data.coachName,
+          phone: data.coachPhone || "",
+          email: data.coachEmail || "",
+          experience: data.coachExperience || "",
+        } : null,
+        medicalTeam,
       };
 
       await axios.put(`${API_BASE_URL}/teams/${teamId}`, payload, {
@@ -396,15 +418,14 @@ const EditTeam = () => {
 
   if (loading && !selectedTeam) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-primary dark:bg-primary-dark py-8">
-      <div className="max-w-4xl mx-auto px-4">
+    <div className="space-y-6">
         <BackButton className="mb-6" />
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">Edit Team</h1>
@@ -440,49 +461,73 @@ const EditTeam = () => {
                 })}
               />
 
-              <div>
-                <Select
-                  label="Sport"
-                  options={sportOptions}
-                  icon={<Lock size={18} />}
-                  error={errors.sport?.message}
-                  disabled
-                  {...register("sport", {
-                    required: "Please select a sport",
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Select
+                    label="Sport"
+                    options={sportOptions}
+                    icon={<Lock size={18} />}
+                    error={errors.sport?.message}
+                    disabled
+                    {...register("sport", {
+                      required: "Please select a sport",
+                    })}
+                  />
+                  <p className="text-xs text-base dark:text-base-dark mt-1">Sport cannot be changed after team creation.</p>
+                </div>
+
+                <Input
+                  label="City (Optional)"
+                  type="text"
+                  placeholder="Enter city name"
+                  icon={<MapPin size={18} />}
+                  error={errors.city?.message}
+                  {...register("city", {
+                    minLength: { value: 2, message: "City must be at least 2 characters" },
+                    maxLength: { value: 20, message: "City must be under 20 characters" },
+                    pattern: {
+                      value: /^[a-zA-Z\s'-]+$/,
+                      message: "City can only contain letters and spaces",
+                    },
                   })}
                 />
-                <p className="text-xs text-base dark:text-base-dark mt-1">Sport cannot be changed after team creation.</p>
               </div>
 
-              <Controller
-                name="gender"
-                control={control}
-                rules={{ required: "Gender is required" }}
-                render={({ field: { value, onChange, ref } }) => (
-                  <RadioGroup
-                    ref={ref}
-                    label="Gender"
-                    options={genderOptions}
-                    name="gender"
-                    value={value}
-                    onChange={onChange}
-                    error={errors.gender?.message}
-                    required
-                  />
-                )}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Controller
+                  name="gender"
+                  control={control}
+                  rules={{ required: "Gender is required" }}
+                  render={({ field: { value, onChange, ref } }) => (
+                    <RadioGroup
+                      ref={ref}
+                      label="Gender"
+                      options={genderOptions}
+                      name="gender"
+                      value={value}
+                      onChange={onChange}
+                      error={errors.gender?.message}
+                      required
+                    />
+                  )}
+                />
 
-              <Input
-                label="City (Optional)"
-                type="text"
-                placeholder="Enter city name"
-                icon={<MapPin size={18} />}
-                error={errors.city?.message}
-                {...register("city", {
-                  minLength: { value: 2, message: "City must be at least 2 characters" },
-                  maxLength: { value: 50, message: "City must be under 50 characters" },
-                })}
-              />
+                <Controller
+                  name="openToJoin"
+                  control={control}
+                  render={({ field: { value, onChange, ref } }) => (
+                    <RadioGroup
+                      ref={ref}
+                      label="Open to Join Requests"
+                      options={openToJoinOptions}
+                      name="openToJoin"
+                      value={value}
+                      onChange={onChange}
+                      error={errors.openToJoin?.message}
+                    />
+                  )}
+                />
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-2">
@@ -506,23 +551,190 @@ const EditTeam = () => {
                   <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
                 )}
               </div>
-
-              <Controller
-                name="openToJoin"
-                control={control}
-                render={({ field: { value, onChange, ref } }) => (
-                  <RadioGroup
-                    ref={ref}
-                    label="Open to Join Requests"
-                    options={openToJoinOptions}
-                    name="openToJoin"
-                    value={value}
-                    onChange={onChange}
-                    error={errors.openToJoin?.message}
-                  />
-                )}
-              />
             </div>
+          </div>
+
+          {/* Coach Information */}
+          <div className="bg-card-background dark:bg-card-background-dark rounded-2xl p-8 shadow-md">
+            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-6 flex items-center gap-2">
+              <User size={20} className="text-secondary" />
+              Coach Information (Optional)
+            </h2>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input
+                  label="Coach Name"
+                  type="text"
+                  placeholder="Enter coach name"
+                  icon={<User size={18} />}
+                  error={errors.coachName?.message}
+                  {...register("coachName", {
+                    minLength: { value: 2, message: "Name must be at least 2 characters" },
+                    maxLength: { value: 25, message: "Name must be under 25 characters" },
+                    pattern: {
+                      value: /^[a-zA-Z\s'.]+$/,
+                      message: "Name can only contain letters, spaces, and apostrophes",
+                    },
+                  })}
+                />
+                <Input
+                  label="Coach Phone"
+                  type="tel"
+                  placeholder="Enter phone number"
+                  icon={<Phone size={18} />}
+                  error={errors.coachPhone?.message}
+                  {...register("coachPhone", {
+                    pattern: {
+                      value: /^[0-9]{10}$/,
+                      message: "Phone must be 10 digits",
+                    },
+                  })}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input
+                  label="Coach Email"
+                  type="email"
+                  placeholder="Enter email address"
+                  icon={<Mail size={18} />}
+                  error={errors.coachEmail?.message}
+                  {...register("coachEmail", {
+                    maxLength: { value: 50, message: "Email must be under 50 characters" },
+                    pattern: {
+                      value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                      message: "Enter a valid email address",
+                    },
+                  })}
+                />
+                <Input
+                  label="Experience"
+                  type="text"
+                  placeholder="e.g., 5 years"
+                  icon={<FileText size={18} />}
+                  error={errors.coachExperience?.message}
+                  {...register("coachExperience", {
+                    maxLength: { value: 50, message: "Experience must be under 50 characters" },
+                  })}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Medical Team */}
+          <div className="bg-card-background dark:bg-card-background-dark rounded-2xl p-8 shadow-md">
+            <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-6 flex items-center gap-2">
+              <Stethoscope size={20} className="text-secondary" />
+              Medical Team (Optional)
+            </h2>
+
+            {/* Existing members */}
+            {medicalTeam.length > 0 && (
+              <div className="space-y-3 mb-6">
+                {medicalTeam.map((member, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-4 bg-primary dark:bg-primary-dark rounded-xl border border-base-dark dark:border-base"
+                  >
+                    <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                      <div>
+                        <span className="text-base dark:text-base-dark text-xs">Name</span>
+                        <p className="font-medium text-text-primary dark:text-text-primary-dark">{member.name}</p>
+                      </div>
+                      <div>
+                        <span className="text-base dark:text-base-dark text-xs">Role</span>
+                        <p className="font-medium text-text-primary dark:text-text-primary-dark">{member.role}</p>
+                      </div>
+                      <div>
+                        <span className="text-base dark:text-base-dark text-xs">Phone</span>
+                        <p className="font-medium text-text-primary dark:text-text-primary-dark">{member.phone || "N/A"}</p>
+                      </div>
+                      <div>
+                        <span className="text-base dark:text-base-dark text-xs">Email</span>
+                        <p className="font-medium text-text-primary dark:text-text-primary-dark truncate">{member.email || "N/A"}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setMedicalTeam(medicalTeam.filter((_, i) => i !== index))}
+                      className="ml-3 p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add new member form */}
+            {medicalTeam.length < 5 && (
+              <div className="space-y-4 p-4 border-2 border-dashed border-base-dark dark:border-base rounded-xl">
+                <p className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">Add Medical Staff</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-1">Name *</label>
+                    <input
+                      type="text"
+                      value={medicalMember.name}
+                      onChange={(e) => setMedicalMember({ ...medicalMember, name: e.target.value })}
+                      placeholder="Staff name"
+                      className="w-full px-4 py-2.5 bg-card-background dark:bg-card-background-dark rounded-lg border border-base-dark dark:border-base focus:outline-none text-text-primary dark:text-text-primary-dark text-sm"
+                      maxLength={25}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-1">Role *</label>
+                    <select
+                      value={medicalMember.role}
+                      onChange={(e) => setMedicalMember({ ...medicalMember, role: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-card-background dark:bg-card-background-dark rounded-lg border border-base-dark dark:border-base focus:outline-none text-text-primary dark:text-text-primary-dark text-sm"
+                    >
+                      <option value="">Select Role</option>
+                      {medicalRoleOptions.map((role) => (
+                        <option key={role} value={role}>{role}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-1">Phone</label>
+                    <input
+                      type="tel"
+                      value={medicalMember.phone}
+                      onChange={(e) => setMedicalMember({ ...medicalMember, phone: e.target.value })}
+                      placeholder="10-digit phone"
+                      className="w-full px-4 py-2.5 bg-card-background dark:bg-card-background-dark rounded-lg border border-base-dark dark:border-base focus:outline-none text-text-primary dark:text-text-primary-dark text-sm"
+                      maxLength={10}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary dark:text-text-primary-dark mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={medicalMember.email}
+                      onChange={(e) => setMedicalMember({ ...medicalMember, email: e.target.value })}
+                      placeholder="Email address"
+                      className="w-full px-4 py-2.5 bg-card-background dark:bg-card-background-dark rounded-lg border border-base-dark dark:border-base focus:outline-none text-text-primary dark:text-text-primary-dark text-sm"
+                      maxLength={50}
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!medicalMember.name || !medicalMember.role) return;
+                    setMedicalTeam([...medicalTeam, { ...medicalMember }]);
+                    setMedicalMember({ name: "", phone: "", email: "", role: "" });
+                  }}
+                  disabled={!medicalMember.name || !medicalMember.role}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-secondary/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm font-semibold"
+                >
+                  <Plus size={16} />
+                  Add Staff Member
+                </button>
+              </div>
+            )}
+            {medicalTeam.length >= 5 && (
+              <p className="text-sm text-amber-600 dark:text-amber-400">Maximum 5 medical staff members reached.</p>
+            )}
           </div>
 
           {/* Team Members Management */}
@@ -668,7 +880,7 @@ const EditTeam = () => {
             <Button
               type="button"
               onClick={handleCancel}
-              className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 px-6 py-3 flex items-center justify-center gap-2"
+              variant="secondary"
             >
               <X size={18} />
               Cancel
@@ -676,20 +888,14 @@ const EditTeam = () => {
             <Button
               type="submit"
               disabled={!isValid || isSubmitting}
+              loading={isSubmitting}
               className="bg-secondary dark:bg-secondary-dark hover:opacity-90 px-6 py-3 flex items-center justify-center gap-2"
             >
-              {isSubmitting ? (
-                <Spinner size="sm" />
-              ) : (
-                <>
-                  <Save size={18} />
-                  Update Team
-                </>
-              )}
+              <Save size={18} />
+              Update Team
             </Button>
           </div>
         </form>
-      </div>
     </div>
   );
 };

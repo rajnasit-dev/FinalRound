@@ -147,16 +147,15 @@ const EditPlayerProfile = () => {
   // Show loading spinner while fetching profile
   if (loading && !profile) {
     return (
-      <div className="min-h-screen bg-primary dark:bg-primary-dark flex items-center justify-center">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-primary dark:bg-primary-dark py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <BackButton className="mb-6" />
+    <div className="space-y-6">
+      <BackButton className="mb-6" />
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
             Edit Profile
@@ -197,6 +196,10 @@ const EditPlayerProfile = () => {
                       value: 2,
                       message: "Full name must be at least 2 characters",
                     },
+                    maxLength: {
+                      value: 25,
+                      message: "Full name must be under 25 characters",
+                    },
                   })}
                   className="w-full pl-10 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark"
                 />
@@ -217,19 +220,11 @@ const EditPlayerProfile = () => {
                 />
                 <input
                   type="email"
-                  {...register("email", {
-                    required: "Email is required",
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Invalid email address",
-                    },
-                  })}
-                  className="w-full pl-10 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark"
+                  {...register("email")}
+                  disabled
+                  className="w-full pl-10 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark opacity-50 cursor-not-allowed"
                 />
               </div>
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
-              )}
             </div>
 
             <div>
@@ -274,8 +269,8 @@ const EditPlayerProfile = () => {
                       message: "City must be at least 2 characters",
                     },
                     maxLength: {
-                      value: 60,
-                      message: "City must be under 60 characters",
+                      value: 20,
+                      message: "City must be under 20 characters",
                     },
                     pattern: {
                       value: /^[a-zA-Z\s'-]+$/,
@@ -380,9 +375,10 @@ const EditPlayerProfile = () => {
                 />
                 <input
                   type="number"
+                  placeholder="e.g., 70"
                   {...register("weight", {
-                    min: { value: 1, message: "Weight must be positive" },
-                    max: { value: 500, message: "Weight must be realistic" },
+                    min: { value: 30, message: "Weight must be at least 30 kg" },
+                    max: { value: 200, message: "Weight must be under 200 kg" },
                   })}
                   className="w-full pl-10 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-secondary dark:focus:ring-secondary-dark"
                 />
@@ -441,7 +437,7 @@ const EditPlayerProfile = () => {
           <Button
             type="button"
             onClick={handleCancel}
-            className="bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 px-6 py-3 flex items-center justify-center gap-2"
+            variant="secondary"
           >
             <X size={18} />
             Cancel
@@ -449,20 +445,14 @@ const EditPlayerProfile = () => {
           <Button
             type="submit"
             disabled={!isValid || isSubmitting || loading}
+            loading={isSubmitting || loading}
             className="bg-secondary dark:bg-secondary-dark hover:opacity-90 px-6 py-3 flex items-center justify-center gap-2"
           >
-            {isSubmitting || loading ? (
-              <Spinner size="sm" />
-            ) : (
-              <>
-                <Save size={18} />
-                Save Changes
-              </>
-            )}
+            <Save size={18} />
+            Save Changes
           </Button>
         </div>
       </form>
-      </div>
     </div>
   );
 };

@@ -44,6 +44,23 @@ const teamSchema = new Schema(
         year: Number,
       },
     ],
+    coach: {
+      name: { type: String, trim: true },
+      phone: { type: String, trim: true },
+      email: { type: String, trim: true },
+      experience: { type: String, trim: true },
+    },
+    medicalTeam: [
+      {
+        name: { type: String, trim: true },
+        phone: { type: String, trim: true },
+        email: { type: String, trim: true },
+        role: {
+          type: String,
+          enum: ["Physiotherapist", "Doctor", "Sports Therapist", "Nutritionist", "Trainer"],
+        },
+      },
+    ],
     openToJoin: {
       type: Boolean,
       default: true,

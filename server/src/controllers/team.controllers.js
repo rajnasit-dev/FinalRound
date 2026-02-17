@@ -13,7 +13,7 @@ import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js
 // Create a new team
 export const createTeam = asyncHandler(async (req, res) => {
   const managerId = req.user._id;
-  const { name, sport, city, description, gender, openToJoin, achievements } = req.body;
+  const { name, sport, city, description, gender, openToJoin, achievements, coach, medicalTeam } = req.body;
   const files = req.files || {};
   const logoLocalPath = files.logo?.[0]?.path;
   const bannerLocalPath = files.banner?.[0]?.path;
@@ -77,6 +77,26 @@ export const createTeam = asyncHandler(async (req, res) => {
     }
   }
 
+  // Parse coach if provided
+  let parsedCoach = null;
+  if (coach) {
+    try {
+      parsedCoach = typeof coach === 'string' ? JSON.parse(coach) : coach;
+    } catch (error) {
+      parsedCoach = null;
+    }
+  }
+
+  // Parse medicalTeam if provided
+  let parsedMedicalTeam = [];
+  if (medicalTeam) {
+    try {
+      parsedMedicalTeam = typeof medicalTeam === 'string' ? JSON.parse(medicalTeam) : medicalTeam;
+    } catch (error) {
+      parsedMedicalTeam = [];
+    }
+  }
+
   const team = await Team.create({
     name,
     sport,
@@ -85,6 +105,8 @@ export const createTeam = asyncHandler(async (req, res) => {
     description,
     gender,
     achievements: parsedAchievements,
+    coach: parsedCoach || undefined,
+    medicalTeam: parsedMedicalTeam,
     openToJoin: openToJoin !== undefined ? openToJoin : true,
     logoUrl: logoResponse?.url || null,
     bannerUrl: bannerResponse?.url || null,
@@ -148,7 +170,7 @@ export const getTeamById = asyncHandler(async (req, res) => {
 export const updateTeam = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const managerId = req.user._id;
-  const { name, city, description, gender, openToJoin, achievements } = req.body;
+  const { name, city, description, gender, openToJoin, achievements, coach, medicalTeam } = req.body;
 
   const team = await Team.findById(id);
 
@@ -182,6 +204,28 @@ export const updateTeam = asyncHandler(async (req, res) => {
       }
     }
     team.achievements = parsedAchievements;
+  }
+  if (coach !== undefined) {
+    let parsedCoach = coach;
+    if (typeof coach === 'string') {
+      try {
+        parsedCoach = JSON.parse(coach);
+      } catch (error) {
+        parsedCoach = null;
+      }
+    }
+    team.coach = parsedCoach;
+  }
+  if (medicalTeam !== undefined) {
+    let parsedMedicalTeam = medicalTeam;
+    if (typeof medicalTeam === 'string') {
+      try {
+        parsedMedicalTeam = JSON.parse(medicalTeam);
+      } catch (error) {
+        parsedMedicalTeam = [];
+      }
+    }
+    team.medicalTeam = parsedMedicalTeam;
   }
 
   await team.save();

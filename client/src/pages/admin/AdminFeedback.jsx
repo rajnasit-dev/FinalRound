@@ -186,16 +186,12 @@ const AdminFeedback = () => {
         <Button
           onClick={(e) => handleDeleteFeedback(e, feedback._id)}
           disabled={deletingId === feedback._id}
-          className="!bg-red-600 hover:!bg-red-700 !text-white !px-4 !py-2 text-sm flex items-center gap-2"
+          loading={deletingId === feedback._id}
+          variant="danger"
+          size="sm"
         >
-          {deletingId === feedback._id ? (
-            <Spinner size="sm" />
-          ) : (
-            <>
-              <Trash2 className="w-4 h-4" />
-              <span>Delete</span>
-            </>
-          )}
+          <Trash2 className="w-4 h-4" />
+          <span>Delete</span>
         </Button>
       ),
     },
@@ -210,7 +206,7 @@ const AdminFeedback = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <BackButton />
       
       {/* Page Header */}
@@ -427,7 +423,7 @@ const AdminFeedback = () => {
                     handleDeleteFeedback(e, selectedFeedback._id);
                     closeModal();
                   }}
-                  className="!bg-red-600 hover:!bg-red-700 !text-white flex items-center gap-2"
+                  variant="danger"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete Feedback

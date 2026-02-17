@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Player } from "../models/Player.model.js";
 import { Sport } from "../models/Sport.model.js";
 import { Team } from "../models/Team.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary, getCloudinaryPublicId } from "../utils/cloudinary.js";
 import fs from "fs";
 
 // Get all players
@@ -368,12 +368,24 @@ export const updatePlayerAvatar = asyncHandler(async (req, res) => {
 export const deletePlayerAvatar = asyncHandler(async (req, res) => {
   const playerId = req.user._id;
 
+  const player = await Player.findById(playerId);
+  if (!player) throw new ApiError(404, "Player not found.");
+
+  // Delete avatar from Cloudinary if exists
+  if (player.avatar) {
+    try {
+      const publicId = getCloudinaryPublicId(player.avatar);
+      await deleteFromCloudinary(publicId);
+    } catch (error) {
+      console.log("Failed to delete avatar from Cloudinary:", error.message);
+    }
+  }
+
   // Update player avatar to null
-  const player = await Player.findByIdAndUpdate(
-    playerId,
-    { avatar: null },
-    { new: true }
-  )
+  player.avatar = null;
+  await player.save();
+
+  const updatedPlayer = await Player.findById(playerId)
     .populate("sports.sport", "name teamBased iconUrl")
     .select("-password -refreshToken");
 
@@ -381,7 +393,7 @@ export const deletePlayerAvatar = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new ApiResponse(200, player, "Avatar deleted successfully."));
+    .json(new ApiResponse(200, updatedPlayer, "Avatar deleted successfully."));
 });
 
 // Get players by sport and gender (for team manager to add players)

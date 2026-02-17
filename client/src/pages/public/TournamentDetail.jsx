@@ -35,7 +35,7 @@ const TournamentDetail = () => {
     (state) => state.tournament
   );
   
-  const { matches: tournamentMatches, loading: matchesLoading } = useSelector(
+  const { tournamentMatches, loading: matchesLoading } = useSelector(
     (state) => state.match
   );
 
@@ -50,6 +50,7 @@ const TournamentDetail = () => {
   // Helper function to check if registration is open
   const isRegistrationOpen = (tournament) => {
     if (!tournament?.registrationStart || !tournament?.registrationEnd) return false;
+    if (tournament?.isCancelled) return false;
     const currentDate = new Date();
     const startDate = new Date(tournament.registrationStart);
     const endDate = new Date(tournament.registrationEnd);
@@ -58,6 +59,9 @@ const TournamentDetail = () => {
 
   // Helper function to get registration status
   const getRegistrationStatus = (tournament) => {
+    if (tournament?.isCancelled) {
+      return { status: 'cancelled', message: 'Tournament Cancelled' };
+    }
     if (!tournament?.registrationStart || !tournament?.registrationEnd) {
       return { status: 'closed', message: 'Registration Closed' };
     }
@@ -114,6 +118,9 @@ const TournamentDetail = () => {
     const role = user.role;
     const regType = tournament?.registrationType;
     
+    // Disable if already registered
+    if (isAlreadyRegistered()) return true;
+
     // Disable for TournamentOrganizer and Admin always
     if (role === "TournamentOrganizer" || role === "Admin") {
       return true;
@@ -130,6 +137,39 @@ const TournamentDetail = () => {
     }
     
     return false;
+  };
+
+  // Helper function to check if the current user is already registered
+  const isAlreadyRegistered = () => {
+    if (!user || !tournament) return false;
+
+    const regType = tournament.registrationType;
+
+    // Player-based: check if user ID is in registeredPlayers
+    if (regType === "Player") {
+      return tournament.registeredPlayers?.some(
+        (p) => (p._id || p) === user._id || String(p._id || p) === String(user._id)
+      );
+    }
+
+    // Team-based: check if any of the user's teams are in registeredTeams
+    if (regType === "Team") {
+      return tournament.registeredTeams?.some(
+        (t) => {
+          const manager = t.manager;
+          const managerId = manager?._id || manager;
+          return String(managerId) === String(user._id);
+        }
+      );
+    }
+
+    return false;
+  };
+
+  // Get registration button text (with already registered override)
+  const getRegisterButtonLabel = () => {
+    if (isAlreadyRegistered()) return "Already Registered";
+    return getRegistrationButtonText();
   };
 
   if (loading) {
@@ -213,14 +253,14 @@ const TournamentDetail = () => {
                     disabled
                     className="bg-gray-500 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-2xl whitespace-nowrap cursor-not-allowed opacity-60"
                   >
-                    {getRegistrationButtonText()}
+                    {getRegisterButtonLabel()}
                   </button>
                 ) : (
                   <Link
                     to={`/tournaments/${id}/register`}
                     className="bg-accent hover:bg-accent/90 text-black px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-2xl hover:shadow-accent/50 hover:scale-105 whitespace-nowrap inline-block"
                   >
-                    {getRegistrationButtonText()}
+                    {getRegisterButtonLabel()}
                   </Link>
                 )}
               </>
@@ -273,18 +313,22 @@ const TournamentDetail = () => {
                   label="Location"
                   value={tournament.ground.city}
                 />
-                <CardStat
-                  Icon={Users}
-                  iconColor="text-yellow-600"
-                  label="Team Limit"
-                  value={tournament.teamLimit}
-                />
-                <CardStat
-                  Icon={Users}
-                  iconColor="text-orange-600"
-                  label="Players Per Team"
-                  value={tournament.playersPerTeam || tournament.sport?.playersPerTeam}
-                />
+                {tournament.registrationType !== "Player" && (
+                  <>
+                    <CardStat
+                      Icon={Users}
+                      iconColor="text-yellow-600"
+                      label="Team Limit"
+                      value={tournament.teamLimit}
+                    />
+                    <CardStat
+                      Icon={Users}
+                      iconColor="text-orange-600"
+                      label="Players Per Team"
+                      value={tournament.playersPerTeam || tournament.sport?.playersPerTeam}
+                    />
+                  </>
+                )}
                 <CardStat
                   Icon={Clock}
                   iconColor="text-green-600"
@@ -455,14 +499,14 @@ const TournamentDetail = () => {
                       disabled
                       className="block w-full text-text-primary dark:text-text-primary-dark bg-base-dark/50 dark:bg-base/50 text-center px-6 py-4 rounded-lg font-bold text-lg transition-all mb-3 cursor-not-allowed opacity-60"
                     >
-                      {getRegistrationButtonText()}
+                      {getRegisterButtonLabel()}
                     </button>
                   ) : (
                     <Link
                       to={`/tournaments/${id}/register`}
                       className="block w-full text-text-secondary dark:text-text-secondary-dark bg-secondary hover:bg-secondary/90 dark:bg-accent dark:hover:bg-accent/90 text-center px-6 py-4 rounded-lg font-bold text-lg transition-all shadow-lg hover:shadow-xl hover:scale-105 mb-3"
                     >
-                      {getRegistrationButtonText()}
+                      {getRegisterButtonLabel()}
                     </Link>
                   )}
                   <p className="text-xs text-center text-base dark:text-base-dark">

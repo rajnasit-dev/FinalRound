@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Calendar, MapPin, Edit } from "lucide-react";
 import DataTable from "./DataTable";
+import MatchDetailModal from "./MatchDetailModal";
 import useDateFormat from "../../hooks/useDateFormat";
 import useStatusColor from "../../hooks/useStatusColor";
 
@@ -8,6 +10,7 @@ const FixturesTable = ({ matches, showEditButton = false, onEdit }) => {
   const navigate = useNavigate();
   const { formatDate, formatTime } = useDateFormat();
   const { getStatusColor } = useStatusColor();
+  const [selectedMatch, setSelectedMatch] = useState(null);
 
   const columns = [
     {
@@ -134,12 +137,22 @@ const FixturesTable = ({ matches, showEditButton = false, onEdit }) => {
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={matches || []}
-      itemsPerPage={10}
-      emptyMessage="No fixtures available"
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={matches || []}
+        itemsPerPage={10}
+        emptyMessage="No fixtures available"
+        onRowClick={(match) => setSelectedMatch(match)}
+      />
+
+      {selectedMatch && (
+        <MatchDetailModal
+          match={selectedMatch}
+          onClose={() => setSelectedMatch(null)}
+        />
+      )}
+    </>
   );
 };
 

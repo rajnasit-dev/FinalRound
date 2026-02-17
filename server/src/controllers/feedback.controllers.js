@@ -64,6 +64,57 @@ export const getAllFeedback = asyncHandler(async (req, res) => {
     }, "Reviews retrieved successfully."));
 });
 
+// Get latest feedback per user role (Player, TeamManager, TournamentOrganizer)
+export const getLatestFeedbackByRole = asyncHandler(async (req, res) => {
+  const roles = ["Player", "TeamManager", "TournamentOrganizer"];
+
+  const results = await Feedback.aggregate([
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "userInfo",
+      },
+    },
+    { $unwind: "$userInfo" },
+    { $match: { "userInfo.role": { $in: roles } } },
+    { $sort: { createdAt: -1 } },
+    {
+      $group: {
+        _id: "$userInfo.role",
+        feedbackId: { $first: "$_id" },
+        user: {
+          $first: {
+            _id: "$userInfo._id",
+            fullName: "$userInfo.fullName",
+            email: "$userInfo.email",
+            avatar: "$userInfo.avatar",
+            role: "$userInfo.role",
+          },
+        },
+        rating: { $first: "$rating" },
+        comment: { $first: "$comment" },
+        createdAt: { $first: "$createdAt" },
+      },
+    },
+    {
+      $project: {
+        _id: "$feedbackId",
+        user: 1,
+        rating: 1,
+        comment: 1,
+        createdAt: 1,
+      },
+    },
+    { $sort: { createdAt: -1 } },
+  ]);
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, results, "Latest reviews per role retrieved successfully."));
+});
+
 // Get feedback by ID
 export const getFeedbackById = asyncHandler(async (req, res) => {
   const { id } = req.params;

@@ -1,59 +1,66 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { formatINR } from "../../utils/formatINR";
 import {
   Trophy,
   Users,
   Calendar,
   DollarSign,
-  Plus,
-  ArrowRight,
   AlertCircle,
 } from "lucide-react";
-import toast from "react-hot-toast";
 import Spinner from "../../components/ui/Spinner";
 import Button from "../../components/ui/Button";
 import DashboardCardState from "../../components/ui/DashboardCardState";
 import GridContainer from "../../components/ui/GridContainer";
-import TournamentCard from "../../components/ui/TournamentCard";
-import FixturesTable from "../../components/ui/FixturesTable";
-import { fetchAllTournaments, deleteTournament } from "../../store/slices/tournamentSlice";
-import { fetchAllMatches } from "../../store/slices/matchSlice";
+import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
+import { fetchUserPayments } from "../../store/slices/paymentSlice";
 
 const OrganizerDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { tournaments, loading: tournamentsLoading } = useSelector((state) => state.tournament);
-  const { matches, loading: matchesLoading } = useSelector((state) => state.match);
+  const { payments, loading: paymentsLoading } = useSelector((state) => state.payment);
 
   useEffect(() => {
     dispatch(fetchAllTournaments({}));
-    dispatch(fetchAllMatches());
+    dispatch(fetchUserPayments());
   }, [dispatch]);
 
-  // Filter tournaments and matches organized by this user
+  // Filter tournaments organized by this user
   const myTournaments = tournaments?.filter((t) => t.organizer?._id === user?._id) || [];
-  const myMatches = matches?.filter((m) =>
-    myTournaments.some((t) => t._id === m.tournament?._id)
-  ) || [];
 
   const totalTournaments = myTournaments.length;
-  const totalMatches = myMatches.length;
-  const totalTeams = myTournaments.reduce((acc, t) => acc + (t.registeredTeams?.length || 0), 0);
-  const paymentsReceived = myTournaments.reduce((acc, t) => acc + (t.totalRevenue || 0), 0);
 
-  if (tournamentsLoading || matchesLoading) {
+  // Total registrations across all tournaments (teams + players)
+  const totalRegistrations = myTournaments.reduce((acc, t) => {
+    return acc + (t.registeredTeams?.length || 0) + (t.registeredPlayers?.length || 0);
+  }, 0);
+
+  // Payment stats from fetched payments
+  const paymentStats = useMemo(() => {
+    if (!payments || payments.length === 0) return { netRevenue: 0 };
+    const successful = payments.filter((p) => p.status === "Success");
+    const totalReceived = successful
+      .filter((p) => p.payerType !== "Organizer")
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    const totalPlatformFees = successful
+      .filter((p) => p.payerType === "Organizer")
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    return { netRevenue: totalReceived - totalPlatformFees };
+  }, [payments]);
+
+  if (tournamentsLoading || paymentsLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Authorization Warning Banner */}
       {!user?.isAuthorized && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6">
@@ -105,8 +112,8 @@ const OrganizerDashboard = () => {
         />
         <DashboardCardState
           Icon={DollarSign}
-          label="Payments Received"
-          value={`₹${formatINR(paymentsReceived)}`}
+          label="Net Revenue"
+          value={`₹${formatINR(paymentStats.netRevenue)}`}
           gradientFrom="from-green-500/10"
           gradientVia="via-green-500/5"
           borderColor="border-green-500/30"
@@ -115,116 +122,17 @@ const OrganizerDashboard = () => {
           onClick={() => navigate("/organizer/payments")}
         />
         <DashboardCardState
-          Icon={Calendar}
-          label="Total Matches"
-          value={totalMatches}
-          gradientFrom="from-blue-500/10"
-          gradientVia="via-blue-500/5"
-          borderColor="border-blue-500/30"
-          iconGradientFrom="from-blue-500"
-          iconGradientTo="to-blue-600"
-          onClick={() => navigate("/organizer/matches")}
-        />
-        <DashboardCardState
           Icon={Users}
-          label="Registered Teams"
-          value={totalTeams}
+          label="Total Registrations"
+          value={totalRegistrations}
           gradientFrom="from-purple-500/10"
           gradientVia="via-purple-500/5"
           borderColor="border-purple-500/30"
           iconGradientFrom="from-purple-500"
           iconGradientTo="to-purple-600"
-          onClick={() => navigate("/organizer/teams")}
+          onClick={() => navigate("/organizer/tournaments")}
         />
       </GridContainer>
-
-      {/* My Tournaments */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-            My Tournaments
-          </h2>
-          <Link
-            to="/organizer/tournaments"
-            className="text-secondary hover:underline font-semibold flex items-center gap-2"
-          >
-            View All
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        {myTournaments.length > 0 ? (
-          <div className="grid md:grid-cols-2 gap-6">
-            {myTournaments.slice(0, 3).map((tournament) => (
-              <TournamentCard 
-                key={tournament._id} 
-                tournament={tournament}
-                showOrganizerButtons={true}
-                onEdit={(id) => navigate(`/organizer/tournaments/${id}/edit`)}
-                onManage={(id) => navigate(`/organizer/tournaments/${id}`)}
-                onView={(id) => navigate(`/organizer/tournaments/${id}/fixtures`)}
-                onDelete={async (id) => {
-                  if (!window.confirm('Are you sure you want to delete this tournament?')) return;
-                  try {
-                    await dispatch(deleteTournament(id)).unwrap();
-                    toast.success('Tournament deleted successfully!');
-                  } catch (error) {
-                    toast.error(error || 'Failed to delete tournament');
-                  }
-                }}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
-            <Trophy className="w-16 h-16 mx-auto mb-4 text-base dark:text-base-dark" />
-            <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
-              No tournaments yet
-            </h3>
-            <p className="text-base dark:text-base-dark mb-6">
-              Create your first tournament to get started
-            </p>
-            {user?.isAuthorized ? (
-              <Link
-                to="/organizer/tournaments/create"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg transition-colors font-semibold"
-              >
-                <Plus className="w-5 h-5" />
-                Create Tournament
-              </Link>
-            ) : (
-              <button
-                disabled
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gray-400 text-white rounded-lg font-semibold cursor-not-allowed opacity-60"
-                title="Authorization required to create tournaments"
-              >
-                <Plus className="w-5 h-5" />
-                Create Tournament
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Recent Matches */}
-      {myMatches.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-              Recent Matches
-            </h2>
-            <Link
-              to="/organizer/matches"
-              className="text-secondary hover:underline font-semibold flex items-center gap-2"
-            >
-              View All
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          <FixturesTable matches={myMatches.slice(0, 3)} />
-        </div>
-      )}
     </div>
   );
 };

@@ -167,7 +167,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 };
 
 export const registerPlayer = asyncHandler(async (req, res) => {
-  const { fullName, email, password, phone, city, sports, dateOfBirth, gender } =
+  const { fullName, email, password, phone, city, sports, dateOfBirth, gender, height, weight } =
     req.body;
   const avatarLocalPath = req.files?.avatar?.[0]?.path;
   const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
@@ -177,6 +177,10 @@ export const registerPlayer = asyncHandler(async (req, res) => {
       400,
       "fullName, email and password are required fields."
     );
+  }
+
+  if (!gender || !["Male", "Female", "Other"].includes(gender)) {
+    throw new ApiError(400, "Gender is required and must be Male, Female, or Other.");
   }
 
   const isUserExist = await User.findOne({ email });
@@ -206,16 +210,31 @@ export const registerPlayer = asyncHandler(async (req, res) => {
       
       // Process each sport to get the Sport ObjectId
       for (const sportItem of sportsData) {
-        // Find active sport by name (case-insensitive)
-        const sportDoc = await Sport.findOne({ 
-          name: { $regex: new RegExp(`^${sportItem.sport}$`, 'i') },
-          isActive: true
-        });
+        let sportDoc = null;
+        const sportValue = sportItem.sport;
+
+        if (typeof sportValue === 'object' && sportValue !== null) {
+          // Frontend sends full sport object with _id
+          if (sportValue._id) {
+            sportDoc = await Sport.findOne({ _id: sportValue._id, isActive: true });
+          } else if (sportValue.name) {
+            sportDoc = await Sport.findOne({
+              name: { $regex: new RegExp(`^${sportValue.name}$`, 'i') },
+              isActive: true
+            });
+          }
+        } else if (typeof sportValue === 'string') {
+          // Sport sent as name string
+          sportDoc = await Sport.findOne({ 
+            name: { $regex: new RegExp(`^${sportValue}$`, 'i') },
+            isActive: true
+          });
+        }
         
         if (sportDoc) {
           parsedSports.push({
             sport: sportDoc._id,
-            role: sportItem.role,
+            role: sportItem.role || undefined,
           });
         }
       }
@@ -236,6 +255,8 @@ export const registerPlayer = asyncHandler(async (req, res) => {
     sports: parsedSports,
     dateOfBirth,
     gender,
+    height: height ? Number(height) : undefined,
+    weight: weight ? Number(weight) : undefined,
     verifyEmailOtp: otp,
     verifyEmailOtpExpiry,
   });

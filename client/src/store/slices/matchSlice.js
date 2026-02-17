@@ -126,9 +126,9 @@ export const updateMatchResult = createAsyncThunk(
 
 export const updateMatchStatus = createAsyncThunk(
   "match/updateStatus",
-  async ({ matchId, status }, { rejectWithValue }) => {
+  async ({ matchId, isCancelled }, { rejectWithValue }) => {
     try {
-      const response = await axios.patch(`${API_BASE_URL}/matches/${matchId}/status`, { status }, { withCredentials: true, headers: { "Content-Type": "application/json" } });
+      const response = await axios.patch(`${API_BASE_URL}/matches/${matchId}/status`, { isCancelled }, { withCredentials: true, headers: { "Content-Type": "application/json" } });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error?.response?.data?.message || error.message || "Failed to update match status");
@@ -140,8 +140,8 @@ export const deleteMatch = createAsyncThunk(
   "match/delete",
   async (matchId, { rejectWithValue }) => {
     try {
-      const response = await axios.delete(`${API_BASE_URL}/matches/${matchId}`, { withCredentials: true });
-      return response.data.data;
+      await axios.delete(`${API_BASE_URL}/matches/${matchId}`, { withCredentials: true });
+      return matchId;
     } catch (error) {
       return rejectWithValue(error?.response?.data?.message || error.message || "Request failed");
     }
@@ -167,6 +167,7 @@ export const generateTournamentFixtures = createAsyncThunk(
 
 const initialState = {
   matches: [],
+  tournamentMatches: [],
   upcomingMatches: [],
   liveMatches: [],
   completedMatches: [],
@@ -197,6 +198,9 @@ const matchSlice = createSlice({
     },
     clearSelectedMatch: (state) => {
       state.selectedMatch = null;
+    },
+    clearTeamMatches: (state) => {
+      state.teamMatches = [];
     },
   },
   extraReducers: (builder) => {
@@ -273,7 +277,7 @@ const matchSlice = createSlice({
       })
       .addCase(fetchMatchesByTournament.fulfilled, (state, action) => {
         state.loading = false;
-        state.matches = action.payload;
+        state.tournamentMatches = action.payload;
       })
       .addCase(fetchMatchesByTournament.rejected, (state, action) => {
         state.loading = false;
@@ -286,7 +290,14 @@ const matchSlice = createSlice({
       })
       .addCase(fetchMatchesByTeam.fulfilled, (state, action) => {
         state.loading = false;
-        state.teamMatches = action.payload;
+        // Accumulate matches from multiple teams, avoiding duplicates
+        const newMatches = action.payload || [];
+        const existingIds = new Set(state.teamMatches.map((m) => m._id));
+        newMatches.forEach((m) => {
+          if (!existingIds.has(m._id)) {
+            state.teamMatches.push(m);
+          }
+        });
       })
       .addCase(fetchMatchesByTeam.rejected, (state, action) => {
         state.loading = false;
@@ -301,8 +312,8 @@ const matchSlice = createSlice({
       .addCase(createMatch.fulfilled, (state, action) => {
         state.loading = false;
         state.matches.push(action.payload);
-        // New matches are typically upcoming
-        if (action.payload.status === "upcoming" || action.payload.status === "scheduled") {
+        // New matches are typically upcoming/scheduled
+        if (action.payload.status === "Upcoming" || action.payload.status === "Scheduled") {
           state.upcomingMatches.push(action.payload);
         }
         state.createSuccess = true;
@@ -319,7 +330,7 @@ const matchSlice = createSlice({
       })
       .addCase(generateTournamentFixtures.fulfilled, (state, action) => {
         state.loading = false;
-        state.matches = action.payload || [];
+        state.tournamentMatches = action.payload || [];
       })
       .addCase(generateTournamentFixtures.rejected, (state, action) => {
         state.loading = false;
@@ -387,16 +398,19 @@ const matchSlice = createSlice({
         const id = action.payload._id;
         const index = state.matches.findIndex((m) => m._id === id);
         if (index !== -1) state.matches[index] = action.payload;
+        // Update in tournamentMatches too
+        const tmIdx = state.tournamentMatches.findIndex((m) => m._id === id);
+        if (tmIdx !== -1) state.tournamentMatches[tmIdx] = action.payload;
         // Remove from all status arrays and re-add to correct one
         state.upcomingMatches = state.upcomingMatches.filter((m) => m._id !== id);
         state.liveMatches = state.liveMatches.filter((m) => m._id !== id);
         state.completedMatches = state.completedMatches.filter((m) => m._id !== id);
-        const status = action.payload.status?.toLowerCase();
-        if (status === "upcoming" || status === "scheduled") {
+        const status = action.payload.status;
+        if (status === "Upcoming" || status === "Scheduled") {
           state.upcomingMatches.push(action.payload);
-        } else if (status === "live" || status === "in_progress") {
+        } else if (status === "Live") {
           state.liveMatches.push(action.payload);
-        } else if (status === "completed" || status === "finished") {
+        } else if (status === "Completed") {
           state.completedMatches.push(action.payload);
         }
         const tIdx = state.teamMatches.findIndex((m) => m._id === id);
@@ -416,8 +430,9 @@ const matchSlice = createSlice({
       })
       .addCase(deleteMatch.fulfilled, (state, action) => {
         state.loading = false;
-        const id = action.payload._id;
+        const id = action.payload;
         state.matches = state.matches.filter((m) => m._id !== id);
+        state.tournamentMatches = state.tournamentMatches.filter((m) => m._id !== id);
         state.upcomingMatches = state.upcomingMatches.filter((m) => m._id !== id);
         state.liveMatches = state.liveMatches.filter((m) => m._id !== id);
         state.completedMatches = state.completedMatches.filter((m) => m._id !== id);
@@ -441,5 +456,6 @@ export const {
   clearUpdateSuccess,
   clearDeleteSuccess,
   clearSelectedMatch,
+  clearTeamMatches,
 } = matchSlice.actions;
 export default matchSlice.reducer;

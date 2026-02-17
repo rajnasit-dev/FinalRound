@@ -41,18 +41,28 @@ const AddPlayer = () => {
       const sportId = selectedTeam.sport?._id || selectedTeam.sport;
       const gender = selectedTeam.gender || "Mixed";
 
-      const response = await axios.get(`${API_BASE_URL}/players/search/by-sport-gender`, {
-        params: {
-          sportId,
-          gender,
-        },
-        withCredentials: true,
-      });
+      // Fetch players and sent requests in parallel
+      const [playersRes, requestsRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/players/search/by-sport-gender`, {
+          params: { sportId, gender },
+          withCredentials: true,
+        }),
+        axios.get(`${API_BASE_URL}/requests/sent`, {
+          withCredentials: true,
+        }),
+      ]);
 
-      if (response.data?.data) {
-        // Filter out players already in the team
-        const teamPlayerIds = selectedTeam.players?.map((p) => p._id || p) || [];
-        const filteredPlayers = response.data.data.filter((p) => !teamPlayerIds.includes(p._id));
+      if (playersRes.data?.data) {
+        const teamPlayerIds = (selectedTeam.players?.map((p) => String(p._id || p)) || []);
+
+        // Get IDs of players who already have a pending request for this team
+        const pendingRequestPlayerIds = (requestsRes.data?.data || [])
+          .filter((r) => r.receiver?._id && (String(r.team?._id || r.team) === String(teamId)))
+          .map((r) => String(r.receiver._id));
+
+        const filteredPlayers = playersRes.data.data.filter(
+          (p) => !teamPlayerIds.includes(String(p._id)) && !pendingRequestPlayerIds.includes(String(p._id))
+        );
         setPlayers(filteredPlayers);
       }
     } catch (err) {
@@ -60,7 +70,7 @@ const AddPlayer = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedTeam]);
+  }, [selectedTeam, teamId]);
 
   useEffect(() => {
     fetchAvailablePlayers();
@@ -83,7 +93,7 @@ const AddPlayer = () => {
 
       toast.success("Request sent successfully!");
       // Remove player from list
-      setPlayers(players.filter((p) => p._id !== playerId));
+      setPlayers((prev) => prev.filter((p) => p._id !== playerId));
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to send request");
     } finally {
@@ -190,7 +200,7 @@ const AddPlayer = () => {
 
   if (teamLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-96">
         <Loader className="w-8 h-8 animate-spin text-secondary" />
       </div>
     );
@@ -198,20 +208,17 @@ const AddPlayer = () => {
 
   if (!selectedTeam) {
     return (
-      <div className="min-h-screen bg-primary dark:bg-primary-dark py-8">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className="space-y-6">
           <BackButton className="mb-6" />
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <p className="text-red-600 dark:text-red-400">Team not found</p>
           </div>
-        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-primary dark:bg-primary-dark py-8">
-      <div className="max-w-6xl mx-auto px-4">
+    <div className="space-y-6">
         <BackButton className="mb-6" />
 
         {/* Header */}
@@ -238,7 +245,6 @@ const AddPlayer = () => {
             emptyMessage="No available players for this sport and gender"
           />
         )}
-      </div>
     </div>
   );
 };
