@@ -117,7 +117,7 @@ const AdminUsers = () => {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
             <img
-              src={user.avatarUrl || defaultAvatar}
+              src={user.avatar || defaultAvatar}
               alt={user.fullName}
               className="w-full h-full object-cover"
             />

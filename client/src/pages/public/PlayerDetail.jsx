@@ -122,7 +122,7 @@ const PlayerDetail = () => {
       {/* Banner */}
       <div className="relative h-screen sm:h-112.5 overflow-hidden">
         <img
-          src={player.coverImageUrl || defaultCoverImage}
+          src={player.coverImage || defaultCoverImage}
           alt={player.fullName}
           className="w-full h-full object-cover"
         />
@@ -143,7 +143,7 @@ const PlayerDetail = () => {
                 <div className="relative">
                   <div className="w-32 h-32 rounded-full border-4 border-white shadow-2xl bg-white overflow-hidden">
                     <img
-                      src={player.avatarUrl || defaultAvatar}
+                      src={player.avatar || defaultAvatar}
                       alt={player.fullName}
                       className="w-full h-full object-cover"
                     />
@@ -386,7 +386,7 @@ const PlayerDetail = () => {
             {/* Player Info */}
                 <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
                   <img
-                    src={player?.avatarUrl || defaultAvatar}
+                    src={player?.avatar || defaultAvatar}
                     alt={player?.fullName}
                     className="w-14 h-14 rounded-full object-cover border-2 border-secondary"
                   />

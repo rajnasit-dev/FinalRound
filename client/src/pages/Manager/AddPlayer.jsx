@@ -118,7 +118,7 @@ const AddPlayer = () => {
       render: (player) => (
         <div className="flex items-center gap-3">
           <img
-            src={player.avatarUrl || defaultAvatar}
+            src={player.avatar || defaultAvatar}
             alt={player.fullName}
             className="w-10 h-10 rounded-full object-cover shrink-0"
           />

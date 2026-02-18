@@ -90,7 +90,7 @@ const ManagerRequests = () => {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
             <img
-              src={request.sender?.avatarUrl || defaultAvatar}
+              src={request.sender?.avatar || defaultAvatar}
               alt={request.sender?.fullName}
               className="w-full h-full object-cover"
             />
@@ -154,7 +154,7 @@ const ManagerRequests = () => {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
             <img
-              src={request.receiver?.avatarUrl || defaultAvatar}
+              src={request.receiver?.avatar || defaultAvatar}
               alt={request.receiver?.fullName}
               className="w-full h-full object-cover"
             />

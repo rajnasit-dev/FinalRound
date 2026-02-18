@@ -128,7 +128,7 @@ const AdminFeedback = () => {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
             <img
-              src={feedback.user?.avatarUrl || defaultAvatar}
+              src={feedback.user?.avatar || defaultAvatar}
               alt={feedback.user?.fullName}
               className="w-full h-full object-cover"
             />
@@ -332,7 +332,7 @@ const AdminFeedback = () => {
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-border-light dark:border-border-dark shrink-0">
                   <img
-                    src={selectedFeedback.user?.avatarUrl || selectedFeedback.user?.avatar || defaultAvatar}
+                    src={selectedFeedback.user?.avatar || defaultAvatar}
                     alt={selectedFeedback.user?.fullName}
                     className="w-full h-full object-cover"
                   />
