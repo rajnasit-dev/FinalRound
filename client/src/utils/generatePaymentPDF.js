@@ -1,5 +1,26 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import logoImg from "../assets/logo.png";
+
+/**
+ * Load an image and return its base64 data URI via canvas
+ */
+const loadImageAsBase64 = (src) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = () => reject(new Error("Failed to load logo image"));
+    img.src = src;
+  });
+};
 
 /**
  * Generate a PDF report for payment data
@@ -9,19 +30,75 @@ import autoTable from "jspdf-autotable";
  * @param {string} options.subtitle - Report subtitle (filter info)
  * @param {Object} options.summary - Summary stats object
  */
-export const generatePaymentPDF = (payments, options = {}) => {
+export const generatePaymentPDF = async (payments, options = {}) => {
   const { title = "Payment Report", subtitle = "", summary = {} } = options;
 
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   let y = 15;
 
-  // ── Header ──
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(30, 30, 30);
-  doc.text(title, pageWidth / 2, y, { align: "center" });
-  y += 8;
+  // ── Load logo for header & watermark ──
+  let logoBase64 = null;
+  try {
+    logoBase64 = await loadImageAsBase64(logoImg);
+  } catch (err) {
+    console.warn("Could not load logo for PDF:", err.message);
+  }
+
+  // ── Helper: Draw watermark on current page ──
+  const drawWatermark = () => {
+    doc.saveGraphicsState();
+    // Diagonal "SPORTSHUB" text watermark
+    const gState = doc.GState({ opacity: 0.06 });
+    doc.setGState(gState);
+    doc.setFontSize(72);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(30, 60, 120);
+    // Rotate and draw centered text
+    const centerX = pageWidth / 2;
+    const centerY = pageHeight / 2;
+    doc.text("SPORTSHUB", centerX, centerY, {
+      align: "center",
+      angle: 35,
+    });
+
+    // Logo watermark (semi-transparent, centered)
+    if (logoBase64) {
+      const wmWidth = 80;
+      const wmHeight = 80;
+      const logoGState = doc.GState({ opacity: 0.05 });
+      doc.setGState(logoGState);
+      doc.addImage(
+        logoBase64,
+        "PNG",
+        centerX - wmWidth / 2,
+        centerY - wmHeight / 2 - 20,
+        wmWidth,
+        wmHeight
+      );
+    }
+    doc.restoreGraphicsState();
+  };
+
+  // ── Header with logo ──
+  if (logoBase64) {
+    doc.addImage(logoBase64, "PNG", 14, y - 6, 18, 18);
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(30, 60, 120);
+    doc.text("SPORTSHUB", 35, y + 5);
+    doc.setFontSize(20);
+    doc.setTextColor(30, 30, 30);
+    doc.text(title, pageWidth / 2 + 10, y + 5, { align: "center" });
+    y += 16;
+  } else {
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(30, 30, 30);
+    doc.text(title, pageWidth / 2, y, { align: "center" });
+    y += 8;
+  }
 
   if (subtitle) {
     doc.setFontSize(10);
@@ -148,23 +225,31 @@ export const generatePaymentPDF = (payments, options = {}) => {
     },
   });
 
-  // ── Footer ──
+  // ── Footer & Watermark on every page ──
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
+
+    // Draw watermark on each page
+    drawWatermark();
+
+    // Footer text
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.text(
       `Page ${i} of ${pageCount}`,
       pageWidth / 2,
-      doc.internal.pageSize.getHeight() - 10,
+      pageHeight - 10,
       { align: "center" }
     );
-    doc.text(
-      "SportsHub",
-      14,
-      doc.internal.pageSize.getHeight() - 10
-    );
+
+    // Footer logo + brand
+    if (logoBase64) {
+      doc.addImage(logoBase64, "PNG", 14, pageHeight - 16, 8, 8);
+      doc.text("SportsHub", 24, pageHeight - 10);
+    } else {
+      doc.text("SportsHub", 14, pageHeight - 10);
+    }
   }
 
   // ── Save ──

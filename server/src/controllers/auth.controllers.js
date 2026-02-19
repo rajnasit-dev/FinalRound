@@ -13,6 +13,10 @@ import crypto from "crypto";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Settings } from "../models/Settings.model.js";
 import jwt from "jsonwebtoken";
+import {
+  verificationEmailWithLogoHtml,
+  forgotPasswordWithLogoHtml,
+} from "../utils/emailTemplates.js";
 
 const OTP_EXPIRES_MINUTES = 5 * 60 * 1000; //5 min
 
@@ -23,129 +27,9 @@ const generateOtpAndExpiry = () => {
   return { otp, verifyEmailOtpExpiry };
 };
 
-const verificationEmailHtml = (name, otp) => `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>OTP Verification</title>
-  <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    .header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #eee; }
-    .header h1 { color: #333; margin: 0; }
-    .content { padding: 20px 0; text-align: center; }
-    .content p { color: #555; line-height: 1.6; margin-bottom: 15px; }
-    .otp-code { font-size: 32px; font-weight: bold; color: #007bff; background-color: #e9f5ff; padding: 10px 20px; border-radius: 5px; display: inline-block; margin: 20px 0; }
-    .footer { text-align: center; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>OTP Verification</h1>
-    </div>
-    <div class="content">
-      <p>Hello, ${name}</p>
-      <p>Your One-Time Password (OTP) for verification is:</p>
-      <div class="otp-code">
-        ${otp}
-      </div>
-      <p>This OTP is valid for the next 5 minutes. Please do not share this code with anyone.</p>
-      <p>If you did not request this OTP, please ignore this email.</p>
-    </div>
-    <div class="footer">
-      <p>&copy; 2026 SportsHub. All rights reserved.</p>
-    </div>
-  </div>
-</body>
-</html>
-`;
+const verificationEmailHtml = (name, otp) => verificationEmailWithLogoHtml(name, otp);
 
-const forgotPasswordEmailHtml = (name, url) => `
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Your Password - SportsHub</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            -webkit-text-size-adjust: none; 
-            -ms-text-size-adjust: none;
-        }
-        .container {
-            max-width: 600px;
-            margin: 20px auto;
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #eeeeee;
-        }
-        .header h1 {
-            color: #333333;
-            margin: 0;
-        }
-        .content {
-            padding: 20px 0;
-            text-align: center;
-        }
-        .content p {
-            color: #555555;
-            line-height: 1.6;
-            margin-bottom: 15px;
-        }
-        /* Style for the call-to-action button */
-        .action-button {
-            display: inline-block;
-            background-color: #007bff; /* Brand color for CTA */
-            color: #ffffff; /* General CSS rule */
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            margin: 20px 0;
-        }
-        .footer {
-            text-align: center;
-            padding-top: 20px;
-            border-top: 1px solid #eeeeee;
-            font-size: 12px;
-            color: #888888;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Password Reset Request</h1>
-        </div>
-        <div class="content">
-            <p>Hello, ${name}</p>
-            <p>We received a request to reset the password for your SportsHub account. Click the button below to complete the process:</p>
-            
-            <!-- ADDED INLINE STYLE HERE TO ENSURE WHITE TEXT ON ALL DEVICES -->
-            <a href="${url}" class="action-button" style="color: #ffffff !important;">Reset My Password</a>
-            
-            <p>For security, this link expires in 5 minutes.</p>
-            <p>If you didn't request a password reset, you can safely ignore this email.</p>
-        </div>
-        <div class="footer">
-            <p>&copy; 2026 SportsHub. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-</html>
-  `;
+const forgotPasswordEmailHtml = (name, url) => forgotPasswordWithLogoHtml(name, url);
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {

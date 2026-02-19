@@ -95,11 +95,11 @@ const AdminPayments = () => {
     return parts.length ? `Filtered by: ${parts.join(" | ")}` : "All Payments";
   };
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
     if (filteredPayments.length === 0) {
       return toast.error("No payment data to generate report");
     }
-    generatePaymentPDF(filteredPayments, {
+    await generatePaymentPDF(filteredPayments, {
       title: "Admin Payments Report",
       subtitle: getFilterSubtitle(),
       summary: {

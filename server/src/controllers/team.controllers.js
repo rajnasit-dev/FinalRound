@@ -9,6 +9,12 @@ import { Request } from "../models/Request.model.js";
 import { Match } from "../models/Match.model.js";
 import Booking from "../models/Booking.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+import { sendEmail } from "../middlewares/sendEmail.js";
+import {
+  playerAddedToTeamHtml,
+  playerRemovedFromTeamHtml,
+  playerLeftTeamHtml,
+} from "../utils/emailTemplates.js";
 
 // Create a new team
 export const createTeam = asyncHandler(async (req, res) => {
@@ -545,6 +551,21 @@ export const addPlayerToTeam = asyncHandler(async (req, res) => {
   team.players.push(playerId);
   await team.save();
 
+  // Send email to the player notifying them they were added
+  try {
+    const manager = await Player.findById(managerId).select("fullName");
+    if (player?.email) {
+      await sendEmail({
+        email: player.email,
+        subject: `You've been added to ${team.name} – SportsHub`,
+        message: `You have been added to ${team.name} by ${manager?.fullName || "the team manager"}.`,
+        html: playerAddedToTeamHtml(player.fullName, team.name, manager?.fullName || "Team Manager"),
+      });
+    }
+  } catch (err) {
+    console.log("Failed to send player-added email:", err.message);
+  }
+
   const updatedTeam = await Team.findById(id)
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
@@ -579,6 +600,21 @@ export const removePlayerFromTeam = asyncHandler(async (req, res) => {
   team.players = team.players.filter(p => p.toString() !== playerId);
   await team.save();
 
+  // Send email to the player notifying them they were removed
+  try {
+    const player = await Player.findById(playerId).select("fullName email");
+    if (player?.email) {
+      await sendEmail({
+        email: player.email,
+        subject: `Removed from ${team.name} – SportsHub`,
+        message: `You have been removed from ${team.name}.`,
+        html: playerRemovedFromTeamHtml(player.fullName, team.name),
+      });
+    }
+  } catch (err) {
+    console.log("Failed to send player-removed email:", err.message);
+  }
+
   const updatedTeam = await Team.findById(id)
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
@@ -608,6 +644,22 @@ export const leaveTeam = asyncHandler(async (req, res) => {
   // Remove player from team
   team.players = team.players.filter(p => p.toString() !== playerId.toString());
   await team.save();
+
+  // Send email to team manager notifying them a player left
+  try {
+    const player = await Player.findById(playerId).select("fullName");
+    const manager = await Player.findById(team.manager).select("fullName email");
+    if (manager?.email) {
+      await sendEmail({
+        email: manager.email,
+        subject: `${player?.fullName || "A player"} left ${team.name} – SportsHub`,
+        message: `${player?.fullName || "A player"} has left your team ${team.name}.`,
+        html: playerLeftTeamHtml(manager.fullName, player?.fullName || "A player", team.name),
+      });
+    }
+  } catch (err) {
+    console.log("Failed to send player-left email:", err.message);
+  }
 
   const updatedTeam = await Team.findById(id)
     .populate("sport", "name teamBased iconUrl")

@@ -5,6 +5,15 @@ import { Request } from "../models/Request.model.js";
 import { Team } from "../models/Team.model.js";
 import { User } from "../models/User.model.js";
 import { Tournament } from "../models/Tournament.model.js";
+import { sendEmail } from "../middlewares/sendEmail.js";
+import {
+  playerRequestToTeamHtml,
+  teamRequestToPlayerHtml,
+  requestAcceptedHtml,
+  playerJoinedTeamNotifyHtml,
+  requestRejectedHtml,
+  requestCancelledHtml,
+} from "../utils/emailTemplates.js";
 
 // Player sends a request to join a team
 export const sendTeamRequest = asyncHandler(async (req, res) => {
@@ -57,9 +66,24 @@ export const sendTeamRequest = asyncHandler(async (req, res) => {
 
   const populatedRequest = await request.populate([
     { path: "sender", select: "fullName avatarUrl" },
-    { path: "receiver", select: "fullName" },
+    { path: "receiver", select: "fullName email" },
     { path: "team", select: "name" },
   ]);
+
+  // Send email to team manager about the join request
+  try {
+    const manager = await User.findById(team.manager).select("fullName email");
+    if (manager?.email) {
+      await sendEmail({
+        email: manager.email,
+        subject: `New Join Request for ${team.name} – SportsHub`,
+        message: `${player.fullName} has requested to join your team ${team.name}.`,
+        html: playerRequestToTeamHtml(manager.fullName, player.fullName, team.name),
+      });
+    }
+  } catch (err) {
+    console.log("Failed to send request email to manager:", err.message);
+  }
 
   res
     .status(201)
@@ -140,9 +164,24 @@ export const sendPlayerRequest = asyncHandler(async (req, res) => {
 
   const populatedRequest = await request.populate([
     { path: "sender", select: "fullName" },
-    { path: "receiver", select: "fullName avatarUrl" },
+    { path: "receiver", select: "fullName avatarUrl email" },
     { path: "team", select: "name" },
   ]);
+
+  // Send email to player about the team invitation
+  try {
+    if (player?.email) {
+      const manager = await User.findById(managerId).select("fullName");
+      await sendEmail({
+        email: player.email,
+        subject: `Team Invitation from ${team.name} – SportsHub`,
+        message: `You have been invited to join ${team.name} by ${manager?.fullName || "the team manager"}.`,
+        html: teamRequestToPlayerHtml(player.fullName, team.name, manager?.fullName || "Team Manager"),
+      });
+    }
+  } catch (err) {
+    console.log("Failed to send invitation email to player:", err.message);
+  }
 
   res
     .status(201)
@@ -264,10 +303,52 @@ export const acceptRequest = asyncHandler(async (req, res) => {
   await request.save();
 
   const populatedRequest = await request.populate([
-    { path: "sender", select: "fullName" },
-    { path: "receiver", select: "fullName" },
+    { path: "sender", select: "fullName email" },
+    { path: "receiver", select: "fullName email" },
     { path: "team", select: "name" },
   ]);
+
+  // Send emails to both parties
+  try {
+    const senderUser = await User.findById(request.sender).select("fullName email");
+    const receiverUser = await User.findById(request.receiver).select("fullName email");
+    const teamName = populatedRequest.team?.name || "the team";
+
+    // Notify the sender that their request was accepted
+    if (senderUser?.email) {
+      await sendEmail({
+        email: senderUser.email,
+        subject: `Request Accepted – You're now part of ${teamName}! – SportsHub`,
+        message: `Your request for ${teamName} has been accepted. You are now a team member!`,
+        html: requestAcceptedHtml(senderUser.fullName, teamName),
+      });
+    }
+
+    // Notify the receiver (acceptor) that a player joined
+    if (request.requestType === "PLAYER_TO_TEAM" && receiverUser?.email) {
+      await sendEmail({
+        email: receiverUser.email,
+        subject: `${senderUser?.fullName || "A player"} joined ${teamName} – SportsHub`,
+        message: `${senderUser?.fullName || "A player"} has joined your team ${teamName}.`,
+        html: playerJoinedTeamNotifyHtml(receiverUser.fullName, senderUser?.fullName || "A player", teamName),
+      });
+    }
+
+    // If TEAM_TO_PLAYER, notify team manager that the player accepted
+    if (request.requestType === "TEAM_TO_PLAYER" && senderUser?.email) {
+      const manager = await User.findById(request.sender).select("fullName email");
+      if (manager?.email) {
+        await sendEmail({
+          email: manager.email,
+          subject: `${receiverUser?.fullName || "Player"} accepted your invitation – SportsHub`,
+          message: `${receiverUser?.fullName || "Player"} has accepted the invitation to join ${teamName}.`,
+          html: playerJoinedTeamNotifyHtml(manager.fullName, receiverUser?.fullName || "Player", teamName),
+        });
+      }
+    }
+  } catch (err) {
+    console.log("Failed to send acceptance emails:", err.message);
+  }
 
   res
     .status(200)
@@ -298,10 +379,26 @@ export const rejectRequest = asyncHandler(async (req, res) => {
   await request.save();
 
   const populatedRequest = await request.populate([
-    { path: "sender", select: "fullName" },
-    { path: "receiver", select: "fullName" },
+    { path: "sender", select: "fullName email" },
+    { path: "receiver", select: "fullName email" },
     { path: "team", select: "name" },
   ]);
+
+  // Notify the sender that their request was rejected
+  try {
+    const senderUser = await User.findById(request.sender).select("fullName email");
+    const teamName = populatedRequest.team?.name || "the team";
+    if (senderUser?.email) {
+      await sendEmail({
+        email: senderUser.email,
+        subject: `Request Declined – ${teamName} – SportsHub`,
+        message: `Your request for ${teamName} has been declined.`,
+        html: requestRejectedHtml(senderUser.fullName, teamName),
+      });
+    }
+  } catch (err) {
+    console.log("Failed to send rejection email:", err.message);
+  }
 
   res
     .status(200)
@@ -326,6 +423,31 @@ export const cancelRequest = asyncHandler(async (req, res) => {
 
   if (request.status !== "PENDING") {
     throw new ApiError(400, `Cannot cancel ${request.status.toLowerCase()} request`);
+  }
+
+  // Notify the receiver that the request was cancelled
+  try {
+    const populatedReq = await request.populate([
+      { path: "sender", select: "fullName" },
+      { path: "receiver", select: "fullName email" },
+      { path: "team", select: "name" },
+    ]);
+    const receiverUser = populatedReq.receiver;
+    if (receiverUser?.email) {
+      await sendEmail({
+        email: receiverUser.email,
+        subject: `Request Cancelled – SportsHub`,
+        message: `A request from ${populatedReq.sender?.fullName || "a user"} has been cancelled.`,
+        html: requestCancelledHtml(
+          receiverUser.fullName,
+          populatedReq.sender?.fullName || "A user",
+          populatedReq.team?.name || "a team",
+          request.requestType
+        ),
+      });
+    }
+  } catch (err) {
+    console.log("Failed to send cancellation email:", err.message);
   }
 
   await Request.findByIdAndDelete(requestId);
