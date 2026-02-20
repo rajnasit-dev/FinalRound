@@ -13,21 +13,21 @@ const emailWrapper = (bodyContent) => `
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SportsHub</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
-    .wrapper { max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
-    .logo-header { background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%); padding: 24px; text-align: center; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #1d2132; margin: 0; padding: 0; }
+    .wrapper { max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.18); overflow: hidden; }
+    .logo-header { background-color: #1d2132; padding: 24px; text-align: center; }
     .logo-header img { height: 48px; width: auto; margin-bottom: 8px; }
     .logo-header h2 { color: #ffffff; margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 1px; }
     .body-content { padding: 32px 28px; }
     .body-content p { color: #444; line-height: 1.7; margin-bottom: 14px; font-size: 15px; }
-    .highlight-box { background-color: #eef4ff; border-left: 4px solid #2563eb; padding: 16px 20px; border-radius: 6px; margin: 20px 0; }
-    .highlight-box p { margin: 4px 0; color: #1e3a5f; font-weight: 500; }
-    .cta-button { display: inline-block; background-color: #2563eb; color: #ffffff !important; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 16px 0; }
+    .highlight-box { background-color: #f3f0ff; border-left: 4px solid #7758e2; padding: 16px 20px; border-radius: 6px; margin: 20px 0; }
+    .highlight-box p { margin: 4px 0; color: #1d2132; font-weight: 500; }
+    .cta-button { display: inline-block; background-color: #7758e2; color: #ffffff !important; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 16px 0; }
     .info-label { color: #888; font-size: 13px; margin-bottom: 2px; }
-    .info-value { color: #1e3a5f; font-size: 16px; font-weight: 600; margin-bottom: 12px; }
-    .email-footer { background-color: #f8fafc; padding: 20px 28px; text-align: center; border-top: 1px solid #e5e7eb; }
+    .info-value { color: #1d2132; font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+    .email-footer { background-color: #1d2132; padding: 20px 28px; text-align: center; border-top: 1px solid #2a2f45; }
     .email-footer p { color: #9ca3af; font-size: 12px; margin: 4px 0; }
-    .email-footer a { color: #2563eb; text-decoration: none; }
+    .email-footer a { color: #7758e2; text-decoration: none; }
   </style>
 </head>
 <body>
@@ -173,7 +173,7 @@ export const verificationEmailWithLogoHtml = (name, otp) =>
     <p>Please use the following One-Time Password (OTP) to verify your email address:</p>
     <div class="highlight-box" style="text-align: center;">
       <p class="info-label">Your Verification Code</p>
-      <p style="font-size: 36px; font-weight: 700; color: #2563eb; letter-spacing: 8px; margin: 12px 0 4px 0;">${otp}</p>
+      <p style="font-size: 36px; font-weight: 700; color: #7758e2; letter-spacing: 8px; margin: 12px 0 4px 0;">${otp}</p>
       <p class="info-label">Valid for 5 minutes</p>
     </div>
     <p>Enter this code on the verification page to complete your registration.</p>
@@ -209,4 +209,20 @@ export const requestCancelledHtml = (recipientName, senderName, teamName, reques
       <p class="info-value" style="color: #f59e0b;">Request Cancelled</p>
     </div>
     <p style="color: #888; font-size: 13px;">No action is needed from your side.</p>
+  `);
+
+// ── Organizer authorized by admin → Notify Organizer ──
+export const organizerAuthorizedHtml = (organizerName) =>
+  emailWrapper(`
+    <p>Hello, <strong>${organizerName}</strong></p>
+    <p>🎉 Great news! Your organizer account on SportsHub has been <span style="color: #16a34a; font-weight: 700;">authorized</span> by our admin team.</p>
+    <div class="highlight-box">
+      <p class="info-label">Account Status</p>
+      <p class="info-value" style="color: #16a34a;">✅ Authorized</p>
+    </div>
+    <p>You can now create and manage tournaments on SportsHub. Head over to your dashboard to get started!</p>
+    <div style="text-align: center; margin: 24px 0;">
+      <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/dashboard" class="cta-button" style="color: #ffffff !important;">Go to Dashboard</a>
+    </div>
+    <p style="color: #888; font-size: 13px;">Thank you for being part of SportsHub.</p>
   `);

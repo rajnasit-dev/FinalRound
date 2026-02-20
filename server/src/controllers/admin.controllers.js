@@ -10,6 +10,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { deleteFromCloudinary, uploadOnCloudinary, getCloudinaryPublicId } from "../utils/cloudinary.js";
+import { sendEmail } from "../middlewares/sendEmail.js";
+import { organizerAuthorizedHtml } from "../utils/emailTemplates.js";
 
 const TOURNAMENT_LISTING_FEE = 100; // 100 rupees per tournament
 
@@ -72,6 +74,18 @@ export const authorizeOrganizer = asyncHandler(async (req, res) => {
   organizer.authorizedAt = new Date();
 
   await organizer.save({ validateBeforeSave: false });
+
+  // Send authorization confirmation email to the organizer
+  try {
+    await sendEmail({
+      email: organizer.email,
+      subject: "Your SportsHub Organizer Account Has Been Authorized!",
+      message: `Hello ${organizer.fullName}, your organizer account has been authorized. You can now create and manage tournaments on SportsHub.`,
+      html: organizerAuthorizedHtml(organizer.fullName),
+    });
+  } catch (err) {
+    console.log("Failed to send organizer authorization email:", err);
+  }
 
   res
     .status(200)
