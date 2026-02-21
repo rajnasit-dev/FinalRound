@@ -221,8 +221,5 @@ export const organizerAuthorizedHtml = (organizerName) =>
       <p class="info-value" style="color: #16a34a;">✅ Authorized</p>
     </div>
     <p>You can now create and manage tournaments on SportsHub. Head over to your dashboard to get started!</p>
-    <div style="text-align: center; margin: 24px 0;">
-      <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/dashboard" class="cta-button" style="color: #ffffff !important;">Go to Dashboard</a>
-    </div>
     <p style="color: #888; font-size: 13px;">Thank you for being part of SportsHub.</p>
   `);
