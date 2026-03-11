@@ -45,6 +45,10 @@ const userSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
     role: {
       type: String,
       enum: ['Admin', 'Player', 'TeamManager', 'TournamentOrganizer'],

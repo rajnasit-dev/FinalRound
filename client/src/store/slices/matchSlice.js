@@ -136,18 +136,6 @@ export const updateMatchStatus = createAsyncThunk(
   }
 );
 
-export const deleteMatch = createAsyncThunk(
-  "match/delete",
-  async (matchId, { rejectWithValue }) => {
-    try {
-      await axios.delete(`${API_BASE_URL}/matches/${matchId}`, { withCredentials: true });
-      return matchId;
-    } catch (error) {
-      return rejectWithValue(error?.response?.data?.message || error.message || "Request failed");
-    }
-  }
-);
-
 // Generate fixtures for a tournament
 export const generateTournamentFixtures = createAsyncThunk(
   "match/generateFixtures",
@@ -421,31 +409,6 @@ const matchSlice = createSlice({
       .addCase(updateMatchStatus.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      })
-      // Delete match
-      .addCase(deleteMatch.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-        state.deleteSuccess = false;
-      })
-      .addCase(deleteMatch.fulfilled, (state, action) => {
-        state.loading = false;
-        const id = action.payload;
-        state.matches = state.matches.filter((m) => m._id !== id);
-        state.tournamentMatches = state.tournamentMatches.filter((m) => m._id !== id);
-        state.upcomingMatches = state.upcomingMatches.filter((m) => m._id !== id);
-        state.liveMatches = state.liveMatches.filter((m) => m._id !== id);
-        state.completedMatches = state.completedMatches.filter((m) => m._id !== id);
-        state.teamMatches = state.teamMatches.filter((m) => m._id !== id);
-        if (state.selectedMatch?._id === id) {
-          state.selectedMatch = null;
-        }
-        state.deleteSuccess = true;
-      })
-      .addCase(deleteMatch.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-        state.deleteSuccess = false;
       });
   },
 });

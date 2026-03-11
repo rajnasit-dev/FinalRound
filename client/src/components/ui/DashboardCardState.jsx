@@ -1,4 +1,6 @@
-const DashboardCardState = ({ Icon, label, value, gradientFrom, gradientVia, borderColor, iconGradientFrom, iconGradientTo, onClick, className = "" }) => {
+import { memo } from "react";
+
+const DashboardCardState = memo(({ Icon, label, value, gradientFrom, gradientVia, borderColor, iconGradientFrom, iconGradientTo, onClick, className = "" }) => {
   const Component = onClick ? 'button' : 'div';
   
   return (
@@ -21,6 +23,6 @@ const DashboardCardState = ({ Icon, label, value, gradientFrom, gradientVia, bor
       <div className={`absolute -bottom-6 -right-6 w-24 h-24 bg-gradient-to-br ${iconGradientFrom} ${iconGradientTo} rounded-full opacity-10 group-hover:opacity-20 transition-opacity duration-300`}></div>
     </Component>
   );
-};
+});
 
 export default DashboardCardState;

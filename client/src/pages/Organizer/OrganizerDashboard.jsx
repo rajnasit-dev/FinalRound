@@ -13,23 +13,22 @@ import Spinner from "../../components/ui/Spinner";
 import Button from "../../components/ui/Button";
 import DashboardCardState from "../../components/ui/DashboardCardState";
 import GridContainer from "../../components/ui/GridContainer";
-import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
+import { fetchOrganizerTournaments } from "../../store/slices/tournamentSlice";
 import { fetchUserPayments } from "../../store/slices/paymentSlice";
 
 const OrganizerDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const { tournaments, loading: tournamentsLoading } = useSelector((state) => state.tournament);
+  const { organizerTournaments, loading: tournamentsLoading } = useSelector((state) => state.tournament);
   const { payments, loading: paymentsLoading } = useSelector((state) => state.payment);
 
   useEffect(() => {
-    dispatch(fetchAllTournaments({}));
+    dispatch(fetchOrganizerTournaments());
     dispatch(fetchUserPayments());
   }, [dispatch]);
 
-  // Filter tournaments organized by this user
-  const myTournaments = tournaments?.filter((t) => t.organizer?._id === user?._id) || [];
+  const myTournaments = organizerTournaments || [];
 
   const totalTournaments = myTournaments.length;
 

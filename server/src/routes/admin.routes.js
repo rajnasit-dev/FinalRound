@@ -11,10 +11,13 @@ import {
   getRevenue,
   getDashboardStats,
   getAllPayments,
-  deleteUser,
+  toggleBlockUser,
   updateUser,
   getOtpSetting,
   toggleOtpSetting,
+  getEmailNotificationSetting,
+  toggleEmailNotificationSetting,
+  getAnalyticsData,
 } from "../controllers/admin.controllers.js";
 
 const router = Router();
@@ -37,6 +40,9 @@ router.use(adminMiddleware);
 // Dashboard statistics
 router.get("/dashboard/stats", getDashboardStats);
 
+// Analytics data
+router.get("/analytics", getAnalyticsData);
+
 // Organizer management
 router.get("/organizers/pending", getPendingOrganizerRequests);
 router.get("/organizers", getAllOrganizers);
@@ -46,7 +52,7 @@ router.patch("/organizers/:organizerId/reject", rejectOrganizer);
 // User management
 router.get("/users", getAllUsers);
 router.patch("/users/:userId", updateUser);
-router.delete("/users/:userId", deleteUser);
+router.patch("/users/:userId/toggle-block", toggleBlockUser);
 
 // Tournament management
 router.get("/tournaments", getAllTournaments);
@@ -63,5 +69,7 @@ router.get("/payments", getAllPayments);
 // Settings
 router.get("/settings/otp", getOtpSetting);
 router.patch("/settings/otp/toggle", toggleOtpSetting);
+router.get("/settings/email-notifications", getEmailNotificationSetting);
+router.patch("/settings/email-notifications/toggle", toggleEmailNotificationSetting);
 
 export default router;

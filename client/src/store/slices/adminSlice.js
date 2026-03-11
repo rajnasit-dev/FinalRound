@@ -229,6 +229,55 @@ export const toggleOtpSetting = createAsyncThunk(
   }
 );
 
+// Get email notification setting
+export const getEmailNotificationSetting = createAsyncThunk(
+  "admin/getEmailNotificationSetting",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/admin/settings/email-notifications`,
+        { withCredentials: true }
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch email notification setting");
+    }
+  }
+);
+
+// Toggle email notification setting
+export const toggleEmailNotificationSetting = createAsyncThunk(
+  "admin/toggleEmailNotificationSetting",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(
+        `${API_BASE_URL}/admin/settings/email-notifications/toggle`,
+        {},
+        { withCredentials: true }
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to toggle email notification setting");
+    }
+  }
+);
+
+// Get analytics data for charts
+export const getAnalyticsData = createAsyncThunk(
+  "admin/getAnalyticsData",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/admin/analytics`,
+        { withCredentials: true }
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch analytics data");
+    }
+  }
+);
+
 const initialState = {
   dashboardStats: {
     users: { total: 0, players: 0, managers: 0, organizers: 0 },
@@ -256,6 +305,10 @@ const initialState = {
   },
   otpVerificationRequired: true,
   otpSettingLoading: false,
+  emailNotificationsEnabled: true,
+  emailNotificationSettingLoading: false,
+  analytics: null,
+  analyticsLoading: false,
   loading: false,
   error: null,
   pagination: null,
@@ -421,6 +474,38 @@ const adminSlice = createSlice({
       })
       .addCase(toggleOtpSetting.rejected, (state) => {
         state.otpSettingLoading = false;
+      })
+      // Email Notification Setting
+      .addCase(getEmailNotificationSetting.pending, (state) => {
+        state.emailNotificationSettingLoading = true;
+      })
+      .addCase(getEmailNotificationSetting.fulfilled, (state, action) => {
+        state.emailNotificationSettingLoading = false;
+        state.emailNotificationsEnabled = action.payload.emailNotificationsEnabled;
+      })
+      .addCase(getEmailNotificationSetting.rejected, (state) => {
+        state.emailNotificationSettingLoading = false;
+      })
+      .addCase(toggleEmailNotificationSetting.pending, (state) => {
+        state.emailNotificationSettingLoading = true;
+      })
+      .addCase(toggleEmailNotificationSetting.fulfilled, (state, action) => {
+        state.emailNotificationSettingLoading = false;
+        state.emailNotificationsEnabled = action.payload.emailNotificationsEnabled;
+      })
+      .addCase(toggleEmailNotificationSetting.rejected, (state) => {
+        state.emailNotificationSettingLoading = false;
+      })
+      // Analytics
+      .addCase(getAnalyticsData.pending, (state) => {
+        state.analyticsLoading = true;
+      })
+      .addCase(getAnalyticsData.fulfilled, (state, action) => {
+        state.analyticsLoading = false;
+        state.analytics = action.payload;
+      })
+      .addCase(getAnalyticsData.rejected, (state) => {
+        state.analyticsLoading = false;
       });
   },
 });

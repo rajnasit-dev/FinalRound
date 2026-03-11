@@ -1,75 +1,88 @@
 import { createBrowserRouter } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import RootLayout from "./layouts/RootLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
 import AdminLayout from "./layouts/AdminLayout";
+import Spinner from "./components/ui/Spinner";
 
-// pages
-import Home from "./pages/public/Home";
-import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
-import VerifyEmail from "./pages/auth/VerifyEmail";
-import ChangePassword from "./pages/auth/ChangePassword";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-import Tournaments from "./pages/public/Tournaments";
-import TournamentDetail from "./pages/public/TournamentDetail";
-import TournamentRegister from "./pages/public/TournamentRegister";
-import Teams from "./pages/public/Teams";
-import TeamDetail from "./pages/public/TeamDetail";
-import Players from "./pages/public/Players";
-import PlayerDetail from "./pages/public/PlayerDetail";
-import Matches from "./pages/public/Matches";
-import NotFound from "./pages/public/NotFound";
+// Lazy wrapper for cleaner route definitions
+const lazyPage = (importFn) => {
+  const Component = lazy(importFn);
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-96"><Spinner size="lg" /></div>}>
+      <Component />
+    </Suspense>
+  );
+};
 
-// Manager Dashboard Pages
-import ManagerDashboard from "./pages/Manager/ManagerDashboard";
-import ManagerTeams from "./pages/Manager/ManagerTeams";
-import CreateTeam from "./pages/Manager/CreateTeam";
-import EditTeam from "./pages/Manager/EditTeam";
-import ManagePlayers from "./pages/Manager/ManagePlayers";
-import AddPlayer from "./pages/Manager/AddPlayer";
-import ManagerTournaments from "./pages/Manager/ManagerTournaments";
-import ManagerProfile from "./pages/Manager/ManagerProfile";
-import EditManagerProfile from "./pages/Manager/EditManagerProfile";
-import ManagerRequests from "./pages/Manager/ManagerRequests";
-import ManagerPayments from "./pages/Manager/ManagerPayments";
+// Public pages - lazy loaded
+const Home = lazy(() => import("./pages/public/Home"));
+const Login = lazy(() => import("./pages/auth/Login"));
+const Register = lazy(() => import("./pages/auth/Register"));
+const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
+const ChangePassword = lazy(() => import("./pages/auth/ChangePassword"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const Tournaments = lazy(() => import("./pages/public/Tournaments"));
+const TournamentDetail = lazy(() => import("./pages/public/TournamentDetail"));
+const TournamentRegister = lazy(() => import("./pages/public/TournamentRegister"));
+const Teams = lazy(() => import("./pages/public/Teams"));
+const TeamDetail = lazy(() => import("./pages/public/TeamDetail"));
+const Players = lazy(() => import("./pages/public/Players"));
+const PlayerDetail = lazy(() => import("./pages/public/PlayerDetail"));
+const Matches = lazy(() => import("./pages/public/Matches"));
+const NotFound = lazy(() => import("./pages/public/NotFound"));
 
-// Player Dashboard Pages
-import PlayerProfile from "./pages/Player/PlayerProfile";
-import EditPlayerProfile from "./pages/Player/EditPlayerProfile";
-import PlayerTournaments from "./pages/Player/PlayerTournaments";
-import TournamentDetails from "./pages/Player/TournamentDetails";
-import TournamentPayment from "./pages/Player/TournamentPayment";
-import PaymentReceipt from "./pages/Player/PaymentReceipt";
-import PlayerTeams from "./pages/Player/PlayerTeams";
-import PlayerRequests from "./pages/Player/PlayerRequests";
-import PlayerPayments from "./pages/Player/PlayerPayments";
+// Manager Dashboard Pages - lazy loaded
+const ManagerDashboard = lazy(() => import("./pages/Manager/ManagerDashboard"));
+const ManagerTeams = lazy(() => import("./pages/Manager/ManagerTeams"));
+const CreateTeam = lazy(() => import("./pages/Manager/CreateTeam"));
+const EditTeam = lazy(() => import("./pages/Manager/EditTeam"));
+const ManagePlayers = lazy(() => import("./pages/Manager/ManagePlayers"));
+const AddPlayer = lazy(() => import("./pages/Manager/AddPlayer"));
+const ManagerTournaments = lazy(() => import("./pages/Manager/ManagerTournaments"));
+const ManagerProfile = lazy(() => import("./pages/Manager/ManagerProfile"));
+const EditManagerProfile = lazy(() => import("./pages/Manager/EditManagerProfile"));
+const ManagerRequests = lazy(() => import("./pages/Manager/ManagerRequests"));
+const ManagerPayments = lazy(() => import("./pages/Manager/ManagerPayments"));
 
-// Organizer Dashboard Pages
-import OrganizerDashboard from "./pages/Organizer/OrganizerDashboard";
-import OrganizerTournaments from "./pages/Organizer/OrganizerTournaments";
-import OrganizerPayments from "./pages/Organizer/OrganizerPayments";
-import OrganizerTeams from "./pages/Organizer/OrganizerTeams";
-import OrganizerAuthorization from "./pages/Organizer/OrganizerAuthorization";
-import CreateTournament from "./pages/Organizer/CreateTournament";
-import EditTournament from "./pages/Organizer/EditTournament";
-import CreateMatch from "./pages/Organizer/CreateMatch";
-import EditMatch from "./pages/Organizer/EditMatch";
-import TournamentFixtures from "./pages/Organizer/TournamentFixtures";
-import OrganizerTournamentDashboard from "./pages/Organizer/OrganizerTournamentDashboard";
-import OrganizerProfile from "./pages/Organizer/OrganizerProfile";
-import EditOrganizerProfile from "./pages/Organizer/EditOrganizerProfile";
+// Player Dashboard Pages - lazy loaded
+const PlayerProfile = lazy(() => import("./pages/Player/PlayerProfile"));
+const EditPlayerProfile = lazy(() => import("./pages/Player/EditPlayerProfile"));
+const PlayerTournaments = lazy(() => import("./pages/Player/PlayerTournaments"));
+const TournamentDetails = lazy(() => import("./pages/Player/TournamentDetails"));
+const TournamentPayment = lazy(() => import("./pages/Player/TournamentPayment"));
+const PaymentReceipt = lazy(() => import("./pages/Player/PaymentReceipt"));
+const PlayerTeams = lazy(() => import("./pages/Player/PlayerTeams"));
+const PlayerRequests = lazy(() => import("./pages/Player/PlayerRequests"));
+const PlayerPayments = lazy(() => import("./pages/Player/PlayerPayments"));
 
-// Admin Pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import OrganizerRequests from "./pages/admin/OrganizerRequests";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminTournaments from "./pages/admin/AdminTournaments";
-import AdminTeams from "./pages/admin/AdminTeams";
-import Revenue from "./pages/admin/Revenue";
-import AdminPayments from "./pages/admin/AdminPayments";
-import AdminFeedback from "./pages/admin/AdminFeedback";
-import AdminSports from "./pages/admin/AdminSports";
+// Organizer Dashboard Pages - lazy loaded
+const OrganizerDashboard = lazy(() => import("./pages/Organizer/OrganizerDashboard"));
+const OrganizerTournaments = lazy(() => import("./pages/Organizer/OrganizerTournaments"));
+const OrganizerPayments = lazy(() => import("./pages/Organizer/OrganizerPayments"));
+const OrganizerTeams = lazy(() => import("./pages/Organizer/OrganizerTeams"));
+const OrganizerAuthorization = lazy(() => import("./pages/Organizer/OrganizerAuthorization"));
+const CreateTournament = lazy(() => import("./pages/Organizer/CreateTournament"));
+const EditTournament = lazy(() => import("./pages/Organizer/EditTournament"));
+const CreateMatch = lazy(() => import("./pages/Organizer/CreateMatch"));
+const EditMatch = lazy(() => import("./pages/Organizer/EditMatch"));
+const TournamentFixtures = lazy(() => import("./pages/Organizer/TournamentFixtures"));
+const OrganizerTournamentDashboard = lazy(() => import("./pages/Organizer/OrganizerTournamentDashboard"));
+const OrganizerProfile = lazy(() => import("./pages/Organizer/OrganizerProfile"));
+const EditOrganizerProfile = lazy(() => import("./pages/Organizer/EditOrganizerProfile"));
+
+// Admin Pages - lazy loaded
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const OrganizerRequests = lazy(() => import("./pages/admin/OrganizerRequests"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminTournaments = lazy(() => import("./pages/admin/AdminTournaments"));
+const AdminTeams = lazy(() => import("./pages/admin/AdminTeams"));
+const Revenue = lazy(() => import("./pages/admin/Revenue"));
+const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
+const AdminFeedback = lazy(() => import("./pages/admin/AdminFeedback"));
+const AdminSports = lazy(() => import("./pages/admin/AdminSports"));
+const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 
 export const router = createBrowserRouter([
   {
@@ -167,6 +180,7 @@ export const router = createBrowserRouter([
       { path: "payments", element: <AdminPayments /> },
       { path: "feedback", element: <AdminFeedback /> },
       { path: "sports", element: <AdminSports /> },
+      { path: "analytics", element: <AdminAnalytics /> },
       { path: "change-password", element: <ChangePassword /> },
     ],
   },

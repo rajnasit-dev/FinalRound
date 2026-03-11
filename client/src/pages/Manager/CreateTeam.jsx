@@ -11,7 +11,7 @@ import BackButton from "../../components/ui/BackButton";
 import AvatarUpload from "../../components/ui/AvatarUpload";
 import BannerUpload from "../../components/ui/BannerUpload";
 import { fetchAllSports } from "../../store/slices/sportSlice";
-import { clearError, fetchAllTeams } from "../../store/slices/teamSlice";
+import { clearError } from "../../store/slices/teamSlice";
 import axios from "axios";
 import toast from "react-hot-toast";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
@@ -232,7 +232,6 @@ const CreateTeam = () => {
       });
 
       toast.success("Team created successfully!");
-      dispatch(fetchAllTeams());
       setTimeout(() => navigate("/manager/teams"), 1500);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create team. Please try again.");

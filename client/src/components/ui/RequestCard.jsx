@@ -1,6 +1,7 @@
 import { CheckCircle2, XCircle, Clock, User, Trophy } from "lucide-react";
+import { memo } from "react";
 
-const RequestCard = ({
+const RequestCard = memo(({
   request,
   type = "received", // "received" or "sent"
   onAccept,
@@ -122,6 +123,6 @@ const RequestCard = ({
       </div>
     </div>
   );
-};
+});
 
 export default RequestCard;

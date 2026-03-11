@@ -3,19 +3,19 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { Users, Trophy, ArrowRight, Briefcase, Stethoscope } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
-import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
+import { fetchOrganizerTournaments } from "../../store/slices/tournamentSlice";
 
 const OrganizerTeams = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { tournaments, loading } = useSelector((state) => state.tournament);
+  const { organizerTournaments, loading } = useSelector((state) => state.tournament);
 
   useEffect(() => {
-    dispatch(fetchAllTournaments({}));
+    dispatch(fetchOrganizerTournaments());
   }, [dispatch]);
 
   // Get all teams from user's tournaments
-  const myTournaments = tournaments?.filter((t) => t.organizer?._id === user?._id) || [];
+  const myTournaments = organizerTournaments || [];
   const allTeams = myTournaments.reduce((teams, tournament) => {
     const tournamentTeams = (tournament.registeredTeams || []).map((team) => ({
       ...team,

@@ -433,7 +433,7 @@ sportshub/
 │   │   ├── store/
 │   │   │   ├── store.js
 │   │   │   └── slices/              # 11 Redux feature slices
-│   │   ├── utils/                   # formatINR, generatePaymentPDF
+│   │   ├── utils/                   # formatINR
 │   │   ├── router.jsx               # 60+ route definitions
 │   │   └── App.jsx
 │   ├── package.json

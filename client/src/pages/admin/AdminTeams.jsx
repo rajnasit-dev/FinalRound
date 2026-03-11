@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAllTeams } from "../../store/slices/adminSlice";
-import { fetchAllTeams } from "../../store/slices/teamSlice";
 import { fetchAllSports } from "../../store/slices/sportSlice";
-import { Users, Trash2 } from "lucide-react";
+import { Users, Power } from "lucide-react";
 import toast from "react-hot-toast";
 import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
@@ -26,7 +25,7 @@ const AdminTeams = () => {
   const [sportFilter, setSportFilter] = useState("");
   const [genderFilter, setGenderFilter] = useState("");
   const [filteredTeams, setFilteredTeams] = useState([]);
-  const [deletingId, setDeletingId] = useState(null);
+  const [togglingId, setTogglingId] = useState(null);
 
   useEffect(() => {
     dispatch(getAllTeams({ search: "", page: 1, limit: 100 }));
@@ -65,23 +64,22 @@ const AdminTeams = () => {
     setFilteredTeams(filtered);
   }, [teams, search, sportFilter, genderFilter]);
 
-  const handleDelete = async (e, team) => {
+  const handleToggleStatus = async (e, team) => {
     e.stopPropagation();
-    
-    if (!window.confirm(`Are you sure you want to delete team "${team.name}"? This action cannot be undone.`)) return;
+    const action = team.isActive ? "deactivate" : "activate";
+    if (!window.confirm(`Are you sure you want to ${action} team "${team.name}"?`)) return;
 
-    setDeletingId(team._id);
+    setTogglingId(team._id);
     try {
-      await axios.delete(`${API_BASE_URL}/teams/${team._id}`, {
+      await axios.patch(`${API_BASE_URL}/teams/${team._id}/toggle-status`, {}, {
         withCredentials: true,
       });
-      toast.success(`Team ${team.name} deleted successfully`);
+      toast.success(`Team ${team.name} ${action}d successfully`);
       dispatch(getAllTeams({ search: "", page: 1, limit: 100 }));
-      dispatch(fetchAllTeams());
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete team");
+      toast.error(err.response?.data?.message || `Failed to ${action} team`);
     } finally {
-      setDeletingId(null);
+      setTogglingId(null);
     }
   };
 
@@ -163,20 +161,33 @@ const AdminTeams = () => {
       ),
     },
     {
+      header: "Status",
+      width: "10%",
+      render: (team) => (
+        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
+          team.isActive
+            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        }`}>
+          {team.isActive ? "Active" : "Deactivated"}
+        </span>
+      ),
+    },
+    {
       header: "Actions",
       width: "20%",
       headerClassName: "text-right",
       cellClassName: "text-right",
       render: (team) => (
         <Button
-          onClick={(e) => handleDelete(e, team)}
-          disabled={deletingId === team._id}
-          loading={deletingId === team._id}
-          variant="danger"
+          onClick={(e) => handleToggleStatus(e, team)}
+          disabled={togglingId === team._id}
+          loading={togglingId === team._id}
+          variant={team.isActive ? "danger" : "primary"}
           size="sm"
         >
-          <Trash2 className="w-4 h-4" />
-          <span>Delete</span>
+          <Power className="w-4 h-4" />
+          <span>{team.isActive ? "Deactivate" : "Activate"}</span>
         </Button>
       ),
     },

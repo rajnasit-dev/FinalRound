@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "axios";
@@ -133,6 +133,8 @@ const Home = () => {
             src="https://res.cloudinary.com/dggwds1xm/image/upload/v1770136100/Video_Project_uu9ctk.jpg"
             alt="Hero Background"
             className="absolute inset-0 w-full h-full object-cover"
+            loading="eager"
+            fetchPriority="high"
           />
         )}
         {/* Video Background */}
@@ -141,6 +143,7 @@ const Home = () => {
           loop
           muted
           playsInline
+          preload="metadata"
           className="absolute inset-0 w-full h-full object-cover"
           onLoadedData={() => setVideoLoaded(true)}
           onLoadedMetadata={(e) => {

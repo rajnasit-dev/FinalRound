@@ -13,7 +13,7 @@ import BackButton from "../../components/ui/BackButton";
 import AvatarUpload from "../../components/ui/AvatarUpload";
 import BannerUpload from "../../components/ui/BannerUpload";
 import { fetchAllSports } from "../../store/slices/sportSlice";
-import { fetchTeamById, fetchAllTeams, clearError, clearSelectedTeam } from "../../store/slices/teamSlice";
+import { fetchTeamById, clearError, clearSelectedTeam } from "../../store/slices/teamSlice";
 import Spinner from "../../components/ui/Spinner";
 import axios from "axios";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
@@ -407,7 +407,6 @@ const EditTeam = () => {
 
       toast.success("Team updated successfully!");
       dispatch(fetchTeamById(teamId));
-      dispatch(fetchAllTeams());
       setTimeout(() => navigate("/manager/teams"), 1500);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to update team. Please try again.");

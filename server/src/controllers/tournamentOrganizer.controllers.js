@@ -189,8 +189,13 @@ export const getOrganizerTournaments = asyncHandler(async (req, res) => {
 
   const tournaments = await Tournament.find({ organizer: organizerId })
     .populate("sport", "name teamBased iconUrl")
-    .populate("registeredTeams", "name logoUrl")
-    .populate("approvedTeams", "name logoUrl");
+    .populate({
+      path: "registeredTeams",
+      select: "name manager players coach medicalTeam",
+      populate: { path: "manager", select: "fullName" },
+    })
+    .sort({ createdAt: -1 })
+    .limit(50);
 
   res
     .status(200)

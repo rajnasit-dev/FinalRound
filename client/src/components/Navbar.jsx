@@ -1,13 +1,13 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Moon, Sun, User, ChevronDown, Menu, X } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { useSelector } from "react-redux";
 import { getDashboardLinks } from "../config/dashboardLinks";
 import LogoutBtn from "./LogoutBtn";
 import Logo from "./Logo";
 import defaultAvatar from "../assets/defaultAvatar.png";
 
-const Navbar = ({ darkMode, toggleDarkMode }) => {
+const Navbar = memo(({ darkMode, toggleDarkMode }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -315,6 +315,6 @@ const Navbar = ({ darkMode, toggleDarkMode }) => {
       </div>
     </nav>
   );
-};
+});
 
 export default Navbar;

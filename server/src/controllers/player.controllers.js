@@ -10,8 +10,9 @@ import fs from "fs";
 // Get all players
 export const getAllPlayers = asyncHandler(async (req, res) => {
   const players = await Player.find({ isActive: true })
+    .select("fullName avatar city gender sports achievements role isActive")
     .populate("sports.sport", "name teamBased")
-    .select("-password -refreshToken -verifyEmailOtp -verifyEmailOtpExpiry -resetPasswordToken -resetPasswordTokenExpiry");
+    .limit(100);
 
   res
     .status(200)
@@ -303,8 +304,9 @@ export const getPlayersBySport = asyncHandler(async (req, res) => {
     "sports.sport": sportId,
     isActive: true 
   })
+    .select("fullName avatar city gender sports achievements role isActive")
     .populate("sports.sport", "name teamBased iconUrl")
-    .select("-password -refreshToken -verifyEmailOtp -verifyEmailOtpExpiry -resetPasswordToken -resetPasswordTokenExpiry");
+    .limit(100);
 
   res
     .status(200)
@@ -319,8 +321,9 @@ export const getPlayersByCity = asyncHandler(async (req, res) => {
     city: { $regex: new RegExp(`^${city}$`, 'i') },
     isActive: true 
   })
+    .select("fullName avatar city gender sports achievements role isActive")
     .populate("sports.sport", "name teamBased iconUrl")
-    .select("-password -refreshToken -verifyEmailOtp -verifyEmailOtpExpiry -resetPasswordToken -resetPasswordTokenExpiry");
+    .limit(100);
 
   res
     .status(200)

@@ -1,10 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { Users, MapPin, Trophy, Edit, UserPlus, UserCog, Trash2, Users2 } from "lucide-react";
+import { memo } from "react";
+import { Users, MapPin, Trophy, Edit, UserPlus, UserCog, Power, Users2, ShieldOff } from "lucide-react";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import defaultTeamCoverImage from "../../assets/defaultTeamCoverImage.png";
 import CardStat from "./CardStat";
 
-const TeamCard = ({ team, showEditButton = false, onEdit, onManagePlayers, onAddPlayer, onDeleteTeam }) => {
+const TeamCard = memo(({ team, showEditButton = false, onEdit, onManagePlayers, onAddPlayer, onToggleStatus }) => {
   const navigate = useNavigate();
 
   const handleCardClick = () => {
@@ -34,7 +35,15 @@ const TeamCard = ({ team, showEditButton = false, onEdit, onManagePlayers, onAdd
           </div>
 
           {/* Status Badge */}
-          {team.openToJoin && (
+          {!team.isActive && (
+            <div className="absolute top-4 left-4">
+              <p className="inline-flex items-center gap-1 px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded-full shadow-lg">
+                <ShieldOff className="w-3 h-3" />
+                Deactivated
+              </p>
+            </div>
+          )}
+          {team.isActive !== false && team.openToJoin && (
             <div className="absolute top-4 right-4">
               <p className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-xs font-semibold rounded-full shadow-lg">
                 Open to Join
@@ -117,13 +126,13 @@ const TeamCard = ({ team, showEditButton = false, onEdit, onManagePlayers, onAdd
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDeleteTeam && onDeleteTeam(team._id);
+                  onToggleStatus && onToggleStatus(team._id, team.isActive);
                 }}
-                className="flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white rounded-lg transition-colors font-semibold text-sm"
-                title="Delete Team"
+                className={`flex items-center justify-center gap-2 px-3 py-2 ${team.isActive ? "bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800" : "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-800"} text-white rounded-lg transition-colors font-semibold text-sm`}
+                title={team.isActive ? "Deactivate Team" : "Activate Team"}
               >
-                <Trash2 className="w-4 h-4" />
-                Delete
+                <Power className="w-4 h-4" />
+                {team.isActive ? "Deactivate" : "Activate"}
               </button>
             </div>
           ) : (
@@ -135,6 +144,6 @@ const TeamCard = ({ team, showEditButton = false, onEdit, onManagePlayers, onAdd
       </div>
     </div>
   );
-};
+});
 
 export default TeamCard;

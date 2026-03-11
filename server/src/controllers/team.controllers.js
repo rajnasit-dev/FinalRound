@@ -144,10 +144,11 @@ export const getAllTeams = asyncHandler(async (req, res) => {
   if (openToJoin !== undefined) filter.openToJoin = openToJoin === 'true';
 
   const teams = await Team.find(filter)
+    .select("name sport manager players city logoUrl bannerUrl openToJoin isActive createdAt")
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
-    .populate("players", "fullName email avatar")
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .limit(100);
 
   res
     .status(200)
@@ -158,7 +159,7 @@ export const getAllTeams = asyncHandler(async (req, res) => {
 export const getTeamById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const team = await Team.findOne({ _id: id, isActive: true })
+  const team = await Team.findById(id)
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar phone city")
     .populate("players", "fullName email avatar phone city sports achievements gender dateOfBirth");
@@ -429,7 +430,7 @@ export const deleteTeamBanner = asyncHandler(async (req, res) => {
 });
 
 // Delete team
-export const deleteTeam = asyncHandler(async (req, res) => {
+export const toggleTeamStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const managerId = req.user._id;
 
@@ -442,78 +443,21 @@ export const deleteTeam = asyncHandler(async (req, res) => {
   // Verify user is the team manager or an admin
   const isAdmin = req.user.role === "Admin";
   if (!isAdmin && team.manager.toString() !== managerId.toString()) {
-    throw new ApiError(403, "Only the team manager or an admin can delete this team.");
+    throw new ApiError(403, "Only the team manager or an admin can change team status.");
   }
 
-  // Delete logo from Cloudinary if exists
-  if (team.logoUrl) {
-    try {
-      const urlParts = team.logoUrl.split('/');
-      const folder = urlParts.slice(-2, -1)[0]; // Get folder name
-      const publicIdWithExtension = urlParts.at(-1);
-      const fileName = publicIdWithExtension.split('.')[0];
-      const publicId = `${folder}/${fileName}`;
-      await deleteFromCloudinary(publicId);
-    } catch (error) {
-      console.log("Failed to delete logo from Cloudinary:", error.message);
-    }
-  }
-
-  // Delete banner from Cloudinary if exists
-  if (team.bannerUrl) {
-    try {
-      const urlParts = team.bannerUrl.split('/');
-      const folder = urlParts.slice(-2, -1)[0];
-      const publicIdWithExtension = urlParts.at(-1);
-      const fileName = publicIdWithExtension.split('.')[0];
-      const publicId = `${folder}/${fileName}`;
-      await deleteFromCloudinary(publicId);
-    } catch (error) {
-      console.log("Failed to delete banner from Cloudinary:", error.message);
-    }
-  }
-
-  // Delete all related requests (where this team is involved)
-  await Request.deleteMany({
-    $or: [
-      { team: id },
-      { bookingEntity: id }
-    ]
-  });
-
-  // Cancel all matches involving this team
-  await Match.updateMany(
-    {
-      $or: [
-        { teamA: id },
-        { teamB: id }
-      ]
-    },
-    {
-      $set: { isCancelled: true }
-    }
-  );
-
-  // Cancel all bookings related to this team
-  await Booking.updateMany(
-    { team: id },
-    {
-      $set: { status: "Cancelled" }
-    }
-  );
-
-  // Soft delete team
-  team.isActive = false;
+  team.isActive = !team.isActive;
   await team.save();
-
-  // Remove team from manager's teams array
-  await TeamManager.findByIdAndUpdate(team.manager, {
-    $pull: { teams: id }
-  });
 
   res
     .status(200)
-    .json(new ApiResponse(200, null, "Team and all related data deleted successfully."));
+    .json(
+      new ApiResponse(
+        200,
+        { _id: team._id, isActive: team.isActive },
+        `Team ${team.isActive ? "activated" : "deactivated"} successfully.`
+      )
+    );
 });
 
 // Add player to team
@@ -738,8 +682,7 @@ export const getPlayerTeams = asyncHandler(async (req, res) => {
   }
 
   const teams = await Team.find({ 
-    players: playerId,
-    isActive: true 
+    players: playerId
   })
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
@@ -762,8 +705,7 @@ export const getManagerTeams = asyncHandler(async (req, res) => {
   }
 
   const teams = await Team.find({ 
-    manager: managerId,
-    isActive: true 
+    manager: managerId
   })
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")

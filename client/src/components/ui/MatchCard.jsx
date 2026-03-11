@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
+import { memo } from "react";
 import { Calendar, MapPin, Trophy, Clock, Edit } from "lucide-react";
 import useStatusColor from "../../hooks/useStatusColor";
 import useDateFormat from "../../hooks/useDateFormat";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 
-const MatchCard = ({ match, showEditButton = false, onEdit }) => {
+const MatchCard = memo(({ match, showEditButton = false, onEdit }) => {
   const { getStatusColor } = useStatusColor();
   const { formatDate, formatTime } = useDateFormat();
 
@@ -154,6 +155,6 @@ const MatchCard = ({ match, showEditButton = false, onEdit }) => {
       </div>
     </Link>
   );
-};
+});
 
 export default MatchCard;

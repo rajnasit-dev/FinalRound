@@ -7,6 +7,7 @@ import Button from "../../components/ui/Button";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import { loginUser, clearError } from "../../store/slices/authSlice";
 import { useEffect } from "react";
+import toast from "react-hot-toast";
 import loginImage from "../../assets/login.png";
 
 const Login = () => {
@@ -55,9 +56,14 @@ const Login = () => {
   const onSubmit = async (data) => {
     // Always call backend to set cookies
     const result = await dispatch(loginUser(data));
+    if (loginUser.rejected.match(result)) {
+      const msg = result.payload;
+      if (typeof msg === "string" && (msg.toLowerCase().includes("blocked") || msg.toLowerCase().includes("deactivated"))) {
+        toast.error(msg);
+      }
+      return;
+    }
     if (loginUser.fulfilled.match(result)) {
-      // Let backend determine user's role from database
-      // and navigate based on the returned user role
       const user = result.payload;
       const roleRoutes = {
         Admin: "/admin/dashboard",

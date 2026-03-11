@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAllUsers } from "../../store/slices/adminSlice";
-import { fetchAllPlayers } from "../../store/slices/playerSlice";
 import { fetchAllSports } from "../../store/slices/sportSlice";
-import { Users, Trash2, MapPin, Mail, Phone } from "lucide-react";
+import { Users, ShieldBan, ShieldCheck, MapPin, Mail, Phone } from "lucide-react";
 import toast from "react-hot-toast";
 import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
@@ -27,7 +26,7 @@ const AdminUsers = () => {
   const [genderFilter, setGenderFilter] = useState("");
   const [sportFilter, setSportFilter] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const [deletingId, setDeletingId] = useState(null);
+  const [blockingId, setBlockingId] = useState(null);
 
   useEffect(() => {
     dispatch(getAllUsers({ role: "", search: "", page: 1, limit: 100 }));
@@ -81,24 +80,23 @@ const AdminUsers = () => {
     return colors[role] || "bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300";
   };
 
-  const handleDelete = async (e, user) => {
+  const handleToggleBlock = async (e, user) => {
     e.stopPropagation();
+    const action = user.isBlocked ? "unblock" : "block";
     
-    if (!window.confirm(`Are you sure you want to delete ${user.fullName}? This action cannot be undone.`)) return;
+    if (!window.confirm(`Are you sure you want to ${action} ${user.fullName}?`)) return;
 
-    setDeletingId(user._id);
+    setBlockingId(user._id);
     try {
-      await axios.delete(`${API_BASE_URL}/admin/users/${user._id}`, {
+      await axios.patch(`${API_BASE_URL}/admin/users/${user._id}/toggle-block`, {}, {
         withCredentials: true,
       });
-      toast.success(`User ${user.fullName} deleted successfully`);
-      // Refresh users list
+      toast.success(`User ${user.fullName} ${action}ed successfully`);
       dispatch(getAllUsers({ role: "", search: "", page: 1, limit: 100 }));
-      dispatch(fetchAllPlayers());
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete user");
+      toast.error(err.response?.data?.message || `Failed to ${action} user`);
     } finally {
-      setDeletingId(null);
+      setBlockingId(null);
     }
   };
 
@@ -160,20 +158,36 @@ const AdminUsers = () => {
       ),
     },
     {
+      header: "Status",
+      width: "10%",
+      render: (user) => (
+        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+          user.isBlocked
+            ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+            : "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+        }`}>
+          {user.isBlocked ? "Blocked" : "Active"}
+        </span>
+      ),
+    },
+    {
       header: "Actions",
       width: "20%",
       headerClassName: "text-right",
       cellClassName: "text-right",
       render: (user) => (
         <Button
-          onClick={(e) => handleDelete(e, user)}
-          disabled={deletingId === user._id}
-          loading={deletingId === user._id}
-          variant="danger"
+          onClick={(e) => handleToggleBlock(e, user)}
+          disabled={blockingId === user._id}
+          loading={blockingId === user._id}
+          variant={user.isBlocked ? "primary" : "danger"}
           size="sm"
         >
-          <Trash2 className="w-4 h-4" />
-          <span className="ml-2">Delete</span>
+          {user.isBlocked ? (
+            <><ShieldCheck className="w-4 h-4" /><span className="ml-2">Unblock</span></>
+          ) : (
+            <><ShieldBan className="w-4 h-4" /><span className="ml-2">Block</span></>
+          )}
         </Button>
       ),
     },

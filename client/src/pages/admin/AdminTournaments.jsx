@@ -2,18 +2,12 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAllTournaments } from "../../store/slices/adminSlice";
-import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
-import { Trophy, Trash2, Mail, Phone } from "lucide-react";
-import toast from "react-hot-toast";
+import { Trophy, Mail, Phone } from "lucide-react";
 import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
 import SearchBar from "../../components/ui/SearchBar";
 import Select from "../../components/ui/Select";
 import DataTable from "../../components/ui/DataTable";
-import Button from "../../components/ui/Button";
-import axios from "axios";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
 const AdminTournaments = () => {
   const dispatch = useDispatch();
@@ -22,8 +16,6 @@ const AdminTournaments = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [filteredTournaments, setFilteredTournaments] = useState([]);
-  const [deletingId, setDeletingId] = useState(null);
-
   useEffect(() => {
     dispatch(getAllTournaments({ status: "", search: "", page: 1, limit: 100 }));
   }, [dispatch]);
@@ -100,26 +92,6 @@ const AdminTournaments = () => {
     navigate(`/tournaments/${tournament._id}`);
   };
 
-  const handleDelete = async (e, tournament) => {
-    e.stopPropagation();
-
-    if (!window.confirm(`Are you sure you want to delete ${tournament.name}? This action cannot be undone.`)) return;
-
-    setDeletingId(tournament._id);
-    try {
-      await axios.delete(`${API_BASE_URL}/tournaments/${tournament._id}`, {
-        withCredentials: true,
-      });
-      toast.success(`Tournament ${tournament.name} deleted successfully`);
-      dispatch(getAllTournaments({ status: "", search: "", page: 1, limit: 100 }));
-      dispatch(fetchAllTournaments());
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete tournament");
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
   const columns = [
     {
       header: "Tournament",
@@ -173,22 +145,6 @@ const AdminTournaments = () => {
             <span className="truncate">{tournament.organizer?.phone || "N/A"}</span>
           </div>
         </div>
-      ),
-    },
-    {
-      header: "Actions",
-      width: "15%",
-      render: (tournament) => (
-        <Button
-          onClick={(e) => handleDelete(e, tournament)}
-          disabled={deletingId === tournament._id}
-          loading={deletingId === tournament._id}
-          variant="danger"
-          size="sm"
-        >
-          <Trash2 className="w-4 h-4" />
-          <span>Delete</span>
-        </Button>
       ),
     },
   ];

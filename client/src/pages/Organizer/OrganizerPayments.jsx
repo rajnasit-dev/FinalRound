@@ -13,7 +13,6 @@ import {
   Clock,
   XCircle,
   Calendar,
-  FileDown,
 } from "lucide-react";
 import axios from "axios";
 import Spinner from "../../components/ui/Spinner";
@@ -23,8 +22,6 @@ import DataTable from "../../components/ui/DataTable";
 import SearchBar from "../../components/ui/SearchBar";
 import Select from "../../components/ui/Select";
 import useDateFormat from "../../hooks/useDateFormat";
-import { generatePaymentPDF } from "../../utils/generatePaymentPDF";
-import toast from "react-hot-toast";
 import PaymentDetailModal from "../../components/ui/PaymentDetailModal";
 
 const API_BASE_URL =
@@ -115,36 +112,6 @@ const OrganizerPayments = () => {
       totalTransactions: filtered.length,
     };
   }, [filteredPayments]);
-
-  // Build filter subtitle for PDF
-  const getFilterSubtitle = () => {
-    const parts = [];
-    if (monthFilter !== "all") {
-      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      parts.push(monthNames[parseInt(monthFilter)]);
-    }
-    if (yearFilter !== "all") parts.push(yearFilter);
-    if (typeFilter !== "all") parts.push(`Type: ${typeFilter === "Organizer" ? "Platform Fees" : typeFilter + " Registration"}`);
-    if (statusFilter !== "all") parts.push(`Status: ${statusFilter}`);
-    return parts.length ? `Filtered by: ${parts.join(" | ")}` : "All Payments";
-  };
-
-  const handleGenerateReport = async () => {
-    if (filteredPayments.length === 0) {
-      return toast.error("No payment data to generate report");
-    }
-    await generatePaymentPDF(filteredPayments, {
-      title: "Organizer Payments Report",
-      subtitle: getFilterSubtitle(),
-      summary: {
-        "Registration Revenue": `Rs.${filteredStats.totalReceived.toLocaleString("en-IN")}`,
-        "Platform Fees Paid": `Rs.${filteredStats.totalPlatformFees.toLocaleString("en-IN")}`,
-        "Net Revenue": `Rs.${filteredStats.netRevenue.toLocaleString("en-IN")}`,
-        "Total Transactions": filteredStats.totalTransactions,
-      },
-    });
-    toast.success("Payment report downloaded!");
-  };
 
   // Status badge helper
   const getStatusBadge = (status) => {
@@ -374,13 +341,6 @@ const OrganizerPayments = () => {
             value={yearFilter}
             onChange={(e) => setYearFilter(e.target.value)}
           />
-          <button
-            onClick={handleGenerateReport}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg font-medium transition-colors cursor-pointer"
-          >
-            <FileDown className="w-4 h-4" />
-            Generate Report
-          </button>
         </div>
       </div>
 

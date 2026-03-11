@@ -8,7 +8,7 @@ import Spinner from "../../components/ui/Spinner";
 import TeamCard from "../../components/ui/TeamCard";
 import BackButton from "../../components/ui/BackButton";
 import GridContainer from "../../components/ui/GridContainer";
-import { fetchManagerTeams, fetchAllTeams } from "../../store/slices/teamSlice";
+import { fetchManagerTeams } from "../../store/slices/teamSlice";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
@@ -17,7 +17,7 @@ const ManagerTeams = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { managerTeams, loading } = useSelector((state) => state.team);
-  const [deletingTeamId, setDeletingTeamId] = useState(null);
+  const [togglingTeamId, setTogglingTeamId] = useState(null);
 
   useEffect(() => {
     if (user?._id) {
@@ -37,24 +37,23 @@ const ManagerTeams = () => {
     navigate(`/manager/teams/${teamId}/add-player`);
   };
 
-  const handleDeleteTeam = async (teamId) => {
-    if (!window.confirm("Are you sure you want to delete this team? This action cannot be undone and will remove all associated data.")) return;
+  const handleToggleStatus = async (teamId, isActive) => {
+    const action = isActive ? "deactivate" : "activate";
+    if (!window.confirm(`Are you sure you want to ${action} this team?`)) return;
 
-    setDeletingTeamId(teamId);
+    setTogglingTeamId(teamId);
 
     try {
-      await axios.delete(`${API_BASE_URL}/teams/${teamId}`, {
+      await axios.patch(`${API_BASE_URL}/teams/${teamId}/toggle-status`, {}, {
         withCredentials: true,
       });
 
-      toast.success("Team deleted successfully!");
-      // Refresh the teams list
+      toast.success(`Team ${action}d successfully!`);
       dispatch(fetchManagerTeams(user._id));
-      dispatch(fetchAllTeams());
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete team");
+      toast.error(err.response?.data?.message || `Failed to ${action} team`);
     } finally {
-      setDeletingTeamId(null);
+      setTogglingTeamId(null);
     }
   };
 
@@ -100,7 +99,7 @@ const ManagerTeams = () => {
               onEdit={handleEditTeam}
               onManagePlayers={handleManagePlayers}
               onAddPlayer={handleAddPlayer}
-              onDeleteTeam={handleDeleteTeam}
+              onToggleStatus={handleToggleStatus}
             />
           ))}
         </GridContainer>

@@ -5,7 +5,6 @@ import {
   getTournamentById,
   updateTournament,
   updateTournamentBanner,
-  deleteTournament,
   registerTeam,
   registerPlayer,
   getTournamentParticipants,
@@ -41,7 +40,6 @@ tournamentRouter.patch("/:id/status", authMiddleware, updateTournamentStatus);
 tournamentRouter.post("/:id/generate-fixtures", authMiddleware, generateFixtures);
 tournamentRouter.post("/:tournamentId/complete-payment", authMiddleware, completePlatformFeePayment);
 tournamentRouter.get("/:id/participants", authMiddleware, getTournamentParticipants);
-tournamentRouter.delete("/:id", authMiddleware, deleteTournament);
 
 // Team registration
 tournamentRouter.post("/:id/register", authMiddleware, registerTeam);

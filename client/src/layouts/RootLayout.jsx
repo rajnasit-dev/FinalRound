@@ -1,8 +1,9 @@
 import { Outlet } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import Lenis from "lenis";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Spinner from "../components/ui/Spinner";
 
 const RootLayout = () => {
   const [darkMode, setDarkMode] = useState(() => {
@@ -23,13 +24,15 @@ const RootLayout = () => {
       smoothTouch: false,
     });
 
+    let rafId;
     function raf(time) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
     }
-    requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
 
     return () => {
+      cancelAnimationFrame(rafId);
       lenis.destroy();
     };
   }, []);
@@ -41,7 +44,9 @@ const RootLayout = () => {
       <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
 
       <main className="flex-1" style={{ paddingTop: "var(--navbar-height)" }}>
-        <Outlet />
+        <Suspense fallback={<div className="flex items-center justify-center h-96"><Spinner size="lg" /></div>}>
+          <Outlet />
+        </Suspense>
       </main>
 
       <Footer />

@@ -1,7 +1,17 @@
 import nodemailer from "nodemailer";
+import { Settings } from "../models/Settings.model.js";
 
 export const sendEmail = async (data) => {
   try {
+    // Skip non-critical emails if notifications are disabled
+    if (!data.critical) {
+      const emailEnabled = await Settings.getSetting("emailNotificationsEnabled", true);
+      if (!emailEnabled) {
+        console.log("Email notifications disabled — skipped:", data.subject);
+        return true;
+      }
+    }
+
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {

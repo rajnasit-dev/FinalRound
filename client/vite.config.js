@@ -9,23 +9,23 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: false,
-    // Ensure SPA routes (e.g. /teams/:id) serve index.html on direct nav or refresh
     historyApiFallback: true,
   },
   build: {
-    // Optimize build for production
-    minify: "esbuild", // Use esbuild (faster and built-in)
-    // Generate source maps for debugging (set to false in production)
+    minify: "esbuild",
     sourcemap: false,
-    // Increase chunk size for better loading
     chunkSizeWarningLimit: 1000,
-    // Configure rollup options for better code splitting
+    target: "es2020",
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor': ['react', 'react-dom', 'react-router-dom'],
-          'redux': ['@reduxjs/toolkit', 'react-redux'],
-          'ui': ['lucide-react', 'framer-motion'],
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-router': ['react-router-dom'],
+          'vendor-redux': ['@reduxjs/toolkit', 'react-redux'],
+          'vendor-ui': ['lucide-react'],
+          'vendor-motion': ['framer-motion'],
+          'vendor-axios': ['axios'],
+          'vendor-charts': ['recharts'],
         }
       }
     }

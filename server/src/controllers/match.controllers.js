@@ -137,7 +137,8 @@ export const getAllMatches = asyncHandler(async (req, res) => {
     .populate("sport", "name teamBased iconUrl")
     .populate("teamA", "name logoUrl")
     .populate("teamB", "name logoUrl")
-    .sort({ scheduledAt: -1 });
+    .sort({ scheduledAt: -1 })
+    .limit(100);
 
   // Add computed status
   let matchesWithStatus = addMatchStatuses(matches);
@@ -323,7 +324,8 @@ export const getMatchesByTournament = asyncHandler(async (req, res) => {
     .populate("sport", "name teamBased iconUrl")
     .populate("teamA", "name logoUrl")
     .populate("teamB", "name logoUrl")
-    .sort({ scheduledAt: 1 });
+    .sort({ scheduledAt: 1 })
+    .limit(100);
 
   const matchesWithStatus = addMatchStatuses(matches);
 
@@ -343,7 +345,8 @@ export const getMatchesByTeam = asyncHandler(async (req, res) => {
     .populate("sport", "name teamBased iconUrl")
     .populate("teamA", "name logoUrl")
     .populate("teamB", "name logoUrl")
-    .sort({ scheduledAt: -1 });
+    .sort({ scheduledAt: -1 })
+    .limit(50);
 
   const matchesWithStatus = addMatchStatuses(matches);
 

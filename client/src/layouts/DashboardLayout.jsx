@@ -1,9 +1,10 @@
 import { Outlet, Navigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense, useCallback } from "react";
 import { Menu, X } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import { fetchCurrentUser } from "../store/slices/authSlice";
+import Spinner from "../components/ui/Spinner";
 
 const DashboardLayout = () => {
 
@@ -98,7 +99,9 @@ const DashboardLayout = () => {
 
         {/* MAIN CONTENT */}
         <main className="py-10">
-          <Outlet />
+          <Suspense fallback={<div className="flex items-center justify-center h-96"><Spinner size="lg" /></div>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

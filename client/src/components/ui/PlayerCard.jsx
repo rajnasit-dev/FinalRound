@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { memo } from "react";
 import {
   User,
   Trophy,
@@ -14,7 +15,7 @@ import defaultCoverImage from "../../assets/defaultCoverImage.png";
 import CardStat from "./CardStat";
 import useAge from "../../hooks/useAge";
 
-const PlayerCard = ({ player }) => {
+const PlayerCard = memo(({ player }) => {
   const firstSport = player?.sports?.[0];
   const firstSportName =
     typeof firstSport === "string"
@@ -141,6 +142,6 @@ const PlayerCard = ({ player }) => {
       </div>
     </Link>
   );
-};
+});
 
 export default PlayerCard;

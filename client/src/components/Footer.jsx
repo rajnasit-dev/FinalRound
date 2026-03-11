@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
+import { memo } from 'react';
 import { Mail, Phone, MapPin } from 'lucide-react';
 
-const Footer = () => {
+const Footer = memo(() => {
   return (
     <footer className="bg-card-background dark:bg-card-background-dark border-t border-gray-200 dark:border-gray-700">
       <div className="container mx-auto px-6 py-12">
@@ -103,6 +104,6 @@ const Footer = () => {
       </div>
     </footer>
   );
-};
+});
 
 export default Footer;

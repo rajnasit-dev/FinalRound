@@ -17,7 +17,7 @@ const Tournaments = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    dispatch(fetchAllTournaments({}));
+    dispatch(fetchAllTournaments({ excludeStatus: "Cancelled,Completed" }));
     dispatch(fetchAllSports());
   }, [dispatch]);
 
@@ -29,8 +29,6 @@ const Tournaments = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [liveCurrentPage, setLiveCurrentPage] = useState(1);
   const [upcomingCurrentPage, setUpcomingCurrentPage] = useState(1);
-  const [completedCurrentPage, setCompletedCurrentPage] = useState(1);
-  const [cancelledCurrentPage, setCancelledCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   const sportOptions = [
@@ -67,8 +65,6 @@ const Tournaments = () => {
   // Organize tournaments by status
   const liveTournaments = filterTournaments(tournaments.filter(t => t.status === "Live"));
   const upcomingTournaments = filterTournaments(tournaments.filter(t => t.status === "Upcoming"));
-  const completedTournaments = filterTournaments(tournaments.filter(t => t.status === "Completed"));
-  const cancelledTournaments = filterTournaments(tournaments.filter(t => t.status === "Cancelled"));
 
   // Pagination logic for each section
   const liveTotalPages = Math.ceil(liveTournaments.length / itemsPerPage);
@@ -79,20 +75,10 @@ const Tournaments = () => {
   const upcomingStartIndex = (upcomingCurrentPage - 1) * itemsPerPage;
   const paginatedUpcomingTournaments = upcomingTournaments.slice(upcomingStartIndex, upcomingStartIndex + itemsPerPage);
 
-  const completedTotalPages = Math.ceil(completedTournaments.length / itemsPerPage);
-  const completedStartIndex = (completedCurrentPage - 1) * itemsPerPage;
-  const paginatedCompletedTournaments = completedTournaments.slice(completedStartIndex, completedStartIndex + itemsPerPage);
-
-  const cancelledTotalPages = Math.ceil(cancelledTournaments.length / itemsPerPage);
-  const cancelledStartIndex = (cancelledCurrentPage - 1) * itemsPerPage;
-  const paginatedCancelledTournaments = cancelledTournaments.slice(cancelledStartIndex, cancelledStartIndex + itemsPerPage);
-
   // Reset to page 1 when filters change
   useEffect(() => {
     setLiveCurrentPage(1);
     setUpcomingCurrentPage(1);
-    setCompletedCurrentPage(1);
-    setCancelledCurrentPage(1);
   }, [selectedSport, selectedRegistrationType, selectedGender, searchQuery, registrationOpenOnly]);
 
   if (loading) {
@@ -230,61 +216,9 @@ const Tournaments = () => {
         </div>
       )}
 
-      {/* Completed Tournaments Section */}
-      {completedTournaments.length > 0 && (
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">
-            Completed Tournaments (<span className="font-num">{completedTournaments.length}</span>)
-          </h2>
-          <GridContainer cols={3}>
-            {paginatedCompletedTournaments.map((tournament) => (
-              <TournamentCard key={tournament._id || tournament.id} tournament={tournament} />
-            ))}
-          </GridContainer>
-          {completedTotalPages > 1 && (
-            <div className="mt-8">
-              <Pagination
-                currentPage={completedCurrentPage}
-                totalPages={completedTotalPages}
-                onPageChange={setCompletedCurrentPage}
-                itemsPerPage={itemsPerPage}
-                totalItems={completedTournaments.length}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Cancelled Tournaments Section */}
-      {cancelledTournaments.length > 0 && (
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6 text-gray-500 dark:text-gray-400">
-            Cancelled Tournaments (<span className="font-num">{cancelledTournaments.length}</span>)
-          </h2>
-          <GridContainer cols={3}>
-            {paginatedCancelledTournaments.map((tournament) => (
-              <TournamentCard key={tournament._id || tournament.id} tournament={tournament} />
-            ))}
-          </GridContainer>
-          {cancelledTotalPages > 1 && (
-            <div className="mt-8">
-              <Pagination
-                currentPage={cancelledCurrentPage}
-                totalPages={cancelledTotalPages}
-                onPageChange={setCancelledCurrentPage}
-                itemsPerPage={itemsPerPage}
-                totalItems={cancelledTournaments.length}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
       {/* No Results Message */}
       {liveTournaments.length === 0 && 
-       upcomingTournaments.length === 0 && 
-       completedTournaments.length === 0 && 
-       cancelledTournaments.length === 0 && (
+       upcomingTournaments.length === 0 && (
         <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
           <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
             <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>

@@ -10,25 +10,22 @@ import FilterDropdown from "../../components/ui/FilterDropdown";
 import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
 import GridContainer from "../../components/ui/GridContainer";
-import { fetchAllTournaments, deleteTournament, cancelTournament } from "../../store/slices/tournamentSlice";
+import { fetchOrganizerTournaments, cancelTournament } from "../../store/slices/tournamentSlice";
 
 const OrganizerTournaments = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const { tournaments, loading } = useSelector((state) => state.tournament);
+  const { organizerTournaments, loading } = useSelector((state) => state.tournament);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All");
 
   useEffect(() => {
-    dispatch(fetchAllTournaments({}));
+    dispatch(fetchOrganizerTournaments());
   }, [dispatch]);
 
-  // Filter tournaments organized by this user
-  const myTournaments = tournaments?.filter((t) => t.organizer?._id === user?._id) || [];
-
   // Apply search and status filters
-  const filteredTournaments = myTournaments.filter((tournament) => {
+  const filteredTournaments = (organizerTournaments || []).filter((tournament) => {
     const matchesSearch =
       searchQuery === "" ||
       tournament.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -126,18 +123,9 @@ const OrganizerTournaments = () => {
                 try {
                   await dispatch(cancelTournament({ tournamentId: id, isCancelled: !isCancelled })).unwrap();
                   toast.success(`Tournament ${isCancelled ? 'reinstated' : 'cancelled'} successfully!`);
-                  dispatch(fetchAllTournaments({}));
+                  dispatch(fetchOrganizerTournaments());
                 } catch (error) {
                   toast.error(error || `Failed to ${action} tournament`);
-                }
-              }}
-              onDelete={async (id) => {
-                if (!window.confirm('Are you sure you want to delete this tournament?')) return;
-                try {
-                  await dispatch(deleteTournament(id)).unwrap();
-                  toast.success('Tournament deleted successfully!');
-                } catch (error) {
-                  toast.error(error || 'Failed to delete tournament');
                 }
               }}
             />

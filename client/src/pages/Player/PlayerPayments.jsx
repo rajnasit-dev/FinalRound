@@ -9,7 +9,6 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  FileDown,
 } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import ErrorMessage from "../../components/ui/ErrorMessage";
@@ -18,8 +17,6 @@ import DataTable from "../../components/ui/DataTable";
 import SearchBar from "../../components/ui/SearchBar";
 import Select from "../../components/ui/Select";
 import useDateFormat from "../../hooks/useDateFormat";
-import { generatePaymentPDF } from "../../utils/generatePaymentPDF";
-import toast from "react-hot-toast";
 import PaymentDetailModal from "../../components/ui/PaymentDetailModal";
 
 const PlayerPayments = () => {
@@ -70,32 +67,6 @@ const PlayerPayments = () => {
       .reduce((sum, p) => sum + (p.amount || 0), 0);
     return { totalPaid, pending, totalTransactions: filteredPayments.length };
   }, [filteredPayments]);
-
-  // PDF subtitle
-  const getFilterSubtitle = () => {
-    const parts = [];
-    if (monthFilter !== "all") {
-      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      parts.push(monthNames[parseInt(monthFilter)]);
-    }
-    if (yearFilter !== "all") parts.push(yearFilter);
-    if (statusFilter !== "all") parts.push(`Status: ${statusFilter}`);
-    return parts.length ? `Filtered by: ${parts.join(" | ")}` : "All Payments";
-  };
-
-  const handleGenerateReport = async () => {
-    if (filteredPayments.length === 0) return toast.error("No payment data to generate report");
-    await generatePaymentPDF(filteredPayments, {
-      title: "Player Payments Report",
-      subtitle: getFilterSubtitle(),
-      summary: {
-        "Total Paid": `Rs.${filteredStats.totalPaid.toLocaleString("en-IN")}`,
-        "Pending": `Rs.${filteredStats.pending.toLocaleString("en-IN")}`,
-        "Transactions": filteredStats.totalTransactions,
-      },
-    });
-    toast.success("Payment report downloaded!");
-  };
 
   // Status badge
   const getStatusBadge = (status) => {
@@ -270,13 +241,6 @@ const PlayerPayments = () => {
               value={yearFilter}
               onChange={(e) => setYearFilter(e.target.value)}
             />
-            <button
-              onClick={handleGenerateReport}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-secondary hover:bg-secondary/90 text-white rounded-lg font-medium transition-colors cursor-pointer"
-            >
-              <FileDown className="w-4 h-4" />
-              Generate Report
-            </button>
             </div>
           </div>
 

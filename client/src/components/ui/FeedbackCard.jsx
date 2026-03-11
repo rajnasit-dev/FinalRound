@@ -1,8 +1,9 @@
 import { Star } from "lucide-react";
+import { memo } from "react";
 import useDateFormat from "../../hooks/useDateFormat";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 
-const FeedbackCard = ({ feedback }) => {
+const FeedbackCard = memo(({ feedback }) => {
   const { formatDate } = useDateFormat();
 
   const renderStars = (rating) => {
@@ -71,6 +72,6 @@ const FeedbackCard = ({ feedback }) => {
       )}
     </div>
   );
-};
+});
 
 export default FeedbackCard;

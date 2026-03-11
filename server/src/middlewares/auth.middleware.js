@@ -32,6 +32,10 @@ export const authMiddleware = asyncHandler(async (req, res, next) => {
       throw new ApiError(401, "Invalid Access Token.");
     }
 
+    if (user.isBlocked) {
+      throw new ApiError(403, "Your account has been blocked. Please contact support.");
+    }
+
     req.user = user;
     return next();
   } catch (error) {

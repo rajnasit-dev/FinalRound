@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -14,9 +14,11 @@ import {
   Lock,
   Menu,
   X,
+  BarChart3,
 } from "lucide-react";
 import { logoutUser } from "../store/slices/authSlice";
 import Logo from "../components/Logo";
+import Spinner from "../components/ui/Spinner";
 
 const AdminLayout = () => {
   const dispatch = useDispatch();
@@ -36,6 +38,7 @@ const AdminLayout = () => {
 
   const navLinks = [
     { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
     { to: "/admin/organizer-requests", icon: UserCheck, label: "Organizer Requests" },
     { to: "/admin/users", icon: Users, label: "Users" },
     { to: "/admin/sports", icon: Dumbbell, label: "Sports" },
@@ -137,7 +140,9 @@ const AdminLayout = () => {
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         <div className="p-4 sm:p-6 lg:p-8 pt-20 lg:pt-8">
-          <Outlet />
+          <Suspense fallback={<div className="flex items-center justify-center h-96"><Spinner size="lg" /></div>}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
     </div>

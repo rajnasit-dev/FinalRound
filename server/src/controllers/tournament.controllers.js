@@ -148,21 +148,24 @@ export const createTournament = asyncHandler(async (req, res) => {
 
 // Get all tournaments
 export const getAllTournaments = asyncHandler(async (req, res) => {
-  const { sport, status, city, registrationType } = req.query;
+  const { sport, status, city, registrationType, excludeStatus } = req.query;
 
   let filter = { isPublished: true }; // Only show published tournaments publicly
 
   if (sport) filter.sport = sport;
   if (registrationType) filter.registrationType = registrationType;
 
+  // If excludeStatus includes "Cancelled", filter out cancelled tournaments at DB level
+  if (excludeStatus && excludeStatus.split(",").map(s => s.trim().toLowerCase()).includes("cancelled")) {
+    filter.isCancelled = { $ne: true };
+  }
+
   const tournaments = await Tournament.find(filter)
+    .select("name sport organizer startDate endDate registrationStart registrationEnd entryFee prizePool format registrationType gender ground bannerUrl isCancelled isPublished status registeredTeams approvedTeams registeredPlayers approvedPlayers")
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email phone avatar orgName")
-    .populate("registeredTeams", "name logoUrl")
-    .populate("approvedTeams", "name logoUrl")
-    .populate("registeredPlayers", "fullName avatar email")
-    .populate("approvedPlayers", "fullName avatar email")
-    .sort({ startDate: -1 });
+    .sort({ startDate: -1 })
+    .limit(100);
 
   // Add computed status to all tournaments
   let tournamentsWithStatus = addTournamentStatuses(tournaments);
@@ -178,6 +181,14 @@ export const getAllTournaments = asyncHandler(async (req, res) => {
   if (status) {
     tournamentsWithStatus = tournamentsWithStatus.filter(t => 
       t.status && t.status.toLowerCase() === status.toLowerCase()
+    );
+  }
+
+  // Exclude statuses if provided (comma-separated, e.g. "Cancelled,Completed")
+  if (excludeStatus) {
+    const excludeList = excludeStatus.split(",").map(s => s.trim().toLowerCase());
+    tournamentsWithStatus = tournamentsWithStatus.filter(t => 
+      !excludeList.includes(t.status?.toLowerCase())
     );
   }
 
@@ -755,10 +766,8 @@ export const getLiveTournaments = asyncHandler(async (req, res) => {
   })
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar orgName")
-    .populate("approvedTeams", "name logoUrl")
-    .populate("registeredPlayers", "fullName avatar email")
-    .populate("approvedPlayers", "fullName avatar email")
-    .sort({ startDate: -1 });
+    .sort({ startDate: -1 })
+    .limit(20);
 
   const tournamentsWithStatus = addTournamentStatuses(tournaments);
 
@@ -837,20 +846,16 @@ export const getTrendingTournaments = asyncHandler(async (req, res) => {
   })
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar orgName")
-    .populate("registeredTeams", "name logoUrl")
-    .populate("approvedTeams", "name logoUrl")
-    .populate("registeredPlayers", "fullName avatar email")
-    .populate("approvedPlayers", "fullName avatar email")
-    .sort({ registeredTeams: -1, startDate: 1 })
-    .limit(parseInt(limit));
+    .sort({ startDate: 1 })
+    .limit(parseInt(limit) * 3);
 
   // Add computed status
   const tournamentsWithStatus = addTournamentStatuses(tournaments);
 
-  // Sort by number of registered teams in descending order
-  const sortedTournaments = tournamentsWithStatus.sort((a, b) => 
-    b.registeredTeams.length - a.registeredTeams.length
-  );
+  // Sort by number of registered teams in descending order and limit
+  const sortedTournaments = tournamentsWithStatus
+    .sort((a, b) => (b.registeredTeams?.length || 0) - (a.registeredTeams?.length || 0))
+    .slice(0, parseInt(limit));
 
   res
     .status(200)

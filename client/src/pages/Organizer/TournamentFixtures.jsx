@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus, Edit, Trash2, Play, Calendar, Trophy, Users, Ban } from "lucide-react";
+import { Plus, Edit, Play, Calendar, Trophy, Users, Ban } from "lucide-react";
 import toast from "react-hot-toast";
 import Spinner from "../../components/ui/Spinner";
 import DataTable from "../../components/ui/DataTable";
@@ -11,7 +11,7 @@ import MatchDetailModal from "../../components/ui/MatchDetailModal";
 import useDateFormat from "../../hooks/useDateFormat";
 import useStatusColor from "../../hooks/useStatusColor";
 import { fetchTournamentById } from "../../store/slices/tournamentSlice";
-import { fetchMatchesByTournament, deleteMatch, updateMatchStatus } from "../../store/slices/matchSlice";
+import { fetchMatchesByTournament, updateMatchStatus } from "../../store/slices/matchSlice";
 
 const TournamentFixtures = () => {
   const { tournamentId } = useParams();
@@ -36,17 +36,7 @@ const TournamentFixtures = () => {
   // Check if user is the organizer
   const isOrganizer = tournament?.organizer?._id === user?._id;
 
-  const handleDeleteMatch = async (matchId) => {
-    if (!window.confirm("Are you sure you want to delete this match?")) return;
-    
-    try {
-      await dispatch(deleteMatch(matchId)).unwrap();
-      toast.success("Match deleted successfully!");
-      dispatch(fetchMatchesByTournament(tournamentId));
-    } catch (error) {
-      toast.error(error?.message || error || "Failed to delete match");
-    }
-  };
+
 
   const handleCancelMatch = async (matchId, isCancelled) => {
     const action = isCancelled ? "reinstate" : "cancel";
@@ -255,19 +245,6 @@ const TournamentFixtures = () => {
                     }}
                   >
                     Reinstate
-                  </Button>
-                )}
-                {match.status === "Scheduled" && (
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteMatch(match._id);
-                    }}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Delete
                   </Button>
                 )}
               </div>

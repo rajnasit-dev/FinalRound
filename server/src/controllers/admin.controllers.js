@@ -6,6 +6,9 @@ import { Player } from "../models/Player.model.js";
 import { TeamManager } from "../models/TeamManager.model.js";
 import { Payment } from "../models/Payment.model.js";
 import { Settings } from "../models/Settings.model.js";
+import { Sport } from "../models/Sport.model.js";
+import { Feedback } from "../models/Feedback.model.js";
+import { Match } from "../models/Match.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -172,7 +175,7 @@ export const getAllTournaments = asyncHandler(async (req, res) => {
 export const getAllTeams = asyncHandler(async (req, res) => {
   const { search } = req.query;
 
-  const filter = { isActive: true };
+  const filter = {};
   if (search) {
     filter.$or = [
       { name: { $regex: search, $options: "i" } },
@@ -639,8 +642,8 @@ export const getAllPayments = asyncHandler(async (req, res) => {
   );
 });
 
-// Delete user (soft delete or hard delete)
-export const deleteUser = asyncHandler(async (req, res) => {
+// Block or unblock a user
+export const toggleBlockUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
   const user = await User.findById(userId);
@@ -648,54 +651,22 @@ export const deleteUser = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User not found");
   }
 
-  // Delete avatar from Cloudinary if exists
-  if (user.avatar) {
-    try {
-      const publicId = getCloudinaryPublicId(user.avatar);
-      await deleteFromCloudinary(publicId);
-    } catch (error) {
-      console.error("Error deleting avatar from Cloudinary:", error);
-    }
+  user.isBlocked = !user.isBlocked;
+
+  // Clear refresh token when blocking so existing sessions are invalidated
+  if (user.isBlocked) {
+    user.refreshToken = undefined;
   }
 
-  // Delete cover image from Cloudinary if exists
-  if (user.coverImage) {
-    try {
-      const publicId = getCloudinaryPublicId(user.coverImage);
-      await deleteFromCloudinary(publicId);
-    } catch (error) {
-      console.error("Error deleting cover image from Cloudinary:", error);
-    }
-  }
-
-  // Soft delete - set isActive to false
-  user.isActive = false;
-  user.refreshToken = undefined;
   await user.save({ validateBeforeSave: false });
 
-  // If user is a TeamManager, deactivate all their teams and clean up images
-  if (user.role === "TeamManager") {
-    const teams = await Team.find({ manager: userId });
-    for (const team of teams) {
-      if (team.logoUrl) {
-        try {
-          await deleteFromCloudinary(getCloudinaryPublicId(team.logoUrl));
-        } catch (error) {
-          console.log("Failed to delete team logo from Cloudinary:", error.message);
-        }
-      }
-      if (team.bannerUrl) {
-        try {
-          await deleteFromCloudinary(getCloudinaryPublicId(team.bannerUrl));
-        } catch (error) {
-          console.log("Failed to delete team banner from Cloudinary:", error.message);
-        }
-      }
-    }
-    await Team.updateMany({ manager: userId }, { isActive: false });
-  }
-
-  res.status(200).json(new ApiResponse(200, null, "User deactivated successfully"));
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      { _id: user._id, isBlocked: user.isBlocked },
+      `User ${user.isBlocked ? "blocked" : "unblocked"} successfully`
+    )
+  );
 });
 
 // Update user status or details
@@ -743,4 +714,272 @@ export const toggleOtpSetting = asyncHandler(async (req, res) => {
         `OTP verification ${updated.value ? "enabled" : "disabled"} successfully`
       )
     );
+});
+
+// Get email notifications setting
+export const getEmailNotificationSetting = asyncHandler(async (req, res) => {
+  const emailNotificationsEnabled = await Settings.getSetting("emailNotificationsEnabled", true);
+  res
+    .status(200)
+    .json(new ApiResponse(200, { emailNotificationsEnabled }, "Email notification setting fetched successfully"));
+});
+
+// Toggle email notifications setting
+export const toggleEmailNotificationSetting = asyncHandler(async (req, res) => {
+  const current = await Settings.getSetting("emailNotificationsEnabled", true);
+  const updated = await Settings.setSetting("emailNotificationsEnabled", !current);
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { emailNotificationsEnabled: updated.value },
+        `Email notifications ${updated.value ? "enabled" : "disabled"} successfully`
+      )
+    );
+});
+
+// Get analytics data for charts and detailed statistics
+export const getAnalyticsData = asyncHandler(async (req, res) => {
+  const now = new Date();
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+  const [
+    // Monthly user registrations (last 12 months)
+    userGrowth,
+    // Monthly revenue (last 12 months)
+    revenueGrowth,
+    // User role distribution
+    roleDistribution,
+    // Tournament format distribution
+    tournamentsByFormat,
+    // Sport-wise tournament count
+    sportWiseTournaments,
+    // Payment status breakdown
+    paymentStatusBreakdown,
+    // Current month vs last month counts for growth %
+    currentMonthUsers,
+    lastMonthUsers,
+    currentMonthTournaments,
+    lastMonthTournaments,
+    currentMonthRevenue,
+    lastMonthRevenue,
+    // Feedback rating distribution
+    feedbackDistribution,
+    // Total counts
+    totalMatches,
+    totalFeedback,
+    totalSports,
+  ] = await Promise.all([
+    // 1. User registrations by month (last 12 months)
+    User.aggregate([
+      { $match: { createdAt: { $gte: twelveMonthsAgo }, isActive: true } },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ]),
+
+    // 2. Revenue by month (last 12 months) - from payments
+    Payment.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: twelveMonthsAgo },
+          status: "Success",
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          amount: { $sum: "$amount" },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ]),
+
+    // 3. User role distribution
+    User.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: "$role", count: { $sum: 1 } } },
+    ]),
+
+    // 4. Tournament format distribution
+    Tournament.aggregate([
+      { $group: { _id: "$format", count: { $sum: 1 } } },
+    ]),
+
+    // 5. Sport-wise tournament count
+    Tournament.aggregate([
+      {
+        $lookup: {
+          from: "sports",
+          localField: "sport",
+          foreignField: "_id",
+          as: "sportInfo",
+        },
+      },
+      { $unwind: "$sportInfo" },
+      {
+        $group: {
+          _id: "$sportInfo.name",
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]),
+
+    // 6. Payment status distribution
+    Payment.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 }, total: { $sum: "$amount" } } },
+    ]),
+
+    // 7. Growth metrics - current month users
+    User.countDocuments({ isActive: true, createdAt: { $gte: currentMonthStart } }),
+    // 8. Last month users
+    User.countDocuments({
+      isActive: true,
+      createdAt: { $gte: lastMonthStart, $lt: currentMonthStart },
+    }),
+    // 9. Current month tournaments
+    Tournament.countDocuments({ createdAt: { $gte: currentMonthStart } }),
+    // 10. Last month tournaments
+    Tournament.countDocuments({
+      createdAt: { $gte: lastMonthStart, $lt: currentMonthStart },
+    }),
+    // 11. Current month revenue
+    Payment.aggregate([
+      {
+        $match: {
+          status: "Success",
+          createdAt: { $gte: currentMonthStart },
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]),
+    // 12. Last month revenue
+    Payment.aggregate([
+      {
+        $match: {
+          status: "Success",
+          createdAt: { $gte: lastMonthStart, $lt: currentMonthStart },
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]),
+
+    // 13. Feedback rating distribution
+    Feedback.aggregate([
+      { $group: { _id: "$rating", count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+    ]),
+
+    // 14. Total matches
+    Match.countDocuments(),
+    // 15. Total feedback
+    Feedback.countDocuments(),
+    // 16. Total sports
+    Sport.countDocuments({ isActive: true }),
+  ]);
+
+  // Format monthly data with month names for last 12 months
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const formattedUserGrowth = [];
+  const formattedRevenueGrowth = [];
+
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const label = `${monthNames[month - 1]} ${year.toString().slice(2)}`;
+
+    const userEntry = userGrowth.find(
+      (u) => u._id.year === year && u._id.month === month
+    );
+    formattedUserGrowth.push({ month: label, users: userEntry?.count || 0 });
+
+    const revEntry = revenueGrowth.find(
+      (r) => r._id.year === year && r._id.month === month
+    );
+    formattedRevenueGrowth.push({ month: label, revenue: revEntry?.amount || 0 });
+  }
+
+  // Calculate growth percentages
+  const calcGrowth = (current, previous) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 100);
+  };
+
+  const currentRevenue = currentMonthRevenue[0]?.total || 0;
+  const prevRevenue = lastMonthRevenue[0]?.total || 0;
+
+  const growth = {
+    users: calcGrowth(currentMonthUsers, lastMonthUsers),
+    tournaments: calcGrowth(currentMonthTournaments, lastMonthTournaments),
+    revenue: calcGrowth(currentRevenue, prevRevenue),
+  };
+
+  // Format role distribution
+  const formattedRoleDistribution = roleDistribution.map((r) => ({
+    name: r._id || "Unknown",
+    value: r.count,
+  }));
+
+  // Format tournament format distribution
+  const formattedTournamentFormats = tournamentsByFormat.map((t) => ({
+    name: t._id || "Unknown",
+    value: t.count,
+  }));
+
+  // Format sport-wise data
+  const formattedSportWise = sportWiseTournaments.map((s) => ({
+    name: s._id,
+    tournaments: s.count,
+  }));
+
+  // Format payment status
+  const formattedPaymentStatus = paymentStatusBreakdown.map((p) => ({
+    name: p._id,
+    count: p.count,
+    amount: p.total,
+  }));
+
+  // Format feedback distribution
+  const formattedFeedback = feedbackDistribution.map((f) => ({
+    rating: `${f._id} Star`,
+    count: f.count,
+  }));
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        userGrowth: formattedUserGrowth,
+        revenueGrowth: formattedRevenueGrowth,
+        roleDistribution: formattedRoleDistribution,
+        tournamentFormats: formattedTournamentFormats,
+        sportWiseTournaments: formattedSportWise,
+        paymentStatus: formattedPaymentStatus,
+        feedbackDistribution: formattedFeedback,
+        growth,
+        totals: {
+          matches: totalMatches,
+          feedback: totalFeedback,
+          sports: totalSports,
+        },
+      },
+      "Analytics data fetched successfully"
+    )
+  );
 });

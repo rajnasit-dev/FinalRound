@@ -4,7 +4,6 @@ import {
   getAllMatches,
   getMatchById,
   updateMatch,
-  deleteMatch,
   updateMatchScore,
   updateMatchResult,
   getMatchesByTournament,
@@ -30,7 +29,6 @@ matchRouter.get("/:id", getMatchById);
 // Protected routes - Tournament Organizer
 matchRouter.post("/", authMiddleware, createMatch);
 matchRouter.put("/:id", authMiddleware, updateMatch);
-matchRouter.delete("/:id", authMiddleware, deleteMatch);
 matchRouter.patch("/:id/score", authMiddleware, updateMatchScore);
 matchRouter.patch("/:id/result", authMiddleware, updateMatchResult);
 matchRouter.patch("/:id/status", authMiddleware, updateMatchStatus);

@@ -8,15 +8,13 @@ import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
 import { createMatch } from "../../store/slices/matchSlice";
-import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
-import { fetchAllTeams } from "../../store/slices/teamSlice";
+import { fetchOrganizerTournaments } from "../../store/slices/tournamentSlice";
 
 const CreateMatch = () => {
   const [searchParams] = useSearchParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { tournaments } = useSelector((state) => state.tournament);
-  const { teams } = useSelector((state) => state.team);
+  const { organizerTournaments: tournaments } = useSelector((state) => state.tournament);
   const { loading } = useSelector((state) => state.match);
 
   const [selectedTournament, setSelectedTournament] = useState(null);
@@ -35,8 +33,7 @@ const CreateMatch = () => {
   const tournamentId = watch("tournament");
 
   useEffect(() => {
-    dispatch(fetchAllTournaments({}));
-    dispatch(fetchAllTeams({}));
+    dispatch(fetchOrganizerTournaments());
   }, [dispatch]);
 
   // Pre-select tournament from URL params
@@ -71,7 +68,7 @@ const CreateMatch = () => {
       setSelectedTournament(null);
       setParticipants([]);
     }
-  }, [tournamentId, tournaments, teams]);
+  }, [tournamentId, tournaments]);
 
   const onSubmit = async (data) => {
     try {

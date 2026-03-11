@@ -10,20 +10,19 @@ import Spinner from "../../components/ui/Spinner";
 import Container from "../../components/container/Container";
 import BackButton from "../../components/ui/BackButton";
 import AvatarUpload from "../../components/ui/AvatarUpload";
-import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
+import { fetchOrganizerTournaments } from "../../store/slices/tournamentSlice";
 
 const OrganizerProfile = () => {
   const dispatch = useDispatch();
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [deletingAvatar, setDeletingAvatar] = useState(false);
   const { user } = useSelector((state) => state.auth);
-  const { tournaments, loading: tournamentsLoading } = useSelector((state) => state.tournament);
-  const organizerTournaments = tournaments?.filter((t) => t.organizer?._id === user?._id) || [];
+  const { organizerTournaments, loading: tournamentsLoading } = useSelector((state) => state.tournament);
 
   const { formatDate } = useDateFormat();
 
   useEffect(() => {
-    dispatch(fetchAllTournaments({}));
+    dispatch(fetchOrganizerTournaments());
   }, [dispatch]);
 
   const handleAvatarChange = async (file) => {

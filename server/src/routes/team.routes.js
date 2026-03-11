@@ -6,7 +6,7 @@ import {
   updateTeam,
   updateTeamLogo,
   updateTeamBanner,
-  deleteTeam,
+  toggleTeamStatus,
   deleteTeamLogo,
   deleteTeamBanner,
   addPlayerToTeam,
@@ -39,7 +39,7 @@ teamRouter.patch("/:id/logo", authMiddleware, upload.single("logo"), updateTeamL
 teamRouter.patch("/:id/banner", authMiddleware, upload.single("banner"), updateTeamBanner);
 teamRouter.delete("/:id/logo", authMiddleware, deleteTeamLogo);
 teamRouter.delete("/:id/banner", authMiddleware, deleteTeamBanner);
-teamRouter.delete("/:id", authMiddleware, deleteTeam);
+teamRouter.patch("/:id/toggle-status", authMiddleware, toggleTeamStatus);
 
 // Team player management
 teamRouter.post("/:id/players", authMiddleware, addPlayerToTeam);

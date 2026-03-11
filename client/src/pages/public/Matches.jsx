@@ -4,11 +4,11 @@ import FixturesTable from "../../components/ui/FixturesTable";
 import SearchBar from "../../components/ui/SearchBar";
 import FilterDropdown from "../../components/ui/FilterDropdown";
 import Spinner from "../../components/ui/Spinner";
-import { fetchAllMatches, fetchLiveMatches, fetchUpcomingMatches } from "../../store/slices/matchSlice";
+import { fetchAllMatches } from "../../store/slices/matchSlice";
 
 const Matches = () => {
   const dispatch = useDispatch();
-  const { matches, liveMatches, upcomingMatches, loading } = useSelector((state) => state.match);
+  const { matches, loading } = useSelector((state) => state.match);
 
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -16,11 +16,13 @@ const Matches = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     dispatch(fetchAllMatches());
-    dispatch(fetchLiveMatches());
-    dispatch(fetchUpcomingMatches());
   }, [dispatch]);
 
   const statuses = ["All", "Live", "Scheduled", "Completed", "Cancelled"];
+
+  // Derive live and upcoming from all matches
+  const liveMatches = (matches || []).filter((m) => m?.status === "Live");
+  const upcomingMatches = (matches || []).filter((m) => m?.status === "Scheduled");
 
   // Filter matches
   const filteredMatches = (matches || []).filter((match) => {

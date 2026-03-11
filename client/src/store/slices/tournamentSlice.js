@@ -13,6 +13,7 @@ export const fetchAllTournaments = createAsyncThunk(
       if (filters.status) params.append("status", filters.status);
       if (filters.city) params.append("city", filters.city);
       if (filters.registrationType) params.append("registrationType", filters.registrationType);
+      if (filters.excludeStatus) params.append("excludeStatus", filters.excludeStatus);
 
       const response = await axios.get(`${API_BASE_URL}/tournaments?${params.toString()}`, { withCredentials: true });
 
@@ -129,20 +130,6 @@ export const fetchTournamentParticipants = createAsyncThunk(
   }
 );
 
-export const deleteTournament = createAsyncThunk(
-  "tournament/delete",
-  async (tournamentId, { rejectWithValue }) => {
-    try {
-      await axios.delete(`${API_BASE_URL}/tournaments/${tournamentId}`, {
-        withCredentials: true,
-      });
-      return tournamentId;
-    } catch (error) {
-      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to delete tournament");
-    }
-  }
-);
-
 export const cancelTournament = createAsyncThunk(
   "tournament/cancel",
   async ({ tournamentId, isCancelled }, { rejectWithValue }) => {
@@ -159,8 +146,21 @@ export const cancelTournament = createAsyncThunk(
   }
 );
 
+export const fetchOrganizerTournaments = createAsyncThunk(
+  "tournament/fetchOrganizerTournaments",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/tournament-organizers/tournaments/my-tournaments`, { withCredentials: true });
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch organizer tournaments");
+    }
+  }
+);
+
 const initialState = {
   tournaments: [],
+  organizerTournaments: [],
   trendingTournaments: [],
   selectedTournament: null,
   participants: null,
@@ -196,6 +196,19 @@ const tournamentSlice = createSlice({
         state.tournaments = action.payload;
       })
       .addCase(fetchAllTournaments.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Fetch organizer's own tournaments
+      .addCase(fetchOrganizerTournaments.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchOrganizerTournaments.fulfilled, (state, action) => {
+        state.loading = false;
+        state.organizerTournaments = action.payload;
+      })
+      .addCase(fetchOrganizerTournaments.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -322,23 +335,6 @@ const tournamentSlice = createSlice({
         state.participants = action.payload;
       })
       .addCase(fetchTournamentParticipants.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-      // Delete tournament
-      .addCase(deleteTournament.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(deleteTournament.fulfilled, (state, action) => {
-        state.loading = false;
-        state.tournaments = state.tournaments.filter((t) => t._id !== action.payload);
-        state.trendingTournaments = state.trendingTournaments.filter((t) => t._id !== action.payload);
-        if (state.selectedTournament?._id === action.payload) {
-          state.selectedTournament = null;
-        }
-      })
-      .addCase(deleteTournament.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

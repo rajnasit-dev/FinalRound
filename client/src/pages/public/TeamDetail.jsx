@@ -15,6 +15,7 @@ import {
   Users2,
   Stethoscope,
   Briefcase,
+  ShieldOff,
 } from "lucide-react";
 import CardStat from "../../components/ui/CardStat";
 import Container from "../../components/container/Container";
@@ -181,6 +182,16 @@ const TeamDetail = () => {
 
   return (
     <div className="min-h-screen pb-16">
+      {/* Deactivated Banner */}
+      {!team.isActive && (
+        <div className="flex items-center gap-3 p-4 mx-4 mt-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <ShieldOff className="w-5 h-5 text-red-500 shrink-0" />
+          <p className="text-sm text-red-700 dark:text-red-400 font-medium">
+            This team has been deactivated and is not visible to other users.
+          </p>
+        </div>
+      )}
+
       {/* Banner */}
       <div className="relative h-screen sm:h-112 overflow-hidden">
         <img

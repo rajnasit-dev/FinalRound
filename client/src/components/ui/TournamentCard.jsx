@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { memo } from "react";
 import { formatINR } from "../../utils/formatINR";
 import {
   ArrowRight,
@@ -7,7 +8,6 @@ import {
   MapPin,
   Trophy,
   Edit,
-  Trash2,
   Settings,
   Eye,
   Ban,
@@ -18,13 +18,12 @@ import useDateFormat from "../../hooks/useDateFormat";
 import defaultTournamentCoverImage from "../../assets/defaultTournamentCoverImage.png";
 import CardStat from "./CardStat";
 
-const TournamentCard = ({ 
+const TournamentCard = memo(({ 
   tournament, 
   isManager = false, 
   registrationStatusBadge = null,
   showOrganizerButtons = false,
   onEdit,
-  onDelete,
   onCancel,
   onManage,
   onView,
@@ -219,18 +218,6 @@ const TournamentCard = ({
                     Reinstate
                   </button>
                 )}
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onDelete && onDelete(tournament._id);
-                  }}
-                  className="flex items-center justify-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white rounded-lg transition-colors font-semibold text-sm"
-                  title="Delete Tournament"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
               </div>
             </>
           ) : isManager ? (
@@ -248,6 +235,6 @@ const TournamentCard = ({
       </div>
     </Link>
   );
-};
+});
 
 export default TournamentCard;

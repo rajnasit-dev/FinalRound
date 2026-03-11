@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Request } from "../models/Request.model.js";
 import { Team } from "../models/Team.model.js";
 import { User } from "../models/User.model.js";
+import { Sport } from "../models/Sport.model.js";
 import { Tournament } from "../models/Tournament.model.js";
 import { sendEmail } from "../middlewares/sendEmail.js";
 import {
@@ -289,6 +290,12 @@ export const acceptRequest = asyncHandler(async (req, res) => {
 
   if (team.players.some((p) => p.toString() === playerId.toString())) {
     throw new ApiError(400, "Player is already a member of this team");
+  }
+
+  // Check if team is full
+  const teamSport = await Sport.findById(team.sport);
+  if (teamSport?.playersPerTeam && team.players.length >= teamSport.playersPerTeam) {
+    throw new ApiError(400, "Cannot accept request. The team is already full.");
   }
 
   // Add player to team

@@ -186,6 +186,7 @@ export const registerPlayer = asyncHandler(async (req, res) => {
     subject: "Email Verification – SportsHub",
     message: ` Please use the following OTP to verify your email : ${otp}`,
     html: verificationEmailHtml(createdPlayer.fullName, otp),
+    critical: true,
   };
 
   await sendEmail(emailData);
@@ -279,6 +280,7 @@ export const registerTeamManager = asyncHandler(async (req, res) => {
     subject: "Email Verification – SportsHub",
     message: ` Please use the following OTP to verify your email : ${otp}`,
     html: verificationEmailHtml(createdManager.fullName, otp),
+    critical: true,
   };
 
   await sendEmail(emailData);
@@ -380,6 +382,7 @@ export const registerTournamentOrganizer = asyncHandler(async (req, res) => {
     subject: "Email Verification – SportsHub",
     message: ` Please use the following OTP to verify your email : ${otp}`,
     html: verificationEmailHtml(createdOrganizer.fullName, otp),
+    critical: true,
   };
 
   await sendEmail(emailData);
@@ -487,6 +490,7 @@ export const resendOtp = asyncHandler(async (req, res) => {
     subject: "Email Verification – SportsHub",
     message: `Please use the following OTP to verify your email: ${otp}`,
     html: verificationEmailHtml(user.fullName, otp),
+    critical: true,
   };
 
   await sendEmail(emailData);
@@ -510,6 +514,11 @@ export const login = asyncHandler(async (req, res) => {
   // Check if account is active
   if (!user.isActive) {
     throw new ApiError(403, "Your account has been deactivated. Please contact support.");
+  }
+
+  // Check if account is blocked
+  if (user.isBlocked) {
+    throw new ApiError(403, "Your account has been blocked. Please contact support.");
   }
 
   // Check password
@@ -589,6 +598,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     subject: "Password Reset - SportsHub",
     message: `Please use the following link to reset password : ${resetPasswordUrl}`,
     html: forgotPasswordEmailHtml(user.fullName, resetPasswordUrl),
+    critical: true,
   };
 
   await sendEmail(emailData);
