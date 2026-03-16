@@ -173,7 +173,7 @@ const Navbar = memo(({ darkMode, toggleDarkMode }) => {
                   to="/login"
                   className="px-6 py-2 bg-secondary dark:bg-secondary-dark text-white rounded-lg hover:bg-opacity-90 dark:hover:bg-opacity-90 hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 font-medium"
                 >
-                  Loginn
+                  Login
                 </NavLink>
               )}
 

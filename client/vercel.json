@@ -1,4 +1,18 @@
 {
+  "headers": [
+    {
+      "source": "/",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    }
+  ],
   "rewrites": [
     { "source": "/api/v1/:path*", "destination": "https://final-round-server-rho.vercel.app/api/v1/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
