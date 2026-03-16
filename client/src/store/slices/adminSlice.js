@@ -278,6 +278,77 @@ export const getAnalyticsData = createAsyncThunk(
   }
 );
 
+// Generate report
+export const generateReport = createAsyncThunk(
+  "admin/generateReport",
+  async (reportData, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/admin/reports/generate`,
+        reportData,
+        { withCredentials: true }
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to generate report");
+    }
+  }
+);
+
+// Get all reports
+export const getReports = createAsyncThunk(
+  "admin/getReports",
+  async ({ search, type, page, limit } = {}, { rejectWithValue }) => {
+    try {
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (type && type !== "all") params.append("type", type);
+      if (page) params.append("page", page);
+      if (limit) params.append("limit", limit);
+
+      const response = await axios.get(
+        `${API_BASE_URL}/admin/reports?${params.toString()}`,
+        { withCredentials: true }
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch reports");
+    }
+  }
+);
+
+// Get single report
+export const getReportById = createAsyncThunk(
+  "admin/getReportById",
+  async (reportId, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/admin/reports/${reportId}`,
+        { withCredentials: true }
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to fetch report");
+    }
+  }
+);
+
+// Delete report
+export const deleteReport = createAsyncThunk(
+  "admin/deleteReport",
+  async (reportId, { rejectWithValue }) => {
+    try {
+      await axios.delete(
+        `${API_BASE_URL}/admin/reports/${reportId}`,
+        { withCredentials: true }
+      );
+      return reportId;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || error.message || "Failed to delete report");
+    }
+  }
+);
+
 const initialState = {
   dashboardStats: {
     users: { total: 0, players: 0, managers: 0, organizers: 0 },
@@ -309,6 +380,11 @@ const initialState = {
   emailNotificationSettingLoading: false,
   analytics: null,
   analyticsLoading: false,
+  reports: [],
+  reportsPagination: null,
+  currentReport: null,
+  reportLoading: false,
+  reportGenerating: false,
   loading: false,
   error: null,
   pagination: null,
@@ -506,6 +582,57 @@ const adminSlice = createSlice({
       })
       .addCase(getAnalyticsData.rejected, (state) => {
         state.analyticsLoading = false;
+      })
+      // Generate report
+      .addCase(generateReport.pending, (state) => {
+        state.reportGenerating = true;
+      })
+      .addCase(generateReport.fulfilled, (state, action) => {
+        state.reportGenerating = false;
+        state.currentReport = action.payload;
+        state.reports.unshift({
+          _id: action.payload._id,
+          title: action.payload.title,
+          type: action.payload.type,
+          dateRange: action.payload.dateRange,
+          filters: action.payload.filters,
+          summary: action.payload.summary,
+          createdAt: action.payload.createdAt,
+        });
+      })
+      .addCase(generateReport.rejected, (state) => {
+        state.reportGenerating = false;
+      })
+      // Get reports
+      .addCase(getReports.pending, (state) => {
+        state.reportLoading = true;
+      })
+      .addCase(getReports.fulfilled, (state, action) => {
+        state.reportLoading = false;
+        state.reports = action.payload.reports;
+        state.reportsPagination = {
+          total: action.payload.total,
+          page: action.payload.page,
+          totalPages: action.payload.totalPages,
+        };
+      })
+      .addCase(getReports.rejected, (state) => {
+        state.reportLoading = false;
+      })
+      // Get report by ID
+      .addCase(getReportById.pending, (state) => {
+        state.reportLoading = true;
+      })
+      .addCase(getReportById.fulfilled, (state, action) => {
+        state.reportLoading = false;
+        state.currentReport = action.payload;
+      })
+      .addCase(getReportById.rejected, (state) => {
+        state.reportLoading = false;
+      })
+      // Delete report
+      .addCase(deleteReport.fulfilled, (state, action) => {
+        state.reports = state.reports.filter((r) => r._id !== action.payload);
       });
   },
 });

@@ -82,7 +82,8 @@ const Revenue = lazy(() => import("./pages/admin/Revenue"));
 const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
 const AdminFeedback = lazy(() => import("./pages/admin/AdminFeedback"));
 const AdminSports = lazy(() => import("./pages/admin/AdminSports"));
-const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
+const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
+const ReportView = lazy(() => import("./pages/admin/ReportView"));
 
 export const router = createBrowserRouter([
   {
@@ -180,7 +181,8 @@ export const router = createBrowserRouter([
       { path: "payments", element: <AdminPayments /> },
       { path: "feedback", element: <AdminFeedback /> },
       { path: "sports", element: <AdminSports /> },
-      { path: "analytics", element: <AdminAnalytics /> },
+      { path: "reports", element: <AdminReports /> },
+      { path: "reports/:reportId", element: <ReportView /> },
       { path: "change-password", element: <ChangePassword /> },
     ],
   },

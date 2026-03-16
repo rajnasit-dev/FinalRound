@@ -14,7 +14,7 @@ import {
   Lock,
   Menu,
   X,
-  BarChart3,
+  FileText,
 } from "lucide-react";
 import { logoutUser } from "../store/slices/authSlice";
 import Logo from "../components/Logo";
@@ -38,7 +38,6 @@ const AdminLayout = () => {
 
   const navLinks = [
     { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
     { to: "/admin/organizer-requests", icon: UserCheck, label: "Organizer Requests" },
     { to: "/admin/users", icon: Users, label: "Users" },
     { to: "/admin/sports", icon: Dumbbell, label: "Sports" },
@@ -46,6 +45,7 @@ const AdminLayout = () => {
     { to: "/admin/teams", icon: Shield, label: "Teams" },
     { to: "/admin/payments", icon: DollarSign, label: "Payments" },
     { to: "/admin/feedback", icon: MessageSquare, label: "Feedback" },
+    { to: "/admin/reports", icon: FileText, label: "Reports" },
     { to: "/admin/change-password", icon: Lock, label: "Change Password" },
   ];
 
