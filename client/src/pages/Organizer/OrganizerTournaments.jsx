@@ -17,6 +17,7 @@ const OrganizerTournaments = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { organizerTournaments, loading } = useSelector((state) => state.tournament);
+  const myTournaments = organizerTournaments || [];
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All");
 
@@ -25,7 +26,7 @@ const OrganizerTournaments = () => {
   }, [dispatch]);
 
   // Apply search and status filters
-  const filteredTournaments = (organizerTournaments || []).filter((tournament) => {
+  const filteredTournaments = myTournaments.filter((tournament) => {
     const matchesSearch =
       searchQuery === "" ||
       tournament.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
