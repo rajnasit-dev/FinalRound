@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -85,9 +85,7 @@ const EditMatch = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Edit Match
         </h1>
-        <p className="text-base dark:text-base-dark">
-          Update match schedule and venue details
-        </p>
+        
       </div>
 
       {/* Match Info Card */}

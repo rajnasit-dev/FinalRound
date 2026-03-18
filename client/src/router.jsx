@@ -71,6 +71,7 @@ const TournamentFixtures = lazy(() => import("./pages/Organizer/TournamentFixtur
 const OrganizerTournamentDashboard = lazy(() => import("./pages/Organizer/OrganizerTournamentDashboard"));
 const OrganizerProfile = lazy(() => import("./pages/Organizer/OrganizerProfile"));
 const EditOrganizerProfile = lazy(() => import("./pages/Organizer/EditOrganizerProfile"));
+const OrganizerReports = lazy(() => import("./pages/Organizer/OrganizerReports"));
 
 // Admin Pages - lazy loaded
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -83,7 +84,6 @@ const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
 const AdminFeedback = lazy(() => import("./pages/admin/AdminFeedback"));
 const AdminSports = lazy(() => import("./pages/admin/AdminSports"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
-const ReportView = lazy(() => import("./pages/admin/ReportView"));
 
 export const router = createBrowserRouter([
   {
@@ -156,6 +156,7 @@ export const router = createBrowserRouter([
           { path: "tournaments/:tournamentId/fixtures/create", element: <CreateMatch /> },
           { path: "matches/:matchId/edit", element: <EditMatch /> },
           { path: "payments", element: <OrganizerPayments /> },
+          { path: "reports", element: <OrganizerReports /> },
           { path: "teams", element: <OrganizerTeams /> },
           { path: "profile", element: <OrganizerProfile /> },
           { path: "profile/edit", element: <EditOrganizerProfile /> },
@@ -182,7 +183,6 @@ export const router = createBrowserRouter([
       { path: "feedback", element: <AdminFeedback /> },
       { path: "sports", element: <AdminSports /> },
       { path: "reports", element: <AdminReports /> },
-      { path: "reports/:reportId", element: <ReportView /> },
       { path: "change-password", element: <ChangePassword /> },
     ],
   },

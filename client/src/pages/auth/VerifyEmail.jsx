@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
@@ -94,9 +94,7 @@ const VerifyEmail = () => {
               </div>
             </div>
             <h1 className="text-4xl font-bold mb-2">Verify Your Email</h1>
-            <p className="text-base dark:text-base-dark mb-2">
-              We've sent a 6-digit verification code to
-            </p>
+            
             <p className="text-secondary font-semibold text-lg">
               {location.state?.email || watch("email")}
             </p>

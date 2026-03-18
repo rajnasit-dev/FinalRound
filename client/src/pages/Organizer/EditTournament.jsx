@@ -192,7 +192,7 @@ const EditTournament = () => {
       <BackButton className="mb-6" />
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">Edit Tournament</h1>
-        <p className="text-base dark:text-base-dark">Update tournament details</p>
+        
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -532,3 +532,4 @@ const EditTournament = () => {
 };
 
 export default EditTournament;
+

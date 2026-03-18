@@ -8,6 +8,14 @@ import { Sport } from "../models/Sport.model.js";
 import { Player } from "../models/Player.model.js";
 import { addMatchStatus, addMatchStatuses, getMatchStatus } from "../utils/statusHelpers.js";
 
+const populateMatchParticipants = (query) => query
+  .populate("tournament", "name format registrationType organizer")
+  .populate("sport", "name teamBased iconUrl")
+  .populate("teamA", "name logoUrl manager players")
+  .populate("teamB", "name logoUrl manager players")
+  .populate("playerA", "fullName avatar email")
+  .populate("playerB", "fullName avatar email");
+
 // Create a new match
 export const createMatch = asyncHandler(async (req, res) => {
   const organizerId = req.user._id;
@@ -105,13 +113,7 @@ export const createMatch = asyncHandler(async (req, res) => {
 
   const match = await Match.create(matchData);
 
-  const populatedMatch = await Match.findById(match._id)
-    .populate("tournament", "name format registrationType")
-    .populate("sport", "name teamBased iconUrl")
-    .populate("teamA", "name logoUrl manager players")
-    .populate("teamB", "name logoUrl manager players")
-    .populate("playerA", "fullName avatar email")
-    .populate("playerB", "fullName avatar email");
+  const populatedMatch = await populateMatchParticipants(Match.findById(match._id));
 
   const matchWithStatus = addMatchStatus(populatedMatch);
 
@@ -132,11 +134,7 @@ export const getAllMatches = asyncHandler(async (req, res) => {
     filter.$or = [{ teamA: team }, { teamB: team }];
   }
 
-  const matches = await Match.find(filter)
-    .populate("tournament", "name format")
-    .populate("sport", "name teamBased iconUrl")
-    .populate("teamA", "name logoUrl")
-    .populate("teamB", "name logoUrl")
+  const matches = await populateMatchParticipants(Match.find(filter))
     .sort({ scheduledAt: -1 })
     .limit(100);
 
@@ -159,9 +157,7 @@ export const getAllMatches = asyncHandler(async (req, res) => {
 export const getMatchById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const match = await Match.findById(id)
-    .populate("tournament", "name format organizer")
-    .populate("sport", "name teamBased iconUrl")
+  const match = await populateMatchParticipants(Match.findById(id))
     .populate({
       path: "teamA",
       populate: {
@@ -221,11 +217,7 @@ export const updateMatch = asyncHandler(async (req, res) => {
 
   await match.save();
 
-  const updatedMatch = await Match.findById(id)
-    .populate("tournament", "name format")
-    .populate("sport", "name teamBased iconUrl")
-    .populate("teamA", "name logoUrl")
-    .populate("teamB", "name logoUrl");
+  const updatedMatch = await populateMatchParticipants(Match.findById(id));
 
   const matchWithStatus = addMatchStatus(updatedMatch);
 
@@ -268,11 +260,7 @@ export const deleteMatch = asyncHandler(async (req, res) => {
 export const updateMatchScore = asyncHandler(async (req, res) => {
   const { id } = req.params;
   
-  const match = await Match.findById(id)
-    .populate("tournament", "name format")
-    .populate("sport", "name teamBased iconUrl")
-    .populate("teamA", "name logoUrl")
-    .populate("teamB", "name logoUrl");
+  const match = await populateMatchParticipants(Match.findById(id));
 
   if (!match) {
     throw new ApiError(404, "Match not found.");
@@ -302,11 +290,7 @@ export const updateMatchResult = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only the tournament organizer can update the match.");
   }
 
-  const updatedMatch = await Match.findById(id)
-    .populate("tournament", "name format")
-    .populate("sport", "name teamBased iconUrl")
-    .populate("teamA", "name logoUrl")
-    .populate("teamB", "name logoUrl");
+  const updatedMatch = await populateMatchParticipants(Match.findById(id));
 
   const matchWithStatus = addMatchStatus(updatedMatch);
 
@@ -319,11 +303,7 @@ export const updateMatchResult = asyncHandler(async (req, res) => {
 export const getMatchesByTournament = asyncHandler(async (req, res) => {
   const { tournamentId } = req.params;
 
-  const matches = await Match.find({ tournament: tournamentId })
-    .populate("tournament", "name format")
-    .populate("sport", "name teamBased iconUrl")
-    .populate("teamA", "name logoUrl")
-    .populate("teamB", "name logoUrl")
+  const matches = await populateMatchParticipants(Match.find({ tournament: tournamentId }))
     .sort({ scheduledAt: 1 })
     .limit(100);
 
@@ -338,13 +318,9 @@ export const getMatchesByTournament = asyncHandler(async (req, res) => {
 export const getMatchesByTeam = asyncHandler(async (req, res) => {
   const { teamId } = req.params;
 
-  const matches = await Match.find({
+  const matches = await populateMatchParticipants(Match.find({
     $or: [{ teamA: teamId }, { teamB: teamId }]
-  })
-    .populate("tournament", "name format")
-    .populate("sport", "name teamBased iconUrl")
-    .populate("teamA", "name logoUrl")
-    .populate("teamB", "name logoUrl")
+  }))
     .sort({ scheduledAt: -1 })
     .limit(50);
 
@@ -358,14 +334,10 @@ export const getMatchesByTeam = asyncHandler(async (req, res) => {
 // Get upcoming matches
 export const getUpcomingMatches = asyncHandler(async (req, res) => {
   const now = new Date();
-  const matches = await Match.find({
+  const matches = await populateMatchParticipants(Match.find({
     scheduledAt: { $gte: now },
     isCancelled: false
-  })
-    .populate("tournament", "name format")
-    .populate("sport", "name teamBased iconUrl")
-    .populate("teamA", "name logoUrl")
-    .populate("teamB", "name logoUrl")
+  }))
     .sort({ scheduledAt: 1 })
     .limit(20);
 
@@ -381,14 +353,10 @@ export const getLiveMatches = asyncHandler(async (req, res) => {
   const now = new Date();
   const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
   
-  const matches = await Match.find({ 
+  const matches = await populateMatchParticipants(Match.find({ 
     scheduledAt: { $gte: threeHoursAgo, $lte: now },
     isCancelled: false
-  })
-    .populate("tournament", "name format")
-    .populate("sport", "name teamBased iconUrl")
-    .populate("teamA", "name logoUrl")
-    .populate("teamB", "name logoUrl")
+  }))
     .sort({ scheduledAt: -1 });
 
   const matchesWithStatus = addMatchStatuses(matches);
@@ -405,14 +373,10 @@ export const getCompletedMatches = asyncHandler(async (req, res) => {
   const now = new Date();
   const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
 
-  const matches = await Match.find({ 
+  const matches = await populateMatchParticipants(Match.find({ 
     scheduledAt: { $lt: threeHoursAgo },
     isCancelled: false
-  })
-    .populate("tournament", "name format")
-    .populate("sport", "name teamBased iconUrl")
-    .populate("teamA", "name logoUrl")
-    .populate("teamB", "name logoUrl")
+  }))
     .sort({ scheduledAt: -1 })
     .limit(parseInt(limit));
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
@@ -63,9 +63,7 @@ const ForgotPassword = () => {
             <h1 className="text-4xl font-bold mb-2 text-text-primary dark:text-text-primary-dark">
               Forgot Password?
             </h1>
-            <p className="text-text-primary dark:text-text-primary-dark">
-              Enter your email and we'll send you a link to reset your password
-            </p>
+            
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

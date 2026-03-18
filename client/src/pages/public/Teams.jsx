@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import TeamCard from "../../components/ui/TeamCard";
 import SearchBar from "../../components/ui/SearchBar";
@@ -82,7 +82,7 @@ const Teams = () => {
       <BackButton className="mb-6" />
       <div className="mb-8">
         <h1 className="text-4xl font-bold my-5 text-text-primary dark:text-text-primary-dark">Explore Teams</h1>
-        <p className="text-base dark:text-base-dark">Find and join competitive sports teams in your area</p>
+        
       </div>
 
       {/* Search and Filters */}

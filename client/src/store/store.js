@@ -10,6 +10,7 @@ import feedbackReducer from "./slices/feedbackSlice";
 import bookingReducer from "./slices/bookingSlice";
 import requestReducer from "./slices/requestSlice";
 import adminReducer from "./slices/adminSlice";
+import organizerReducer from "./slices/organizerSlice";
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +25,7 @@ export const store = configureStore({
     booking: bookingReducer,
     request: requestReducer,
     admin: adminReducer,
+    organizer: organizerReducer,
   },
 });
 

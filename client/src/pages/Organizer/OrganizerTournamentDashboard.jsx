@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   Edit,
   CheckCircle,
-  User,
 } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import BackButton from "../../components/ui/BackButton";
@@ -14,6 +13,7 @@ import {
   fetchTournamentParticipants,
 } from "../../store/slices/tournamentSlice";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
+import defaultUserAvatar from "../../assets/defaultUserAvatar.png";
 
 const OrganizerTournamentDashboard = () => {
   const { tournamentId } = useParams();
@@ -80,9 +80,7 @@ const OrganizerTournamentDashboard = () => {
             <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
               {tournament.name} - Participants
             </h1>
-            <p className="text-base dark:text-base-dark">
-              View registered participants
-            </p>
+            
           </div>
           {isOrganizer && (
             <Link
@@ -216,25 +214,17 @@ const OrganizerTournamentDashboard = () => {
                       width: "40%",
                       render: (player) => (
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full overflow-hidden bg-linear-to-br from-blue-500 to-purple-600 shrink-0">
-                            {player.avatar ? (
-                              <img
-                                src={player.avatar}
-                                alt={player.fullName}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-white font-bold">
-                                <User className="w-5 h-5" />
-                              </div>
-                            )}
-                          </div>
+                          <img
+                            src={player.avatar || defaultUserAvatar}
+                            alt={player.fullName}
+                            className="w-10 h-10 rounded-full object-cover shrink-0"
+                          />
                           <div className="min-w-0">
                             <p className="font-semibold text-text-primary dark:text-text-primary-dark text-sm truncate">
                               {player.fullName}
                             </p>
                             <p className="text-xs text-base dark:text-base-dark truncate">
-                              {player.email}
+                              {player.city || "N/A"}
                             </p>
                           </div>
                         </div>
@@ -246,10 +236,10 @@ const OrganizerTournamentDashboard = () => {
                       render: (player) => (
                         <div className="min-w-0">
                           <p className="text-sm text-text-primary dark:text-text-primary-dark truncate">
-                            {player.phone || "N/A"}
+                            {player.email || "N/A"}
                           </p>
                           <p className="text-xs text-base dark:text-base-dark truncate">
-                            {player.city || "N/A"}
+                            {player.phone || "N/A"}
                           </p>
                         </div>
                       ),
@@ -284,3 +274,4 @@ const OrganizerTournamentDashboard = () => {
 };
 
 export default OrganizerTournamentDashboard;
+

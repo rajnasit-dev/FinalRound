@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAllUsers } from "../../store/slices/adminSlice";
@@ -219,9 +219,7 @@ const AdminUsers = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           User Management
         </h1>
-        <p className="text-base dark:text-base-dark mt-2">
-          View and manage all users
-        </p>
+        
       </div>
 
       {/* Tabs */}

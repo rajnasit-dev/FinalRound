@@ -145,3 +145,4 @@ const PlayerCard = memo(({ player }) => {
 });
 
 export default PlayerCard;
+

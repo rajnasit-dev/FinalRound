@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Calendar, MapPin, Trophy, Clock, ArrowLeft, Users } from "lucide-react";
@@ -68,9 +68,7 @@ const MatchDetail = () => {
               <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
                 {match.tournament?.name || "Tournament Match"}
               </h1>
-              <p className="text-base dark:text-base-dark">
-                {match.round && `${match.round} Round`}
-              </p>
+              
             </div>
           </div>
           <span

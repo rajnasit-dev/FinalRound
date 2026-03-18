@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -217,7 +217,7 @@ const PlayerRequests = () => {
       <BackButton className="mb-6" />
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">Team Requests</h1>
-        <p className="text-base dark:text-base-dark">Manage your team invitations and join requests</p>
+        
       </div>
 
         {error && <ErrorMessage message={error} type="error" onDismiss={() => dispatch(clearError())} />}

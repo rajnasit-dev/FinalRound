@@ -69,6 +69,7 @@ import bookingRouter from './routes/booking.routes.js';
 import requestRouter from './routes/request.routes.js';
 import adminRouter from './routes/admin.routes.js';
 import reportRouter from './routes/report.routes.js';
+import organizerReportRouter from './routes/organizerReport.routes.js';
 
 //Routes
 app.use('/api/v1/auth', authRouter);
@@ -86,6 +87,7 @@ app.use('/api/v1/bookings', bookingRouter);
 app.use('/api/v1/requests', requestRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/admin/reports', reportRouter);
+app.use('/api/v1/organizer/reports', organizerReportRouter);
 
 // SPA fallback: serve client build for non-API routes (fixes 404 on direct /teams/:id etc.)
 const clientDist = path.join(__dirname, '../../client/dist');

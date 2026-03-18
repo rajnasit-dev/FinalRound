@@ -185,9 +185,7 @@ const PlayerDetail = () => {
             {player.bio && (
               <Container>
                 <h2 className="text-2xl font-bold mb-3">About Player</h2>
-                <p className="text-base dark:text-base-dark leading-relaxed">
-                  {player.bio}
-                </p>
+                
               </Container>
             )}
             {/* Player Details */}
@@ -459,3 +457,4 @@ const PlayerDetail = () => {
 };
 
 export default PlayerDetail;
+

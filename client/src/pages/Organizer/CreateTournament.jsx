@@ -264,7 +264,7 @@ const CreateTournament = () => {
           }
         },
         prefill: {
-          name: tournament.organizer?.fullName || "",
+          name: tournament.organizer?.orgName || tournament.organizer?.fullName || "",
           email: tournament.organizer?.email || "",
           contact: tournament.organizer?.phone || "",
         },
@@ -304,7 +304,7 @@ const CreateTournament = () => {
       <BackButton className="mb-6" />
       <div>
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">Create Tournament</h1>
-        <p className="text-base dark:text-base-dark">Set up a new competition</p>
+        
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -621,3 +621,4 @@ const CreateTournament = () => {
 };
 
 export default CreateTournament;
+

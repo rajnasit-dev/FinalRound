@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllTournaments } from "../../store/slices/tournamentSlice";
 import { fetchUserBookings } from "../../store/slices/bookingSlice";
@@ -94,10 +94,7 @@ const PlayerTournaments = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
           My Tournaments
         </h1>
-        <p className="text-base dark:text-base-dark">
-          View and manage your registered tournaments
-          {myTournaments.length > 0 && ` (${myTournaments.length})`}
-        </p>
+        
       </div>
 
       {/* Empty State */}

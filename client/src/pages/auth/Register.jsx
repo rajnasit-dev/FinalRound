@@ -153,9 +153,7 @@ const Register = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-2">Create Your Account</h1>
-            <p className="text-base dark:text-base-dark">
-              Join SportsHub and connect with the sports community
-            </p>
+            
           </div>
 
           {/* Registration Form */}
@@ -479,3 +477,4 @@ const Register = () => {
 };
 
 export default Register;
+

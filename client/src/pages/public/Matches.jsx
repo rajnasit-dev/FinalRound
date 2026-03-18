@@ -53,9 +53,7 @@ const Matches = () => {
         <h1 className="text-4xl font-bold my-5 text-text-primary dark:text-text-primary-dark">
           Live & Upcoming Matches
         </h1>
-        <p className="text-base dark:text-base-dark">
-          Follow live matches and check upcoming fixtures
-        </p>
+        
       </div>
 
       {/* Live Matches Section */}
@@ -136,3 +134,4 @@ const Matches = () => {
 };
 
 export default Matches;
+

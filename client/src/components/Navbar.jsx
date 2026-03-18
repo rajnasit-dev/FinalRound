@@ -17,6 +17,9 @@ const Navbar = memo(({ darkMode, toggleDarkMode }) => {
   const location = useLocation();
   
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const userDisplayName = user?.role === "TournamentOrganizer"
+    ? (user?.orgName || user?.fullName)
+    : user?.fullName;
 
   // Navigation links data
   const navLinks = [
@@ -126,11 +129,11 @@ const Navbar = memo(({ darkMode, toggleDarkMode }) => {
                     <div className="flex items-center gap-2">
                       <img
                       src={user.avatar || defaultAvatar}
-                      alt={user.fullName}
+                      alt={userDisplayName}
                       className="w-10 h-10 rounded-full object-cover"
                     />
                       <div className="text-left">
-                        <p className="text-sm font-semibold">{user.fullName}</p>
+                        <p className="text-sm font-semibold">{userDisplayName}</p>
                         <p className="text-xs text-base dark:text-base-dark">{getRoleBadge()}</p>
                       </div>
                       <ChevronDown size={16} className={`transition-transform ${showDropdown ? 'rotate-180' : ''}`} />

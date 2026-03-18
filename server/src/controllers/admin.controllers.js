@@ -716,28 +716,7 @@ export const toggleOtpSetting = asyncHandler(async (req, res) => {
     );
 });
 
-// Get email notifications setting
-export const getEmailNotificationSetting = asyncHandler(async (req, res) => {
-  const emailNotificationsEnabled = await Settings.getSetting("emailNotificationsEnabled", true);
-  res
-    .status(200)
-    .json(new ApiResponse(200, { emailNotificationsEnabled }, "Email notification setting fetched successfully"));
-});
 
-// Toggle email notifications setting
-export const toggleEmailNotificationSetting = asyncHandler(async (req, res) => {
-  const current = await Settings.getSetting("emailNotificationsEnabled", true);
-  const updated = await Settings.setSetting("emailNotificationsEnabled", !current);
-  res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        { emailNotificationsEnabled: updated.value },
-        `Email notifications ${updated.value ? "enabled" : "disabled"} successfully`
-      )
-    );
-});
 
 // Get analytics data for charts and detailed statistics
 export const getAnalyticsData = asyncHandler(async (req, res) => {
@@ -788,12 +767,13 @@ export const getAnalyticsData = asyncHandler(async (req, res) => {
       { $sort: { "_id.year": 1, "_id.month": 1 } },
     ]),
 
-    // 2. Revenue by month (last 12 months) - from payments
+    // 2. Admin Revenue by month (last 12 months) - from platform fees only
     Payment.aggregate([
       {
         $match: {
           createdAt: { $gte: twelveMonthsAgo },
           status: "Success",
+          payerType: "Organizer", // Only admin/platform revenue from organizers
         },
       },
       {
@@ -840,8 +820,9 @@ export const getAnalyticsData = asyncHandler(async (req, res) => {
       { $limit: 10 },
     ]),
 
-    // 6. Payment status distribution
+    // 6. Admin revenue status distribution (organizer payments only)
     Payment.aggregate([
+      { $match: { payerType: "Organizer" } },
       { $group: { _id: "$status", count: { $sum: 1 }, total: { $sum: "$amount" } } },
     ]),
 
@@ -858,22 +839,24 @@ export const getAnalyticsData = asyncHandler(async (req, res) => {
     Tournament.countDocuments({
       createdAt: { $gte: lastMonthStart, $lt: currentMonthStart },
     }),
-    // 11. Current month revenue
+    // 11. Current month admin revenue (organizer payments only)
     Payment.aggregate([
       {
         $match: {
           status: "Success",
           createdAt: { $gte: currentMonthStart },
+          payerType: "Organizer",
         },
       },
       { $group: { _id: null, total: { $sum: "$amount" } } },
     ]),
-    // 12. Last month revenue
+    // 12. Last month admin revenue (organizer payments only)
     Payment.aggregate([
       {
         $match: {
           status: "Success",
           createdAt: { $gte: lastMonthStart, $lt: currentMonthStart },
+          payerType: "Organizer",
         },
       },
       { $group: { _id: null, total: { $sum: "$amount" } } },

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Lock, ArrowLeft, CheckCircle } from "lucide-react";
@@ -85,9 +85,7 @@ const ResetPassword = () => {
             <h1 className="text-4xl font-bold mb-2 text-text-primary dark:text-text-primary-dark">
               Reset Password
             </h1>
-            <p className="text-text-secondary dark:text-text-secondary-dark">
-              Enter your new password below
-            </p>
+            
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

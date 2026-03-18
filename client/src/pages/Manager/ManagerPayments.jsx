@@ -144,9 +144,7 @@ const ManagerPayments = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Payment History
         </h1>
-        <p className="text-base dark:text-base-dark mt-2">
-          View all your team tournament registration payments
-        </p>
+        
       </div>
 
       {error && <ErrorMessage message={error} />}
@@ -286,3 +284,4 @@ const ManagerPayments = () => {
 };
 
 export default ManagerPayments;
+

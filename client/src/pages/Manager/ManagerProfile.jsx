@@ -1,4 +1,4 @@
-import { User, Mail, Phone, MapPin, Calendar, Edit } from "lucide-react";
+﻿import { User, Mail, Phone, MapPin, Calendar, Edit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -132,7 +132,7 @@ const ManagerProfile = () => {
               <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
                 {user?.fullName || "Manager Name"}
               </h2>
-              <p className="text-base dark:text-base-dark mt-1">Team Manager</p>
+              
             </div>
 
             {/* Contact Info */}

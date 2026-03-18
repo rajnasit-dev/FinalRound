@@ -40,9 +40,7 @@ const OrganizerTeams = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
           Registered Teams
         </h1>
-        <p className="text-base dark:text-base-dark">
-          All teams registered in your tournaments
-        </p>
+        
       </div>
 
       {/* Stats */}
@@ -209,3 +207,4 @@ const OrganizerTeams = () => {
 };
 
 export default OrganizerTeams;
+

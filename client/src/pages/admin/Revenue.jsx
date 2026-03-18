@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getRevenue } from "../../store/slices/adminSlice";
 import { formatINR } from "../../utils/formatINR";
@@ -11,6 +11,8 @@ import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
 import DashboardCardState from "../../components/ui/DashboardCardState";
 import DataTable from "../../components/ui/DataTable";
+import SearchBar from "../../components/ui/SearchBar";
+import Select from "../../components/ui/Select";
 import useDateFormat from "../../hooks/useDateFormat";
 
 const Revenue = () => {
@@ -18,18 +20,69 @@ const Revenue = () => {
   const { formatDate, formatTime } = useDateFormat();
   const { revenue, loading } = useSelector((state) => state.admin);
   const [selectedFilter, setSelectedFilter] = useState("all"); // "all", "admin", "organizer"
+  const [searchTerm, setSearchTerm] = useState("");
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [monthFilter, setMonthFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
 
   useEffect(() => {
     dispatch(getRevenue({ type: selectedFilter }));
   }, [dispatch, selectedFilter]);
 
-  // Filter transactions based on selected card
-  const getFilteredTransactions = () => {
-    if (!revenue?.transactions) return [];
-    return revenue.transactions;
-  };
+  const transactions = revenue?.transactions || [];
 
-  const filteredTransactions = getFilteredTransactions();
+  const availableYears = useMemo(() => {
+    if (!transactions.length) return [];
+    const years = [...new Set(transactions.map((t) => new Date(t.createdAt).getFullYear()))];
+    return years.sort((a, b) => b - a);
+  }, [transactions]);
+
+  const uniqueTransactionTypes = useMemo(() => {
+    return [...new Set(transactions.map((t) => t.type).filter(Boolean))];
+  }, [transactions]);
+
+  const uniqueCategories = useMemo(() => {
+    return [...new Set(transactions.map((t) => t.paymentType).filter(Boolean))];
+  }, [transactions]);
+
+  const filteredTransactions = useMemo(() => {
+    return transactions
+      .filter((transaction) => {
+        if (selectedFilter === "admin") {
+          return transaction.paymentType === "Admin Revenue" || transaction.type === "Platform Fee";
+        }
+        if (selectedFilter === "organizer") {
+          return !(transaction.paymentType === "Admin Revenue" || transaction.type === "Platform Fee");
+        }
+        return true;
+      })
+      .filter((transaction) => {
+        if (transactionTypeFilter === "all") return true;
+        return transaction.type === transactionTypeFilter;
+      })
+      .filter((transaction) => {
+        if (categoryFilter === "all") return true;
+        return transaction.paymentType === categoryFilter;
+      })
+      .filter((transaction) => {
+        if (!searchTerm.trim()) return true;
+        const q = searchTerm.toLowerCase().trim();
+        return (
+          (transaction.tournament?.name || "").toLowerCase().includes(q) ||
+          (transaction.organizer?.orgName || transaction.organizer?.fullName || "").toLowerCase().includes(q) ||
+          (transaction.team?.name || "").toLowerCase().includes(q) ||
+          (transaction.player?.fullName || "").toLowerCase().includes(q) ||
+          (transaction.payerName || "").toLowerCase().includes(q)
+        );
+      })
+      .filter((transaction) => {
+        const date = new Date(transaction.createdAt);
+        if (monthFilter !== "all" && date.getMonth() !== parseInt(monthFilter, 10)) return false;
+        if (yearFilter !== "all" && date.getFullYear() !== parseInt(yearFilter, 10)) return false;
+        return true;
+      });
+  }, [transactions, selectedFilter, transactionTypeFilter, categoryFilter, searchTerm, monthFilter, yearFilter]);
 
   if (loading) {
     return (
@@ -46,9 +99,7 @@ const Revenue = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Revenue Management
         </h1>
-        <p className="text-base dark:text-base-dark mt-2">
-          Track platform earnings and payments
-        </p>
+        
       </div>
 
       {/* Stats Grid */}
@@ -89,6 +140,62 @@ const Revenue = () => {
           onClick={() => setSelectedFilter("all")}
           className="cursor-pointer transform transition-all hover:scale-105"
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <SearchBar
+          placeholder="Search tournament, organizer, player..."
+          searchQuery={searchTerm}
+          setSearchQuery={setSearchTerm}
+        />
+        <Select
+          options={[
+            { value: "all", label: "All Types" },
+            ...uniqueTransactionTypes.map((type) => ({ value: type, label: type })),
+          ]}
+          value={transactionTypeFilter}
+          onChange={(e) => setTransactionTypeFilter(e.target.value)}
+        />
+        <Select
+          options={[
+            { value: "all", label: "All Categories" },
+            ...uniqueCategories.map((category) => ({ value: category, label: category })),
+          ]}
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+        />
+        <Select
+          options={[
+            { value: "all", label: "All Months" },
+            { value: "0", label: "January" },
+            { value: "1", label: "February" },
+            { value: "2", label: "March" },
+            { value: "3", label: "April" },
+            { value: "4", label: "May" },
+            { value: "5", label: "June" },
+            { value: "6", label: "July" },
+            { value: "7", label: "August" },
+            { value: "8", label: "September" },
+            { value: "9", label: "October" },
+            { value: "10", label: "November" },
+            { value: "11", label: "December" },
+          ]}
+          value={monthFilter}
+          onChange={(e) => setMonthFilter(e.target.value)}
+        />
+        <Select
+          options={[
+            { value: "all", label: "All Years" },
+            ...availableYears.map((year) => ({ value: String(year), label: String(year) })),
+          ]}
+          value={yearFilter}
+          onChange={(e) => setYearFilter(e.target.value)}
+        />
+        <div className="flex items-center justify-end">
+          <span className="text-sm text-base dark:text-base-dark font-medium">
+            Total: {filteredTransactions.length}
+          </span>
+        </div>
       </div>
 
       {/* Transactions Table */}
@@ -138,7 +245,7 @@ const Revenue = () => {
               render: (transaction) => (
                 <p className="text-sm text-text-primary dark:text-text-primary-dark">
                   {transaction.type === "Platform Fee" 
-                    ? transaction.organizer?.fullName || transaction.organizer?.orgName || transaction.payerName || "Unknown"
+                    ? transaction.organizer?.orgName || transaction.organizer?.fullName || transaction.payerName || "Unknown"
                     : transaction.team?.name || transaction.player?.fullName || transaction.payerName || "Unknown"}
                 </p>
               ),
@@ -190,3 +297,4 @@ const Revenue = () => {
 };
 
 export default Revenue;
+

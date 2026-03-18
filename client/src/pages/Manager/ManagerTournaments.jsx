@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Trophy, CheckCircle } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
@@ -60,10 +60,7 @@ const ManagerTournaments = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
           My Tournaments
         </h1>
-        <p className="text-base dark:text-base-dark">
-          View tournaments where your teams are registered
-          {myTournaments.length > 0 && ` (${myTournaments.length})`}
-        </p>
+        
       </div>
 
       {myTournaments.length === 0 && (

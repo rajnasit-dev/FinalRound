@@ -10,6 +10,7 @@ import Spinner from "../../components/ui/Spinner";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import DataTable from "../../components/ui/DataTable";
 import SearchBar from "../../components/ui/SearchBar";
+import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
 import Input from "../../components/ui/Input";
@@ -33,6 +34,9 @@ const AdminSports = () => {
   const [editingSport, setEditingSport] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("nameAsc");
   const [addRoleInput, setAddRoleInput] = useState("");
   const [addRoles, setAddRoles] = useState(["Player"]);
   const [editRoleInput, setEditRoleInput] = useState("");
@@ -243,6 +247,33 @@ const AdminSports = () => {
     },
   ];
 
+  const uniqueRoles = [...new Set((sports || []).flatMap((sport) => sport.roles || ["Player"]))]
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
+
+  const filteredSports = [...(sports || [])]
+    .filter((sport) => {
+      if (!searchTerm) return true;
+      return sport.name?.toLowerCase().includes(searchTerm.toLowerCase().trim());
+    })
+    .filter((sport) => {
+      if (typeFilter === "all") return true;
+      return typeFilter === "team" ? sport.teamBased : !sport.teamBased;
+    })
+    .filter((sport) => {
+      if (roleFilter === "all") return true;
+      return (sport.roles || ["Player"]).includes(roleFilter);
+    })
+    .sort((a, b) => {
+      if (sortBy === "nameDesc") {
+        return (b.name || "").localeCompare(a.name || "");
+      }
+      if (sortBy === "type") {
+        return Number(b.teamBased) - Number(a.teamBased);
+      }
+      return (a.name || "").localeCompare(b.name || "");
+    });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -260,9 +291,7 @@ const AdminSports = () => {
           <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
             Sports Management
           </h1>
-          <p className="text-base dark:text-base-dark mt-2">
-            Manage all sports available on the platform
-          </p>
+          
         </div>
         <Button
           onClick={() => setShowAddModal(true)}
@@ -281,12 +310,45 @@ const AdminSports = () => {
         />
       )}
 
-      {/* Search */}
-      <SearchBar
-        placeholder="Search sports by name..."
-        searchQuery={searchTerm}
-        setSearchQuery={setSearchTerm}
-      />
+      {/* Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <SearchBar
+          placeholder="Search sports by name..."
+          searchQuery={searchTerm}
+          setSearchQuery={setSearchTerm}
+        />
+        <Select
+          options={[
+            { value: "all", label: "All Types" },
+            { value: "team", label: "Team-Based" },
+            { value: "individual", label: "Individual" },
+          ]}
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+        />
+        <Select
+          options={[
+            { value: "all", label: "All Roles" },
+            ...uniqueRoles.map((role) => ({ value: role, label: role })),
+          ]}
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+        />
+        <Select
+          options={[
+            { value: "nameAsc", label: "Name (A-Z)" },
+            { value: "nameDesc", label: "Name (Z-A)" },
+            { value: "type", label: "Type (Team First)" },
+          ]}
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        />
+        <div className="flex items-center justify-end">
+          <span className="text-sm text-base dark:text-base-dark font-medium">
+            Total: {filteredSports.length}
+          </span>
+        </div>
+      </div>
 
       {sports.length === 0 ? (
         <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-12 text-center">
@@ -303,11 +365,7 @@ const AdminSports = () => {
       ) : (
         <DataTable
           columns={columns}
-          data={sports.filter((s) =>
-            searchTerm
-              ? s.name?.toLowerCase().includes(searchTerm.toLowerCase())
-              : true
-          )}
+          data={filteredSports}
           itemsPerPage={10}
           emptyMessage="No sports found"
         />
@@ -575,3 +633,4 @@ const AdminSports = () => {
 };
 
 export default AdminSports;
+

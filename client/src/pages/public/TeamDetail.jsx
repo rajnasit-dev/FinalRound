@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+﻿import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -287,9 +287,7 @@ const TeamDetail = () => {
             {team.description && (
               <Container>
                 <h2 className="text-2xl font-bold mb-5">About Team</h2>
-                <p className="text-base dark:text-base-dark leading-relaxed">
-                  {team.description}
-                </p>
+                
               </Container>
             )}
             {/* Team Information */}

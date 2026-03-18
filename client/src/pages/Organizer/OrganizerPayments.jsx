@@ -232,9 +232,7 @@ const OrganizerPayments = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Payments Management
         </h1>
-        <p className="text-base dark:text-base-dark mt-2">
-          Track registration payments received and platform fees paid
-        </p>
+        
       </div>
 
       {error && <ErrorMessage message={error} type="error" />}
@@ -378,3 +376,4 @@ const OrganizerPayments = () => {
 };
 
 export default OrganizerPayments;
+

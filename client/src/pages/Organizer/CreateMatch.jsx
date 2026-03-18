@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -53,15 +53,13 @@ const CreateMatch = () => {
       // Get participants based on tournament type
       if (tournament) {
         if (tournament.registrationType === "Team") {
-          // Use registeredTeams directly from tournament (already populated)
-          const tournamentTeams = tournament.registeredTeams || [];
+          const tournamentTeams = tournament.approvedTeams || [];
           console.log("Tournament teams:", tournamentTeams);
           setParticipants(tournamentTeams);
         } else if (tournament.registrationType === "Player") {
-          // Use registered players from tournament
-          const registeredPlayers = tournament.registeredPlayers || [];
-          console.log("Tournament players:", registeredPlayers);
-          setParticipants(registeredPlayers);
+          const approvedPlayers = tournament.approvedPlayers || [];
+          console.log("Tournament players:", approvedPlayers);
+          setParticipants(approvedPlayers);
         }
       }
     } else {
@@ -129,9 +127,7 @@ const CreateMatch = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Schedule Match
         </h1>
-        <p className="text-base dark:text-base-dark">
-          Create a new match for a tournament
-        </p>
+        
       </div>
 
       {/* Form */}

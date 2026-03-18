@@ -218,8 +218,8 @@ export const getTournamentById = asyncHandler(async (req, res) => {
         select: "name teamBased iconUrl fullName email avatar"
       }
     })
-    .populate("registeredPlayers", "fullName avatar email")
-    .populate("approvedPlayers", "fullName avatar email");
+    .populate("registeredPlayers", "fullName avatar email phone city")
+    .populate("approvedPlayers", "fullName avatar email phone city");
 
   if (!tournament) {
     throw new ApiError(404, "Tournament not found.");
@@ -315,6 +315,92 @@ export const updateTournament = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, tournamentWithStatus, "Tournament updated successfully."));
 });
 
+const FIXTURE_SLOT_HOURS = [10, 13, 16, 19];
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+const createLeaguePairings = (participantIds) => {
+  const pairings = [];
+
+  for (let i = 0; i < participantIds.length; i++) {
+    for (let j = i + 1; j < participantIds.length; j++) {
+      pairings.push([participantIds[i], participantIds[j]]);
+    }
+  }
+
+  return pairings;
+};
+
+const getNextPowerOfTwo = (value) => {
+  let power = 1;
+
+  while (power < value) {
+    power *= 2;
+  }
+
+  return power;
+};
+
+const createKnockoutPairings = (participantIds) => {
+  const bracketSize = getNextPowerOfTwo(participantIds.length);
+  const byeCount = bracketSize - participantIds.length;
+  const participantsWithBye = participantIds.slice(0, byeCount);
+  const competingParticipants = participantIds.slice(byeCount);
+  const pairings = [];
+
+  for (let i = 0; i < competingParticipants.length; i += 2) {
+    const participantA = competingParticipants[i];
+    const participantB = competingParticipants[i + 1];
+
+    if (participantA && participantB) {
+      pairings.push([participantA, participantB]);
+    }
+  }
+
+  return { pairings, byeCount, participantsWithBye };
+};
+
+const createScheduledMatches = ({ pairings, start, end, tournament }) => {
+  const totalDays = Math.max(1, Math.ceil((end - start) / DAY_IN_MS) + 1);
+  const totalAvailableSlots = totalDays * FIXTURE_SLOT_HOURS.length;
+
+  if (pairings.length > totalAvailableSlots) {
+    throw new ApiError(
+      400,
+      `The tournament date range supports only ${totalAvailableSlots} fixture slots. Extend the tournament dates or reduce the number of participants.`
+    );
+  }
+
+  return pairings.map(([participantA, participantB], index) => {
+    const dayOffset = Math.floor(index / FIXTURE_SLOT_HOURS.length);
+    const slotHour = FIXTURE_SLOT_HOURS[index % FIXTURE_SLOT_HOURS.length];
+    const scheduledAt = new Date(start.getTime() + dayOffset * DAY_IN_MS);
+
+    scheduledAt.setHours(slotHour, 0, 0, 0);
+
+    const baseMatch = {
+      tournament: tournament._id,
+      sport: tournament.sport._id || tournament.sport,
+      ground: tournament.ground || null,
+      scheduledAt,
+      status: "Scheduled",
+    };
+
+    if (tournament.registrationType === "Team") {
+      return {
+        ...baseMatch,
+        teamA: participantA,
+        teamB: participantB,
+      };
+    }
+
+    return {
+      ...baseMatch,
+      playerA: participantA,
+      playerB: participantB,
+    };
+  });
+};
+
 // Generate fixtures (schedule) for a tournament - branched for player vs team
 export const generateFixtures = asyncHandler(async (req, res) => {
   const organizerId = req.user._id;
@@ -343,86 +429,47 @@ export const generateFixtures = asyncHandler(async (req, res) => {
   let scheduledMatches = [];
   const start = new Date(tournament.startDate);
   const end = new Date(tournament.endDate);
+  let byeCount = 0;
   
   if (isNaN(start) || isNaN(end) || start > end) {
     throw new ApiError(400, "Invalid tournament start/end dates.");
   }
 
-  const totalDays = Math.max(1, Math.ceil((end - start) / (24 * 60 * 60 * 1000)) + 1);
-
   // Branch based on tournament registration type
   if (tournament.registrationType === "Team") {
-    // Team-based fixtures
     const teams = tournament.approvedTeams?.map(t => t._id.toString()) || [];
     if (teams.length < 2) {
       throw new ApiError(400, "At least 2 approved teams are required to generate fixtures.");
     }
 
-    const pairings = [];
-    for (let i = 0; i < teams.length; i++) {
-      for (let j = i + 1; j < teams.length; j++) {
-        pairings.push([teams[i], teams[j]]);
-      }
+    let pairings = [];
+
+    if (tournament.format === "Knockout") {
+      const knockoutFixtures = createKnockoutPairings(teams);
+      pairings = knockoutFixtures.pairings;
+      byeCount = knockoutFixtures.byeCount;
+    } else {
+      pairings = createLeaguePairings(teams);
     }
 
-    const matchesPerDay = Math.max(1, Math.ceil(pairings.length / totalDays));
-    let pairingIndex = 0;
-
-    for (let day = 0; day < totalDays && pairingIndex < pairings.length; day++) {
-      for (let k = 0; k < matchesPerDay && pairingIndex < pairings.length; k++) {
-        const scheduledAt = new Date(start.getTime() + day * 24 * 60 * 60 * 1000);
-        const baseHour = 10 + (k * 3);
-        scheduledAt.setHours(baseHour, 0, 0, 0);
-
-        const [teamA, teamB] = pairings[pairingIndex];
-        scheduledMatches.push({
-          tournament: tournament._id,
-          sport: tournament.sport._id || tournament.sport,
-          ground: tournament.ground || null,
-          teamA,
-          teamB,
-          scheduledAt,
-          status: "Scheduled",
-        });
-        pairingIndex++;
-      }
-    }
+    scheduledMatches = createScheduledMatches({ pairings, start, end, tournament });
   } else if (tournament.registrationType === "Player") {
-    // Player-based fixtures
     const players = tournament.approvedPlayers?.map(p => p._id.toString()) || [];
     if (players.length < 2) {
       throw new ApiError(400, "At least 2 approved players are required to generate fixtures.");
     }
 
-    const pairings = [];
-    for (let i = 0; i < players.length; i++) {
-      for (let j = i + 1; j < players.length; j++) {
-        pairings.push([players[i], players[j]]);
-      }
+    let pairings = [];
+
+    if (tournament.format === "Knockout") {
+      const knockoutFixtures = createKnockoutPairings(players);
+      pairings = knockoutFixtures.pairings;
+      byeCount = knockoutFixtures.byeCount;
+    } else {
+      pairings = createLeaguePairings(players);
     }
 
-    const matchesPerDay = Math.max(1, Math.ceil(pairings.length / totalDays));
-    let pairingIndex = 0;
-
-    for (let day = 0; day < totalDays && pairingIndex < pairings.length; day++) {
-      for (let k = 0; k < matchesPerDay && pairingIndex < pairings.length; k++) {
-        const scheduledAt = new Date(start.getTime() + day * 24 * 60 * 60 * 1000);
-        const baseHour = 10 + (k * 3);
-        scheduledAt.setHours(baseHour, 0, 0, 0);
-
-        const [playerA, playerB] = pairings[pairingIndex];
-        scheduledMatches.push({
-          tournament: tournament._id,
-          sport: tournament.sport._id || tournament.sport,
-          ground: tournament.ground || null,
-          playerA,
-          playerB,
-          scheduledAt,
-          status: "Scheduled",
-        });
-        pairingIndex++;
-      }
-    }
+    scheduledMatches = createScheduledMatches({ pairings, start, end, tournament });
   }
 
   if (scheduledMatches.length === 0) {
@@ -445,7 +492,11 @@ export const generateFixtures = asyncHandler(async (req, res) => {
     .populate("playerA", "fullName avatar")
     .populate("playerB", "fullName avatar");
 
-  return res.status(201).json(new ApiResponse(201, populated, "Fixtures generated successfully."));
+  const message = tournament.format === "Knockout" && byeCount > 0
+    ? `Knockout fixtures generated successfully. ${byeCount} participant(s) received a first-round bye.`
+    : "Fixtures generated successfully.";
+
+  return res.status(201).json(new ApiResponse(201, populated, message));
 });
 
 // Update tournament banner
@@ -697,8 +748,8 @@ export const registerPlayer = asyncHandler(async (req, res) => {
   const updated = await Tournament.findById(id)
     .populate("sport", "name teamBased iconUrl")
     .populate("organizer", "fullName email avatar orgName")
-    .populate("registeredPlayers", "fullName avatar email")
-    .populate("approvedPlayers", "fullName avatar email");
+    .populate("registeredPlayers", "fullName avatar email phone city")
+    .populate("approvedPlayers", "fullName avatar email phone city");
 
   res.status(201).json(new ApiResponse(201, updated, "Player registered successfully."));
 });
@@ -709,8 +760,8 @@ export const getTournamentParticipants = asyncHandler(async (req, res) => {
   const tournament = await Tournament.findById(id)
     .populate("registeredTeams", "name logoUrl")
     .populate("approvedTeams", "name logoUrl")
-    .populate("registeredPlayers", "fullName avatar email")
-    .populate("approvedPlayers", "fullName avatar email")
+    .populate("registeredPlayers", "fullName avatar email phone city")
+    .populate("approvedPlayers", "fullName avatar email phone city")
     .populate("sport", "name registrationType teamBased");
 
   if (!tournament) {

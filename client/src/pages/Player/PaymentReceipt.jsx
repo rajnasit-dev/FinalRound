@@ -92,9 +92,7 @@ const PaymentReceipt = () => {
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
             Payment Successful!
           </h1>
-          <p className="text-gray-600">
-            Your tournament registration has been confirmed
-          </p>
+          
         </div>
 
         {/* Action Buttons */}
@@ -126,7 +124,7 @@ const PaymentReceipt = () => {
                 <h2 className="text-3xl font-bold text-gray-800 mb-2">
                   PAYMENT RECEIPT
                 </h2>
-                <p className="text-gray-600">SportsHub Platform</p>
+                
                 <p className="text-sm text-gray-500">www.sportshub.com</p>
               </div>
               <div className="text-right">
@@ -270,3 +268,4 @@ const PaymentReceipt = () => {
 };
 
 export default PaymentReceipt;
+

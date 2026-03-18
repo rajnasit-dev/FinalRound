@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
@@ -74,10 +74,7 @@ const ManagerTeams = () => {
           <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
             My Teams
           </h1>
-          <p className="text-base dark:text-base-dark">
-            Manage your teams and roster
-            {managerTeams && managerTeams.length > 0 && ` (${managerTeams.length})`}
-          </p>
+          
         </div>
         <Link
           to="/manager/teams/create"

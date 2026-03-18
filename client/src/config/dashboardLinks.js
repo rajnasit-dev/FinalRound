@@ -10,8 +10,8 @@ import {
   Target,
   Lock,
   DollarSign,
+  FileText,
 } from "lucide-react";
-
 // Player dashboard menu links
 export const playerLinks = [
   { name: "My Tournaments", icon: Trophy, url: "/player/tournaments" },
@@ -37,6 +37,7 @@ export const organizerLinks = [
   { name: "Dashboard", icon: LayoutDashboard, url: "/organizer/dashboard" },
   { name: "Tournaments", icon: Trophy, url: "/organizer/tournaments" },
   { name: "Payments", icon: DollarSign, url: "/organizer/payments" },
+  { name: "Reports", icon: FileText, url: "/organizer/reports" },
   { name: "Profile", icon: UserCircle, url: "/organizer/profile" },
   { name: "Change Password", icon: Lock, url: "/organizer/change-password" },
 ];

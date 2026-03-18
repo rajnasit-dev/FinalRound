@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { UserPlus, Mail, Phone, MapPin, Loader } from "lucide-react";
@@ -226,9 +226,7 @@ const AddPlayer = () => {
           <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
             Add Players - {selectedTeam.name}
           </h1>
-          <p className="text-base dark:text-base-dark mt-2">
-            Send requests to available players to join your team
-          </p>
+          
         </div>
 
         {/* Players Table */}

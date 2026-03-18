@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { FileText, Upload, CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
@@ -117,9 +117,7 @@ const OrganizerAuthorization = () => {
               <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
                 Authorization Approved
               </h2>
-              <p className="text-green-600 dark:text-green-400">
-                Your organization is verified and authorized
-              </p>
+              
             </div>
           </div>
           <p className="text-base dark:text-base-dark">
@@ -149,9 +147,7 @@ const OrganizerAuthorization = () => {
               <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
                 Authorization Pending
               </h2>
-              <p className="text-amber-600 dark:text-amber-400">
-                Your request is under review
-              </p>
+              
             </div>
           </div>
           <p className="text-base dark:text-base-dark mb-4">
@@ -196,9 +192,7 @@ const OrganizerAuthorization = () => {
               <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
                 Authorization Rejected
               </h2>
-              <p className="text-red-600 dark:text-red-400">
-                Your request was not approved
-              </p>
+              
             </div>
           </div>
 
@@ -225,9 +219,7 @@ const OrganizerAuthorization = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
           Organization Authorization
         </h1>
-        <p className="text-base dark:text-base-dark">
-          Submit verification documents to get authorized for creating tournaments
-        </p>
+        
       </div>
 
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">

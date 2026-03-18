@@ -13,6 +13,7 @@ import {
   requestAuthorization,
   getAuthorizationStatus,
   getOrganizerDocument,
+  getOrganizerAnalytics,
 } from "../controllers/tournamentOrganizer.controllers.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -28,6 +29,7 @@ tournamentOrganizerRouter.get("/city/:city", getOrganizersByCity);
 tournamentOrganizerRouter.get("/profile/me", authMiddleware, getTournamentOrganizerProfile);
 tournamentOrganizerRouter.put("/profile/me", authMiddleware, updateTournamentOrganizerProfile);
 tournamentOrganizerRouter.get("/tournaments/my-tournaments", authMiddleware, getOrganizerTournaments);
+tournamentOrganizerRouter.get("/analytics/dashboard", authMiddleware, getOrganizerAnalytics);
 
 // Authorization management
 tournamentOrganizerRouter.post("/request-authorization", authMiddleware, upload.single("document"), requestAuthorization);

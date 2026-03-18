@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getPendingOrganizerRequests,
@@ -20,23 +20,56 @@ const OrganizerRequests = () => {
   const dispatch = useDispatch();
   const { pendingOrganizers, loading, error } = useSelector((state) => state.admin);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [processingId, setProcessingId] = useState(null);
 
   useEffect(() => {
     dispatch(getPendingOrganizerRequests());
   }, [dispatch]);
 
-  const filteredOrganizers = pendingOrganizers?.filter((organizer) =>
-    organizer.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    organizer.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredOrganizers = [...(pendingOrganizers || [])]
+    .filter((organizer) => {
+      const q = searchQuery.toLowerCase();
+      return (
+        (organizer.orgName || "").toLowerCase().includes(q) ||
+        organizer.fullName.toLowerCase().includes(q) ||
+        organizer.email.toLowerCase().includes(q)
+      );
+    })
+    .filter((organizer) => {
+      if (!fromDate && !toDate) return true;
+      const requestDate = new Date(organizer.authorizationRequestDate);
+      if (fromDate) {
+        const from = new Date(fromDate);
+        from.setHours(0, 0, 0, 0);
+        if (requestDate < from) return false;
+      }
+      if (toDate) {
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999);
+        if (requestDate > to) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "oldest") {
+        return new Date(a.authorizationRequestDate) - new Date(b.authorizationRequestDate);
+      }
+      if (sortBy === "nameAsc") {
+        return (a.orgName || a.fullName || "").localeCompare(b.orgName || b.fullName || "");
+      }
+      return new Date(b.authorizationRequestDate) - new Date(a.authorizationRequestDate);
+    });
 
   const handleApprove = async (e, organizer) => {
     e.stopPropagation();
     setProcessingId(organizer._id);
+    const organizerLabel = organizer.orgName || organizer.fullName;
     try {
       await dispatch(authorizeOrganizer(organizer._id)).unwrap();
-      toast.success(`${organizer.fullName} has been approved`);
+      toast.success(`${organizerLabel} has been approved`);
       dispatch(getPendingOrganizerRequests());
     } catch (error) {
       toast.error(error?.message || "Failed to approve organizer");
@@ -48,11 +81,12 @@ const OrganizerRequests = () => {
   const handleReject = async (e, organizer) => {
     e.stopPropagation();
     setProcessingId(organizer._id);
+    const organizerLabel = organizer.orgName || organizer.fullName;
     try {
       await dispatch(
         rejectOrganizer({ organizerId: organizer._id })
       ).unwrap();
-      toast.success(`${organizer.fullName}'s request has been rejected`);
+      toast.success(`${organizerLabel}'s request has been rejected`);
       dispatch(getPendingOrganizerRequests());
     } catch (error) {
       toast.error(error?.message || "Failed to reject organizer");
@@ -74,13 +108,13 @@ const OrganizerRequests = () => {
           <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
             <img
               src={organizer.avatar || defaultAvatar}
-              alt={organizer.fullName}
+              alt={organizer.orgName || organizer.fullName}
               className="w-full h-full object-cover"
             />
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-text-primary dark:text-text-primary-dark truncate">
-              {organizer.fullName}
+              {organizer.orgName || organizer.fullName}
             </p>
             <div className="space-y-1 mt-1">
               <div className="flex items-center gap-1 text-xs text-base dark:text-base-dark">
@@ -180,9 +214,7 @@ const OrganizerRequests = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Organizer Authorization Requests
         </h1>
-        <p className="text-base dark:text-base-dark mt-2">
-          Review and authorize tournament organizers
-        </p>
+        
       </div>
 
       {pendingOrganizers?.length === 0 ? (
@@ -197,11 +229,39 @@ const OrganizerRequests = () => {
         </div>
       ) : (
         <>
-          <SearchBar
-            placeholder="Search by name or email..."
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <SearchBar
+              placeholder="Search by name or email..."
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+            />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary cursor-pointer"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="nameAsc">Name (A-Z)</option>
+            </select>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary"
+            />
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary"
+            />
+            <div className="flex items-center justify-end">
+              <span className="text-sm text-base dark:text-base-dark font-medium">
+                Total: {filteredOrganizers.length}
+              </span>
+            </div>
+          </div>
 
           <DataTable
             columns={columns}

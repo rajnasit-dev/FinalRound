@@ -3,6 +3,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { TournamentOrganizer } from "../models/TournamentOrganizer.model.js";
 import { Tournament } from "../models/Tournament.model.js";
+import { Payment } from "../models/Payment.model.js";
+import { addTournamentStatuses } from "../utils/statusHelpers.js";
 import { uploadOnCloudinary, deleteFromCloudinary, getCloudinaryPublicId, getCloudinaryRawPublicId, getPrivateDownloadUrl } from "../utils/cloudinary.js";
 import fs from "fs";
 
@@ -194,12 +196,21 @@ export const getOrganizerTournaments = asyncHandler(async (req, res) => {
       select: "name manager players coach medicalTeam",
       populate: { path: "manager", select: "fullName" },
     })
+    .populate({
+      path: "approvedTeams",
+      select: "name manager players coach medicalTeam",
+      populate: { path: "manager", select: "fullName" },
+    })
+    .populate("registeredPlayers", "fullName avatar email phone city")
+    .populate("approvedPlayers", "fullName avatar email phone city")
     .sort({ createdAt: -1 })
     .limit(50);
 
+  const tournamentsWithStatus = addTournamentStatuses(tournaments);
+
   res
     .status(200)
-    .json(new ApiResponse(200, tournaments, "Tournaments retrieved successfully."));
+    .json(new ApiResponse(200, tournamentsWithStatus, "Tournaments retrieved successfully."));
 });
 
 // Get verified organizers
@@ -341,4 +352,109 @@ export const getOrganizerDocument = asyncHandler(async (req, res) => {
 
   // Redirect the user to the authenticated download URL
   res.redirect(downloadUrl);
+});
+
+// Get organizer analytics data for charts
+export const getOrganizerAnalytics = asyncHandler(async (req, res) => {
+  const organizerId = req.user._id;
+
+  // Get organizer's tournaments
+  const tournaments = await Tournament.find({ organizer: organizerId })
+    .populate("sport", "name")
+    .lean();
+
+  // Always derive status from cancellation flag + dates so cancelled tournaments
+  // are represented correctly in the dashboard chart.
+  const tournamentsWithStatus = addTournamentStatuses(tournaments);
+
+  // Get organizer's payments
+  const payments = await Payment.find({ 
+    tournament: { $in: tournaments.map(t => t._id) },
+    status: "Success"
+  }).lean();
+
+  // Build a stable local month key in YYYY-MM to avoid UTC timezone shifts
+  const getMonthKey = (dateInput) => {
+    const date = new Date(dateInput);
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    return `${date.getFullYear()}-${month}`;
+  };
+
+  // Calculate revenue trend (monthly) - Last 12 months
+  // Only include incoming tournament payments (exclude organizer platform-fee payments)
+  const revenueByMonth = {};
+  payments.forEach((payment) => {
+    if (payment.payerType === "Organizer") {
+      return;
+    }
+
+    const month = getMonthKey(payment.createdAt);
+    if (!revenueByMonth[month]) {
+      revenueByMonth[month] = 0;
+    }
+    revenueByMonth[month] += payment.amount || 0;
+  });
+
+  // Generate all 12 months (last 12 months including current month)
+  const today = new Date();
+  const last12Months = [];
+  for (let i = 11; i >= 0; i--) {
+    const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    const monthKey = getMonthKey(date);
+    last12Months.push({
+      monthKey,
+      monthFormatted: date.toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+    });
+  }
+
+  // Map the revenue data to all 12 months
+  const revenueTrend = last12Months.map(({ monthKey, monthFormatted }) => ({
+    month: monthFormatted,
+    revenue: revenueByMonth[monthKey] || 0,
+  }));
+
+  // Tournament status breakdown
+  const statusCounts = tournamentsWithStatus.reduce((acc, t) => {
+    const status = t.status || "Upcoming";
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const tournamentStatus = Object.entries(statusCounts).map(([status, count]) => ({
+    name: status,
+    value: count,
+  }));
+
+  // Sport distribution
+  const sportCounts = tournamentsWithStatus.reduce((acc, t) => {
+    const sportName = t.sport?.name || "Unknown";
+    acc[sportName] = (acc[sportName] || 0) + 1;
+    return acc;
+  }, {});
+
+  const sportDistribution = Object.entries(sportCounts).map(([sport, count]) => ({
+    name: sport,
+    value: count,
+  }));
+
+  // Total stats
+  const totalRegistrations = tournamentsWithStatus.reduce((sum, t) => {
+    return sum + (t.registeredTeams?.length || 0) + (t.registeredPlayers?.length || 0);
+  }, 0);
+
+  const totalRevenue = payments
+    .filter((p) => p.payerType !== "Organizer")
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  const analytics = {
+    revenueTrend,
+    tournamentStatus,
+    sportDistribution,
+    totalTournaments: tournamentsWithStatus.length,
+    totalRegistrations,
+    totalRevenue,
+    totalPayments: payments.length,
+  };
+
+  res.status(200).json(new ApiResponse(200, analytics, "Organizer analytics fetched successfully"));
 });

@@ -141,7 +141,7 @@ const TournamentDetails = () => {
               <h1 className="text-4xl font-bold text-gray-800 mb-2">
                 {selectedTournament.name}
               </h1>
-              <p className="text-gray-600 text-lg">{selectedTournament.description}</p>
+              
             </div>
             <span
               className={`px-4 py-2 rounded-full text-sm font-semibold ${
@@ -283,7 +283,7 @@ const TournamentDetails = () => {
                 {selectedTournament.organizer.avatar && (
                   <img
                     src={selectedTournament.organizer.avatar}
-                    alt={selectedTournament.organizer.fullName}
+                    alt={selectedTournament.organizer.orgName || selectedTournament.organizer.fullName}
                     className="w-16 h-16 rounded-full object-cover"
                   />
                 )}
@@ -422,3 +422,4 @@ const TournamentDetails = () => {
 };
 
 export default TournamentDetails;
+

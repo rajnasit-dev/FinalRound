@@ -18,9 +18,7 @@ const NotFound = () => {
         <h2 className="text-3xl md:text-4xl font-bold mb-4">
           Oops! Page Not Found
         </h2>
-        <p className="text-lg mb-8 max-w-md mx-auto">
-          The page you're looking for seems to have been moved, deleted, or doesn't exist. Let's get you back on track!
-        </p>
+        
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -63,3 +61,4 @@ const NotFound = () => {
 };
 
 export default NotFound;
+

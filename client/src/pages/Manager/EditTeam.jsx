@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
@@ -428,7 +428,7 @@ const EditTeam = () => {
         <BackButton className="mb-6" />
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">Edit Team</h1>
-          <p className="text-base dark:text-base-dark mt-2">Update your team profile</p>
+          
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

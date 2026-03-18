@@ -15,8 +15,6 @@ import {
   updateUser,
   getOtpSetting,
   toggleOtpSetting,
-  getEmailNotificationSetting,
-  toggleEmailNotificationSetting,
   getAnalyticsData,
 } from "../controllers/admin.controllers.js";
 
@@ -69,7 +67,5 @@ router.get("/payments", getAllPayments);
 // Settings
 router.get("/settings/otp", getOtpSetting);
 router.patch("/settings/otp/toggle", toggleOtpSetting);
-router.get("/settings/email-notifications", getEmailNotificationSetting);
-router.patch("/settings/email-notifications/toggle", toggleEmailNotificationSetting);
 
 export default router;

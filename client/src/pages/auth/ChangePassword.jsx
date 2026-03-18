@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Lock, Eye, EyeOff, Save, X } from "lucide-react";
@@ -76,9 +76,7 @@ const ChangePassword = () => {
               <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
                 Change Password
               </h1>
-              <p className="text-base dark:text-base-dark mt-1">
-                Update your account password
-              </p>
+              
             </div>
           </div>
 

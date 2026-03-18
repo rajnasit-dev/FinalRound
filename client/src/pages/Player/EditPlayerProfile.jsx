@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useForm } from "react-hook-form";
@@ -160,9 +160,7 @@ const EditPlayerProfile = () => {
           <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
             Edit Profile
           </h1>
-          <p className="text-base dark:text-base-dark mt-2">
-            Update your profile information
-          </p>
+          
         </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

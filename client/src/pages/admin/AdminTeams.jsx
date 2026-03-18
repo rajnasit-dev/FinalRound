@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAllTeams } from "../../store/slices/adminSlice";
@@ -200,9 +200,7 @@ const AdminTeams = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Teams Management
         </h1>
-        <p className="text-base dark:text-base-dark mt-2">
-          View and manage all teams
-        </p>
+        
       </div>
 
       {/* Filters */}
@@ -215,7 +213,9 @@ const AdminTeams = () => {
         <Select
           options={[
             { value: "", label: "All Sports" },
-            ...(sports || []).map((sport) => ({
+            ...(sports || [])
+              .filter((sport) => sport.teamBased)
+              .map((sport) => ({
               value: sport._id,
               label: sport.name,
             })),

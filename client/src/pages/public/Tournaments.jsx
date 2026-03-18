@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import TournamentCard from "../../components/ui/TournamentCard";
 import SearchBar from "../../components/ui/SearchBar";
@@ -96,7 +96,7 @@ const Tournaments = () => {
       <BackButton className="mb-6" />
       <div className="mb-8">
         <h1 className="text-4xl font-bold my-5 text-text-primary dark:text-text-primary-dark">Explore Tournaments</h1>
-        <p className="text-base dark:text-base-dark">Find and join tournaments happening near you</p>
+        
       </div>
 
 

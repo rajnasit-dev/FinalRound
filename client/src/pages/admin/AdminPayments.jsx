@@ -169,9 +169,7 @@ const AdminPayments = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Payments Management
         </h1>
-        <p className="text-base dark:text-base-dark mt-2">
-          Track all platform payments and revenue streams
-        </p>
+        
       </div>
 
       {/* Stats Grid */}
@@ -303,3 +301,4 @@ const AdminPayments = () => {
 };
 
 export default AdminPayments;
+

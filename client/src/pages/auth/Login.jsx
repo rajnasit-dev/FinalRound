@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+﻿import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Mail, Lock, Trophy } from "lucide-react";
@@ -103,9 +103,7 @@ const Login = () => {
               <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
                 Welcome Back
               </h1>
-              <p className="text-base dark:text-base-dark">
-                Sign in to your account to continue
-              </p>
+              
             </div>
 
             {/* Login Form */}

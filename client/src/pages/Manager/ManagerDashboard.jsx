@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import {
@@ -58,9 +58,7 @@ const ManagerDashboard = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
           Welcome back, {user?.fullName}!
         </h1>
-        <p className="text-base dark:text-base-dark">
-          Manage your teams and track performance
-        </p>
+        
       </div>
 
       {/* Stats Cards */}

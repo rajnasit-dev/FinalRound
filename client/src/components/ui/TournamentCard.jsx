@@ -30,6 +30,8 @@ const TournamentCard = memo(({
 }) => {
   const { getStatusColor } = useStatusColor();
   const { formatDate } = useDateFormat();
+  const isTournamentCancelled = tournament.isCancelled || tournament.status === "Cancelled";
+  const displayStatus = isTournamentCancelled ? "Cancelled" : tournament.status;
 
   // Check if registration is open
   const isRegistrationOpen = () => {
@@ -71,13 +73,13 @@ const TournamentCard = memo(({
           <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
             <p
               className={`inline-flex items-center gap-1 px-3 py-1 ${getStatusColor(
-                tournament.status
+                displayStatus
               )} text-white text-xs font-semibold rounded-full shadow-lg`}
             >
-              {tournament.status === "Live" && (
+              {displayStatus === "Live" && (
                 <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
               )}
-              {tournament.status}
+              {displayStatus}
             </p>
           </div>
         </div>
@@ -191,7 +193,7 @@ const TournamentCard = memo(({
                   <Trophy className="w-4 h-4" />
                   Fixtures
                 </button>
-                {tournament.status !== "Cancelled" ? (
+                {!isTournamentCancelled ? (
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -212,10 +214,10 @@ const TournamentCard = memo(({
                       onCancel && onCancel(tournament._id, true);
                     }}
                     className="flex items-center justify-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors font-semibold text-sm"
-                    title="Reinstate Tournament"
+                    title="Continue Tournament"
                   >
                     <RotateCcw className="w-4 h-4" />
-                    Reinstate
+                    Continue
                   </button>
                 )}
               </div>
@@ -238,3 +240,4 @@ const TournamentCard = memo(({
 });
 
 export default TournamentCard;
+

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, Search, Calendar } from "lucide-react";
@@ -64,10 +64,7 @@ const OrganizerTournaments = () => {
           <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
             My Tournaments
           </h1>
-          <p className="text-base dark:text-base-dark">
-            Manage and organize your tournaments
-            {myTournaments.length > 0 && ` (${myTournaments.length})`}
-          </p>
+          
         </div>
         {user?.isAuthorized ? (
           <Link
@@ -119,11 +116,11 @@ const OrganizerTournaments = () => {
               onEdit={(id) => navigate(`/organizer/tournaments/${id}/edit`)}
               onManage={(id) => navigate(`/organizer/tournaments/${id}`)}
               onCancel={async (id, isCancelled) => {
-                const action = isCancelled ? 'reinstate' : 'cancel';
+                const action = isCancelled ? 'continue' : 'cancel';
                 if (!window.confirm(`Are you sure you want to ${action} this tournament?`)) return;
                 try {
                   await dispatch(cancelTournament({ tournamentId: id, isCancelled: !isCancelled })).unwrap();
-                  toast.success(`Tournament ${isCancelled ? 'reinstated' : 'cancelled'} successfully!`);
+                  toast.success(`Tournament ${isCancelled ? 'continued' : 'cancelled'} successfully!`);
                   dispatch(fetchOrganizerTournaments());
                 } catch (error) {
                   toast.error(error || `Failed to ${action} tournament`);

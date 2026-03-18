@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
@@ -247,9 +247,7 @@ const CreateTeam = () => {
           <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
             Create Team
           </h1>
-          <p className="text-base dark:text-base-dark mt-2">
-            Set up your team profile and start recruiting players
-          </p>
+          
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

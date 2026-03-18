@@ -147,3 +147,4 @@ const TeamCard = memo(({ team, showEditButton = false, onEdit, onManagePlayers, 
 });
 
 export default TeamCard;
+

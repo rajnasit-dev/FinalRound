@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "axios";
@@ -262,10 +262,7 @@ const Home = () => {
               <h2 className="text-3xl md:text-4xl font-bold mb-2 text-text-primary dark:text-text-primary-dark">
                 What Our Users Say
               </h2>
-              <p className="text-base dark:text-base-dark">
-                Hear from players, managers, and organizers who are using
-                SportsHub
-              </p>
+              
             </div>
             {!showReviewForm && (
               <Button

@@ -185,7 +185,7 @@ const TournamentDetail = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-red-600 mb-2">Error Loading Tournament</h2>
-          <p className="text-gray-600">{error || "Tournament not found"}</p>
+          
           <Link to="/tournaments" className="mt-4 inline-block text-blue-600 hover:underline">
             Back to Tournaments
           </Link>
@@ -278,9 +278,7 @@ const TournamentDetail = () => {
             {tournament.description && (
               <Container>
                 <h2 className="text-2xl font-bold mb-3">About Tournament</h2>
-                <p className="text-base dark:text-base-dark leading-relaxed">
-                  {tournament.description}
-                </p>
+                
               </Container>
             )}
 
@@ -589,3 +587,4 @@ const TournamentDetail = () => {
 };
 
 export default TournamentDetail;
+

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllFeedback, deleteFeedback } from "../../store/slices/feedbackSlice";
 import {
@@ -214,9 +214,7 @@ const AdminFeedback = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           User Feedback & Reviews
         </h1>
-        <p className="text-base dark:text-base-dark mt-2">
-          Manage and monitor all user feedback and ratings
-        </p>
+        
       </div>
 
       {/* Stats Cards */}

@@ -9,7 +9,7 @@ const reportSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ["Revenue", "Tournament", "User", "Match", "Booking"],
+      enum: ["UserPlayer", "RevenuePayment", "Tournament"],
       required: true,
     },
     generatedBy: {
@@ -22,12 +22,9 @@ const reportSchema = new Schema(
       to: { type: Date, required: true },
     },
     filters: {
-      status: { type: String, default: "all" },
       sport: { type: String, default: "all" },
-      payerType: { type: String, default: "all" },
-      format: { type: String, default: "all" },
-      role: { type: String, default: "all" },
-      registrationType: { type: String, default: "all" },
+      organizerId: { type: String, default: "all" },
+      userPlayerScope: { type: String, enum: ["all", "users", "players", "manager", "player", "teamManager"], default: "player" },
     },
     summary: {
       type: Schema.Types.Mixed,

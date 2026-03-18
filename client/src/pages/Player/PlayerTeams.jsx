@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Users, LogOut } from "lucide-react";
 import TeamCard from "../../components/ui/TeamCard";
@@ -53,10 +53,7 @@ const PlayerTeams = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-2">
           My Teams
         </h1>
-        <p className="text-base dark:text-base-dark">
-          Teams you are a member of
-          {playerTeams && playerTeams.length > 0 && ` (${playerTeams.length})`}
-        </p>
+        
       </div>
 
       {/* Error State */}

@@ -1,4 +1,4 @@
-import { User, Mail, Phone, MapPin, Calendar, Edit, Trophy, Target } from "lucide-react";
+﻿import { User, Mail, Phone, MapPin, Calendar, Edit, Trophy, Target, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -18,6 +18,7 @@ const OrganizerProfile = () => {
   const [deletingAvatar, setDeletingAvatar] = useState(false);
   const { user } = useSelector((state) => state.auth);
   const { organizerTournaments, loading: tournamentsLoading } = useSelector((state) => state.tournament);
+  const organizerDisplayName = user?.orgName || user?.fullName || "Organization";
 
   const { formatDate } = useDateFormat();
 
@@ -101,17 +102,26 @@ const OrganizerProfile = () => {
     <div className="space-y-6">
       <BackButton className="mb-6" />
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           My Profile
         </h1>
-        <Link
-          to="/organizer/profile/edit"
-          className="flex items-center gap-2 px-4 py-2 bg-secondary dark:bg-secondary-dark text-white rounded-lg hover:opacity-90 transition-opacity"
-        >
-          <Edit size={18} />
-          Edit Profile
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/organizer/reports"
+            className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:opacity-90 transition-opacity"
+          >
+            <FileText size={18} />
+            Reports
+          </Link>
+          <Link
+            to="/organizer/profile/edit"
+            className="flex items-center gap-2 px-4 py-2 bg-secondary dark:bg-secondary-dark text-white rounded-lg hover:opacity-90 transition-opacity"
+          >
+            <Edit size={18} />
+            Edit Profile
+          </Link>
+        </div>
       </div>
 
       {/* Profile Card */}
@@ -129,7 +139,7 @@ const OrganizerProfile = () => {
               showDelete={!!user?.avatar}
               size="lg"
               shape="circle"
-              alt={user?.fullName || "Organizer"}
+              alt={organizerDisplayName}
             />
           </div>
 
@@ -137,9 +147,9 @@ const OrganizerProfile = () => {
           <div className="flex-1 space-y-4">
             <div>
               <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-                {user?.fullName || "Organizer Name"}
+                {organizerDisplayName}
               </h2>
-              <p className="text-base dark:text-base-dark mt-1">Tournament Organizer</p>
+              
             </div>
 
             {/* Contact Info */}

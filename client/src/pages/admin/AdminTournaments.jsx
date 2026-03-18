@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getAllTournaments } from "../../store/slices/adminSlice";
@@ -15,6 +15,8 @@ const AdminTournaments = () => {
   const { tournaments, loading, error } = useSelector((state) => state.admin);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [sportFilter, setSportFilter] = useState("");
+  const [genderFilter, setGenderFilter] = useState("");
   const [filteredTournaments, setFilteredTournaments] = useState([]);
   useEffect(() => {
     dispatch(getAllTournaments({ status: "", search: "", page: 1, limit: 100 }));
@@ -65,8 +67,39 @@ const AdminTournaments = () => {
       );
     }
 
+    if (sportFilter) {
+      filtered = filtered.filter(
+        (t) => t.sport?._id === sportFilter || t.sport === sportFilter
+      );
+    }
+
+    if (genderFilter) {
+      filtered = filtered.filter((t) => t.gender === genderFilter);
+    }
+
     setFilteredTournaments(filtered);
-  }, [tournaments, search, statusFilter]);
+  }, [tournaments, search, statusFilter, sportFilter, genderFilter]);
+
+  const sportOptions = [
+    { value: "", label: "All Sports" },
+    ...Object.values(
+      (tournaments || []).reduce((acc, tournament) => {
+        const id = tournament?.sport?._id || tournament?.sport;
+        const name = tournament?.sport?.name;
+        if (id && name && !acc[id]) {
+          acc[id] = { value: id, label: name };
+        }
+        return acc;
+      }, {})
+    ).sort((a, b) => a.label.localeCompare(b.label)),
+  ];
+
+  const genderOptions = [
+    { value: "", label: "All Genders" },
+    ...[...new Set((tournaments || []).map((tournament) => tournament?.gender).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b))
+      .map((gender) => ({ value: gender, label: gender })),
+  ];
 
   const getStatusColor = (status) => {
     const colors = {
@@ -134,7 +167,7 @@ const AdminTournaments = () => {
       render: (tournament) => (
         <div className="space-y-1 min-w-0">
           <p className="text-sm font-medium text-text-primary dark:text-text-primary-dark truncate">
-            {tournament.organizer?.fullName || tournament.organizer?.orgName || "N/A"}
+            {tournament.organizer?.orgName || tournament.organizer?.fullName || "N/A"}
           </p>
           <div className="flex items-center gap-2 text-xs text-base dark:text-base-dark">
             <Mail className="w-4 h-4 shrink-0" />
@@ -175,13 +208,11 @@ const AdminTournaments = () => {
         <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
           Tournament Management
         </h1>
-        <p className="text-base dark:text-base-dark mt-2">
-          View and manage all tournaments
-        </p>
+        
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <SearchBar
           placeholder="Search by tournament name..."
           searchQuery={search}
@@ -197,6 +228,16 @@ const AdminTournaments = () => {
           ]}
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
+        />
+        <Select
+          options={sportOptions}
+          value={sportFilter}
+          onChange={(e) => setSportFilter(e.target.value)}
+        />
+        <Select
+          options={genderOptions}
+          value={genderFilter}
+          onChange={(e) => setGenderFilter(e.target.value)}
         />
         <div className="flex items-center justify-end">
           <span className="text-sm text-base dark:text-base-dark font-medium">

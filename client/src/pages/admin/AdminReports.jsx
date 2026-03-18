@@ -1,59 +1,794 @@
-import { useEffect, useState, useMemo } from "react";
+﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { generateReport, getAllOrganizers, getAnalyticsData } from "../../store/slices/adminSlice";
 import {
-  generateReport,
-  getReports,
-  deleteReport,
-} from "../../store/slices/adminSlice";
-import { fetchAllSports } from "../../store/slices/sportSlice";
-import {
+  Users,
   IndianRupee,
   Trophy,
-  Users,
-  Swords,
-  Ticket,
-  FileText,
-  Eye,
-  Trash2,
   X,
-  Search,
+  Download,
+  TrendingUp,
+  Clock,
+  DollarSign,
+  BarChart3,
+  MessageSquare,
 } from "lucide-react";
+import { Bar, Doughnut, Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Filler,
+  Tooltip,
+  Legend,
+} from "chart.js";
 import Spinner from "../../components/ui/Spinner";
 import toast from "react-hot-toast";
+import { formatINR } from "../../utils/formatINR";
+import { chartThemeOptions, doughnutThemeOptions, getTournamentStatusColor, toMonthLabels } from "../../utils/chartConfig";
 
-// ─── Report Generation Modal ────────────────────────────────────────────
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Filler,
+  Tooltip,
+  Legend
+);
 
-const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, sports = [] }) => {
+const COLORS = ["#2563eb", "#16a34a", "#f59e0b", "#dc2626", "#0ea5e9", "#7c3aed"];
+const FEEDBACK_COLORS = ["#ef4444", "#f97316", "#f59e0b", "#84cc16", "#10b981"];
+
+const formatDateForInput = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const chartOptions = chartThemeOptions;
+
+const overviewBaseChartOptions = chartThemeOptions;
+
+const overviewLineChartOptions = {
+  ...overviewBaseChartOptions,
+  interaction: {
+    mode: "index",
+    intersect: false,
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { font: { size: 11 } },
+      border: { display: false },
+    },
+    y: {
+      beginAtZero: true,
+      ticks: { precision: 0, font: { size: 11 } },
+      grid: { color: "rgba(148, 163, 184, 0.15)" },
+      border: { display: false },
+    },
+  },
+};
+
+const overviewRevenueLineOptions = {
+  ...overviewLineChartOptions,
+  scales: {
+    ...overviewLineChartOptions.scales,
+    y: {
+      ...overviewLineChartOptions.scales.y,
+      ticks: {
+        font: { size: 11 },
+        callback: (value) => `₹${value >= 1000 ? `${Math.round(value / 1000)}k` : value}`,
+      },
+    },
+  },
+};
+
+const overviewDoughnutChartOptions = {
+  ...doughnutThemeOptions,
+};
+
+const overviewBarChartOptions = {
+  ...overviewBaseChartOptions,
+  plugins: {
+    ...overviewBaseChartOptions.plugins,
+    legend: {
+      display: false,
+    },
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { font: { size: 11 } },
+      border: { display: false },
+    },
+    y: {
+      beginAtZero: true,
+      ticks: { precision: 0, font: { size: 11 } },
+      grid: { color: "rgba(148, 163, 184, 0.15)" },
+      border: { display: false },
+    },
+  },
+};
+
+const OverviewChartCard = ({ title, icon: Icon, children, className = "" }) => (
+  <div
+    className={`bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6 ${className}`}
+  >
+    <div className="flex items-center gap-3 mb-6">
+      <div className="w-10 h-10 bg-linear-to-br from-secondary to-indigo-600 rounded-lg flex items-center justify-center">
+        <Icon className="w-5 h-5 text-white" />
+      </div>
+      <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark">{title}</h3>
+    </div>
+    {children}
+  </div>
+);
+
+const REPORT_META = {
+  UserPlayer: {
+    label: "User Report",
+    title: "User Report",
+    description: "Total users, active vs inactive users, new users per month, and players by sport.",
+    icon: Users,
+    btnText: "Generate User Report",
+    btnColor: "bg-blue-600 hover:bg-blue-700",
+    iconBg: "bg-blue-100 dark:bg-blue-900/30",
+    iconColor: "text-blue-600 dark:text-blue-400",
+    borderColor: "border-blue-200 dark:border-blue-800",
+  },
+  RevenuePayment: {
+    label: "Revenue / Payment",
+    title: "Revenue and Payment Report",
+    description: "Registration revenue, listing cost, profit, and pending payments for the website or a specific organizer.",
+    icon: IndianRupee,
+    btnText: "Generate Revenue and Payment Report",
+    btnColor: "bg-emerald-600 hover:bg-emerald-700",
+    iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
+    iconColor: "text-emerald-600 dark:text-emerald-400",
+    borderColor: "border-emerald-200 dark:border-emerald-800",
+  },
+  Tournament: {
+    label: "Tournament Report",
+    title: "Tournament Report",
+    description: "Total tournaments organized, participation, registration type, and tournament status.",
+    icon: Trophy,
+    btnText: "Generate Tournament Report",
+    btnColor: "bg-amber-600 hover:bg-amber-700",
+    iconBg: "bg-amber-100 dark:bg-amber-900/30",
+    iconColor: "text-amber-600 dark:text-amber-400",
+    borderColor: "border-amber-200 dark:border-amber-800",
+  },
+};
+
+const SummaryCard = ({ label, value, colorClass = "text-text-primary dark:text-text-primary-dark" }) => (
+  <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-5 text-center">
+    <p className="text-xs text-base dark:text-base-dark font-semibold uppercase tracking-wide mb-1">{label}</p>
+    <p className={`text-2xl font-bold ${colorClass}`}>{value}</p>
+  </div>
+);
+
+const SectionCard = ({ title, icon: Icon, children }) => (
+  <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
+    <div className="flex items-center gap-2 mb-4">
+      <Icon className="w-5 h-5 text-secondary" />
+      <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark">{title}</h3>
+    </div>
+    {children}
+  </div>
+);
+
+const ScopeInfo = ({ label, value }) => (
+  <div className="px-3 py-1.5 rounded-lg bg-base-dark/50 dark:bg-base/50 inline-block text-sm">
+    {label && <span className="text-base dark:text-base-dark">{label}: </span>}
+    <span className="font-semibold text-text-primary dark:text-text-primary-dark">{value}</span>
+  </div>
+);
+
+const escapeCsvValue = (value) => {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  const formatted = typeof value === "object"
+    ? JSON.stringify(value)
+    : String(value);
+
+  const escaped = formatted.replace(/"/g, '""');
+  return /[",\n]/.test(escaped) ? `"${escaped}"` : escaped;
+};
+
+const buildCsvRows = (report) => {
+  const rows = [];
+  const recordSectionKeys = new Set([
+    "usersTable",
+    "teamsByManager",
+    "payments",
+    "pendingPayments",
+    "tournamentsTable",
+  ]);
+
+  Object.entries(report.data || {}).forEach(([sectionName, sectionData]) => {
+    if (!recordSectionKeys.has(sectionName) || !Array.isArray(sectionData)) {
+      return;
+    }
+
+    if (sectionData.length === 0) {
+      return;
+    }
+
+    rows.push([sectionName]);
+
+    const headers = Array.from(
+      sectionData.reduce((set, item) => {
+        if (item && typeof item === "object") {
+          Object.keys(item).forEach((key) => set.add(key));
+        }
+        return set;
+      }, new Set())
+    );
+
+    if (headers.length === 0) {
+      rows.push(["value"]);
+      sectionData.forEach((item) => rows.push([item]));
+    } else {
+      rows.push(headers);
+      sectionData.forEach((item) => {
+        rows.push(headers.map((header) => item?.[header]));
+      });
+    }
+
+    rows.push([]);
+  });
+
+  if (rows.length === 0) {
+    rows.push(["No records found"]);
+  }
+
+  return rows;
+};
+
+const downloadReportCsv = (report) => {
+  const rows = buildCsvRows(report);
+  const csvContent = rows
+    .map((row) => row.map((cell) => escapeCsvValue(cell)).join(","))
+    .join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const safeTitle = (report.title || "report").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+  link.href = url;
+  link.setAttribute("download", `${safeTitle || "report"}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+// Report viewer components
+const UserPlayerReportView = ({ report }) => {
+  const { summary, data } = report;
+  const scopeLabel = summary.scopeLabel || "All Users and Players";
+  const isPlayerReport = summary.scope === "player";
+  const isTeamManagerScope = summary.scope === "manager" || summary.scope === "teamManager";
+  const isOrganizerScope = summary.scope === "organizer";
+  const isIndividualScope = ["player", "manager", "teamManager", "organizer"].includes(summary.scope);
+  const hasTeamInsights = isTeamManagerScope || isOrganizerScope;
+  const insightsLabel = isOrganizerScope ? "Tournaments Organized" : "Managed Teams";
+  const hasMonthlyGenderBreakdown = isPlayerReport && data.newUsersPerMonth?.some(
+    (item) => item.maleCount !== undefined || item.femaleCount !== undefined || item.totalCount !== undefined
+  );
+  const hasGenderRatio = isPlayerReport && data.genderRatio?.length > 0;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap gap-2">
+        <ScopeInfo label="" value={scopeLabel} />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <SummaryCard label={isPlayerReport ? "Total Players" : "Total Users"} value={(summary.totalRegisteredUsers || 0).toLocaleString("en-IN")} colorClass="text-blue-600" />
+        <SummaryCard label="Active Users" value={(summary.activeUsers || 0).toLocaleString("en-IN")} colorClass="text-emerald-600" />
+        <SummaryCard label="Inactive Users" value={(summary.inactiveUsers || 0).toLocaleString("en-IN")} colorClass="text-red-600" />
+      </div>
+
+      {hasTeamInsights && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <SummaryCard
+            label={insightsLabel}
+            value={(summary.totalTeams || 0).toLocaleString("en-IN")}
+            colorClass="text-amber-600"
+          />
+        </div>
+      )}
+
+      {(data.activeInactiveBreakdown?.length > 0 || hasGenderRatio) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {data.activeInactiveBreakdown?.length > 0 && (
+            <SectionCard title="Active vs Inactive Users" icon={Users}>
+              <div className="h-64">
+                <Doughnut
+                  data={{
+                    labels: data.activeInactiveBreakdown.map((item) => item.name),
+                    datasets: [{
+                      data: data.activeInactiveBreakdown.map((item) => item.count),
+                      backgroundColor: ["#16a34a", "#dc2626"],
+                      borderWidth: 0,
+                    }],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: "right",
+                        labels: { usePointStyle: true, pointStyle: "circle", padding: 16, font: { size: 12 } },
+                      },
+                    },
+                  }}
+                />
+              </div>
+            </SectionCard>
+          )}
+
+          {hasGenderRatio && (
+            <SectionCard title="Male vs Female Ratio" icon={Users}>
+              <div className="h-64">
+                <Doughnut
+                  data={{
+                    labels: data.genderRatio.map((item) => item.gender),
+                    datasets: [{
+                      data: data.genderRatio.map((item) => item.count),
+                      backgroundColor: ["#2563eb", "#ec4899"],
+                      borderWidth: 0,
+                    }],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        position: "right",
+                        labels: { usePointStyle: true, pointStyle: "circle", padding: 16, font: { size: 12 } },
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: (tooltipItem) => {
+                            const ratioItem = data.genderRatio[tooltipItem.dataIndex];
+                            return `${ratioItem.gender}: ${ratioItem.count} (${ratioItem.percentage}%)`;
+                          },
+                        },
+                      },
+                    },
+                  }}
+                />
+              </div>
+            </SectionCard>
+          )}
+        </div>
+      )}
+
+      {!isIndividualScope && data.usersByRole?.length > 0 && (
+        <SectionCard title="Users by Role" icon={Users}>
+          <div className="h-64">
+            <Doughnut
+              data={{
+                labels: data.usersByRole.map((item) => item.role),
+                datasets: [{
+                  data: data.usersByRole.map((item) => item.count),
+                  backgroundColor: data.usersByRole.map((_, index) => COLORS[index % COLORS.length]),
+                  borderWidth: 0,
+                }],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: "right",
+                    labels: { usePointStyle: true, pointStyle: "circle", padding: 16, font: { size: 12 } },
+                  },
+                },
+              }}
+            />
+          </div>
+        </SectionCard>
+      )}
+
+      {data.newUsersPerMonth?.length > 0 && (
+        <SectionCard title="New Users Per Month" icon={TrendingUp}>
+          <div className="h-72">
+            <Bar
+              data={{
+                labels: toMonthLabels(data.newUsersPerMonth.map((item) => item.month)),
+                datasets: hasMonthlyGenderBreakdown
+                  ? [
+                      {
+                        label: "Male",
+                        data: data.newUsersPerMonth.map((item) => item.maleCount ?? 0),
+                        backgroundColor: "#2563eb",
+                        borderRadius: 4,
+                      },
+                      {
+                        label: "Female",
+                        data: data.newUsersPerMonth.map((item) => item.femaleCount ?? 0),
+                        backgroundColor: "#ec4899",
+                        borderRadius: 4,
+                      },
+                      {
+                        label: "Total",
+                        data: data.newUsersPerMonth.map((item) => item.totalCount ?? item.count ?? 0),
+                        backgroundColor: "#14b8a6",
+                        borderRadius: 4,
+                      },
+                    ]
+                  : [{
+                      label: "New Users",
+                      data: data.newUsersPerMonth.map((item) => item.count),
+                      backgroundColor: "#2563eb",
+                      borderRadius: 4,
+                    }],
+              }}
+              options={chartOptions}
+            />
+          </div>
+        </SectionCard>
+      )}
+
+      {data.playersBySport?.length > 0 && (
+        <SectionCard title="Players by Sport" icon={Users}>
+          <div className="h-72">
+            <Bar
+              data={{
+                labels: data.playersBySport.map((item) => item.sport),
+                datasets: [{
+                  label: "Players",
+                  data: data.playersBySport.map((item) => item.count),
+                  backgroundColor: data.playersBySport.map((_, index) => COLORS[index % COLORS.length]),
+                  borderRadius: 4,
+                }],
+              }}
+              options={chartOptions}
+            />
+          </div>
+        </SectionCard>
+      )}
+
+      {data.cityDistribution?.length > 0 && (
+        <SectionCard title="Top Cities" icon={Users}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-base-dark dark:border-base">
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">City</th>
+                  <th className="text-right py-3 px-3 text-base dark:text-base-dark font-semibold">Users</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.cityDistribution.map((item) => (
+                  <tr key={item.city} className="border-b border-base-dark/50 dark:border-base/50">
+                    <td className="py-3 px-3 font-medium text-text-primary dark:text-text-primary-dark">{item.city}</td>
+                    <td className="py-3 px-3 text-right text-text-primary dark:text-text-primary-dark">{item.count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
+      )}
+
+      {hasTeamInsights && data.teamsByManager?.length > 0 && (
+        <SectionCard title={isOrganizerScope ? "Tournaments by Organizer" : `Team Distribution (${insightsLabel})`} icon={Users}>
+          <div className="h-72">
+            {isOrganizerScope ? (
+              <Doughnut
+                data={{
+                  labels: data.teamsByManager.map((item) => item.manager),
+                  datasets: [{
+                    label: insightsLabel,
+                    data: data.teamsByManager.map((item) => item.count),
+                    backgroundColor: data.teamsByManager.map((_, index) => COLORS[index % COLORS.length]),
+                    borderWidth: 0,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: "right",
+                      labels: { usePointStyle: true, pointStyle: "circle", padding: 16, font: { size: 12 } },
+                    },
+                  },
+                }}
+              />
+            ) : (
+              <Bar
+                data={{
+                  labels: data.teamsByManager.map((item) => item.manager),
+                  datasets: [{
+                    label: insightsLabel,
+                    data: data.teamsByManager.map((item) => item.count),
+                    backgroundColor: "#f59e0b",
+                    borderRadius: 4,
+                  }],
+                }}
+                options={chartOptions}
+              />
+            )}
+          </div>
+        </SectionCard>
+      )}
+
+      <SectionCard title="User Data Table" icon={Users}>
+        {data.usersTable?.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-base-dark dark:border-base">
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Name</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Email</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">City</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Status</th>
+                  <th className="text-right py-3 px-3 text-base dark:text-base-dark font-semibold">Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.usersTable.map((row) => (
+                  <tr key={row._id} className="border-b border-base-dark/50 dark:border-base/50">
+                    <td className="py-3 px-3 font-medium text-text-primary dark:text-text-primary-dark">{row.fullName}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.email}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.city}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.status}</td>
+                    <td className="py-3 px-3 text-right text-text-primary dark:text-text-primary-dark">
+                      {new Date(row.joinedAt).toLocaleDateString("en-IN")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-base dark:text-base-dark">No records found for this report.</p>
+        )}
+      </SectionCard>
+    </div>
+  );
+};
+
+const RevenuePaymentReportView = ({ report }) => {
+  const { summary, data } = report;
+  const paymentRows = data.payments || data.pendingPayments || [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap gap-2">
+        {summary.organizer?.name && (
+          <ScopeInfo label="Organizer" value={summary.organizer.name} />
+        )}
+        {!summary.organizer?.name && (
+          <ScopeInfo label="" value="Website" />
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <SummaryCard label="Registration Revenue" value={`₹${formatINR(summary.registrationRevenue ?? summary.totalRevenue ?? 0)}`} colorClass="text-emerald-600" />
+        <SummaryCard label="Listing Cost" value={`₹${formatINR(summary.listingCost || 0)}`} colorClass="text-orange-600" />
+        <SummaryCard
+          label="Profit"
+          value={`₹${formatINR(summary.profit || 0)}`}
+          colorClass={(summary.profit || 0) >= 0 ? "text-green-600" : "text-red-600"}
+        />
+      </div>
+
+      {data.revenuePerMonth?.length > 0 && (
+        <SectionCard title="Registration Revenue Per Month" icon={TrendingUp}>
+          <div className="h-72">
+            <Bar
+              data={{
+                labels: toMonthLabels(data.revenuePerMonth.map((item) => item.month)),
+                datasets: [{
+                  label: "Registration Revenue (INR)",
+                  data: data.revenuePerMonth.map((item) => item.revenue),
+                  backgroundColor: "#16a34a",
+                  borderRadius: 4,
+                }],
+              }}
+              options={chartOptions}
+            />
+          </div>
+        </SectionCard>
+      )}
+
+      {data.revenueBySport?.length > 0 && (
+        <SectionCard title="Revenue by Sport" icon={IndianRupee}>
+          <div className="h-72">
+            <Bar
+              data={{
+                labels: data.revenueBySport.map((item) => item.sport),
+                datasets: [{
+                  label: "Registration Revenue (INR)",
+                  data: data.revenueBySport.map((item) => item.revenue),
+                  backgroundColor: data.revenueBySport.map((_, index) => COLORS[index % COLORS.length]),
+                  borderRadius: 4,
+                }],
+              }}
+              options={chartOptions}
+            />
+          </div>
+        </SectionCard>
+      )}
+
+      <SectionCard title="Payment Records" icon={Clock}>
+        {paymentRows.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-base-dark dark:border-base">
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Payer</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Type</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Tournament</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Status</th>
+                  <th className="text-right py-3 px-3 text-base dark:text-base-dark font-semibold">Amount</th>
+                  <th className="text-right py-3 px-3 text-base dark:text-base-dark font-semibold">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paymentRows.map((payment) => (
+                  <tr key={payment._id} className="border-b border-base-dark/50 dark:border-base/50">
+                    <td className="py-3 px-3 font-medium text-text-primary dark:text-text-primary-dark">{payment.payerName || "N/A"}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{payment.payerType}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{payment.tournamentName}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{payment.status}</td>
+                    <td className="py-3 px-3 text-right font-semibold text-text-primary dark:text-text-primary-dark">₹{formatINR(payment.amount)}</td>
+                    <td className="py-3 px-3 text-right text-text-primary dark:text-text-primary-dark">
+                      {new Date(payment.createdAt).toLocaleDateString("en-IN")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-base dark:text-base-dark">No payment records found for this report period.</p>
+        )}
+      </SectionCard>
+    </div>
+  );
+};
+
+const TournamentReportView = ({ report }) => {
+  const { summary, data } = report;
+  const topTournamentParticipation = [...(data.tournamentParticipation || [])]
+    .sort((a, b) => b.teamsRegistered - a.teamsRegistered)
+    .slice(0, 10);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap gap-2">
+        <ScopeInfo label="" value={summary.scopeLabel || "All Tournaments"} />
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <SummaryCard label="Total Tournaments" value={(summary.totalTournamentsOrganized || 0).toLocaleString("en-IN")} colorClass="text-amber-600" />
+        <SummaryCard label="Participation" value={(summary.totalTournamentParticipation || 0).toLocaleString("en-IN")} colorClass="text-blue-600" />
+        <SummaryCard label="Ongoing" value={(summary.ongoingTournaments || 0).toLocaleString("en-IN")} colorClass="text-emerald-600" />
+        <SummaryCard label="Completed" value={(summary.completedTournaments || 0).toLocaleString("en-IN")} colorClass="text-indigo-600" />
+      </div>
+
+      {topTournamentParticipation.length > 0 && (
+        <SectionCard title="Tournament Participation (Top 10)" icon={Users}>
+          <div className="h-72">
+            <Bar
+              data={{
+                labels: topTournamentParticipation.map((item) => item.tournamentName),
+                datasets: [{
+                  label: "Teams Registered",
+                  data: topTournamentParticipation.map((item) => item.teamsRegistered),
+                  backgroundColor: "#2563eb",
+                  borderRadius: 4,
+                }],
+              }}
+              options={chartOptions}
+            />
+          </div>
+        </SectionCard>
+      )}
+
+      {data.statusBreakdown?.length > 0 && (
+        <SectionCard title="Tournament Status" icon={TrendingUp}>
+          <div className="h-72">
+            <Bar
+              data={{
+                labels: data.statusBreakdown.map((item) => item.status),
+                datasets: [{
+                  label: "Tournaments",
+                  data: data.statusBreakdown.map((item) => item.count),
+                  backgroundColor: data.statusBreakdown.map((item) => getTournamentStatusColor(item.status)),
+                  borderRadius: 4,
+                }],
+              }}
+              options={chartOptions}
+            />
+          </div>
+        </SectionCard>
+      )}
+
+      <SectionCard title="Tournament Data Table" icon={Trophy}>
+        {data.tournamentsTable?.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-base-dark dark:border-base">
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Tournament Name</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Organizer</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Registration Type</th>
+                  <th className="text-right py-3 px-3 text-base dark:text-base-dark font-semibold">Teams Registered</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.tournamentsTable.map((row) => (
+                  <tr key={row._id} className="border-b border-base-dark/50 dark:border-base/50">
+                    <td className="py-3 px-3 font-medium text-text-primary dark:text-text-primary-dark">{row.tournamentName}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.organizerName}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.registrationType}</td>
+                    <td className="py-3 px-3 text-right text-text-primary dark:text-text-primary-dark">{row.teamsRegistered}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-base dark:text-base-dark">No tournament records found for this report.</p>
+        )}
+      </SectionCard>
+    </div>
+  );
+};
+
+const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, organizers = [] }) => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [filters, setFilters] = useState({
-    status: "all",
-    sport: "all",
-    payerType: "all",
-    format: "all",
-    role: "all",
-    registrationType: "all",
+    organizerId: "all",
+    userPlayerScope: "users",
   });
 
   useEffect(() => {
     if (isOpen) {
-      // Default to last 30 days
       const to = new Date();
-      const from = new Date();
-      from.setDate(from.getDate() - 30);
-      setFromDate(from.toISOString().split("T")[0]);
-      setToDate(to.toISOString().split("T")[0]);
-      setFilters({ status: "all", sport: "all", payerType: "all", format: "all", role: "all", registrationType: "all" });
+      const from = new Date(to.getFullYear(), 0, 1);
+      setFromDate(formatDateForInput(from));
+      setToDate(formatDateForInput(to));
+      setFilters({ organizerId: "all", userPlayerScope: "users" });
     }
   }, [isOpen]);
 
-  const clearFilters = () => {
-    setFilters({ status: "all", sport: "all", payerType: "all", format: "all", role: "all", registrationType: "all" });
-  };
+  if (!isOpen) {
+    return null;
+  }
+
+  const isUserPlayer = reportType === "UserPlayer";
+  const isRevenuePayment = reportType === "RevenuePayment";
 
   const handleSubmit = () => {
-    if (!fromDate || !toDate) return toast.error("Please select date range");
+    if (!fromDate || !toDate) {
+      toast.error("Please select a valid date range");
+      return;
+    }
+
     onGenerate({
       type: reportType,
       from: fromDate,
@@ -62,23 +797,12 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, spor
     });
   };
 
-  if (!isOpen) return null;
-
-  const typeLabels = {
-    Revenue: "Revenue Report",
-    Tournament: "Tournament Report",
-    User: "User Report",
-    Match: "Match Report",
-    Booking: "Booking Report",
-  };
-
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-card-background dark:bg-card-background-dark rounded-2xl shadow-2xl w-full max-w-lg border border-base-dark dark:border-base">
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-base-dark dark:border-base">
           <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">
-            Select Date Range for {typeLabels[reportType]}
+            {REPORT_META[reportType].title}
           </h2>
           <button
             onClick={onClose}
@@ -88,160 +812,98 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, spor
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
-          {/* Date Range */}
-          <div>
-            <p className="text-sm font-semibold text-text-primary dark:text-text-primary-dark mb-3">
-              Date Range
-            </p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
-                  From Date
-                </label>
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
-                  To Date
-                </label>
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary"
-                />
-              </div>
+        <div className="p-6 space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
+                From Date
+              </label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
+                To Date
+              </label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary"
+              />
             </div>
           </div>
 
-          {/* Filters */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">
-                Filter By
-              </p>
-              <button
-                onClick={clearFilters}
-                className="text-xs text-secondary hover:underline font-medium"
+          {isUserPlayer && (
+            <div>
+              <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
+                User Type
+              </label>
+              <select
+                value={filters.userPlayerScope}
+                onChange={(e) => setFilters((prev) => ({ ...prev, userPlayerScope: e.target.value }))}
+                className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary cursor-pointer"
               >
-                Clear Filters
-              </button>
+                <option value="users">All Users</option>
+                <option value="player">Player</option>
+                <option value="manager">Manager</option>
+                <option value="organizer">Organizer</option>
+              </select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {(reportType === "Revenue" || reportType === "Match") && (
+          )}
+
+          {isRevenuePayment && (
+            <>
+              <div>
+                <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
+                  Report For
+                </label>
+                <select
+                  value={filters.organizerId === "all" ? "website" : "organizer"}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFilters((prev) => ({
+                      ...prev,
+                      organizerId: value === "website" ? "all" : (organizers[0]?._id || "all"),
+                    }));
+                  }}
+                  className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary cursor-pointer"
+                >
+                  <option value="website">Website (All Organizers)</option>
+                  <option value="organizer">Individual Organizer</option>
+                </select>
+              </div>
+
+              {filters.organizerId !== "all" && (
                 <div>
                   <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
-                    Sport
+                    Organizer
                   </label>
                   <select
-                    value={filters.sport}
-                    onChange={(e) => setFilters({ ...filters, sport: e.target.value })}
+                    value={filters.organizerId}
+                    onChange={(e) => setFilters((prev) => ({ ...prev, organizerId: e.target.value }))}
                     className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary cursor-pointer"
                   >
-                    <option value="all">All Sports</option>
-                    {sports.map((s) => (
-                      <option key={s._id} value={s.name}>{s.name}</option>
-                    ))}
+                    {organizers.length === 0 ? (
+                      <option value="all">No organizers available</option>
+                    ) : (
+                      organizers.map((organizer) => (
+                        <option key={organizer._id} value={organizer._id}>
+                          {organizer.orgName || "Unknown Organization"}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
               )}
-
-              {reportType === "Tournament" && (
-                <>
-                  <div>
-                    <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
-                      Format
-                    </label>
-                    <select
-                      value={filters.format}
-                      onChange={(e) => setFilters({ ...filters, format: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary cursor-pointer"
-                    >
-                      <option value="all">All Formats</option>
-                      <option value="League">League</option>
-                      <option value="Knockout">Knockout</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
-                      Sport
-                    </label>
-                    <select
-                      value={filters.sport}
-                      onChange={(e) => setFilters({ ...filters, sport: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary cursor-pointer"
-                    >
-                      <option value="all">All Sports</option>
-                      {sports.map((s) => (
-                        <option key={s._id} value={s.name}>{s.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {reportType === "User" && (
-                <div>
-                  <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
-                    Role
-                  </label>
-                  <select
-                    value={filters.role}
-                    onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary cursor-pointer"
-                  >
-                    <option value="all">All Roles</option>
-                    <option value="Player">Player</option>
-                    <option value="TeamManager">Team Manager</option>
-                    <option value="TournamentOrganizer">Tournament Organizer</option>
-                  </select>
-                </div>
-              )}
-
-              {reportType === "Booking" && (
-                <>
-                  <div>
-                    <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
-                      Status
-                    </label>
-                    <select
-                      value={filters.status}
-                      onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary cursor-pointer"
-                    >
-                      <option value="all">All Statuses</option>
-                      <option value="Confirmed">Confirmed</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Cancelled">Cancelled</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
-                      Registration Type
-                    </label>
-                    <select
-                      value={filters.registrationType}
-                      onChange={(e) => setFilters({ ...filters, registrationType: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary cursor-pointer"
-                    >
-                      <option value="all">All Types</option>
-                      <option value="Team">Team</option>
-                      <option value="Player">Player</option>
-                    </select>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-end gap-3 p-6 border-t border-base-dark dark:border-base">
           <button
             onClick={onClose}
@@ -252,16 +914,9 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, spor
           <button
             onClick={handleSubmit}
             disabled={generating}
-            className="px-6 py-2.5 rounded-lg bg-secondary hover:bg-secondary/90 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-2.5 rounded-lg bg-secondary hover:bg-secondary/90 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {generating ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Generating...
-              </>
-            ) : (
-              "Generate Report"
-            )}
+            {generating ? "Generating..." : "Generate Report"}
           </button>
         </div>
       </div>
@@ -269,187 +924,148 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, spor
   );
 };
 
-// ─── Main Page ──────────────────────────────────────────────────────────
-
 const AdminReports = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { reports, reportsPagination, reportLoading, reportGenerating } =
-    useSelector((state) => state.admin);
-  const { sports } = useSelector((state) => state.sport);
+  const { currentReport, reportGenerating, organizers, analytics, analyticsLoading } = useSelector((state) => state.admin);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState("Revenue");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [showAll, setShowAll] = useState(false);
+  const [modalType, setModalType] = useState("UserPlayer");
 
   useEffect(() => {
-    dispatch(getReports({}));
-    dispatch(fetchAllSports());
+    dispatch(getAllOrganizers());
+    dispatch(getAnalyticsData());
   }, [dispatch]);
 
-  const filteredReports = useMemo(() => {
-    let filtered = reports || [];
-    if (typeFilter !== "all") {
-      filtered = filtered.filter((r) => r.type === typeFilter);
-    }
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (r) =>
-          r.title.toLowerCase().includes(term) ||
-          r.type.toLowerCase().includes(term)
-      );
-    }
-    return filtered;
-  }, [reports, typeFilter, searchTerm]);
+  const userGrowthData = {
+    labels: toMonthLabels(analytics?.userGrowth?.map((item) => item.month) || []),
+    datasets: [
+      {
+        label: "New Users",
+        data: analytics?.userGrowth?.map((item) => item.users) || [],
+        borderColor: "#6366f1",
+        backgroundColor: "rgba(99, 102, 241, 0.18)",
+        fill: true,
+        tension: 0.35,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      },
+    ],
+  };
 
-  const displayedReports = showAll ? filteredReports : filteredReports.slice(0, 5);
+  const revenueGrowthData = {
+    labels: toMonthLabels(analytics?.revenueGrowth?.map((item) => item.month) || []),
+    datasets: [
+      {
+        label: "Revenue",
+        data: analytics?.revenueGrowth?.map((item) => item.revenue) || [],
+        borderColor: "#10b981",
+        backgroundColor: "rgba(16, 185, 129, 0.18)",
+        fill: true,
+        tension: 0.35,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      },
+    ],
+  };
 
-  const openModal = (type) => {
-    setModalType(type);
-    setModalOpen(true);
+  const roleDistributionData = {
+    labels: analytics?.roleDistribution?.map((item) => item.name) || [],
+    datasets: [
+      {
+        data: analytics?.roleDistribution?.map((item) => item.value) || [],
+        backgroundColor: analytics?.roleDistribution?.map((_, index) => COLORS[index % COLORS.length]) || [],
+        borderColor: "#ffffff",
+        borderWidth: 3,
+      },
+    ],
+  };
+
+  const adminRevenueData = {
+    labels: ["Successful Revenue", "Pending Revenue", "Failed Payments"],
+    datasets: [
+      {
+        data: [
+          analytics?.paymentStatus?.find((item) => item.name === "Success")?.amount || 0,
+          analytics?.paymentStatus?.find((item) => item.name === "Pending")?.amount || 0,
+          analytics?.paymentStatus?.find((item) => item.name === "Failed")?.amount || 0,
+        ],
+        backgroundColor: ["#10b981", "#f59e0b", "#ef4444"],
+        borderColor: "#ffffff",
+        borderWidth: 3,
+      },
+    ],
+  };
+
+  const sportWiseTournamentsData = {
+    labels: analytics?.sportWiseTournaments?.map((item) => item.name) || [],
+    datasets: [
+      {
+        label: "Tournaments",
+        data: analytics?.sportWiseTournaments?.map((item) => item.tournaments) || [],
+        backgroundColor: analytics?.sportWiseTournaments?.map((_, index) => COLORS[index % COLORS.length]) || [],
+        borderRadius: 8,
+        maxBarThickness: 42,
+      },
+    ],
+  };
+
+  const feedbackDistributionData = {
+    labels: analytics?.feedbackDistribution?.map((item) => `${item.rating} Star`) || [],
+    datasets: [
+      {
+        label: "Reviews",
+        data: analytics?.feedbackDistribution?.map((item) => item.count) || [],
+        backgroundColor:
+          analytics?.feedbackDistribution?.map((_, index) => FEEDBACK_COLORS[index] || COLORS[index % COLORS.length]) || [],
+        borderRadius: 8,
+        maxBarThickness: 52,
+      },
+    ],
   };
 
   const handleGenerate = async (reportData) => {
     const result = await dispatch(generateReport(reportData));
     if (generateReport.fulfilled.match(result)) {
-      toast.success(`${reportData.type} report generated!`);
+      toast.success("Report generated successfully");
       setModalOpen(false);
-      navigate(`/admin/reports/${result.payload._id}`);
-    } else {
-      toast.error(result.payload || "Failed to generate report");
+      return;
     }
+
+    toast.error(result.payload || "Failed to generate report");
   };
-
-  const handleDelete = async (reportId) => {
-    const result = await dispatch(deleteReport(reportId));
-    if (deleteReport.fulfilled.match(result)) {
-      toast.success("Report deleted");
-    } else {
-      toast.error("Failed to delete report");
-    }
-  };
-
-  const formatDate = (date) =>
-    new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-
-  const formatTime = (date) =>
-    new Date(date).toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-  const getFilterSummary = (report) => {
-    const parts = [];
-    if (report.filters) {
-      Object.entries(report.filters).forEach(([key, val]) => {
-        if (val && val !== "all") parts.push(`${key}: ${val}`);
-      });
-    }
-    return parts.length > 0 ? parts.join(" | ") : "No filters";
-  };
-
-  const reportCards = [
-    {
-      type: "Revenue",
-      icon: IndianRupee,
-      title: "Revenue Report",
-      description: "Analyze platform revenue, payment trends, and financial breakdowns by sport and tournament",
-      btnText: "Generate Revenue Report",
-      btnColor: "bg-emerald-500 hover:bg-emerald-600",
-      iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
-      iconColor: "text-emerald-600 dark:text-emerald-400",
-      borderColor: "border-emerald-200 dark:border-emerald-800",
-    },
-    {
-      type: "Tournament",
-      icon: Trophy,
-      title: "Tournament Report",
-      description: "View tournament statistics, format and sport distribution, registration fill rates, and trends",
-      btnText: "Generate Tournament Report",
-      btnColor: "bg-blue-500 hover:bg-blue-600",
-      iconBg: "bg-blue-100 dark:bg-blue-900/30",
-      iconColor: "text-blue-600 dark:text-blue-400",
-      borderColor: "border-blue-200 dark:border-blue-800",
-    },
-    {
-      type: "User",
-      icon: Users,
-      title: "User Report",
-      description: "Track user registrations, role distribution, player demographics, and city-wise engagement",
-      btnText: "Generate User Report",
-      btnColor: "bg-purple-500 hover:bg-purple-600",
-      iconBg: "bg-purple-100 dark:bg-purple-900/30",
-      iconColor: "text-purple-600 dark:text-purple-400",
-      borderColor: "border-purple-200 dark:border-purple-800",
-    },
-    {
-      type: "Match",
-      icon: Swords,
-      title: "Match Report",
-      description: "Analyze match scheduling, cancellation rates, sport-wise breakdowns, and venue utilization",
-      btnText: "Generate Match Report",
-      btnColor: "bg-orange-500 hover:bg-orange-600",
-      iconBg: "bg-orange-100 dark:bg-orange-900/30",
-      iconColor: "text-orange-600 dark:text-orange-400",
-      borderColor: "border-orange-200 dark:border-orange-800",
-    },
-    {
-      type: "Booking",
-      icon: Ticket,
-      title: "Booking Report",
-      description: "Track tournament bookings, registration trends, popular tournaments, and payment success rates",
-      btnText: "Generate Booking Report",
-      btnColor: "bg-teal-500 hover:bg-teal-600",
-      iconBg: "bg-teal-100 dark:bg-teal-900/30",
-      iconColor: "text-teal-600 dark:text-teal-400",
-      borderColor: "border-teal-200 dark:border-teal-800",
-    },
-  ];
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
-            Analytics & Reports
-          </h1>
-          <p className="text-base dark:text-base-dark mt-1">
-            Generate and manage platform reports
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold text-text-primary dark:text-text-primary-dark">
+          Reports
+        </h1>
+        
       </div>
 
-      {/* Report Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {reportCards.map((card) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Object.entries(REPORT_META).map(([type, card]) => (
           <div
-            key={card.type}
+            key={type}
             className={`bg-card-background dark:bg-card-background-dark rounded-xl border-2 ${card.borderColor} p-6 flex flex-col`}
           >
             <div className="flex items-center gap-3 mb-3">
-              <div
-                className={`w-12 h-12 ${card.iconBg} rounded-xl flex items-center justify-center`}
-              >
+              <div className={`w-12 h-12 ${card.iconBg} rounded-xl flex items-center justify-center`}>
                 <card.icon className={`w-6 h-6 ${card.iconColor}`} />
               </div>
               <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark">
                 {card.title}
               </h3>
             </div>
-            <p className="text-sm text-base dark:text-base-dark mb-5 flex-1">
-              {card.description}
-            </p>
+
+            <p className="text-sm text-base dark:text-base-dark mb-5 flex-1">{card.description}</p>
+
             <button
-              onClick={() => openModal(card.type)}
-              className={`w-full py-3 rounded-lg text-white text-sm font-semibold transition-colors ${card.btnColor} cursor-pointer`}
+              onClick={() => {
+                setModalType(type);
+                setModalOpen(true);
+              }}
+              className={`w-full py-3 rounded-lg text-white text-sm font-semibold transition-colors ${card.btnColor}`}
             >
               {card.btnText}
             </button>
@@ -457,132 +1073,103 @@ const AdminReports = () => {
         ))}
       </div>
 
-      {/* Recent Reports History */}
-      <div>
-        <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
-          Recent Reports History
-        </h2>
+      {currentReport && reportGenerating === false && (
+        <div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">{currentReport.title}</h2>
+            </div>
 
-        {/* Search + Filter */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search reports..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary"
-            />
-          </div>
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="px-4 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none cursor-pointer"
-          >
-            <option value="all">All Types</option>
-            <option value="Revenue">Revenue</option>
-            <option value="Tournament">Tournament</option>
-            <option value="User">User</option>
-            <option value="Match">Match</option>
-            <option value="Booking">Booking</option>
-          </select>
-        </div>
-
-        {/* Reports List */}
-        {reportLoading && (!reports || reports.length === 0) ? (
-          <div className="flex justify-center py-12">
-            <Spinner size="md" />
-          </div>
-        ) : filteredReports.length === 0 ? (
-          <div className="text-center py-12 bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base">
-            <FileText className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-            <p className="text-lg font-semibold text-text-primary dark:text-text-primary-dark">
-              No reports generated yet
-            </p>
-            <p className="text-sm text-base dark:text-base-dark mt-1">
-              Generate your first report using the cards above
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {displayedReports.map((report) => {
-              const typeColors = {
-                Revenue: "text-emerald-600 dark:text-emerald-400",
-                Tournament: "text-blue-600 dark:text-blue-400",
-                User: "text-purple-600 dark:text-purple-400",
-                Match: "text-orange-600 dark:text-orange-400",
-                Booking: "text-teal-600 dark:text-teal-400",
-              };
-              return (
-                <div
-                  key={report._id}
-                  className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-4 flex flex-col sm:flex-row sm:items-center gap-3"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-sm font-bold ${typeColors[report.type]}`}>
-                        {report.type}
-                      </span>
-                      <span className="font-bold text-text-primary dark:text-text-primary-dark">
-                        {report.title}
-                      </span>
-                    </div>
-                    <p className="text-xs text-base dark:text-base-dark">
-                      {formatDate(report.dateRange?.from)} to{" "}
-                      {formatDate(report.dateRange?.to)} &bull;{" "}
-                      {getFilterSummary(report)} &bull; {formatDate(report.createdAt)}{" "}
-                      {formatTime(report.createdAt)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => navigate(`/admin/reports/${report._id}`)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-secondary hover:bg-secondary/10 rounded-lg transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                      View
-                    </button>
-                    <button
-                      onClick={() => handleDelete(report._id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* View All Toggle */}
-        {filteredReports.length > 5 && (
-          <div className="text-center mt-4">
             <button
-              onClick={() => setShowAll(!showAll)}
-              className="text-sm font-medium text-secondary hover:underline"
+              onClick={() => downloadReportCsv(currentReport)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-white text-sm font-medium hover:bg-secondary/90 transition-colors"
             >
-              {showAll
-                ? "Show Less"
-                : `View all (${filteredReports.length})`}
+              <Download className="w-4 h-4" />
+              Export CSV
             </button>
           </div>
-        )}
-      </div>
 
-      {/* Report Generation Modal */}
+          {currentReport.type === "UserPlayer" && <UserPlayerReportView report={currentReport} />}
+          {currentReport.type === "Tournament" && <TournamentReportView report={currentReport} />}
+          {currentReport.type === "RevenuePayment" && <RevenuePaymentReportView report={currentReport} />}
+        </div>
+      )}
+
+      {reportGenerating && (
+        <div className="flex justify-center py-12">
+          <Spinner size="lg" />
+        </div>
+      )}
+
+      {!currentReport && !reportGenerating && (
+        <div className="space-y-6">
+          {analyticsLoading ? (
+            <div className="flex items-center justify-center h-64 bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base">
+              <Spinner size="lg" />
+            </div>
+          ) : (
+            analytics && (
+              <>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  <OverviewChartCard title="User Growth" icon={TrendingUp}>
+                    <div className="h-72">
+                      <Line data={userGrowthData} options={overviewLineChartOptions} />
+                    </div>
+                  </OverviewChartCard>
+
+                  <OverviewChartCard title="Revenue Trend" icon={DollarSign}>
+                    <div className="h-72">
+                      <Line data={revenueGrowthData} options={overviewRevenueLineOptions} />
+                    </div>
+                  </OverviewChartCard>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <OverviewChartCard title="Users by Role" icon={Users}>
+                    <div className="h-64">
+                      <Doughnut data={roleDistributionData} options={overviewDoughnutChartOptions} />
+                    </div>
+                  </OverviewChartCard>
+
+                  <OverviewChartCard title="Admin Revenue" icon={DollarSign}>
+                    <div className="h-64">
+                      <Doughnut data={adminRevenueData} options={overviewDoughnutChartOptions} />
+                    </div>
+                  </OverviewChartCard>
+                </div>
+
+                {analytics.sportWiseTournaments?.length > 0 && (
+                  <OverviewChartCard title="Sport-wise Tournaments" icon={BarChart3}>
+                    <div className="h-72">
+                      <Bar data={sportWiseTournamentsData} options={overviewBarChartOptions} />
+                    </div>
+                  </OverviewChartCard>
+                )}
+
+                {analytics.feedbackDistribution?.length > 0 && (
+                  <OverviewChartCard title="Feedback Ratings" icon={MessageSquare}>
+                    <div className="h-64">
+                      <Bar data={feedbackDistributionData} options={overviewBarChartOptions} />
+                    </div>
+                  </OverviewChartCard>
+                )}
+              </>
+            )
+          )}
+        </div>
+      )}
+
       <ReportModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         reportType={modalType}
         onGenerate={handleGenerate}
         generating={reportGenerating}
-        sports={sports}
+        organizers={organizers}
       />
     </div>
   );
 };
 
 export default AdminReports;
+

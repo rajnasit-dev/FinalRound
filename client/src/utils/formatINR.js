@@ -9,3 +9,4 @@ export const formatINR = (amount) => {
   if (isNaN(num)) return "0";
   return num.toLocaleString("en-IN");
 };
+
