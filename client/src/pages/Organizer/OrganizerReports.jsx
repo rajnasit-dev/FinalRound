@@ -213,6 +213,38 @@ const RevenuePaymentReportView = ({ report }) => {
         </SectionCard>
       )}
 
+      {data.revenueByTournament?.length > 0 && (
+        <SectionCard title="Registration Revenue by Tournament" icon={Trophy}>
+          <div className="h-80">
+            <Bar
+              data={{
+                labels: data.revenueByTournament.map((item) => item.tournamentName),
+                datasets: [{
+                  label: "Registration Revenue (INR)",
+                  data: data.revenueByTournament.map((item) => item.revenue),
+                  backgroundColor: data.revenueByTournament.map((_, index) => COLORS[index % COLORS.length]),
+                  borderRadius: 6,
+                }],
+              }}
+              options={{
+                ...chartOptions,
+                scales: {
+                  ...(chartOptions.scales || {}),
+                  x: {
+                    ...((chartOptions.scales || {}).x || {}),
+                    ticks: {
+                      ...(((chartOptions.scales || {}).x || {}).ticks || {}),
+                      maxRotation: 40,
+                      minRotation: 20,
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
+        </SectionCard>
+      )}
+
       <SectionCard title="Payment Records" icon={Clock}>
         {paymentRows.length > 0 ? (
           <div className="overflow-x-auto">
@@ -336,9 +368,10 @@ const TournamentReportView = ({ report }) => {
   );
 };
 
-const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating }) => {
+const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, tournaments = [] }) => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [tournamentId, setTournamentId] = useState("all");
 
   const formatDateForInput = (date) => {
     const year = date.getFullYear();
@@ -353,6 +386,7 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating }) =>
       const from = new Date(to.getFullYear(), 0, 1);
       setFromDate(formatDateForInput(from));
       setToDate(formatDateForInput(to));
+      setTournamentId("all");
     }
   }, [isOpen]);
 
@@ -370,6 +404,9 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating }) =>
       type: reportType,
       from: fromDate,
       to: toDate,
+      filters: {
+        tournamentId,
+      },
     });
   };
 
@@ -413,6 +450,24 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating }) =>
               />
             </div>
           </div>
+
+          <div>
+            <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
+              Tournament Scope
+            </label>
+            <select
+              value={tournamentId}
+              onChange={(e) => setTournamentId(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary"
+            >
+              <option value="all">All Tournaments</option>
+              {tournaments.map((tournament) => (
+                <option key={tournament._id} value={tournament._id}>
+                  {tournament.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="flex items-center justify-end gap-3 p-6 border-t border-base-dark dark:border-base">
@@ -440,6 +495,7 @@ const OrganizerReports = () => {
   const [reportGenerating, setReportGenerating] = useState(false);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analytics, setAnalytics] = useState(null);
+  const [organizerTournaments, setOrganizerTournaments] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState("Tournament");
 
@@ -452,6 +508,12 @@ const OrganizerReports = () => {
           { withCredentials: true }
         );
         setAnalytics(response.data?.data || null);
+
+        const tournamentsResponse = await axios.get(
+          `${API_BASE_URL}/tournament-organizers/tournaments/my-tournaments`,
+          { withCredentials: true }
+        );
+        setOrganizerTournaments(tournamentsResponse.data?.data || []);
       } catch (error) {
         toast.error(error?.response?.data?.message || "Failed to load organizer analytics");
       } finally {
@@ -669,6 +731,7 @@ const OrganizerReports = () => {
         reportType={modalType}
         onGenerate={handleGenerate}
         generating={reportGenerating}
+        tournaments={organizerTournaments}
       />
     </div>
   );

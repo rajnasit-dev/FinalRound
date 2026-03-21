@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Calendar, MapPin, Edit } from "lucide-react";
+import { Calendar, Edit, Swords } from "lucide-react";
+import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import DataTable from "./DataTable";
 import MatchDetailModal from "./MatchDetailModal";
 import useDateFormat from "../../hooks/useDateFormat";
@@ -12,45 +13,52 @@ const FixturesTable = ({ matches, showEditButton = false, onEdit }) => {
   const { getStatusColor } = useStatusColor();
   const [selectedMatch, setSelectedMatch] = useState(null);
 
+  const getTeamLogo = (team) => team?.logoUrl || team?.logo || defaultTeamAvatar;
+
   const columns = [
     {
-      header: "Date & Time",
-      width: "20%",
-      render: (match) => (
-        <div className="flex items-start gap-2">
-          <Calendar className="w-4 h-4 text-secondary dark:text-accent mt-0.5 shrink-0" />
-          <div className="text-sm font-num">
-            <div className="font-medium text-text-primary dark:text-text-primary-dark">
-              {formatDate(match.scheduledAt)}
-            </div>
-            <div className="text-base dark:text-base-dark">
-              {formatTime(match.scheduledAt)}
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
       header: "Match",
-      width: "35%",
+      width: showEditButton ? "56%" : "62%",
+      headerClassName: "tracking-wide",
       render: (match) => (
         <div className="text-sm">
           {match.teamA && match.teamB ? (
-            <div className="font-medium text-text-primary dark:text-text-primary-dark">
+            <div className="flex items-center gap-3 min-w-0">
               <Link
                 to={`/teams/${match.teamA._id}`}
                 onClick={(e) => e.stopPropagation()}
-                className="hover:text-secondary dark:hover:text-accent transition-colors"
+                className="group flex items-center gap-2.5 min-w-0 max-w-[42%] rounded-xl px-2.5 py-2 bg-card-background/80 dark:bg-card-background-dark/70 border border-base-dark/20 dark:border-base/30 hover:border-secondary/60 dark:hover:border-accent/50 transition-colors"
+                title={match.teamA.name}
               >
-                {match.teamA.name}
+                <img
+                  src={getTeamLogo(match.teamA)}
+                  alt={match.teamA.name}
+                  className="w-11 h-11 rounded-full object-cover border border-border-light dark:border-border-dark shrink-0"
+                />
+                <span className="truncate font-semibold text-text-primary dark:text-text-primary-dark group-hover:text-secondary dark:group-hover:text-accent transition-colors">
+                  {match.teamA.name}
+                </span>
               </Link>
-              <span className="mx-2 text-base dark:text-base-dark">vs</span>
+
+              <div className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-secondary/10 dark:bg-accent/10 text-secondary dark:text-accent shrink-0">
+                <Swords className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-bold uppercase tracking-wide">VS</span>
+              </div>
+
               <Link
                 to={`/teams/${match.teamB._id}`}
                 onClick={(e) => e.stopPropagation()}
-                className="hover:text-secondary dark:hover:text-accent transition-colors"
+                className="group flex items-center gap-2.5 min-w-0 max-w-[42%] rounded-xl px-2.5 py-2 bg-card-background/80 dark:bg-card-background-dark/70 border border-base-dark/20 dark:border-base/30 hover:border-secondary/60 dark:hover:border-accent/50 transition-colors"
+                title={match.teamB.name}
               >
-                {match.teamB.name}
+                <img
+                  src={getTeamLogo(match.teamB)}
+                  alt={match.teamB.name}
+                  className="w-11 h-11 rounded-full object-cover border border-border-light dark:border-border-dark shrink-0"
+                />
+                <span className="truncate font-semibold text-text-primary dark:text-text-primary-dark group-hover:text-secondary dark:group-hover:text-accent transition-colors">
+                  {match.teamB.name}
+                </span>
               </Link>
             </div>
           ) : match.playerA && match.playerB ? (
@@ -74,26 +82,24 @@ const FixturesTable = ({ matches, showEditButton = false, onEdit }) => {
           ) : (
             <span className="text-base dark:text-base-dark">TBD</span>
           )}
-          {match.tournament && (
-            <div className="text-xs text-base dark:text-base-dark mt-1 truncate">
-              {match.tournament.name}
-            </div>
-          )}
         </div>
       ),
     },
     {
-      header: "Venue",
-      width: "25%",
+      header: "Date & Time",
+      width: showEditButton ? "22%" : "23%",
+      headerClassName: "tracking-wide",
       render: (match) => (
-        <div className="flex items-start gap-2">
-          <MapPin className="w-4 h-4 text-secondary dark:text-accent mt-0.5 shrink-0" />
-          <div className="text-sm min-w-0">
-            <div className="font-medium text-text-primary dark:text-text-primary-dark truncate">
-              {match.ground?.name || "TBD"}
+        <div className="inline-flex items-start gap-2.5 rounded-xl px-3 py-2 bg-card-background/80 dark:bg-card-background-dark/70 border border-base-dark/20 dark:border-base/30">
+          <div className="w-7 h-7 rounded-full bg-secondary/15 dark:bg-accent/15 flex items-center justify-center shrink-0 mt-0.5">
+            <Calendar className="w-4 h-4 text-secondary dark:text-accent" />
+          </div>
+          <div className="text-sm font-num leading-tight">
+            <div className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">
+              {formatDate(match.scheduledAt)}
             </div>
-            <div className="text-base dark:text-base-dark truncate">
-              {match.ground?.city || ""}
+            <div className="text-xs mt-1 text-base dark:text-base-dark">
+              {formatTime(match.scheduledAt)}
             </div>
           </div>
         </div>
@@ -101,14 +107,14 @@ const FixturesTable = ({ matches, showEditButton = false, onEdit }) => {
     },
     {
       header: "Status",
-      width: showEditButton ? "10%" : "20%",
+      width: showEditButton ? "12%" : "15%",
+      headerClassName: "tracking-wide",
+      cellClassName: "align-middle",
       render: (match) => (
         <span
-          className={`text-white inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(match.status)}`}
+          className={`text-white inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide shadow-sm ${getStatusColor(match.status)}`}
         >
-          {match.status === "Live" && (
-            <span className="w-2 h-2 text-white bg-current rounded-full animate-pulse mr-2"></span>
-          )}
+          <span className={`w-1.5 h-1.5 rounded-full bg-white ${match.status === "Live" ? "animate-pulse" : "opacity-80"}`}></span>
           {match.status}
         </span>
       ),

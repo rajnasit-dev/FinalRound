@@ -22,6 +22,9 @@ const RootLayout = () => {
       duration: 1.2,
       smoothWheel: true,
       smoothTouch: false,
+      // Keep native wheel scroll for modals and other opt-out containers.
+      prevent: (node) =>
+        !!node?.closest?.("[data-lenis-prevent], [data-lenis-prevent-wheel]"),
     });
 
     let rafId;

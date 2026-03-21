@@ -3,13 +3,12 @@ import { useDispatch } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
 import { fetchAllSports as fetchAllSportsThunk } from "../../store/slices/sportSlice";
 import axios from "axios";
-import { Dumbbell, Edit2, Trash2, Plus, X, Users } from "lucide-react";
+import { Dumbbell, Edit2, Plus, RotateCcw, X, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import BackButton from "../../components/ui/BackButton";
 import Spinner from "../../components/ui/Spinner";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import DataTable from "../../components/ui/DataTable";
-import SearchBar from "../../components/ui/SearchBar";
 import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
@@ -33,10 +32,8 @@ const AdminSports = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingSport, setEditingSport] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("nameAsc");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [addRoleInput, setAddRoleInput] = useState("");
   const [addRoles, setAddRoles] = useState(["Player"]);
   const [editRoleInput, setEditRoleInput] = useState("");
@@ -77,7 +74,7 @@ const AdminSports = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_BASE_URL}/sports`, {
+      const response = await axios.get(`${API_BASE_URL}/sports/admin/all`, {
         withCredentials: true,
       });
       setSports(response.data?.data || []);
@@ -90,18 +87,36 @@ const AdminSports = () => {
 
   const handleDelete = async (e, sportId) => {
     e.stopPropagation();
-    if (!window.confirm("Are you sure you want to delete this sport? This action cannot be undone.")) return;
+    if (!window.confirm("Are you sure you want to remove this sport? You can restore it later.")) return;
 
     setDeletingId(sportId);
     try {
       await axios.delete(`${API_BASE_URL}/sports/${sportId}`, {
         withCredentials: true,
       });
-      toast.success("Sport deleted successfully");
+      toast.success("Sport removed successfully");
       fetchSports();
       dispatch(fetchAllSportsThunk());
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete sport");
+      toast.error(err.response?.data?.message || "Failed to remove sport");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleRestore = async (e, sportId) => {
+    e.stopPropagation();
+
+    setDeletingId(sportId);
+    try {
+      await axios.patch(`${API_BASE_URL}/sports/${sportId}/restore`, {}, {
+        withCredentials: true,
+      });
+      toast.success("Sport restored successfully");
+      fetchSports();
+      dispatch(fetchAllSportsThunk());
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to restore sport");
     } finally {
       setDeletingId(null);
     }
@@ -210,7 +225,7 @@ const AdminSports = () => {
       ),
     },
     {
-      header: "Players/Team",
+      header: "Min Players",
       width: "15%",
       render: (sport) => (
         <span className="text-text-primary dark:text-text-primary-dark">
@@ -219,8 +234,21 @@ const AdminSports = () => {
       ),
     },
     {
+      header: "Status",
+      width: "10%",
+      render: (sport) => (
+        <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+          sport.isActive
+            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+            : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
+        }`}>
+          {sport.isActive ? "Active" : "Removed"}
+        </span>
+      ),
+    },
+    {
       header: "Actions",
-      width: "30%",
+      width: "20%",
       headerClassName: "text-right",
       cellClassName: "text-right",
       render: (sport) => (
@@ -233,45 +261,28 @@ const AdminSports = () => {
             Edit
           </Button>
           <Button
-            onClick={(e) => handleDelete(e, sport._id)}
+            onClick={(e) => (sport.isActive ? handleDelete(e, sport._id) : handleRestore(e, sport._id))}
             disabled={deletingId === sport._id}
             loading={deletingId === sport._id}
-            variant="danger"
+            variant={sport.isActive ? "danger" : "secondary"}
             size="sm"
           >
-            <Trash2 className="w-4 h-4" />
-            <span className="text-sm font-semibold">Delete</span>
+            <RotateCcw className="w-4 h-4" />
+            <span className="text-sm font-semibold">{sport.isActive ? "Remove" : "Restore"}</span>
           </Button>
         </div>
       ),
     },
   ];
 
-  const uniqueRoles = [...new Set((sports || []).flatMap((sport) => sport.roles || ["Player"]))]
-    .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b));
-
   const filteredSports = [...(sports || [])]
-    .filter((sport) => {
-      if (!searchTerm) return true;
-      return sport.name?.toLowerCase().includes(searchTerm.toLowerCase().trim());
-    })
     .filter((sport) => {
       if (typeFilter === "all") return true;
       return typeFilter === "team" ? sport.teamBased : !sport.teamBased;
     })
     .filter((sport) => {
-      if (roleFilter === "all") return true;
-      return (sport.roles || ["Player"]).includes(roleFilter);
-    })
-    .sort((a, b) => {
-      if (sortBy === "nameDesc") {
-        return (b.name || "").localeCompare(a.name || "");
-      }
-      if (sortBy === "type") {
-        return Number(b.teamBased) - Number(a.teamBased);
-      }
-      return (a.name || "").localeCompare(b.name || "");
+      if (statusFilter === "all") return true;
+      return statusFilter === "active" ? sport.isActive : !sport.isActive;
     });
 
   if (loading) {
@@ -311,12 +322,7 @@ const AdminSports = () => {
       )}
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <SearchBar
-          placeholder="Search sports by name..."
-          searchQuery={searchTerm}
-          setSearchQuery={setSearchTerm}
-        />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Select
           options={[
             { value: "all", label: "All Types" },
@@ -328,20 +334,12 @@ const AdminSports = () => {
         />
         <Select
           options={[
-            { value: "all", label: "All Roles" },
-            ...uniqueRoles.map((role) => ({ value: role, label: role })),
+            { value: "all", label: "All Status" },
+            { value: "active", label: "Active" },
+            { value: "removed", label: "Removed" },
           ]}
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-        />
-        <Select
-          options={[
-            { value: "nameAsc", label: "Name (A-Z)" },
-            { value: "nameDesc", label: "Name (Z-A)" },
-            { value: "type", label: "Type (Team First)" },
-          ]}
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
         />
         <div className="flex items-center justify-end">
           <span className="text-sm text-base dark:text-base-dark font-medium">

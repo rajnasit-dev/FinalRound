@@ -1,10 +1,13 @@
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const Modal = ({ children, onClose }) => {
+  const modalRef = useRef(null);
+
   useEffect(() => {
     // Prevent body scroll when modal is open
     document.body.style.overflow = "hidden";
+    modalRef.current?.focus();
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -19,7 +22,13 @@ const Modal = ({ children, onClose }) => {
       />
       
       {/* Modal */}
-      <div className="relative z-10 bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div
+        ref={modalRef}
+        tabIndex={-1}
+        data-lenis-prevent
+        data-lenis-prevent-wheel
+        className="relative z-10 bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base max-w-2xl w-full max-h-[90vh] overflow-y-auto focus:outline-none"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}

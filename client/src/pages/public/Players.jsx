@@ -14,6 +14,7 @@ import { fetchAllSports } from "../../store/slices/sportSlice";
 const Players = () => {
   const [selectedSport, setSelectedSport] = useState("All");
   const [selectedRole, setSelectedRole] = useState("All");
+  const [selectedGender, setSelectedGender] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const dispatch = useDispatch();
   const {
@@ -61,6 +62,17 @@ const Players = () => {
     return ["All", ...Array.from(allRoles)];
   })();
 
+  const genderOptions = [
+    "All",
+    ...Array.from(
+      new Set(
+        players
+          .map((player) => player.gender)
+          .filter(Boolean)
+      )
+    ),
+  ];
+
   // Filter players based on selections
   const filteredPlayers = players.filter((player) => {
     const matchesSport =
@@ -70,6 +82,10 @@ const Players = () => {
     const matchesRole =
       selectedRole === "All" ||
       player.sports?.some((sport) => sport.role === selectedRole);
+
+    const matchesGender =
+      selectedGender === "All" ||
+      (player.gender || "").toLowerCase() === selectedGender.toLowerCase();
     
     const matchesSearch =
       searchQuery === "" ||
@@ -79,7 +95,7 @@ const Players = () => {
         sport.role?.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-    return matchesSport && matchesRole && matchesSearch;
+    return matchesSport && matchesRole && matchesGender && matchesSearch;
   });
 
   // Pagination logic
@@ -93,7 +109,7 @@ const Players = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedSport, selectedRole, searchQuery]);
+  }, [selectedSport, selectedRole, selectedGender, searchQuery]);
 
   if (loading) {
     return (
@@ -150,6 +166,15 @@ const Players = () => {
               options={roles.map((role) => ({
                 value: role,
                 label: role === "All" ? "All Roles" : role,
+              }))}
+            />
+
+            <FilterDropdown
+              value={selectedGender}
+              onChange={(e) => setSelectedGender(e.target.value)}
+              options={genderOptions.map((gender) => ({
+                value: gender,
+                label: gender === "All" ? "All Genders" : gender,
               }))}
             />
           </div>

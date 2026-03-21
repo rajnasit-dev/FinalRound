@@ -1,8 +1,9 @@
 ﻿import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus, Edit, Play, Calendar, Users, Ban, Trash2, X } from "lucide-react";
+import { Plus, Edit, Play, Calendar, Ban, Trash2, X } from "lucide-react";
 import toast from "react-hot-toast";
+import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import Spinner from "../../components/ui/Spinner";
 import DataTable from "../../components/ui/DataTable";
 import Button from "../../components/ui/Button";
@@ -78,6 +79,8 @@ const TournamentFixtures = () => {
     if (typeof participant === "object") return participant.fullName || participant.name || "TBD";
     return playerNameLookup.get(participant.toString()) || "TBD";
   };
+
+  const getTeamLogo = (team) => team?.logoUrl || team?.logo || defaultTeamAvatar;
 
   const canAutoGenerate =
     !tournament?.isScheduleCreated &&
@@ -292,7 +295,12 @@ const TournamentFixtures = () => {
 
 
 
-  const handleCancelMatch = async (matchId, isCancelled) => {
+  const handleCancelMatch = async (matchId, isCancelled, matchStatus) => {
+    if (matchStatus === "Completed") {
+      toast.error("Completed matches cannot be cancelled.");
+      return;
+    }
+
     const action = isCancelled ? "continue" : "cancel";
     if (!window.confirm(`Are you sure you want to ${action} this match?`)) return;
     
@@ -454,12 +462,28 @@ const TournamentFixtures = () => {
               const participantB = match.teamB
                 ? getParticipantName(match.teamB, "team")
                 : getParticipantName(match.playerB, "player");
+
+              const isTeamMatch = Boolean(match.teamA && match.teamB);
+
               return (
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-secondary dark:text-secondary" />
-                  <div className="text-sm text-text-primary dark:text-text-primary-dark">
-                    {participantA} <span className="text-base dark:text-base-dark">vs</span> {participantB}
-                  </div>
+                <div className="text-sm text-text-primary dark:text-text-primary-dark flex items-center gap-2 min-w-0">
+                  {isTeamMatch && (
+                    <img
+                      src={getTeamLogo(match.teamA)}
+                      alt={participantA}
+                      className="w-9 h-9 rounded-full object-cover border border-border-light dark:border-border-dark shrink-0"
+                    />
+                  )}
+                  <span className="truncate" title={participantA}>{participantA}</span>
+                  <span className="text-base dark:text-base-dark shrink-0">vs</span>
+                  {isTeamMatch && (
+                    <img
+                      src={getTeamLogo(match.teamB)}
+                      alt={participantB}
+                      className="w-9 h-9 rounded-full object-cover border border-border-light dark:border-border-dark shrink-0"
+                    />
+                  )}
+                  <span className="truncate" title={participantB}>{participantB}</span>
                 </div>
               );
             },
@@ -482,43 +506,42 @@ const TournamentFixtures = () => {
             accessor: "actions",
             render: (match) => {
               const isMatchCancelled = match.isCancelled || match.status === "Cancelled";
+              const isMatchCompleted = match.status === "Completed";
               const matchStatus = isMatchCancelled ? "Cancelled" : match.status;
 
               return (
               <div className="flex items-center gap-2">
-                {!isMatchCancelled && (
-                  <Button
-                    variant="info"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/organizer/matches/${match._id}/edit`);
-                    }}
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                    {matchStatus === "Live" ? "Update" : "Edit"}
-                  </Button>
-                )}
-                {(matchStatus === "Scheduled" || matchStatus === "Live") && (
+                <Button
+                  variant="info"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/organizer/matches/${match._id}/edit`);
+                  }}
+                >
+                  <Edit className="w-3.5 h-3.5" />
+                  {matchStatus === "Live" ? "Update" : "Edit"}
+                </Button>
+                {!isMatchCompleted && (matchStatus === "Scheduled" || matchStatus === "Live") && (
                   <Button
                     variant="warning"
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleCancelMatch(match._id, false);
+                      handleCancelMatch(match._id, false, match.status);
                     }}
                   >
                     <Ban className="w-3.5 h-3.5" />
                     Cancel
                   </Button>
                 )}
-                {isMatchCancelled && (
+                {!isMatchCompleted && isMatchCancelled && (
                   <Button
                     variant="success"
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleCancelMatch(match._id, true);
+                      handleCancelMatch(match._id, true, match.status);
                     }}
                   >
                     Continue

@@ -56,6 +56,10 @@ const PaymentDetailModal = ({ paymentId, onClose, currentUserId }) => {
     return () => document.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  useEffect(() => {
+    modalRef.current?.focus();
+  }, []);
+
   const handleBackdropClick = (e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {
       onClose();
@@ -109,7 +113,10 @@ const PaymentDetailModal = ({ paymentId, onClose, currentUserId }) => {
     >
       <div
         ref={modalRef}
-        className="bg-card-background dark:bg-card-background-dark rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-border-light dark:border-border-dark shadow-2xl"
+        tabIndex={-1}
+        data-lenis-prevent
+        data-lenis-prevent-wheel
+        className="bg-card-background dark:bg-card-background-dark rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-border-light dark:border-border-dark shadow-2xl focus:outline-none"
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-border-light dark:border-border-dark sticky top-0 bg-card-background dark:bg-card-background-dark z-10 rounded-t-2xl">

@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import {
   getDashboardStats,
-  getOtpSetting,
-  toggleOtpSetting,
   getAnalyticsData,
 } from "../../store/slices/adminSlice";
 import { formatINR } from "../../utils/formatINR";
@@ -14,14 +12,9 @@ import {
   Trophy,
   Shield,
   DollarSign,
-  UserCheck,
   TrendingUp,
-  TrendingDown,
-  Settings,
   BarChart3,
-  Dumbbell,
   MessageSquare,
-  Swords,
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -117,28 +110,6 @@ const barChartOptions = {
   },
 };
 
-const GrowthBadge = ({ value }) => {
-  if (value === 0) return null;
-  const isPositive = value > 0;
-  return (
-    <span
-      className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
-        isPositive
-          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-      }`}
-    >
-      {isPositive ? (
-        <TrendingUp className="w-3 h-3" />
-      ) : (
-        <TrendingDown className="w-3 h-3" />
-      )}
-      {isPositive ? "+" : ""}
-      {value}%
-    </span>
-  );
-};
-
 const ChartCard = ({ title, icon: Icon, children, className = "" }) => (
   <div
     className={`bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6 ${className}`}
@@ -161,21 +132,14 @@ const AdminDashboard = () => {
   const {
     dashboardStats,
     loading,
-    otpVerificationRequired,
-    otpSettingLoading,
     analytics,
     analyticsLoading,
   } = useSelector((state) => state.admin);
 
   useEffect(() => {
     dispatch(getDashboardStats());
-    dispatch(getOtpSetting());
     dispatch(getAnalyticsData());
   }, [dispatch]);
-
-  const handleToggleOtp = () => {
-    dispatch(toggleOtpSetting());
-  };
 
   const userGrowthData = {
     labels: toMonthLabels(analytics?.userGrowth?.map((item) => item.month) || []),
@@ -292,7 +256,6 @@ const AdminDashboard = () => {
               <div className="w-14 h-14 bg-linear-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <Users className="w-7 h-7 text-white" />
               </div>
-              {analytics?.growth && <GrowthBadge value={analytics.growth.users} />}
             </div>
             <p className="text-sm font-semibold text-base dark:text-base-dark mb-2 uppercase tracking-wide">
               Total Users
@@ -314,9 +277,6 @@ const AdminDashboard = () => {
               <div className="w-14 h-14 bg-linear-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <Trophy className="w-7 h-7 text-white" />
               </div>
-              {analytics?.growth && (
-                <GrowthBadge value={analytics.growth.tournaments} />
-              )}
             </div>
             <p className="text-sm font-semibold text-base dark:text-base-dark mb-2 uppercase tracking-wide">
               Tournaments
@@ -359,9 +319,6 @@ const AdminDashboard = () => {
               <div className="w-14 h-14 bg-linear-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <DollarSign className="w-7 h-7 text-white" />
               </div>
-              {analytics?.growth && (
-                <GrowthBadge value={analytics.growth.revenue} />
-              )}
             </div>
             <p className="text-sm font-semibold text-base dark:text-base-dark mb-2 uppercase tracking-wide">
               Total Revenue
@@ -371,63 +328,6 @@ const AdminDashboard = () => {
             </p>
           </div>
           <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-linear-to-br from-purple-500 to-purple-600 rounded-full opacity-10 group-hover:opacity-20 transition-opacity duration-300"></div>
-        </div>
-      </div>
-
-      {/* Secondary Stats Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-4 flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
-            <Dumbbell className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-              {analytics?.totals?.sports || 0}
-            </p>
-            <p className="text-xs text-base dark:text-base-dark uppercase tracking-wide">Sports</p>
-          </div>
-        </div>
-        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-4 flex items-center gap-3">
-          <div className="w-10 h-10 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg flex items-center justify-center">
-            <Swords className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-              {analytics?.totals?.matches || 0}
-            </p>
-            <p className="text-xs text-base dark:text-base-dark uppercase tracking-wide">
-              Matches
-            </p>
-          </div>
-        </div>
-        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-4 flex items-center gap-3">
-          <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/30 rounded-lg flex items-center justify-center">
-            <MessageSquare className="w-5 h-5 text-pink-600 dark:text-pink-400" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-              {analytics?.totals?.feedback || 0}
-            </p>
-            <p className="text-xs text-base dark:text-base-dark uppercase tracking-wide">
-              Feedback
-            </p>
-          </div>
-        </div>
-        <div
-          onClick={() => navigate("/admin/organizer-requests")}
-          className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-4 flex items-center gap-3 cursor-pointer hover:shadow-md transition-shadow"
-        >
-          <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
-            <UserCheck className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-              {dashboardStats?.pendingRequests || 0}
-            </p>
-            <p className="text-xs text-base dark:text-base-dark uppercase tracking-wide">
-              Pending
-            </p>
-          </div>
         </div>
       </div>
 
@@ -480,47 +380,6 @@ const AdminDashboard = () => {
           </>
         )
       )}
-
-      {/* Bottom Section: Settings + Recent Payments */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Platform Settings */}
-        <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Settings className="w-6 h-6 text-indigo-600" />
-            <h3 className="text-xl font-bold">Platform Settings</h3>
-          </div>
-          <div className="flex items-center justify-between p-4 bg-base-dark dark:bg-base rounded-lg">
-            <div>
-              <p className="font-medium text-text-primary dark:text-text-primary-dark">
-                OTP Email Verification
-              </p>
-              <p className="text-sm text-base dark:text-base-dark mt-1">
-                {otpVerificationRequired
-                  ? "Users must verify their email via OTP before account activation."
-                  : "Users are registered and logged in directly without OTP verification."}
-              </p>
-            </div>
-            <button
-              onClick={handleToggleOtp}
-              disabled={otpSettingLoading}
-              className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                otpVerificationRequired
-                  ? "bg-secondary"
-                  : "bg-gray-400 dark:bg-gray-600"
-              }`}
-              role="switch"
-              aria-checked={otpVerificationRequired}
-              aria-label="Toggle OTP verification"
-            >
-              <span
-                className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  otpVerificationRequired ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-      </div>
 
       {/* Feedback Distribution */}
       {analytics?.feedbackDistribution?.length > 0 && (

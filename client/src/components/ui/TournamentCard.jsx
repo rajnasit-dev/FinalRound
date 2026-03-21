@@ -31,6 +31,7 @@ const TournamentCard = memo(({
   const { getStatusColor } = useStatusColor();
   const { formatDate } = useDateFormat();
   const isTournamentCancelled = tournament.isCancelled || tournament.status === "Cancelled";
+  const isTournamentCompleted = tournament.status === "Completed";
   const displayStatus = isTournamentCancelled ? "Cancelled" : tournament.status;
 
   // Check if registration is open
@@ -193,7 +194,7 @@ const TournamentCard = memo(({
                   <Trophy className="w-4 h-4" />
                   Fixtures
                 </button>
-                {!isTournamentCancelled ? (
+                {!isTournamentCancelled && !isTournamentCompleted ? (
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -206,7 +207,7 @@ const TournamentCard = memo(({
                     <Ban className="w-4 h-4" />
                     Cancel
                   </button>
-                ) : (
+                ) : isTournamentCancelled && !isTournamentCompleted ? (
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -218,6 +219,15 @@ const TournamentCard = memo(({
                   >
                     <RotateCcw className="w-4 h-4" />
                     Continue
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg font-semibold text-sm cursor-not-allowed"
+                    title="Completed tournaments cannot be cancelled"
+                  >
+                    <Ban className="w-4 h-4" />
+                    Cancel
                   </button>
                 )}
               </div>

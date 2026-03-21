@@ -13,7 +13,7 @@ import {
   BarChart3,
   MessageSquare,
 } from "lucide-react";
-import { Bar, Doughnut, Line } from "react-chartjs-2";
+import { Bar, Doughnut, Line, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -176,8 +176,8 @@ const SummaryCard = ({ label, value, colorClass = "text-text-primary dark:text-t
   </div>
 );
 
-const SectionCard = ({ title, icon: Icon, children }) => (
-  <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
+const SectionCard = ({ title, icon: Icon, children, className = "" }) => (
+  <div className={`bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6 ${className}`}>
     <div className="flex items-center gap-2 mb-4">
       <Icon className="w-5 h-5 text-secondary" />
       <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark">{title}</h3>
@@ -285,6 +285,7 @@ const UserPlayerReportView = ({ report }) => {
   const isIndividualScope = ["player", "manager", "teamManager", "organizer"].includes(summary.scope);
   const hasTeamInsights = isTeamManagerScope || isOrganizerScope;
   const insightsLabel = isOrganizerScope ? "Tournaments Organized" : "Managed Teams";
+  const hasOrganizerAuthorization = isOrganizerScope && data.organizerAuthorizationStatus?.length > 0;
   const hasMonthlyGenderBreakdown = isPlayerReport && data.newUsersPerMonth?.some(
     (item) => item.maleCount !== undefined || item.femaleCount !== undefined || item.totalCount !== undefined
   );
@@ -303,13 +304,45 @@ const UserPlayerReportView = ({ report }) => {
       </div>
 
       {hasTeamInsights && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className={`grid grid-cols-1 ${isOrganizerScope ? "sm:grid-cols-3" : "sm:grid-cols-2"} gap-4`}>
           <SummaryCard
             label={insightsLabel}
             value={(summary.totalTeams || 0).toLocaleString("en-IN")}
             colorClass="text-amber-600"
           />
+          {isOrganizerScope && (
+            <SummaryCard
+              label="Authorized Organizers"
+              value={(summary.authorizedOrganizers || 0).toLocaleString("en-IN")}
+              colorClass="text-emerald-600"
+            />
+          )}
+          {isOrganizerScope && (
+            <SummaryCard
+              label="Not Authorized"
+              value={(summary.unauthorizedOrganizers || 0).toLocaleString("en-IN")}
+              colorClass="text-red-600"
+            />
+          )}
         </div>
+      )}
+
+      {hasOrganizerAuthorization && (
+        <SectionCard title="Organizer Authorization Status" icon={Users}>
+          <div className="h-64">
+            <Doughnut
+              data={{
+                labels: data.organizerAuthorizationStatus.map((item) => item.name),
+                datasets: [{
+                  data: data.organizerAuthorizationStatus.map((item) => item.count),
+                  backgroundColor: ["#16a34a", "#ef4444"],
+                  borderWidth: 0,
+                }],
+              }}
+              options={doughnutThemeOptions}
+            />
+          </div>
+        </SectionCard>
       )}
 
       {(data.activeInactiveBreakdown?.length > 0 || hasGenderRatio) && (
@@ -569,6 +602,7 @@ const UserPlayerReportView = ({ report }) => {
 const RevenuePaymentReportView = ({ report }) => {
   const { summary, data } = report;
   const paymentRows = data.payments || data.pendingPayments || [];
+  const isWebsiteScope = summary.scope === "website";
 
   return (
     <div className="space-y-6">
@@ -581,45 +615,77 @@ const RevenuePaymentReportView = ({ report }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <SummaryCard label="Registration Revenue" value={`₹${formatINR(summary.registrationRevenue ?? summary.totalRevenue ?? 0)}`} colorClass="text-emerald-600" />
-        <SummaryCard label="Listing Cost" value={`₹${formatINR(summary.listingCost || 0)}`} colorClass="text-orange-600" />
-        <SummaryCard
-          label="Profit"
-          value={`₹${formatINR(summary.profit || 0)}`}
-          colorClass={(summary.profit || 0) >= 0 ? "text-green-600" : "text-red-600"}
-        />
+      <div className={`grid grid-cols-1 ${isWebsiteScope ? "sm:grid-cols-2" : "sm:grid-cols-4"} gap-4`}>
+        <SummaryCard label={isWebsiteScope ? "Website Revenue" : "Registration Revenue"} value={`₹${formatINR((isWebsiteScope ? summary.websiteRevenue : summary.registrationRevenue) ?? summary.totalRevenue ?? 0)}`} colorClass="text-emerald-600" />
+        <SummaryCard label="Total Transactions" value={(summary.totalTransactions || 0).toLocaleString("en-IN")} colorClass="text-blue-600" />
+        {!isWebsiteScope && (
+          <SummaryCard label="Listing Cost" value={`₹${formatINR(summary.listingCost || 0)}`} colorClass="text-orange-600" />
+        )}
+        {!isWebsiteScope && (
+          <SummaryCard
+            label="Profit"
+            value={`₹${formatINR(summary.profit || 0)}`}
+            colorClass={(summary.profit || 0) >= 0 ? "text-green-600" : "text-red-600"}
+          />
+        )}
       </div>
 
-      {data.revenuePerMonth?.length > 0 && (
-        <SectionCard title="Registration Revenue Per Month" icon={TrendingUp}>
-          <div className="h-72">
-            <Bar
-              data={{
-                labels: toMonthLabels(data.revenuePerMonth.map((item) => item.month)),
-                datasets: [{
-                  label: "Registration Revenue (INR)",
-                  data: data.revenuePerMonth.map((item) => item.revenue),
-                  backgroundColor: "#16a34a",
-                  borderRadius: 4,
-                }],
-              }}
-              options={chartOptions}
-            />
-          </div>
-        </SectionCard>
+      {(data.revenuePerMonth?.length > 0 || data.revenueBySport?.length > 0) && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {data.revenuePerMonth?.length > 0 && (
+            <SectionCard
+              title={isWebsiteScope ? "Website Revenue Per Month" : "Registration Revenue Per Month"}
+              icon={TrendingUp}
+              className={isWebsiteScope ? "xl:col-span-2" : ""}
+            >
+              <div className="h-72">
+                <Bar
+                  data={{
+                    labels: toMonthLabels(data.revenuePerMonth.map((item) => item.month)),
+                    datasets: [{
+                      label: isWebsiteScope ? "Website Revenue (INR)" : "Registration Revenue (INR)",
+                      data: data.revenuePerMonth.map((item) => item.revenue),
+                      backgroundColor: "#16a34a",
+                      borderRadius: 4,
+                    }],
+                  }}
+                  options={chartOptions}
+                />
+              </div>
+            </SectionCard>
+          )}
+
+          {data.revenueBySport?.length > 0 && (
+            <SectionCard title={isWebsiteScope ? "Platform Fee Revenue by Sport" : "Revenue by Sport"} icon={IndianRupee}>
+              <div className="h-72">
+                <Bar
+                  data={{
+                    labels: data.revenueBySport.map((item) => item.sport),
+                    datasets: [{
+                      label: isWebsiteScope ? "Platform Fee Revenue (INR)" : "Registration Revenue (INR)",
+                      data: data.revenueBySport.map((item) => item.revenue),
+                      backgroundColor: data.revenueBySport.map((_, index) => COLORS[index % COLORS.length]),
+                      borderRadius: 4,
+                    }],
+                  }}
+                  options={chartOptions}
+                />
+              </div>
+            </SectionCard>
+          )}
+        </div>
       )}
 
-      {data.revenueBySport?.length > 0 && (
-        <SectionCard title="Revenue by Sport" icon={IndianRupee}>
+      {isWebsiteScope && data.topOrganizerRevenue?.length > 0 && (
+        <SectionCard title="Top 5 Organizations by Revenue" icon={BarChart3}>
           <div className="h-72">
             <Bar
               data={{
-                labels: data.revenueBySport.map((item) => item.sport),
+                labels: data.topOrganizerRevenue.map((item) => item.organizerName),
                 datasets: [{
-                  label: "Registration Revenue (INR)",
-                  data: data.revenueBySport.map((item) => item.revenue),
-                  backgroundColor: data.revenueBySport.map((_, index) => COLORS[index % COLORS.length]),
+                  label: "Revenue (INR)",
+                  data: data.topOrganizerRevenue.map((item) => item.revenue),
+                  backgroundColor: data.topOrganizerRevenue.map((_, index) => COLORS[index % COLORS.length]),
                   borderRadius: 4,
                 }],
               }}
@@ -636,6 +702,9 @@ const RevenuePaymentReportView = ({ report }) => {
               <thead>
                 <tr className="border-b border-base-dark dark:border-base">
                   <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Payer</th>
+                  {!isWebsiteScope && (
+                    <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Organization</th>
+                  )}
                   <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Type</th>
                   <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Tournament</th>
                   <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Status</th>
@@ -647,6 +716,9 @@ const RevenuePaymentReportView = ({ report }) => {
                 {paymentRows.map((payment) => (
                   <tr key={payment._id} className="border-b border-base-dark/50 dark:border-base/50">
                     <td className="py-3 px-3 font-medium text-text-primary dark:text-text-primary-dark">{payment.payerName || "N/A"}</td>
+                    {!isWebsiteScope && (
+                      <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{payment.organizationName || "-"}</td>
+                    )}
                     <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{payment.payerType}</td>
                     <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{payment.tournamentName}</td>
                     <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{payment.status}</td>
@@ -669,9 +741,6 @@ const RevenuePaymentReportView = ({ report }) => {
 
 const TournamentReportView = ({ report }) => {
   const { summary, data } = report;
-  const topTournamentParticipation = [...(data.tournamentParticipation || [])]
-    .sort((a, b) => b.teamsRegistered - a.teamsRegistered)
-    .slice(0, 10);
 
   return (
     <div className="space-y-6">
@@ -686,15 +755,34 @@ const TournamentReportView = ({ report }) => {
         <SummaryCard label="Completed" value={(summary.completedTournaments || 0).toLocaleString("en-IN")} colorClass="text-indigo-600" />
       </div>
 
-      {topTournamentParticipation.length > 0 && (
-        <SectionCard title="Tournament Participation (Top 10)" icon={Users}>
+      {data.statusBreakdown?.length > 0 && (
+        <SectionCard title="Tournament Status" icon={TrendingUp}>
+          <div className="h-72">
+            <Pie
+              data={{
+                labels: data.statusBreakdown.map((item) => item.status),
+                datasets: [{
+                  label: "Tournaments",
+                  data: data.statusBreakdown.map((item) => item.count),
+                  backgroundColor: data.statusBreakdown.map((item) => getTournamentStatusColor(item.status)),
+                  borderWidth: 0,
+                }],
+              }}
+              options={overviewDoughnutChartOptions}
+            />
+          </div>
+        </SectionCard>
+      )}
+
+      {data.tournamentParticipation?.length > 0 && (
+        <SectionCard title="Registration by Tournament" icon={Users}>
           <div className="h-72">
             <Bar
               data={{
-                labels: topTournamentParticipation.map((item) => item.tournamentName),
+                labels: data.tournamentParticipation.map((item) => item.tournamentName),
                 datasets: [{
-                  label: "Teams Registered",
-                  data: topTournamentParticipation.map((item) => item.teamsRegistered),
+                  label: "Registrations",
+                  data: data.tournamentParticipation.map((item) => item.teamsRegistered),
                   backgroundColor: "#2563eb",
                   borderRadius: 4,
                 }],
@@ -705,16 +793,16 @@ const TournamentReportView = ({ report }) => {
         </SectionCard>
       )}
 
-      {data.statusBreakdown?.length > 0 && (
-        <SectionCard title="Tournament Status" icon={TrendingUp}>
+      {data.organizerTournamentCounts?.length > 0 && (
+        <SectionCard title="Tournaments by Organizer" icon={BarChart3}>
           <div className="h-72">
             <Bar
               data={{
-                labels: data.statusBreakdown.map((item) => item.status),
+                labels: data.organizerTournamentCounts.map((item) => item.organizerName),
                 datasets: [{
-                  label: "Tournaments",
-                  data: data.statusBreakdown.map((item) => item.count),
-                  backgroundColor: data.statusBreakdown.map((item) => getTournamentStatusColor(item.status)),
+                  label: "Tournaments Created",
+                  data: data.organizerTournamentCounts.map((item) => item.count),
+                  backgroundColor: "#2563eb",
                   borderRadius: 4,
                 }],
               }}
@@ -763,6 +851,8 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, orga
   const [toDate, setToDate] = useState("");
   const [filters, setFilters] = useState({
     organizerId: "all",
+    tournamentOrganizerId: "all",
+    tournamentStatus: "all",
     userPlayerScope: "users",
   });
 
@@ -772,7 +862,12 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, orga
       const from = new Date(to.getFullYear(), 0, 1);
       setFromDate(formatDateForInput(from));
       setToDate(formatDateForInput(to));
-      setFilters({ organizerId: "all", userPlayerScope: "users" });
+      setFilters({
+        organizerId: "all",
+        tournamentOrganizerId: "all",
+        tournamentStatus: "all",
+        userPlayerScope: "users",
+      });
     }
   }, [isOpen]);
 
@@ -782,6 +877,7 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, orga
 
   const isUserPlayer = reportType === "UserPlayer";
   const isRevenuePayment = reportType === "RevenuePayment";
+  const isTournament = reportType === "Tournament";
 
   const handleSubmit = () => {
     if (!fromDate || !toDate) {
@@ -900,6 +996,45 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, orga
                   </select>
                 </div>
               )}
+            </>
+          )}
+
+          {isTournament && (
+            <>
+              <div>
+                <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
+                  Organization
+                </label>
+                <select
+                  value={filters.tournamentOrganizerId}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, tournamentOrganizerId: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary cursor-pointer"
+                >
+                  <option value="all">All Organizations</option>
+                  {organizers.map((organizer) => (
+                    <option key={organizer._id} value={organizer._id}>
+                      {organizer.orgName || organizer.fullName || "Unknown Organization"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs text-base dark:text-base-dark font-medium mb-1 block">
+                  Tournament Status
+                </label>
+                <select
+                  value={filters.tournamentStatus}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, tournamentStatus: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-lg border border-base-dark dark:border-base bg-card-background dark:bg-card-background-dark text-sm focus:outline-none focus:border-secondary cursor-pointer"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="Upcoming">Upcoming</option>
+                  <option value="Ongoing">Ongoing</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
             </>
           )}
         </div>

@@ -93,8 +93,8 @@ const CreateMatch = () => {
       const result = await dispatch(createMatch(matchData)).unwrap();
 
       if (result) {
-        // Navigate back to the tournament dashboard
-        navigate(`/organizer/tournaments/${data.tournament}`);
+        // Navigate back to fixtures list for the selected tournament
+        navigate(`/organizer/tournaments/${data.tournament}/fixtures`);
       }
     } catch (error) {
       console.error("Failed to create match:", error);
@@ -278,7 +278,7 @@ const CreateMatch = () => {
         </div>
       </form>
     </div>
-  ); -1
+  );
 };
 
 export default CreateMatch;

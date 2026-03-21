@@ -10,6 +10,7 @@ import {
   User,
   Swords,
 } from "lucide-react";
+import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import useDateFormat from "../../hooks/useDateFormat";
 import useStatusColor from "../../hooks/useStatusColor";
 
@@ -20,6 +21,7 @@ const MatchDetailModal = ({ match, onClose }) => {
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
+    modalRef.current?.focus();
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -72,6 +74,8 @@ const MatchDetailModal = ({ match, onClose }) => {
     ? `/teams/${participantB?._id}`
     : `/players/${participantB?._id}`;
 
+  const getTeamLogo = (team) => team?.logoUrl || team?.logo || defaultTeamAvatar;
+
   return (
     <div
       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -79,7 +83,10 @@ const MatchDetailModal = ({ match, onClose }) => {
     >
       <div
         ref={modalRef}
-        className="bg-card-background dark:bg-card-background-dark rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-border-light dark:border-border-dark shadow-2xl"
+        tabIndex={-1}
+        data-lenis-prevent
+        data-lenis-prevent-wheel
+        className="bg-card-background dark:bg-card-background-dark rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-border-light dark:border-border-dark shadow-2xl focus:outline-none"
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-border-light dark:border-border-dark sticky top-0 bg-card-background dark:bg-card-background-dark z-10 rounded-t-2xl">
@@ -121,16 +128,25 @@ const MatchDetailModal = ({ match, onClose }) => {
                 {/* Participant A */}
                 <div className="flex-1 text-center">
                   {participantA ? (
-                    <Link
-                      to={linkA}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onClose();
-                      }}
-                      className="text-lg sm:text-xl font-bold text-text-primary dark:text-text-primary-dark hover:text-secondary dark:hover:text-accent transition-colors"
-                    >
-                      {nameA}
-                    </Link>
+                    <div className="flex flex-col items-center gap-2">
+                      {isTeamMatch && (
+                        <img
+                          src={getTeamLogo(participantA)}
+                          alt={nameA}
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-border-light dark:border-border-dark"
+                        />
+                      )}
+                      <Link
+                        to={linkA}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onClose();
+                        }}
+                        className="text-lg sm:text-xl font-bold text-text-primary dark:text-text-primary-dark hover:text-secondary dark:hover:text-accent transition-colors"
+                      >
+                        {nameA}
+                      </Link>
+                    </div>
                   ) : (
                     <span className="text-lg font-bold text-base dark:text-base-dark">
                       TBD
@@ -148,16 +164,25 @@ const MatchDetailModal = ({ match, onClose }) => {
                 {/* Participant B */}
                 <div className="flex-1 text-center">
                   {participantB ? (
-                    <Link
-                      to={linkB}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onClose();
-                      }}
-                      className="text-lg sm:text-xl font-bold text-text-primary dark:text-text-primary-dark hover:text-secondary dark:hover:text-accent transition-colors"
-                    >
-                      {nameB}
-                    </Link>
+                    <div className="flex flex-col items-center gap-2">
+                      {isTeamMatch && (
+                        <img
+                          src={getTeamLogo(participantB)}
+                          alt={nameB}
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-border-light dark:border-border-dark"
+                        />
+                      )}
+                      <Link
+                        to={linkB}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onClose();
+                        }}
+                        className="text-lg sm:text-xl font-bold text-text-primary dark:text-text-primary-dark hover:text-secondary dark:hover:text-accent transition-colors"
+                      >
+                        {nameB}
+                      </Link>
+                    </div>
                   ) : (
                     <span className="text-lg font-bold text-base dark:text-base-dark">
                       TBD
@@ -276,7 +301,18 @@ const MatchDetailModal = ({ match, onClose }) => {
                   }}
                   className="font-medium text-text-primary dark:text-text-primary-dark hover:text-secondary dark:hover:text-accent transition-colors"
                 >
-                  {nameA}
+                  {isTeamMatch ? (
+                    <span className="inline-flex items-center gap-2">
+                      <img
+                        src={getTeamLogo(participantA)}
+                        alt={nameA}
+                        className="w-8 h-8 rounded-full object-cover border border-border-light dark:border-border-dark"
+                      />
+                      {nameA}
+                    </span>
+                  ) : (
+                    nameA
+                  )}
                 </Link>
                 {isTeamMatch && participantA.city && (
                   <p className="text-xs text-base dark:text-base-dark mt-1">
@@ -311,7 +347,18 @@ const MatchDetailModal = ({ match, onClose }) => {
                   }}
                   className="font-medium text-text-primary dark:text-text-primary-dark hover:text-secondary dark:hover:text-accent transition-colors"
                 >
-                  {nameB}
+                  {isTeamMatch ? (
+                    <span className="inline-flex items-center gap-2">
+                      <img
+                        src={getTeamLogo(participantB)}
+                        alt={nameB}
+                        className="w-8 h-8 rounded-full object-cover border border-border-light dark:border-border-dark"
+                      />
+                      {nameB}
+                    </span>
+                  ) : (
+                    nameB
+                  )}
                 </Link>
                 {isTeamMatch && participantB.city && (
                   <p className="text-xs text-base dark:text-base-dark mt-1">

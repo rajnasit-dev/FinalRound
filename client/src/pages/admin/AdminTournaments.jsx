@@ -16,7 +16,6 @@ const AdminTournaments = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [sportFilter, setSportFilter] = useState("");
-  const [genderFilter, setGenderFilter] = useState("");
   const [filteredTournaments, setFilteredTournaments] = useState([]);
   useEffect(() => {
     dispatch(getAllTournaments({ status: "", search: "", page: 1, limit: 100 }));
@@ -73,12 +72,8 @@ const AdminTournaments = () => {
       );
     }
 
-    if (genderFilter) {
-      filtered = filtered.filter((t) => t.gender === genderFilter);
-    }
-
     setFilteredTournaments(filtered);
-  }, [tournaments, search, statusFilter, sportFilter, genderFilter]);
+  }, [tournaments, search, statusFilter, sportFilter]);
 
   const sportOptions = [
     { value: "", label: "All Sports" },
@@ -92,13 +87,6 @@ const AdminTournaments = () => {
         return acc;
       }, {})
     ).sort((a, b) => a.label.localeCompare(b.label)),
-  ];
-
-  const genderOptions = [
-    { value: "", label: "All Genders" },
-    ...[...new Set((tournaments || []).map((tournament) => tournament?.gender).filter(Boolean))]
-      .sort((a, b) => a.localeCompare(b))
-      .map((gender) => ({ value: gender, label: gender })),
   ];
 
   const getStatusColor = (status) => {
@@ -212,7 +200,7 @@ const AdminTournaments = () => {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <SearchBar
           placeholder="Search by tournament name..."
           searchQuery={search}
@@ -233,11 +221,6 @@ const AdminTournaments = () => {
           options={sportOptions}
           value={sportFilter}
           onChange={(e) => setSportFilter(e.target.value)}
-        />
-        <Select
-          options={genderOptions}
-          value={genderFilter}
-          onChange={(e) => setGenderFilter(e.target.value)}
         />
         <div className="flex items-center justify-end">
           <span className="text-sm text-base dark:text-base-dark font-medium">

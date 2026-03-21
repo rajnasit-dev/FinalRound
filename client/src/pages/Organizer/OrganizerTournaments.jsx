@@ -20,12 +20,13 @@ const OrganizerTournaments = () => {
   const myTournaments = organizerTournaments || [];
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All");
+  const [selectedSport, setSelectedSport] = useState("All");
 
   useEffect(() => {
     dispatch(fetchOrganizerTournaments());
   }, [dispatch]);
 
-  // Apply search and status filters
+  // Apply search, status, and sport filters
   const filteredTournaments = myTournaments.filter((tournament) => {
     const matchesSearch =
       searchQuery === "" ||
@@ -36,7 +37,10 @@ const OrganizerTournaments = () => {
     const matchesStatus =
       selectedStatus === "All" || tournament.status === selectedStatus;
 
-    return matchesSearch && matchesStatus;
+    const matchesSport =
+      selectedSport === "All" || tournament.sport?.name === selectedSport;
+
+    return matchesSearch && matchesStatus && matchesSport;
   });
 
   const statusOptions = [
@@ -45,6 +49,13 @@ const OrganizerTournaments = () => {
     { value: "Live", label: "Live" },
     { value: "Completed", label: "Completed" },
     { value: "Cancelled", label: "Cancelled" },
+  ];
+
+  const sportOptions = [
+    { value: "All", label: "All Sports" },
+    ...Array.from(new Set(myTournaments.map((tournament) => tournament.sport?.name).filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b))
+      .map((sport) => ({ value: sport, label: sport })),
   ];
 
   if (loading) {
@@ -100,6 +111,11 @@ const OrganizerTournaments = () => {
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
             options={statusOptions}
+          />
+          <FilterDropdown
+            value={selectedSport}
+            onChange={(e) => setSelectedSport(e.target.value)}
+            options={sportOptions}
           />
         </div>
       )}

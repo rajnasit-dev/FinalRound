@@ -18,6 +18,7 @@ import toast from "react-hot-toast";
 import { chartThemeOptions, getTournamentStatusColor, toMonthLabels } from "../../utils/chartConfig";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
+const COLORS = ["#2563eb", "#16a34a", "#f59e0b", "#dc2626", "#0ea5e9", "#7c3aed"];
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
@@ -246,6 +247,38 @@ const RevenueReportView = ({ report }) => {
                 }],
               }}
               options={chartOptions}
+            />
+          </div>
+        </SectionCard>
+      )}
+
+      {data.revenueByTournament?.length > 0 && (
+        <SectionCard title="Registration Revenue by Tournament" icon={Trophy}>
+          <div className="h-80">
+            <Bar
+              data={{
+                labels: data.revenueByTournament.map((item) => item.tournamentName),
+                datasets: [{
+                  label: "Registration Revenue (INR)",
+                  data: data.revenueByTournament.map((item) => item.revenue),
+                  backgroundColor: data.revenueByTournament.map((_, index) => COLORS[index % COLORS.length]),
+                  borderRadius: 6,
+                }],
+              }}
+              options={{
+                ...chartOptions,
+                scales: {
+                  ...(chartOptions.scales || {}),
+                  x: {
+                    ...((chartOptions.scales || {}).x || {}),
+                    ticks: {
+                      ...(((chartOptions.scales || {}).x || {}).ticks || {}),
+                      maxRotation: 40,
+                      minRotation: 20,
+                    },
+                  },
+                },
+              }}
             />
           </div>
         </SectionCard>
