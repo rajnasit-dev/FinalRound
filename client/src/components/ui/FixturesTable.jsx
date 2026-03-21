@@ -105,20 +105,22 @@ const FixturesTable = ({ matches, showEditButton = false, onEdit }) => {
         </div>
       ),
     },
-    {
-      header: "Status",
-      width: showEditButton ? "12%" : "15%",
+    ...(showEditButton ? [] : [{
+      header: "",
+      width: "15%",
       headerClassName: "tracking-wide",
       cellClassName: "align-middle",
-      render: (match) => (
-        <span
-          className={`text-white inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide shadow-sm ${getStatusColor(match.status)}`}
-        >
-          <span className={`w-1.5 h-1.5 rounded-full bg-white ${match.status === "Live" ? "animate-pulse" : "opacity-80"}`}></span>
-          {match.status}
-        </span>
-      ),
-    },
+      render: (match) => {
+        if (match.status !== "Cancelled" && !match.isCancelled) return null;
+        return (
+          <span
+            className={`text-white inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide shadow-sm ${getStatusColor(match.status)}`}
+          >
+            {match.status}
+          </span>
+        );
+      },
+    }]),
   ];
 
   if (showEditButton) {

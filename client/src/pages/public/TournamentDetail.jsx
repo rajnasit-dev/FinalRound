@@ -7,9 +7,9 @@ import { fetchMatchesByTournament } from "../../store/slices/matchSlice";
 import CardStat from "../../components/ui/CardStat";
 import Container from "../../components/container/Container";
 import Spinner from "../../components/ui/Spinner";
-import FixturesTable from "../../components/ui/FixturesTable";
 import GridContainer from "../../components/ui/GridContainer";
 import BackButton from "../../components/ui/BackButton";
+import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import {
   MapPin,
   Users,
@@ -28,7 +28,7 @@ import useStatusColor from "../../hooks/useStatusColor";
 const TournamentDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const { formatDate } = useDateFormat();
+  const { formatDate, formatTime } = useDateFormat();
   const { getStatusColor } = useStatusColor();
 
   const { selectedTournament: tournament, loading, error } = useSelector(
@@ -193,6 +193,20 @@ const TournamentDetail = () => {
       </div>
     );
   }
+
+  const allFixtures = [...(tournamentMatches || [])].sort(
+    (a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt)
+  );
+
+  const getFixtureParticipant = (match, side) => {
+    const team = side === "A" ? match.teamA : match.teamB;
+    const player = side === "A" ? match.playerA : match.playerB;
+
+    return {
+      name: team?.name || player?.fullName || "TBD",
+      avatar: team?.logoUrl || player?.avatar || defaultTeamAvatar,
+    };
+  };
 
   return (
     <div className="min-h-screen pb-16">
@@ -534,49 +548,76 @@ const TournamentDetail = () => {
             <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark mb-6">
               Tournament Fixtures
             </h2>
-              
-              {matchesLoading ? (
+            {matchesLoading ? (
                 <div className="flex justify-center py-8">
                   <Spinner size="md" />
                 </div>
               ) : (
-                <div>
-                  {/* Live Matches */}
-                  {tournamentMatches.filter(m => m.status === "Live").length > 0 && (
-                    <div className="mb-8">
-                      <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-4 flex items-center gap-2">
-                        <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-                        Live Now
-                      </h3>
-                      <FixturesTable
-                        matches={tournamentMatches.filter(m => m.status === "Live")}
-                      />
-                    </div>
-                  )}
+                <div className="rounded-2xl border border-base-dark dark:border-base bg-linear-to-br from-card-background to-card-background/80 dark:from-card-background-dark dark:to-card-background-dark/80 p-4 sm:p-5">
+                  <div className="space-y-3">
+                    {allFixtures.map((match) => {
+                      const participantA = getFixtureParticipant(match, "A");
+                      const participantB = getFixtureParticipant(match, "B");
+                      const isCancelled = match.status === "Cancelled" || match.isCancelled;
 
-                  {/* Upcoming Matches */}
-                  {tournamentMatches.filter(m => m.status === "Scheduled").length > 0 && (
-                    <div className="mb-8">
-                      <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-4">
-                        Upcoming Matches
-                      </h3>
-                      <FixturesTable
-                        matches={tournamentMatches.filter(m => m.status === "Scheduled")}
-                      />
-                    </div>
-                  )}
+                      return (
+                        <div
+                          key={match._id}
+                          className="rounded-xl border border-base-dark/60 dark:border-base/60 bg-base/10 dark:bg-base-dark/20 px-4 py-3"
+                        >
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <img
+                                  src={participantA.avatar}
+                                  alt={participantA.name}
+                                  className="w-11 h-11 rounded-full object-cover border border-border-light dark:border-border-dark shrink-0"
+                                />
+                                <span className="font-semibold text-text-primary dark:text-text-primary-dark truncate max-w-35 sm:max-w-55">
+                                  {participantA.name}
+                                </span>
+                              </div>
 
-                  {/* Completed Matches */}
-                  {tournamentMatches.filter(m => m.status === "Completed").length > 0 && (
-                    <div className="mb-8">
-                      <h3 className="text-xl font-semibold text-text-primary dark:text-text-primary-dark mb-4">
-                        Completed Matches
-                      </h3>
-                      <FixturesTable
-                        matches={tournamentMatches.filter(m => m.status === "Completed").slice(0, 6)}
-                      />
-                    </div>
-                  )}
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-secondary/10 dark:bg-accent/10 text-secondary dark:text-accent shrink-0">
+                                VS
+                              </span>
+
+                              <div className="flex items-center gap-2 min-w-0">
+                                <img
+                                  src={participantB.avatar}
+                                  alt={participantB.name}
+                                  className="w-11 h-11 rounded-full object-cover border border-border-light dark:border-border-dark shrink-0"
+                                />
+                                <span className="font-semibold text-text-primary dark:text-text-primary-dark truncate max-w-35 sm:max-w-55">
+                                  {participantB.name}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 md:justify-end">
+                              <div className="inline-flex items-start gap-2.5 rounded-xl px-3 py-2 bg-card-background/70 dark:bg-card-background-dark/60 border border-base-dark/30 dark:border-base/40">
+                                <Calendar className="w-4 h-4 text-secondary dark:text-accent mt-0.5 shrink-0" />
+                                <div className="leading-tight">
+                                  <p className="text-sm font-semibold text-text-primary dark:text-text-primary-dark">
+                                    {formatDate(match.scheduledAt)}
+                                  </p>
+                                  <p className="text-xs mt-1 text-base dark:text-base-dark">
+                                    {formatTime(match.scheduledAt)}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {isCancelled && (
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white ${getStatusColor("Cancelled")}`}>
+                                  Cancelled
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
           </div>

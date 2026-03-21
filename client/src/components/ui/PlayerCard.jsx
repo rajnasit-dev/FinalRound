@@ -59,15 +59,6 @@ const PlayerCard = memo(({ player }) => {
             />
           </div>
 
-          {/* Gender Badge */}
-          {player.gender && (
-            <div className="absolute top-4 right-4">
-              <p className="inline-flex items-center px-3 py-1 bg-indigo-500 text-white text-xs font-semibold rounded-full shadow-lg">
-                {player.gender}
-              </p>
-            </div>
-          )}
-          
         </div>
 
         {/* Content Section */}
@@ -129,6 +120,16 @@ const PlayerCard = memo(({ player }) => {
                 bgColor="bg-purple-50 dark:bg-purple-900/20"
                 label="Location"
                 value={player.city}
+              />
+            )}
+
+            {player.gender && (
+              <CardStat
+                Icon={User}
+                iconColor="text-indigo-600 dark:text-indigo-400"
+                bgColor="bg-indigo-50 dark:bg-indigo-900/20"
+                label="Gender"
+                value={player.gender}
               />
             )}
           </div>

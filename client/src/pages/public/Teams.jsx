@@ -22,7 +22,7 @@ const Teams = () => {
   }, [dispatch]);
 
   const [selectedSport, setSelectedSport] = useState("All");
-  const [selectedStatus, setSelectedStatus] = useState("All");
+  const [showOpenToJoinOnly, setShowOpenToJoinOnly] = useState(false);
   const [selectedGender, setSelectedGender] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,25 +33,20 @@ const Teams = () => {
     ...(sports?.map(sport => sport.name) || [])
   ];
 
-  const statuses = ["All", "Open to Join", "Full"];
-
   const genders = ["All", "Male", "Female", "Mixed"];
 
   // Filter teams
   const filteredTeams = (teams || []).filter((team) => {
     const matchesSport =
       selectedSport === "All" || team?.sport?.name === selectedSport;
-    const matchesStatus =
-      selectedStatus === "All" ||
-      (selectedStatus === "Open to Join" && team?.openToJoin) ||
-      (selectedStatus === "Full" && !team?.openToJoin);
+    const matchesOpenToJoin = !showOpenToJoinOnly || team?.openToJoin;
     const matchesGender =
       selectedGender === "All" || team?.gender === selectedGender;
     const matchesSearch =
       team?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       team?.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       team?.sport?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSport && matchesStatus && matchesGender && matchesSearch;
+    return matchesSport && matchesOpenToJoin && matchesGender && matchesSearch;
   });
 
   // Pagination logic
@@ -65,7 +60,7 @@ const Teams = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedSport, selectedStatus, selectedGender, searchQuery]);
+  }, [selectedSport, showOpenToJoinOnly, selectedGender, searchQuery]);
 
   if (loading) {
     return (
@@ -107,16 +102,6 @@ const Teams = () => {
               }))}
             />
 
-            {/* Status Filter Dropdown */}
-            <FilterDropdown
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              options={statuses.map((status) => ({
-                value: status,
-                label: status === "All" ? "All Teams" : status,
-              }))}
-            />
-
             {/* Gender Filter Dropdown */}
             <FilterDropdown
               value={selectedGender}
@@ -126,6 +111,24 @@ const Teams = () => {
                 label: gender === "All" ? "All Genders" : gender,
               }))}
             />
+
+            <label
+              className="flex items-center gap-2 cursor-pointer select-none whitespace-nowrap"
+              onClick={() => setShowOpenToJoinOnly((prev) => !prev)}
+            >
+              <span className="text-sm font-medium text-text-primary dark:text-text-primary-dark">
+                Open to Join
+              </span>
+              <div className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                showOpenToJoinOnly
+                  ? "bg-blue-500 dark:bg-blue-600"
+                  : "bg-gray-300 dark:bg-gray-600"
+              }`}>
+                <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                  showOpenToJoinOnly ? "translate-x-5" : "translate-x-0"
+                }`} />
+              </div>
+            </label>
           </div>
         </div>
       </div>

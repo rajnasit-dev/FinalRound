@@ -144,7 +144,7 @@ export const getAllTeams = asyncHandler(async (req, res) => {
   if (openToJoin !== undefined) filter.openToJoin = openToJoin === 'true';
 
   const teams = await Team.find(filter)
-    .select("name sport manager players city logoUrl bannerUrl openToJoin isActive createdAt")
+    .select("name sport manager players city gender logoUrl bannerUrl openToJoin isActive createdAt")
     .populate("sport", "name teamBased iconUrl")
     .populate("manager", "fullName email avatar")
     .sort({ createdAt: -1 })

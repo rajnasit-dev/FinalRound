@@ -22,6 +22,7 @@ export const createTournament = asyncHandler(async (req, res) => {
     name,
     sport,
     format,
+    gender,
     description,
     teamLimit,
     registrationStart,
@@ -103,6 +104,7 @@ export const createTournament = asyncHandler(async (req, res) => {
     sport,
     organizer: organizerId,
     format: format || "League",
+    gender: ["Male", "Female", "Mixed"].includes(gender) ? gender : "Mixed",
     description,
     teamLimit,
     playersPerTeam: sportDoc.playersPerTeam || undefined,
@@ -239,6 +241,7 @@ export const updateTournament = asyncHandler(async (req, res) => {
   const {
     name,
     format,
+    gender,
     description,
     teamLimit,
     registrationStart,
@@ -264,6 +267,7 @@ export const updateTournament = asyncHandler(async (req, res) => {
 
   if (name) tournament.name = name;
   if (format) tournament.format = format;
+  if (gender && ["Male", "Female", "Mixed"].includes(gender)) tournament.gender = gender;
   if (description !== undefined) tournament.description = description;
   if (teamLimit) tournament.teamLimit = teamLimit;
   if (registrationStart) tournament.registrationStart = new Date(registrationStart);

@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { Calendar, MapPin } from "lucide-react";
 import Input from "../../components/ui/Input";
@@ -11,7 +11,7 @@ import { createMatch } from "../../store/slices/matchSlice";
 import { fetchOrganizerTournaments } from "../../store/slices/tournamentSlice";
 
 const CreateMatch = () => {
-  const [searchParams] = useSearchParams();
+  const { tournamentId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { organizerTournaments: tournaments } = useSelector((state) => state.tournament);
@@ -23,28 +23,17 @@ const CreateMatch = () => {
   const {
     register,
     handleSubmit,
-    setValue,
     watch,
     formState: { errors, isValid },
   } = useForm({
     mode: "onChange",
   });
 
-  const tournamentId = watch("tournament");
-
   useEffect(() => {
     dispatch(fetchOrganizerTournaments());
   }, [dispatch]);
 
-  // Pre-select tournament from URL params
-  useEffect(() => {
-    const tournamentIdFromUrl = searchParams.get("tournament");
-    if (tournamentIdFromUrl && tournaments) {
-      setValue("tournament", tournamentIdFromUrl);
-    }
-  }, [searchParams, tournaments, setValue]);
-
-  // Update selected tournament and participants when tournament changes
+  // Resolve tournament from route param
   useEffect(() => {
     if (tournamentId && tournaments) {
       const tournament = tournaments.find((t) => t._id === tournamentId);
@@ -71,7 +60,7 @@ const CreateMatch = () => {
   const onSubmit = async (data) => {
     try {
       const matchData = {
-        tournament: data.tournament,
+        tournament: tournamentId,
         sport: selectedTournament?.sport?._id || selectedTournament?.sport,
         scheduledAt: data.scheduledAt,
         ground: {
@@ -93,21 +82,12 @@ const CreateMatch = () => {
       const result = await dispatch(createMatch(matchData)).unwrap();
 
       if (result) {
-        // Navigate back to fixtures list for the selected tournament
-        navigate(`/organizer/tournaments/${data.tournament}/fixtures`);
+        navigate(`/organizer/tournaments/${tournamentId}/fixtures`);
       }
     } catch (error) {
       console.error("Failed to create match:", error);
     }
   };
-
-  const tournamentOptions = [
-    { value: "", label: "Select Tournament" },
-    ...(tournaments?.map((tournament) => ({
-      value: tournament._id,
-      label: `${tournament.name} - ${tournament.sport?.name || ""}`,
-    })) || []),
-  ];
 
   const participantOptions = [
     { value: "", label: `Select ${selectedTournament?.registrationType === "Team" ? "Team" : "Player"}` },
@@ -140,18 +120,19 @@ const CreateMatch = () => {
           </h2>
 
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <Select
-                label="Tournament"
-                options={tournamentOptions}
-                {...register("tournament", { required: "Tournament is required" })}
-                error={errors.tournament?.message}
-                required
-              />
-            </div>
-
             {selectedTournament && (
               <>
+                <div className="md:col-span-2">
+                  <div className="flex flex-wrap items-center gap-2 rounded-lg border border-base-dark/60 dark:border-base/60 bg-base/10 dark:bg-base-dark/20 px-3 py-2">
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-secondary/15 dark:bg-accent/15 text-secondary dark:text-accent">
+                      Sport: {selectedTournament.sport?.name || "N/A"}
+                    </span>
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-300">
+                      Type: {selectedTournament.registrationType || "N/A"}
+                    </span>
+                  </div>
+                </div>
+
                 <Select
                   label={`${selectedTournament.registrationType === "Team" ? "Team A" : "Player A"}`}
                   options={participantOptions}
@@ -202,6 +183,14 @@ const CreateMatch = () => {
             Venue Information
           </h2>
 
+          {selectedTournament && (
+            <p className="text-sm text-base dark:text-base-dark mb-4">
+              Location: <span className="font-semibold text-text-primary dark:text-text-primary-dark">{selectedTournament.ground?.city || "Not set"}</span>
+              {" | "}
+              Gender: <span className="font-semibold text-text-primary dark:text-text-primary-dark">{selectedTournament.gender || "Mixed"}</span>
+            </p>
+          )}
+
           <div className="grid md:grid-cols-2 gap-4">
             <Input
               label="Ground Name"
@@ -241,11 +230,10 @@ const CreateMatch = () => {
           </div>
         </div>
 
-        {/* Helper Message */}
         {!selectedTournament && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-blue-800 dark:text-blue-200">
-              Select a tournament to see available participants
+              Tournament not found. Please open this page from a tournament fixtures screen.
             </p>
           </div>
         )}

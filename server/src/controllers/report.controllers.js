@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Payment } from "../models/Payment.model.js";
 import { Tournament } from "../models/Tournament.model.js";
+import { TournamentOrganizer } from "../models/TournamentOrganizer.model.js";
 import { Sport } from "../models/Sport.model.js";
 import { User } from "../models/User.model.js";
 import { Team } from "../models/Team.model.js";
@@ -91,6 +92,23 @@ const buildUserPlayerReport = async ({ fromDate, toDate, filters }) => {
     { $group: { _id: "$role", count: { $sum: 1 } } },
     { $sort: { count: -1 } },
   ]);
+
+  const organizerAuthorizationAgg = selectedRole === "TournamentOrganizer"
+    ? await User.aggregate([
+        { $match: userMatch },
+        {
+          $group: {
+            _id: {
+              $cond: [{ $eq: ["$isAuthorized", true] }, "Authorized", "Not Authorized"],
+            },
+            count: { $sum: 1 },
+          },
+        },
+      ])
+    : [];
+
+  const authorizedOrganizers = organizerAuthorizationAgg.find((item) => item._id === "Authorized")?.count || 0;
+  const unauthorizedOrganizers = organizerAuthorizationAgg.find((item) => item._id === "Not Authorized")?.count || 0;
 
   const playersMatch = { ...dateFilter, role: "Player" };
   if (selectedRole === "Player" && filters.sport && filters.sport !== "all") {
@@ -223,6 +241,8 @@ const buildUserPlayerReport = async ({ fromDate, toDate, filters }) => {
       inactiveUsers,
       totalUsersInScope: totalRegisteredUsers,
       totalTeams,
+      authorizedOrganizers,
+      unauthorizedOrganizers,
       malePlayers: playerGenderSummary.maleCount,
       femalePlayers: playerGenderSummary.femaleCount,
     },
@@ -260,6 +280,10 @@ const buildUserPlayerReport = async ({ fromDate, toDate, filters }) => {
         role: item._id,
         count: item.count,
       })),
+      organizerAuthorizationStatus: organizerAuthorizationAgg.map((item) => ({
+        name: item._id,
+        count: item.count,
+      })),
       playersBySport: playersBySportAgg.map((item) => ({
         sport: item._id,
         count: item.count,
@@ -281,24 +305,49 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
   const LISTING_COST_PER_TOURNAMENT = 500;
   const paymentMatch = { createdAt: { $gte: fromDate, $lte: toDate } };
   const reportScope = organizerId || (filters.organizerId && filters.organizerId !== "all") ? "organizer" : "website";
+  const selectedTournamentId = filters.tournamentId && filters.tournamentId !== "all"
+    ? filters.tournamentId
+    : null;
 
   let organizerDetails = null;
+  const targetOrganizerId = organizerId || filters.organizerId;
   if (reportScope === "organizer") {
-    const targetOrganizerId = organizerId || filters.organizerId;
     if (!mongoose.Types.ObjectId.isValid(targetOrganizerId)) {
       throw new ApiError(400, "Invalid organizer selected");
     }
 
     paymentMatch.organizer = new mongoose.Types.ObjectId(targetOrganizerId);
-    organizerDetails = await User.findOne({ _id: targetOrganizerId, role: "TournamentOrganizer" })
-      .select("fullName orgName email");
+    organizerDetails = await TournamentOrganizer.findById(targetOrganizerId)
+      .select("fullName orgName email role");
 
-    if (!organizerDetails) {
+    if (!organizerDetails || organizerDetails.role !== "TournamentOrganizer") {
       throw new ApiError(404, "Organizer not found");
     }
   }
 
-  if (filters.sport && filters.sport !== "all") {
+  if (selectedTournamentId) {
+    if (!mongoose.Types.ObjectId.isValid(selectedTournamentId)) {
+      throw new ApiError(400, "Invalid tournament selected");
+    }
+
+    const selectedTournament = await Tournament.findById(selectedTournamentId)
+      .select("_id organizer");
+
+    if (!selectedTournament) {
+      throw new ApiError(404, "Tournament not found");
+    }
+
+    if (
+      reportScope === "organizer" &&
+      selectedTournament.organizer?.toString() !== targetOrganizerId?.toString()
+    ) {
+      throw new ApiError(403, "You can only generate reports for your own tournaments");
+    }
+
+    paymentMatch.tournament = selectedTournament._id;
+  }
+
+  if (!selectedTournamentId && filters.sport && filters.sport !== "all") {
     const sport = await Sport.findOne({ name: filters.sport }).select("_id");
     if (!sport) {
       paymentMatch.tournament = { $in: [] };
@@ -308,9 +357,11 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
     }
   }
 
-  const registrationPayerTypes = ["Player", "Team"];
-  const successMatch = { ...paymentMatch, status: "Success", payerType: { $in: registrationPayerTypes } };
-  const pendingMatch = { ...paymentMatch, status: "Pending", payerType: { $in: registrationPayerTypes } };
+  const revenuePayerTypes = reportScope === "website"
+    ? ["Organizer"]
+    : ["Player", "Team"];
+  const successMatch = { ...paymentMatch, status: "Success", payerType: { $in: revenuePayerTypes } };
+  const pendingMatch = { ...paymentMatch, status: "Pending", payerType: { $in: revenuePayerTypes } };
 
   const revenuePerMonthAgg = await Payment.aggregate([
     { $match: successMatch },
@@ -325,13 +376,44 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
 
   const revenueBySportAgg = await Payment.aggregate([
     { $match: successMatch },
-    { $lookup: { from: "tournaments", localField: "tournament", foreignField: "_id", as: "tournamentInfo" } },
+    { $lookup: { from: "tournaments", localField: "tournament", foreignField: "_id", as: "tournamentInfo  " } },
     { $unwind: "$tournamentInfo" },
     { $lookup: { from: "sports", localField: "tournamentInfo.sport", foreignField: "_id", as: "sportInfo" } },
     { $unwind: "$sportInfo" },
     { $group: { _id: "$sportInfo.name", revenue: { $sum: "$amount" }, payments: { $sum: 1 } } },
     { $sort: { revenue: -1 } },
   ]);
+
+  const revenueByTournamentAgg = await Payment.aggregate([
+    { $match: successMatch },
+    { $lookup: { from: "tournaments", localField: "tournament", foreignField: "_id", as: "tournamentInfo" } },
+    { $unwind: "$tournamentInfo" },
+    {
+      $group: {
+        _id: "$tournamentInfo._id",
+        tournamentName: { $first: "$tournamentInfo.name" },
+        revenue: { $sum: "$amount" },
+        payments: { $sum: 1 },
+      },
+    },
+    { $sort: { revenue: -1 } },
+    { $limit: 12 },
+  ]);
+
+  const topOrganizerRevenueAgg = reportScope === "website"
+    ? await Payment.aggregate([
+        { $match: { ...successMatch, organizer: { $exists: true, $ne: null } } },
+        {
+          $group: {
+            _id: "$organizer",
+            revenue: { $sum: "$amount" },
+            payments: { $sum: 1 },
+          },
+        },
+        { $sort: { revenue: -1 } },
+        { $limit: 5 },
+      ])
+    : [];
 
   const pendingSummaryAgg = await Payment.aggregate([
     { $match: pendingMatch },
@@ -345,32 +427,112 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
   ]);
 
   const pendingPayments = await Payment.find(pendingMatch)
-    .select("amount payerName payerType status createdAt")
+    .select("amount payerName payerType organizer status createdAt")
     .populate("tournament", "name")
+    .populate("organizer", "orgName fullName")
     .sort({ createdAt: -1 })
     .limit(50);
 
-  const paymentRecords = await Payment.find({ ...paymentMatch, payerType: { $in: registrationPayerTypes } })
-    .select("amount payerName payerType status createdAt")
+  const paymentRecords = await Payment.find({ ...paymentMatch, payerType: { $in: revenuePayerTypes } })
+    .select("amount payerName payerType organizer status createdAt")
     .populate("tournament", "name")
+    .populate("organizer", "orgName fullName")
     .sort({ createdAt: -1 })
     .limit(100);
+
+  const organizerIds = [
+    ...new Set(
+      [...paymentRecords, ...pendingPayments]
+        .filter((payment) => payment.payerType === "Organizer" && payment.organizer?._id)
+        .map((payment) => payment.organizer._id.toString())
+        .concat(topOrganizerRevenueAgg.map((item) => item._id?.toString()).filter(Boolean))
+    ),
+  ];
+
+  const organizerDocs = organizerIds.length > 0
+    ? await TournamentOrganizer.find({ _id: { $in: organizerIds } }).select("_id orgName fullName")
+    : [];
+
+  const organizerNameById = new Map(
+    organizerDocs.map((organizer) => [
+      organizer._id.toString(),
+      {
+        orgName: (organizer.orgName || "").trim(),
+        displayName: (organizer.orgName || "").trim() || (organizer.fullName || "").trim(),
+      },
+    ])
+  );
+
+  const resolvePayerName = (payment) => {
+    const rawName = (payment.payerName || "").trim();
+
+    if (payment.payerType === "Organizer") {
+      const organizerId = payment.organizer?._id?.toString();
+      const organizerDisplayName = organizerId
+        ? organizerNameById.get(organizerId)?.displayName
+        : undefined;
+
+      const fallbackDisplayName =
+        (payment.organizer?.orgName || "").trim() ||
+        (payment.organizer?.fullName || "").trim();
+
+      if (organizerDisplayName) {
+        return organizerDisplayName;
+      }
+
+      if (fallbackDisplayName) {
+        return fallbackDisplayName;
+      }
+
+      return rawName || "Unknown";
+    }
+
+    if (rawName && rawName.toLowerCase() !== "unknown") {
+      return rawName;
+    }
+
+    return rawName || "Unknown";
+  };
+
+  const resolveOrganizationName = (payment) => {
+    if (payment.payerType !== "Organizer") {
+      return null;
+    }
+
+    const organizerId = payment.organizer?._id?.toString();
+    const orgName = organizerId
+      ? organizerNameById.get(organizerId)?.orgName
+      : (payment.organizer?.orgName || "").trim();
+
+    if (orgName) {
+      return orgName;
+    }
+
+    return null;
+  };
 
   const tournamentMatch = { createdAt: { $gte: fromDate, $lte: toDate } };
   if (reportScope === "organizer") {
     tournamentMatch.organizer = paymentMatch.organizer;
+  }
+  if (selectedTournamentId) {
+    tournamentMatch._id = new mongoose.Types.ObjectId(selectedTournamentId);
   }
   if (filters.sport && filters.sport !== "all") {
     const selectedSport = await Sport.findOne({ name: filters.sport }).select("_id");
     tournamentMatch.sport = selectedSport?._id || null;
   }
   const totalTournaments = await Tournament.countDocuments(tournamentMatch);
+  const totalTransactions = await Payment.countDocuments({
+    ...paymentMatch,
+    payerType: { $in: revenuePayerTypes },
+  });
 
   const totalRevenue = revenuePerMonthAgg.reduce((sum, item) => sum + item.revenue, 0);
   const pendingCount = pendingSummaryAgg[0]?.pendingCount || 0;
   const pendingAmount = pendingSummaryAgg[0]?.pendingAmount || 0;
-  const listingCost = totalTournaments * LISTING_COST_PER_TOURNAMENT;
-  const profit = totalRevenue - listingCost;
+  const listingCost = reportScope === "organizer" ? totalTournaments * LISTING_COST_PER_TOURNAMENT : 0;
+  const profit = reportScope === "organizer" ? totalRevenue - listingCost : totalRevenue;
   const organizerName = (organizerDetails?.orgName || "").trim() || "Unknown Organization";
 
   return {
@@ -388,6 +550,8 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
         : null,
       totalRevenue,
       registrationRevenue: totalRevenue,
+      websiteRevenue: reportScope === "website" ? totalRevenue : 0,
+      totalTransactions,
       totalTournaments,
       listingCostPerTournament: LISTING_COST_PER_TOURNAMENT,
       listingCost,
@@ -405,9 +569,25 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
         revenue: item.revenue,
         payments: item.payments,
       })),
+      revenueByTournament: revenueByTournamentAgg.map((item) => ({
+        tournamentId: item._id,
+        tournamentName: item.tournamentName || "Unknown Tournament",
+        revenue: item.revenue,
+        payments: item.payments,
+      })),
+      topOrganizerRevenue: topOrganizerRevenueAgg.map((item) => {
+        const organizerInfo = organizerNameById.get(item._id?.toString?.() || "");
+        return {
+          organizerId: item._id,
+          organizerName: organizerInfo?.orgName || organizerInfo?.displayName || "Unknown Organization",
+          revenue: item.revenue,
+          payments: item.payments,
+        };
+      }),
       payments: paymentRecords.map((payment) => ({
         _id: payment._id,
-        payerName: payment.payerName,
+        payerName: resolvePayerName(payment),
+        organizationName: resolveOrganizationName(payment),
         payerType: payment.payerType,
         amount: payment.amount,
         status: payment.status,
@@ -416,7 +596,8 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
       })),
       pendingPayments: pendingPayments.map((payment) => ({
         _id: payment._id,
-        payerName: payment.payerName,
+        payerName: resolvePayerName(payment),
+        organizationName: resolveOrganizationName(payment),
         payerType: payment.payerType,
         amount: payment.amount,
         status: payment.status,
@@ -427,17 +608,68 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
   };
 };
 
-const buildTournamentReport = async ({ fromDate, toDate, organizerId = null }) => {
+const buildTournamentReport = async ({ fromDate, toDate, organizerId = null, filters = {} }) => {
+  const selectedStatus = filters.tournamentStatus && filters.tournamentStatus !== "all"
+    ? filters.tournamentStatus
+    : null;
+  const selectedTournamentId = filters.tournamentId && filters.tournamentId !== "all"
+    ? filters.tournamentId
+    : null;
   const tournamentMatch = { createdAt: { $gte: fromDate, $lte: toDate } };
   if (organizerId) {
+    if (!mongoose.Types.ObjectId.isValid(organizerId)) {
+      throw new ApiError(400, "Invalid organizer selected");
+    }
     tournamentMatch.organizer = new mongoose.Types.ObjectId(organizerId);
+  }
+
+  let selectedTournamentName = null;
+  if (selectedTournamentId) {
+    if (!mongoose.Types.ObjectId.isValid(selectedTournamentId)) {
+      throw new ApiError(400, "Invalid tournament selected");
+    }
+
+    const selectedTournament = await Tournament.findById(selectedTournamentId)
+      .select("_id name organizer");
+
+    if (!selectedTournament) {
+      throw new ApiError(404, "Tournament not found");
+    }
+
+    if (
+      organizerId &&
+      selectedTournament.organizer?.toString() !== organizerId.toString()
+    ) {
+      throw new ApiError(403, "You can only generate reports for your own tournaments");
+    }
+
+    selectedTournamentName = selectedTournament.name;
+    tournamentMatch._id = selectedTournament._id;
   }
 
   const tournaments = await Tournament.find(tournamentMatch)
     .select("name registrationType registeredTeams registeredPlayers organizer createdAt startDate endDate isCancelled")
-    .populate("organizer", "fullName orgName")
+    .populate("organizer", "fullName")
     .sort({ createdAt: -1 })
     .limit(200);
+
+  const organizerIds = [...new Set(
+    tournaments
+      .map((tournament) => tournament.organizer?._id || tournament.organizer)
+      .filter(Boolean)
+      .map((id) => id.toString())
+  )];
+
+  const organizerDocs = organizerIds.length > 0
+    ? await TournamentOrganizer.find({ _id: { $in: organizerIds } }).select("_id orgName fullName")
+    : [];
+
+  const organizerNameById = new Map(
+    organizerDocs.map((organizer) => [
+      organizer._id.toString(),
+      (organizer.orgName || "").trim() || (organizer.fullName || "").trim() || "Unknown Organization",
+    ])
+  );
 
   const participationData = tournaments.map((tournament) => {
     const teamsRegistered = tournament.registrationType === "Team"
@@ -454,10 +686,15 @@ const buildTournamentReport = async ({ fromDate, toDate, organizerId = null }) =
       status = "Ongoing";
     }
 
+    const organizerId = (tournament.organizer?._id || tournament.organizer)?.toString();
+    const organizerName = organizerId
+      ? organizerNameById.get(organizerId) || (tournament.organizer?.fullName || "").trim() || "Unknown Organization"
+      : "Unknown Organization";
+
     return {
       _id: tournament._id,
       tournamentName: tournament.name,
-      organizerName: tournament.organizer?.orgName || "Unknown Organization",
+      organizerName,
       registrationType: tournament.registrationType,
       teamsRegistered,
       status,
@@ -465,24 +702,54 @@ const buildTournamentReport = async ({ fromDate, toDate, organizerId = null }) =
     };
   });
 
-  const totalTournamentsOrganized = tournaments.length;
-  const totalTournamentParticipation = participationData.reduce((sum, item) => sum + item.teamsRegistered, 0);
+  const filteredParticipationData = selectedStatus
+    ? participationData.filter((item) => item.status === selectedStatus)
+    : participationData;
 
-  const statusBreakdown = participationData.reduce((acc, item) => {
+  const totalTournamentsOrganized = filteredParticipationData.length;
+  const totalTournamentParticipation = filteredParticipationData.reduce((sum, item) => sum + item.teamsRegistered, 0);
+
+  const statusBreakdown = filteredParticipationData.reduce((acc, item) => {
     acc[item.status] = (acc[item.status] || 0) + 1;
     return acc;
   }, {});
 
+  const organizerTournamentCounts = Object.entries(
+    filteredParticipationData.reduce((acc, item) => {
+      const key = item.organizerName || "Unknown Organization";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {})
+  )
+    .map(([organizerName, count]) => ({ organizerName, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const scopeParts = [];
+  if (organizerId) {
+    const organizerScopeName = organizerNameById.get(organizerId.toString());
+    if (organizerScopeName) {
+      scopeParts.push(organizerScopeName);
+    }
+  }
+  if (selectedTournamentName) {
+    scopeParts.push(selectedTournamentName);
+  }
+  if (selectedStatus) {
+    scopeParts.push(`${selectedStatus} Tournaments`);
+  }
+  const scopeLabel = scopeParts.length > 0 ? scopeParts.join(" - ") : "All Tournaments";
+
   return {
     title: "Tournament Report",
     summary: {
+      scopeLabel,
       totalTournamentsOrganized,
       totalTournamentParticipation,
       ongoingTournaments: statusBreakdown.Ongoing || 0,
       completedTournaments: statusBreakdown.Completed || 0,
     },
     data: {
-      tournamentParticipation: participationData.map((item) => ({
+      tournamentParticipation: filteredParticipationData.map((item) => ({
         tournamentName: item.tournamentName,
         teamsRegistered: item.teamsRegistered,
       })),
@@ -490,10 +757,11 @@ const buildTournamentReport = async ({ fromDate, toDate, organizerId = null }) =
         status,
         count,
       })),
-      tournamentsTable: participationData.map((item) => ({
+      organizerTournamentCounts,
+      tournamentsTable: filteredParticipationData.map((item) => ({
         _id: item._id,
         tournamentName: item.tournamentName,
-        ...(organizerId ? {} : { organizerName: item.organizerName }),
+        organizerName: item.organizerName,
         registrationType: item.registrationType,
         teamsRegistered: item.teamsRegistered,
         status: item.status,
@@ -526,11 +794,15 @@ export const generateReport = asyncHandler(async (req, res) => {
   if (normalizedType === "UserPlayer") {
     reportPayload = await buildUserPlayerReport({ fromDate, toDate, filters });
   } else if (normalizedType === "Tournament") {
+    const adminSelectedOrganizerId = !isOrganizer && filters.tournamentOrganizerId && filters.tournamentOrganizerId !== "all"
+      ? filters.tournamentOrganizerId
+      : null;
+
     reportPayload = await buildTournamentReport({
       fromDate,
       toDate,
       filters,
-      organizerId: isOrganizer ? req.user._id : null,
+      organizerId: isOrganizer ? req.user._id : adminSelectedOrganizerId,
     });
   } else {
     reportPayload = await buildRevenuePaymentReport({

@@ -3,6 +3,12 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Sport } from "../models/Sport.model.js";
 
+const requireAdmin = (user) => {
+  if (!user || user.role !== "Admin") {
+    throw new ApiError(403, "Only admins can perform this action.");
+  }
+};
+
 // Create a new sport (Admin only)
 export const createSport = asyncHandler(async (req, res) => {
   const { name, teamBased, roles, playersPerTeam } = req.body;
@@ -51,6 +57,17 @@ export const getAllSports = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, sports, "Sports retrieved successfully."));
+});
+
+// Get all sports including removed ones (Admin only)
+export const getAllSportsForAdmin = asyncHandler(async (req, res) => {
+  requireAdmin(req.user);
+
+  const sports = await Sport.find({}).sort({ name: 1 });
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, sports, "All sports retrieved successfully."));
 });
 
 // Get sport by ID
@@ -135,7 +152,25 @@ export const deleteSport = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new ApiResponse(200, sport, "Sport deleted successfully."));
+    .json(new ApiResponse(200, sport, "Sport removed successfully."));
+});
+
+// Restore sport (Admin only)
+export const restoreSport = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const sport = await Sport.findById(id);
+
+  if (!sport) {
+    throw new ApiError(404, "Sport not found.");
+  }
+
+  sport.isActive = true;
+  await sport.save();
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, sport, "Sport restored successfully."));
 });
 
 // Get team-based sports

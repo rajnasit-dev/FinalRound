@@ -114,14 +114,13 @@ const MatchDetailModal = ({ match, onClose }) => {
           <div className="bg-primary dark:bg-primary-dark rounded-xl p-6">
             <div className="flex flex-col items-center gap-4">
               {/* Status Badge */}
-              <span
-                className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold text-white ${getStatusColor(match.status)}`}
-              >
-                {match.status === "Live" && (
-                  <span className="w-2 h-2 bg-white rounded-full animate-pulse mr-2"></span>
-                )}
-                {match.status}
-              </span>
+              {(match.status === "Cancelled" || match.isCancelled) && (
+                <span
+                  className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold text-white ${getStatusColor(match.status)}`}
+                >
+                  {match.status}
+                </span>
+              )}
 
               {/* Participants VS Display */}
               <div className="flex items-center justify-center gap-4 sm:gap-8 w-full">

@@ -38,16 +38,15 @@ const MatchCard = memo(({ match, showEditButton = false, onEdit }) => {
                   Edit
                 </button>
               )}
-              <span
-                className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                  match.status
-                )} text-white`}
-              >
-                {match.status === "Live" && (
-                  <span className="inline-block w-1.5 h-1.5 bg-white rounded-full animate-pulse mr-1"></span>
-                )}
-                {match.status}
-              </span>
+              {(match.status === "Cancelled" || match.isCancelled) && (
+                <span
+                  className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                    match.status
+                  )} text-white`}
+                >
+                  {match.status}
+                </span>
+              )}
             </div>
           </div>
 

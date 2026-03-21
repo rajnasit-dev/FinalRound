@@ -489,13 +489,13 @@ const TournamentFixtures = () => {
             },
           },
           {
-            header: "Status",
+            header: "",
             accessor: "status",
             render: (match) => {
+              if (match.status !== "Cancelled" && !match.isCancelled) return null;
               const statusClass = getStatusColor(match.status);
               return (
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white ${statusClass}`}>
-                  {match.status === "Live" && <span className="w-2 h-2 bg-current rounded-full animate-pulse mr-1.5" />}
                   {match.status}
                 </span>
               );
@@ -507,25 +507,26 @@ const TournamentFixtures = () => {
             render: (match) => {
               const isMatchCancelled = match.isCancelled || match.status === "Cancelled";
               const isMatchCompleted = match.status === "Completed";
-              const matchStatus = isMatchCancelled ? "Cancelled" : match.status;
 
               return (
               <div className="flex items-center gap-2">
                 <Button
                   variant="info"
                   size="sm"
+                  className="min-w-24"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/organizer/matches/${match._id}/edit`);
                   }}
                 >
                   <Edit className="w-3.5 h-3.5" />
-                  {matchStatus === "Live" ? "Update" : "Edit"}
+                  Edit
                 </Button>
-                {!isMatchCompleted && (matchStatus === "Scheduled" || matchStatus === "Live") && (
+                {!isMatchCompleted && !isMatchCancelled && (
                   <Button
                     variant="warning"
                     size="sm"
+                    className="min-w-24"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleCancelMatch(match._id, false, match.status);
@@ -539,6 +540,7 @@ const TournamentFixtures = () => {
                   <Button
                     variant="success"
                     size="sm"
+                    className="min-w-24"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleCancelMatch(match._id, true, match.status);

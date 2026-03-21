@@ -104,6 +104,7 @@ const CreateTournament = () => {
     mode: "onChange",
     defaultValues: {
       format: "League",
+      gender: "",
     },
   });
 
@@ -123,6 +124,12 @@ const CreateTournament = () => {
   const formatOptions = [
     { value: "League", label: "League" },
     { value: "Knockout", label: "Knockout" },
+  ];
+
+  const genderOptions = [
+    { value: "Mixed", label: "Mixed" },
+    { value: "Male", label: "Male" },
+    { value: "Female", label: "Female" },
   ];
 
   const handleBannerChange = (file) => {
@@ -169,6 +176,7 @@ const CreateTournament = () => {
       formData.append("name", data.name);
       formData.append("sport", data.sport);
       formData.append("format", data.format);
+      formData.append("gender", data.gender || "Mixed");
       formData.append("description", data.description || "");
       formData.append("teamLimit", data.teamLimit);
       formData.append("registrationStart", data.registrationStart);
@@ -347,6 +355,26 @@ const CreateTournament = () => {
               error={errors.format?.message}
               {...register("format", { required: "Format is required" })}
             />
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium mb-3 text-text-primary dark:text-text-primary-dark">Gender *</label>
+              <div className="flex gap-6">
+                {genderOptions.map((option) => (
+                  <label key={option.value} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      value={option.value}
+                      {...register("gender", { required: "Gender is required" })}
+                      className="w-4 h-4 cursor-pointer accent-secondary"
+                    />
+                    <span className="text-text-primary dark:text-text-primary-dark font-medium">{option.label}</span>
+                  </label>
+                ))}
+              </div>
+              {errors.gender && (
+                <p className="text-red-500 text-sm mt-2">{errors.gender.message}</p>
+              )}
+            </div>
 
             <Input
               label={isTeamBased ? "Team Limit" : "Player Limit"}
@@ -555,7 +583,7 @@ const CreateTournament = () => {
                   className="group relative bg-primary dark:bg-primary-dark rounded-lg border border-base-dark dark:border-base p-4 transition-all duration-200 hover:shadow-md hover:border-secondary dark:hover:border-secondary"
                 >
                   <div className="flex gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-secondary/10 dark:bg-secondary/20 rounded-lg flex items-center justify-center text-secondary font-bold text-sm">
+                    <div className="shrink-0 w-8 h-8 bg-secondary/10 dark:bg-secondary/20 rounded-lg flex items-center justify-center text-secondary font-bold text-sm">
                       {index + 1}
                     </div>
                     <div className="flex-1">
@@ -570,7 +598,7 @@ const CreateTournament = () => {
                     <button
                       type="button"
                       onClick={() => removeRule(index)}
-                      className="flex-shrink-0 p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
+                      className="shrink-0 p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 opacity-0 group-hover:opacity-100"
                       title="Remove rule"
                     >
                       <Trash2 className="w-4 h-4" />

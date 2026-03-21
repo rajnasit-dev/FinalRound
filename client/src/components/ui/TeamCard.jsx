@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { memo } from "react";
-import { Users, MapPin, Trophy, Edit, UserPlus, UserCog, Power, Users2, ShieldOff } from "lucide-react";
+import { Users, MapPin, Trophy, Edit, UserPlus, UserCog, Power, Users2, ShieldOff, ArrowRight } from "lucide-react";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import defaultTeamCoverImage from "../../assets/defaultTeamCoverImage.png";
 import CardStat from "./CardStat";
@@ -138,6 +138,7 @@ const TeamCard = memo(({ team, showEditButton = false, onEdit, onManagePlayers, 
           ) : (
             <div className="flex items-center justify-between pt-3 text-secondary font-semibold group-hover:translate-x-2 transition-transform">
               <p>View Team</p>
+              <ArrowRight className="w-5 h-5" />
             </div>
           )}
         </div>

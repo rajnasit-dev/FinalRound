@@ -71,16 +71,15 @@ const MatchDetail = () => {
               
             </div>
           </div>
-          <span
-            className={`px-4 py-2 text-sm font-semibold rounded-full ${getStatusColor(
-              match.status
-            )} text-white`}
-          >
-            {match.status === "Live" && (
-              <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse mr-2"></span>
-            )}
-            {match.status}
-          </span>
+          {(match.status === "Cancelled" || match.isCancelled) && (
+            <span
+              className={`px-4 py-2 text-sm font-semibold rounded-full ${getStatusColor(
+                match.status
+              )} text-white`}
+            >
+              {match.status}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-6 text-sm text-base dark:text-base-dark">
