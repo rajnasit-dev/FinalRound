@@ -102,6 +102,18 @@ if (process.env.NODE_ENV === 'production' || fs.existsSync(clientDist)) {
 app.use((err, req, res, next) => {
     console.error("Error:", err.message);
     console.error("Error details:", err);
+
+    // Handle Multer upload errors
+    if (err.name === 'MulterError') {
+        const isSizeError = err.code === 'LIMIT_FILE_SIZE';
+        return res.status(400).json({
+            success: false,
+            message: isSizeError
+                ? 'Uploaded file is too large. Maximum allowed size is 10MB.'
+                : err.message || 'File upload failed.',
+            errors: [],
+        });
+    }
     
     // Handle Mongoose validation errors
     if (err.name === 'ValidationError') {

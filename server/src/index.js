@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import app from './app.js';
 
 console.log('🔧 Environment:', process.env.NODE_ENV);
@@ -8,7 +9,7 @@ console.log('🔧 MongoDB URI:', process.env.MONGODB_URI ? 'Set' : 'NOT SET');
 console.log('🔧 DB Name:', process.env.DB_NAME);
 
 // Ensure temp directory exists
-const tempDir = path.resolve('public/temp');
+const tempDir = path.join(os.tmpdir(), 'sportshub-uploads');
 if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir, { recursive: true });
     console.log('✅ Created temp directory:', tempDir);
