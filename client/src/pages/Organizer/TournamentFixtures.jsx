@@ -568,12 +568,12 @@ const TournamentFixtures = () => {
       )}
 
       {showFixtureSetupModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-xl bg-card-background dark:bg-card-background-dark border border-base-dark dark:border-base">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-base-dark dark:border-base">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto">
+          <div className="w-full max-w-5xl max-h-[90vh] flex flex-col rounded-xl bg-card-background dark:bg-card-background-dark border border-base-dark dark:border-base">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-base-dark dark:border-base shrink-0">
               <div>
                 <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">Auto Fixture Generator</h2>
-                
+
               </div>
               <button
                 type="button"
@@ -584,7 +584,7 @@ const TournamentFixtures = () => {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)] space-y-6">
+            <div className="p-6 overflow-y-auto overscroll-contain flex-1 space-y-6">
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-semibold mb-1 text-text-primary dark:text-text-primary-dark">Format</label>

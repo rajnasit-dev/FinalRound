@@ -16,6 +16,7 @@ import { useReactToPrint } from "react-to-print";
 import Spinner from "../../components/ui/Spinner";
 import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
+import logo from "../../assets/logo.png";
 
 const PaymentReceipt = () => {
   const { paymentId } = useParams();
@@ -116,7 +117,15 @@ const PaymentReceipt = () => {
         </div>
 
         {/* Receipt */}
-        <div ref={componentRef} className="bg-white rounded-lg shadow-lg p-8">
+        <div ref={componentRef} className="bg-white rounded-lg shadow-lg p-8 relative overflow-hidden">
+          {/* Watermark Logo */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <img
+              src={logo}
+              alt=""
+              className="w-96 h-96 object-contain opacity-5"
+            />
+          </div>
           {/* Header */}
           <div className="border-b-2 border-gray-200 pb-6 mb-6">
             <div className="flex justify-between items-start">
