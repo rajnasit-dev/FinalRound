@@ -648,8 +648,9 @@ const buildTournamentReport = async ({ fromDate, toDate, organizerId = null, fil
   }
 
   const tournaments = await Tournament.find(tournamentMatch)
-    .select("name registrationType registeredTeams registeredPlayers organizer createdAt startDate endDate isCancelled")
+    .select("name sport registrationType registeredTeams registeredPlayers organizer createdAt startDate endDate isCancelled")
     .populate("organizer", "fullName")
+    .populate("sport", "name")
     .sort({ createdAt: -1 })
     .limit(200);
 
@@ -691,6 +692,8 @@ const buildTournamentReport = async ({ fromDate, toDate, organizerId = null, fil
       ? organizerNameById.get(organizerId) || (tournament.organizer?.fullName || "").trim() || "Unknown Organization"
       : "Unknown Organization";
 
+    const sportName = tournament.sport?.name || "Unknown Sport";
+
     return {
       _id: tournament._id,
       tournamentName: tournament.name,
@@ -698,6 +701,7 @@ const buildTournamentReport = async ({ fromDate, toDate, organizerId = null, fil
       registrationType: tournament.registrationType,
       teamsRegistered,
       status,
+      sport: sportName,
       createdAt: tournament.createdAt,
     };
   });
@@ -722,6 +726,16 @@ const buildTournamentReport = async ({ fromDate, toDate, organizerId = null, fil
     }, {})
   )
     .map(([organizerName, count]) => ({ organizerName, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const tournamentsBySport = Object.entries(
+    filteredParticipationData.reduce((acc, item) => {
+      const sport = item.sport || "Unknown Sport";
+      acc[sport] = (acc[sport] || 0) + 1;
+      return acc;
+    }, {})
+  )
+    .map(([sport, count]) => ({ sport, count }))
     .sort((a, b) => b.count - a.count);
 
   const scopeParts = [];
@@ -758,6 +772,7 @@ const buildTournamentReport = async ({ fromDate, toDate, organizerId = null, fil
         count,
       })),
       organizerTournamentCounts,
+      tournamentsBySport,
       tournamentsTable: filteredParticipationData.map((item) => ({
         _id: item._id,
         tournamentName: item.tournamentName,
@@ -765,6 +780,7 @@ const buildTournamentReport = async ({ fromDate, toDate, organizerId = null, fil
         registrationType: item.registrationType,
         teamsRegistered: item.teamsRegistered,
         status: item.status,
+        sport: item.sport,
       })),
     },
   };
