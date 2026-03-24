@@ -126,6 +126,9 @@ export const doughnutThemeOptions = {
         size: 12,
       },
       formatter: (value, context) => {
+        // Don't show label if value is 0
+        if (value === 0) return "";
+
         const dataset = context.dataset.data;
         const total = dataset.reduce((acc, val) => acc + val, 0);
         if (total === 0) return "";
