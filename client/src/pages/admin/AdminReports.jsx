@@ -1022,69 +1022,100 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, orga
 
 const PrintableReportWrapper = ({ report, children }) => {
   return (
-    <div className="bg-white text-black p-8 relative overflow-visible w-full" style={{ color: "black" }}>
+    <div style={{ backgroundColor: "white", color: "black", padding: "32px", position: "relative", overflow: "visible", width: "100%" }}>
       <style>{`
-        * { color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
-        .bg-blue-600 { background-color: #2563eb !important; }
-        .bg-blue-100 { background-color: #dbeafe !important; }
-        .text-blue-600 { color: #2563eb !important; }
-        .bg-emerald-600 { background-color: #059669 !important; }
-        .bg-emerald-100 { background-color: #d1fae5 !important; }
-        .text-emerald-600 { color: #059669 !important; }
-        .bg-amber-600 { background-color: #d97706 !important; }
-        .bg-amber-100 { background-color: #fef3c7 !important; }
-        .text-amber-600 { color: #d97706 !important; }
-        .bg-red-50 { background-color: #fef2f2 !important; }
-        .border-red-200 { border-color: #fecaca !important; }
-        .text-red-600 { color: #dc2626 !important; }
-        .bg-green-50 { background-color: #f0fdf4 !important; }
-        .border-green-200 { border-color: #bbf7d0 !important; }
-        .text-green-600 { color: #16a34a !important; }
-        .bg-gray-50 { background-color: #f9fafb !important; }
-        .border-gray-200 { border-color: #e5e7eb !important; }
+        * {
+          color-adjust: exact !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        body { background-color: white !important; }
+
+        /* Text colors */
+        .text-black { color: #000000 !important; }
+        .text-white { color: #ffffff !important; }
         .text-gray-600 { color: #4b5563 !important; }
         .text-gray-800 { color: #1f2937 !important; }
+        .text-blue-600 { color: #2563eb !important; }
+        .text-blue-700 { color: #1d4ed8 !important; }
+        .text-emerald-600 { color: #059669 !important; }
+        .text-amber-600 { color: #d97706 !important; }
+        .text-red-600 { color: #dc2626 !important; }
+        .text-green-600 { color: #16a34a !important; }
+
+        /* Background colors */
+        .bg-white { background-color: #ffffff !important; }
+        .bg-black { background-color: #000000 !important; }
+        .bg-blue-50 { background-color: #eff6ff !important; }
+        .bg-blue-100 { background-color: #dbeafe !important; }
+        .bg-blue-600 { background-color: #2563eb !important; }
+        .bg-emerald-50 { background-color: #f0fdf4 !important; }
+        .bg-emerald-100 { background-color: #d1fae5 !important; }
+        .bg-emerald-600 { background-color: #059669 !important; }
+        .bg-amber-50 { background-color: #fffbeb !important; }
+        .bg-amber-100 { background-color: #fef3c7 !important; }
+        .bg-amber-600 { background-color: #d97706 !important; }
+        .bg-amber-200 { background-color: #fcd34d !important; }
+        .bg-amber-800 { background-color: #92400e !important; }
+        .bg-red-50 { background-color: #fef2f2 !important; }
+        .bg-red-600 { background-color: #dc2626 !important; }
+        .bg-green-50 { background-color: #f0fdf4 !important; }
+        .bg-green-600 { background-color: #16a34a !important; }
+        .bg-gray-50 { background-color: #f9fafb !important; }
+        .bg-gray-100 { background-color: #f3f4f6 !important; }
+        .bg-gray-200 { background-color: #e5e7eb !important; }
+
+        /* Border colors */
+        .border-gray-200 { border-color: #e5e7eb !important; }
+        .border-gray-300 { border-color: #d1d5db !important; }
+        .border-red-200 { border-color: #fecaca !important; }
+        .border-green-200 { border-color: #bbf7d0 !important; }
+        .border-amber-200 { border-color: #fcd34d !important; }
+        .border-amber-800 { border-color: #92400e !important; }
+
+        /* Extra coverage for dark mode that might leak */
+        .dark { display: none !important; }
       `}</style>
 
       {/* Watermark Logo */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
         <img
           src={logo}
           alt=""
-          className="w-96 h-96 object-contain opacity-5"
+          style={{ width: "384px", height: "384px", objectFit: "contain", opacity: 0.05 }}
         />
       </div>
 
       {/* Header with Logo and Title */}
-      <div className="relative z-10 border-b-2 border-gray-200 pb-6 mb-6">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="SportsHub" className="w-12 h-12 object-contain" />
+      <div style={{ position: "relative", zIndex: 10, borderBottom: "2px solid #e5e7eb", paddingBottom: "24px", marginBottom: "24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <img src={logo} alt="SportsHub" style={{ width: "48px", height: "48px", objectFit: "contain" }} />
             <div>
-              <h1 className="text-3xl font-bold text-gray-800" style={{ fontFamily: "'Syne', sans-serif" }}>
+              <h1 style={{ fontSize: "30px", fontWeight: "bold", color: "#1f2937", fontFamily: "'Syne', sans-serif" }}>
                 SportsHub
               </h1>
-              <p className="text-sm text-gray-600">www.sportshub.com</p>
+              <p style={{ fontSize: "14px", color: "#4b5563" }}>www.sportshub.com</p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-sm text-gray-600">Report Date</p>
-            <p className="font-semibold text-gray-800">{new Date().toLocaleDateString("en-IN")}</p>
+          <div style={{ textAlign: "right" }}>
+            <p style={{ fontSize: "14px", color: "#4b5563" }}>Report Date</p>
+            <p style={{ fontWeight: "600", color: "#1f2937" }}>{new Date().toLocaleDateString("en-IN")}</p>
           </div>
         </div>
       </div>
 
       {/* Report Content */}
-      <div className="relative z-10 space-y-6">
+      <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", gap: "24px" }}>
         {children}
       </div>
 
       {/* Footer */}
-      <div className="relative z-10 border-t-2 border-gray-200 mt-8 pt-6 text-center">
-        <p className="text-xs text-gray-600">
+      <div style={{ position: "relative", zIndex: 10, borderTop: "2px solid #e5e7eb", marginTop: "32px", paddingTop: "24px", textAlign: "center" }}>
+        <p style={{ fontSize: "12px", color: "#4b5563" }}>
           This report is generated automatically by SportsHub and is valid for administrative purposes.
         </p>
-        <p className="text-xs text-gray-500 mt-1">
+        <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
           For any queries, please contact support@sportshub.com
         </p>
       </div>
