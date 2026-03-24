@@ -693,12 +693,20 @@ const OrganizerReports = () => {
         toast.dismiss(toastId);
         toast.success("PDF downloaded successfully!");
       } finally {
-        // Restore classes to original elements
+        // Restore classes to original elements using setAttribute to handle SVG elements
         elementsWithClasses.forEach(({ element, className }) => {
-          element.className = className;
+          try {
+            element.setAttribute("class", className);
+          } catch (e) {
+            // Silently ignore if setAttribute fails
+          }
         });
         if (rootClassName) {
-          printRef.current.className = rootClassName;
+          try {
+            printRef.current.setAttribute("class", rootClassName);
+          } catch (e) {
+            // Silently ignore if setAttribute fails
+          }
         }
       }
     } catch (error) {
