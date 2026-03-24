@@ -57,6 +57,55 @@ const formatDateForInput = (date) => {
   return `${year}-${month}-${day}`;
 };
 
+const downloadRecordCsv = (record, recordType) => {
+  const headers = Object.keys(record);
+  const headerRow = headers.map((h) => escapeCsvValue(h)).join(",");
+  const dataRow = headers.map((h) => escapeCsvValue(record[h])).join(",");
+
+  const csvContent = `${headerRow}\n${dataRow}`;
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  const recordName = record.tournamentName || record.fullName || record.payerName || "record";
+  const fileName = `${recordType}-${recordName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}.csv`;
+
+  link.href = url;
+  link.setAttribute("download", fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+const downloadAllUsersCsv = (users) => {
+  if (!users || users.length === 0) {
+    toast.error("No users to export");
+    return;
+  }
+
+  const headers = Object.keys(users[0]);
+  const headerRow = headers.map((h) => escapeCsvValue(h)).join(",");
+  const dataRows = users.map((user) =>
+    headers.map((h) => escapeCsvValue(user[h])).join(",")
+  ).join("\n");
+
+  const csvContent = `${headerRow}\n${dataRows}`;
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  const fileName = `user-report-${new Date().toISOString().split("T")[0]}.csv`;
+
+  link.href = url;
+  link.setAttribute("download", fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  toast.success(`Exported ${users.length} users`);
+};
+
 const chartOptions = barChartThemeOptions;
 
 const overviewBaseChartOptions = chartThemeOptions;
@@ -266,6 +315,121 @@ const downloadReportCsv = (report) => {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+};
+
+const waitForRenderFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
+
+const waitForFontsReady = async () => {
+  if (document.fonts?.ready) {
+    try {
+      await document.fonts.ready;
+    } catch (error) {
+      console.warn("Failed waiting for fonts:", error);
+    }
+  }
+};
+
+const waitForImagesReady = async (rootElement) => {
+  const images = Array.from(rootElement.querySelectorAll("img"));
+  await Promise.all(
+    images.map((img) => {
+      if (img.complete) {
+        return Promise.resolve();
+      }
+
+      return new Promise((resolve) => {
+        const done = () => {
+          img.removeEventListener("load", done);
+          img.removeEventListener("error", done);
+          resolve();
+        };
+        img.addEventListener("load", done, { once: true });
+        img.addEventListener("error", done, { once: true });
+      });
+    })
+  );
+};
+
+const waitForChartCanvasesReady = async (rootElement) => {
+  const canvasHasPaintedPixels = (canvas) => {
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) {
+      return false;
+    }
+
+    const sampleRows = 6;
+    const sampleCols = 6;
+    for (let row = 0; row < sampleRows; row++) {
+      for (let col = 0; col < sampleCols; col++) {
+        const x = Math.floor(((col + 0.5) / sampleCols) * (canvas.width - 1));
+        const y = Math.floor(((row + 0.5) / sampleRows) * (canvas.height - 1));
+        const pixel = ctx.getImageData(x, y, 1, 1).data;
+        if (pixel[3] > 0) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  const canvases = Array.from(rootElement.querySelectorAll("canvas"));
+  if (canvases.length === 0) {
+    return;
+  }
+
+  const timeoutMs = 3000;
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const allReady = canvases.every((canvas) => {
+      if (canvas.width === 0 || canvas.height === 0) {
+        return false;
+      }
+
+      return canvasHasPaintedPixels(canvas);
+    });
+
+    if (allReady) {
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 120));
+  }
+};
+
+const forceChartRedraw = () => {
+  const instances = Object.values(ChartJS.instances || {});
+  instances.forEach((chart) => {
+    try {
+      chart.stop();
+      chart.update("none");
+    } catch (error) {
+      console.warn("Chart redraw failed:", error);
+    }
+  });
+};
+
+const formatDateLabel = (value) => {
+  if (!value) {
+    return "-";
+  }
+
+  const normalized = String(value).trim();
+  if (!normalized) {
+    return "-";
+  }
+
+  const parsed = new Date(`${normalized}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    return normalized;
+  }
+
+  return parsed.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
 // Report viewer components
@@ -533,33 +697,25 @@ const UserPlayerReportView = ({ report }) => {
         </SectionCard>
       )}
 
-      <SectionCard title="User Data Table" icon={Users}>
+      <SectionCard title="User Data" icon={Users} className="hide-in-pdf">
         {data.usersTable?.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-base-dark dark:border-base">
-                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Name</th>
-                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Email</th>
-                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">City</th>
-                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Status</th>
-                  <th className="text-right py-3 px-3 text-base dark:text-base-dark font-semibold">Joined</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.usersTable.map((row) => (
-                  <tr key={row._id} className="border-b border-base-dark/50 dark:border-base/50">
-                    <td className="py-3 px-3 font-medium text-text-primary dark:text-text-primary-dark">{row.fullName}</td>
-                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.email}</td>
-                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.city}</td>
-                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.status}</td>
-                    <td className="py-3 px-3 text-right text-text-primary dark:text-text-primary-dark">
-                      {new Date(row.joinedAt).toLocaleDateString("en-IN")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div>
+              <p className="text-sm font-medium text-text-primary dark:text-text-primary-dark">
+                Total Users: {data.usersTable.length}
+              </p>
+              <p className="text-xs text-base dark:text-base-dark mt-1">
+                Click the button below to download all user data as CSV
+              </p>
+            </div>
+            <button
+              onClick={() => downloadAllUsersCsv(data.usersTable)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/90 text-white text-sm font-medium transition-colors"
+              title="Download all users as CSV"
+            >
+              <Download className="w-4 h-4" />
+              Export All Users
+            </button>
           </div>
         ) : (
           <p className="text-sm text-base dark:text-base-dark">No records found for this report.</p>
@@ -664,7 +820,7 @@ const RevenuePaymentReportView = ({ report }) => {
         </div>
       )}
 
-      <SectionCard title="Payment Records" icon={Clock}>
+      <SectionCard title="Payment Records" icon={Clock} className="hide-in-pdf">
         {paymentRows.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -686,7 +842,7 @@ const RevenuePaymentReportView = ({ report }) => {
                   <tr key={payment._id} className="border-b border-base-dark/50 dark:border-base/50">
                     <td className="py-3 px-3 font-medium text-text-primary dark:text-text-primary-dark">{payment.payerName || "N/A"}</td>
                     {!isWebsiteScope && (
-                      <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{payment.organizationName || "-"}</td>
+                      <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{payment.organizationName || "N/A"}</td>
                     )}
                     <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{payment.payerType}</td>
                     <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{payment.tournamentName}</td>
@@ -744,7 +900,26 @@ const TournamentReportView = ({ report }) => {
         </SectionCard>
       )}
 
-      {data.tournamentParticipation?.length > 0 && (
+      {data.tournamentsBySport?.length > 0 && (
+        <SectionCard title="Tournaments by Sport" icon={Trophy}>
+          <div className="h-72">
+            <Bar
+              data={{
+                labels: data.tournamentsBySport.map((item) => item.sport),
+                datasets: [{
+                  label: "Number of Tournaments",
+                  data: data.tournamentsBySport.map((item) => item.count),
+                  backgroundColor: data.tournamentsBySport.map((_, index) => COLORS[index % COLORS.length]),
+                  borderRadius: 4,
+                }],
+              }}
+              options={chartOptions}
+            />
+          </div>
+        </SectionCard>
+      )}
+
+      {!isWebsiteScope && data.tournamentParticipation?.length > 0 && (
         <SectionCard title="Registration by Tournament" icon={Users}>
           <div className="h-72">
             <Bar
@@ -782,7 +957,7 @@ const TournamentReportView = ({ report }) => {
         </SectionCard>
       )}
 
-      <SectionCard title="Tournament Data Table" icon={Trophy}>
+      <SectionCard title="Tournament Data Table" icon={Trophy} className="hide-in-pdf">
         {data.tournamentsTable?.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -800,7 +975,7 @@ const TournamentReportView = ({ report }) => {
                 {data.tournamentsTable.map((row) => (
                   <tr key={row._id} className="border-b border-base-dark/50 dark:border-base/50">
                     <td className="py-3 px-3 font-medium text-text-primary dark:text-text-primary-dark">{row.tournamentName}</td>
-                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.sport || "-"}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.sport || row.sportName || "N/A"}</td>
                     <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.organizerName}</td>
                     <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.registrationType}</td>
                     <td className="py-3 px-3 text-right text-text-primary dark:text-text-primary-dark">{row.teamsRegistered}</td>
@@ -1038,15 +1213,11 @@ const PrintableReportWrapper = ({ report, children, dateRange }) => {
   // Format date range for display
   const formatDateRangeDisplay = () => {
     if (!dateRange || !dateRange.from || !dateRange.to) {
-      return null;
+      return "-";
     }
 
-    const fromDate = new Date(dateRange.from);
-    const toDate = new Date(dateRange.to);
-
-    const fromFormatted = fromDate.toLocaleDateString("en-IN");
-    const toFormatted = toDate.toLocaleDateString("en-IN");
-
+    const fromFormatted = formatDateLabel(dateRange.from);
+    const toFormatted = formatDateLabel(dateRange.to);
     return `${fromFormatted} to ${toFormatted}`;
   };
 
@@ -1056,10 +1227,11 @@ const PrintableReportWrapper = ({ report, children, dateRange }) => {
     <div className="pdf-wrapper" style={{
       backgroundColor: "white",
       color: "black",
-      padding: "32px",
+      padding: "16px",
       position: "relative",
       overflow: "visible",
-      width: "100%",
+      width: "1200px",
+      maxWidth: "1200px",
       backgroundImage: `linear-gradient(white, white), url("${logo}")`,
       backgroundRepeat: "no-repeat, repeat",
       backgroundSize: "100% 100%, 600px 600px",
@@ -1184,52 +1356,101 @@ const PrintableReportWrapper = ({ report, children, dateRange }) => {
           margin-left: 0 !important;
         }
 
-        /* Hide data tables in PDF - show only graphs and summaries */
-        .pdf-wrapper .overflow-x-auto {
+        /* Hide User Data section in PDF */
+        .pdf-wrapper .hide-in-pdf {
           display: none !important;
         }
 
-        .pdf-wrapper .overflow-x-auto ~ p {
-          display: none !important;
+        /* Prevent charts and sections from breaking across pages */
+        .pdf-wrapper > div > div {
+          page-break-inside: avoid !important;
         }
+
+        .pdf-wrapper .h-64,
+        .pdf-wrapper .h-72,
+        .pdf-wrapper .h-80 {
+          page-break-inside: avoid !important;
+        }
+
+        /* Reduce spacing in PDF for single-page layout */
+        .pdf-wrapper .bg-card-background.rounded-xl {
+          padding: 12px !important;
+          margin-bottom: 8px !important;
+        }
+
+        .pdf-wrapper .bg-card-background.rounded-xl h3 {
+          font-size: 14px !important;
+          margin-bottom: 8px !important;
+        }
+
+        .pdf-wrapper .grid {
+          gap: 8px !important;
+          display: grid !important;
+        }
+
+        .pdf-wrapper .grid-cols-1 {
+          grid-template-columns: 1fr !important;
+        }
+
+        .pdf-wrapper .space-y-6 {
+          gap: 8px !important;
+        }
+
+        /* Ensure charts render in grid */
+        .pdf-wrapper .grid .h-64 {
+          width: 100% !important;
+          display: block !important;
+        }
+
+        /* Reduce chart heights in PDF */
+        .pdf-wrapper .h-64 {
+          height: 240px !important;
+        }
+
+        .pdf-wrapper .h-72 {
+          height: 240px !important;
+        }
+
+        .pdf-wrapper .h-80 {
+          height: 240px !important;
+        }
+
       `}</style>
 
       {/* Header with Logo and Title */}
-      <div style={{ position: "relative", zIndex: 10, borderBottom: "2px solid #e5e7eb", paddingBottom: "24px", marginBottom: "24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <img src={logo} alt="SportsHub" style={{ width: "48px", height: "48px", objectFit: "contain" }} />
+      <div style={{ position: "relative", zIndex: 10, borderBottom: "2px solid #e5e7eb", paddingBottom: "12px", marginBottom: "12px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <img src={logo} alt="SportsHub" style={{ width: "36px", height: "36px", objectFit: "contain" }} />
             <div>
-              <h1 style={{ fontSize: "30px", fontWeight: "bold", color: "#1f2937", fontFamily: "'Syne', sans-serif" }}>
+              <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#1f2937", fontFamily: "'Syne', sans-serif", margin: 0 }}>
                 SportsHub
               </h1>
-              <p style={{ fontSize: "14px", color: "#4b5563" }}>www.sportshub.com</p>
+              <p style={{ fontSize: "12px", color: "#4b5563", margin: 0 }}>www.sportshub.com</p>
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <p style={{ fontSize: "14px", color: "#4b5563" }}>Report Date</p>
-            <p style={{ fontWeight: "600", color: "#1f2937" }}>{new Date().toLocaleDateString("en-IN")}</p>
+            <p style={{ fontSize: "12px", color: "#4b5563", margin: 0 }}>Report Date</p>
+            <p style={{ fontWeight: "600", color: "#1f2937", fontSize: "12px", margin: 0 }}>{new Date().toLocaleDateString("en-IN")}</p>
           </div>
         </div>
-        {dateRangeText && (
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px" }}>
-            <div>
-              <p style={{ fontSize: "12px", color: "#4b5563", margin: "0 0 2px 0" }}>Report Period</p>
-              <p style={{ fontWeight: "600", color: "#1f2937", fontSize: "14px", margin: 0 }}>{dateRangeText}</p>
-            </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px" }}>
+          <div>
+            <p style={{ fontSize: "11px", color: "#4b5563", margin: "0 0 1px 0" }}>Selected Timeframe</p>
+            <p style={{ fontWeight: "600", color: "#1f2937", fontSize: "12px", margin: 0 }}>{dateRangeText}</p>
           </div>
-        )}
+        </div>
       </div>
-      <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", gap: "12px" }}>
         {children}
       </div>
 
       {/* Footer */}
-      <div style={{ position: "relative", zIndex: 10, borderTop: "2px solid #e5e7eb", marginTop: "32px", paddingTop: "24px", textAlign: "center" }}>
-        <p style={{ fontSize: "12px", color: "#4b5563" }}>
+      <div style={{ position: "relative", zIndex: 10, borderTop: "2px solid #e5e7eb", marginTop: "12px", paddingTop: "12px", textAlign: "center" }}>
+        <p style={{ fontSize: "11px", color: "#4b5563", margin: 0 }}>
           This report is generated automatically by SportsHub and is valid for administrative purposes.
         </p>
-        <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+        <p style={{ fontSize: "11px", color: "#6b7280", marginTop: "2px", margin: "2px 0 0 0" }}>
           For any queries, please contact sportshub.support@gmail.com
         </p>
       </div>
@@ -1260,9 +1481,16 @@ const AdminReports = () => {
       // Show loading state
       const toastId = toast.loading("Generating PDF...");
 
-      // Wait a moment to ensure all charts are rendered
-      console.log("Waiting for charts to render...");
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Ensure fonts, images, and chart canvases are fully painted before capture.
+      console.log("Waiting for print content to fully render...");
+      await waitForFontsReady();
+      await waitForRenderFrame();
+      await waitForRenderFrame();
+      await waitForImagesReady(printRef.current);
+      forceChartRedraw();
+      await waitForRenderFrame();
+      await waitForChartCanvasesReady(printRef.current);
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Replace problematic oklab/oklch colors in computed styles
       console.log("Replacing oklab/oklch colors in computed styles...");
@@ -1310,74 +1538,62 @@ const AdminReports = () => {
       try {
         // Capture the element as canvas with support for canvas elements
         console.log("Capturing with html2canvas...");
+        const captureWidth = Math.ceil(printRef.current.scrollWidth || printRef.current.offsetWidth || 1200);
+        const captureHeight = Math.ceil(printRef.current.scrollHeight || printRef.current.offsetHeight || 1600);
+
         const canvas = await html2canvas(printRef.current, {
-          scale: 1.5,
+          scale: 2,
           useCORS: true,
           allowTaint: true,
           backgroundColor: "#ffffff",
-          logging: true,
+          logging: false,
+          imageTimeout: 15000,
+          width: captureWidth,
+          height: captureHeight,
+          windowWidth: captureWidth,
+          windowHeight: captureHeight,
+          scrollX: 0,
+          scrollY: 0,
           canvas: null,
         });
 
         console.log("Canvas captured successfully, dimensions:", canvas.width, "x", canvas.height);
 
-        // Create PDF from canvas with proper multi-page support
+        // Create PDF page sized to the rendered report content to avoid chart/page splits.
+        const pxToMm = 0.264583;
+        const marginMm = 6;
+        const contentWidthMm = Math.max(120, canvas.width * pxToMm);
+        const contentHeightMm = Math.max(120, canvas.height * pxToMm);
+        const pageWidthMm = contentWidthMm + marginMm * 2;
+        const pageHeightMm = contentHeightMm + marginMm * 2;
+        const pageOrientation = pageWidthMm > pageHeightMm ? "landscape" : "portrait";
+
         const pdf = new jsPDF({
-          orientation: "portrait",
+          orientation: pageOrientation,
           unit: "mm",
-          format: "a4",
+          format: [pageWidthMm, pageHeightMm],
+          compress: true,
         });
 
         const imgData = canvas.toDataURL("image/png");
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pdfWidth - 10; // 5mm margin on each side
-        const usableHeight = pdfHeight - 15; // Leave 15mm margin (top + bottom)
-
-        // Calculate total image height in mm
-        const imgHeightMM = (canvas.height * imgWidth) / canvas.width;
-
-        // Calculate the pixel height per PDF page
-        const pixelsPerPage = (usableHeight * canvas.width) / imgWidth;
-
-        // Calculate number of pages needed
-        const numPages = Math.ceil(canvas.height / pixelsPerPage);
-
-        console.log(`Total canvas height: ${canvas.height}px, Pages needed: ${numPages}`);
-
-        // Add each page with the appropriate portion of the canvas
-        for (let pageNum = 0; pageNum < numPages; pageNum++) {
-          if (pageNum > 0) {
-            pdf.addPage();
-          }
-
-          // Calculate which part of the canvas to show on this page
-          const sourceTop = pageNum * pixelsPerPage;
-          const sourceHeight = Math.min(pixelsPerPage, canvas.height - sourceTop);
-
-          // Calculate the height this will be on the PDF page
-          const displayHeight = (sourceHeight * imgWidth) / canvas.width;
-
-          // Create a temporary canvas for this page's content
-          const tempCanvas = document.createElement("canvas");
-          tempCanvas.width = canvas.width;
-          tempCanvas.height = sourceHeight;
-
-          const ctx = tempCanvas.getContext("2d");
-          ctx.drawImage(
-            canvas,
-            0, sourceTop,           // source X, Y
-            canvas.width, sourceHeight,  // source width, height
-            0, 0,                   // destination X, Y
-            tempCanvas.width, tempCanvas.height  // destination width, height
-          );
-
-          const pageImgData = tempCanvas.toDataURL("image/png");
-          pdf.addImage(pageImgData, "PNG", 5, 7.5, imgWidth, displayHeight);
-        }
+        pdf.addImage(
+          imgData,
+          "PNG",
+          marginMm,
+          marginMm,
+          contentWidthMm,
+          contentHeightMm,
+          undefined,
+          "FAST"
+        );
 
         // Generate filename
-        const fileName = `${currentReport?.title || "report"}-${new Date().toLocaleDateString("en-IN")}.pdf`;
+        const dateStamp = new Date().toISOString().split("T")[0];
+        const safeTitle = (currentReport?.title || "report").replace(/[^a-z0-9- ]/gi, "").trim().replace(/\s+/g, "-");
+        const timeframeSlug = reportDateRange?.from && reportDateRange?.to
+          ? `${reportDateRange.from}_to_${reportDateRange.to}`
+          : "timeframe-not-set";
+        const fileName = `${safeTitle || "report"}-${timeframeSlug}-${dateStamp}.pdf`;
 
         // Download PDF
         pdf.save(fileName);
@@ -1587,7 +1803,17 @@ const AdminReports = () => {
           </div>
 
           {/* Hidden Print Component */}
-          <div style={{ position: "fixed", left: "-99999px", top: 0, width: "100%", zIndex: -1 }}>
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "1200px",
+              opacity: 0,
+              pointerEvents: "none",
+              zIndex: -1,
+            }}
+          >
             <div ref={printRef}>
               <PrintableReportWrapper report={currentReport} dateRange={reportDateRange}>
                 {currentReport.type === "UserPlayer" && <UserPlayerReportView report={currentReport} />}

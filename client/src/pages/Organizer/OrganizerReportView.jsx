@@ -111,6 +111,27 @@ const downloadReportCsv = (report) => {
   URL.revokeObjectURL(url);
 };
 
+const downloadRecordCsv = (record, recordType) => {
+  const headers = Object.keys(record);
+  const headerRow = headers.map((h) => escapeCsvValue(h)).join(",");
+  const dataRow = headers.map((h) => escapeCsvValue(record[h])).join(",");
+
+  const csvContent = `${headerRow}\n${dataRow}`;
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  const recordName = record.tournamentName || record.fullName || record.payerName || "record";
+  const fileName = `${recordType}-${recordName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}.csv`;
+
+  link.href = url;
+  link.setAttribute("download", fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 const TournamentReportView = ({ report }) => {
   const { summary, data } = report;
   const topTournamentParticipation = [...(data.tournamentParticipation || [])]
