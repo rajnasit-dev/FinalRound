@@ -563,6 +563,38 @@ const PrintableReportWrapper = ({ report, children }) => {
 
         /* Extra coverage for dark mode that might leak */
         .dark { display: none !important; }
+
+        /* PDF-specific styling for summary cards */
+        .bg-card-background {
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: center !important;
+          text-align: left !important;
+          padding: 16px !important;
+          background-color: #f9fafb !important;
+        }
+
+        .bg-card-background p:first-child {
+          text-align: left !important;
+          margin-bottom: 0 !important;
+          margin-right: 16px !important;
+          flex: 1 !important;
+        }
+
+        .bg-card-background p:last-child {
+          text-align: right !important;
+          white-space: nowrap !important;
+        }
+
+        /* Hide icons in PDF */
+        svg {
+          display: none !important;
+        }
+
+        /* Hide icon containers */
+        [class*="icon"] {
+          display: none !important;
+        }
       `}</style>
 
       {/* Header with Logo and Title */}
