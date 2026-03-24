@@ -1021,8 +1021,23 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, orga
 };
 
 const PrintableReportWrapper = ({ report, children }) => {
+  // Create a simple SVG watermark pattern
+  const watermarkSVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Ctext x='300' y='300' font-size='200' font-weight='bold' text-anchor='middle' fill='%23000000' opacity='0.05' font-family='Arial'%3E%3C/text%3E%3C/svg%3E`;
+
   return (
-    <div style={{ backgroundColor: "white", color: "black", padding: "32px", position: "relative", overflow: "visible", width: "100%" }}>
+    <div style={{
+      backgroundColor: "white",
+      color: "black",
+      padding: "32px",
+      position: "relative",
+      overflow: "visible",
+      width: "100%",
+      backgroundImage: `linear-gradient(white, white), url("${logo}")`,
+      backgroundRepeat: "no-repeat, repeat",
+      backgroundSize: "100% 100%, 600px 600px",
+      backgroundPosition: "center, center",
+      backgroundAttachment: "scroll, scroll"
+    }}>
       <style>{`
         * {
           color-adjust: exact !important;
@@ -1076,15 +1091,6 @@ const PrintableReportWrapper = ({ report, children }) => {
         /* Extra coverage for dark mode that might leak */
         .dark { display: none !important; }
       `}</style>
-
-      {/* Watermark Logo */}
-      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-        <img
-          src={logo}
-          alt=""
-          style={{ width: "384px", height: "384px", objectFit: "contain", opacity: 0.05 }}
-        />
-      </div>
 
       {/* Header with Logo and Title */}
       <div style={{ position: "relative", zIndex: 10, borderBottom: "2px solid #e5e7eb", paddingBottom: "24px", marginBottom: "24px" }}>
