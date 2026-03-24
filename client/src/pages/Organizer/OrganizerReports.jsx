@@ -496,6 +496,29 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, tour
 const PrintableReportWrapper = ({ report, children }) => {
   return (
     <div className="bg-white text-black p-8 relative overflow-visible w-full" style={{ color: "black" }}>
+      <style>{`
+        * { color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
+        .bg-blue-600 { background-color: #2563eb !important; }
+        .bg-blue-100 { background-color: #dbeafe !important; }
+        .text-blue-600 { color: #2563eb !important; }
+        .bg-emerald-600 { background-color: #059669 !important; }
+        .bg-emerald-100 { background-color: #d1fae5 !important; }
+        .text-emerald-600 { color: #059669 !important; }
+        .bg-amber-600 { background-color: #d97706 !important; }
+        .bg-amber-100 { background-color: #fef3c7 !important; }
+        .text-amber-600 { color: #d97706 !important; }
+        .bg-red-50 { background-color: #fef2f2 !important; }
+        .border-red-200 { border-color: #fecaca !important; }
+        .text-red-600 { color: #dc2626 !important; }
+        .bg-green-50 { background-color: #f0fdf4 !important; }
+        .border-green-200 { border-color: #bbf7d0 !important; }
+        .text-green-600 { color: #16a34a !important; }
+        .bg-gray-50 { background-color: #f9fafb !important; }
+        .border-gray-200 { border-color: #e5e7eb !important; }
+        .text-gray-600 { color: #4b5563 !important; }
+        .text-gray-800 { color: #1f2937 !important; }
+      `}</style>
+
       {/* Watermark Logo */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <img
