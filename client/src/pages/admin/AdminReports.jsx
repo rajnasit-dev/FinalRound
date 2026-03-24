@@ -1145,83 +1145,87 @@ const AdminReports = () => {
       // Show loading state
       const toastId = toast.loading("Generating PDF...");
 
-      // Clone the element to avoid modifying the original
-      const clonedElement = printRef.current.cloneNode(true);
+      // Wait a moment to ensure all charts are rendered
+      console.log("Waiting for charts to render...");
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Function to strip all Tailwind classes from all elements
-      const stripTailwindClasses = (element) => {
-        const allElements = element.querySelectorAll("*");
-        allElements.forEach((el) => {
+      // Store original classes before removing them
+      const elementsWithClasses = [];
+      const allElements = printRef.current.querySelectorAll("*");
+      allElements.forEach((el) => {
+        if (el.className) {
+          elementsWithClasses.push({ element: el, className: el.className });
           el.removeAttribute("class");
-          // Keep only inline styles
-        });
-        // Also remove the root element's classes
-        element.removeAttribute("class");
-      };
-
-      stripTailwindClasses(clonedElement);
-
-      // Create a temporary container to hold the cloned element
-      const tempContainer = document.createElement("div");
-      tempContainer.appendChild(clonedElement);
-      tempContainer.style.position = "fixed";
-      tempContainer.style.left = "-99999px";
-      tempContainer.style.top = "0";
-      tempContainer.style.width = "100%";
-      document.body.appendChild(tempContainer);
-
-      // Capture the element as canvas
-      console.log("Capturing with html2canvas...");
-      const canvas = await html2canvas(clonedElement, {
-        scale: 1.5,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff",
-        logging: true,
+        }
       });
 
-      // Remove temp container
-      document.body.removeChild(tempContainer);
-
-      console.log("Canvas captured successfully, dimensions:", canvas.width, "x", canvas.height);
-
-      // Create PDF from canvas with proper multi-page support
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth - 10; // 5mm margin on each side
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 5; // 5mm top margin
-
-      // Add first page
-      pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight - 10;
-
-      // Add additional pages if content is longer than one page
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight - 10;
+      // Also store root element classes
+      let rootClassName = "";
+      if (printRef.current.className) {
+        rootClassName = printRef.current.className;
+        printRef.current.removeAttribute("class");
       }
 
-      // Generate filename
-      const fileName = `${currentReport?.title || "report"}-${new Date().toLocaleDateString("en-IN")}.pdf`;
+      try {
+        // Capture the element as canvas with support for canvas elements
+        console.log("Capturing with html2canvas...");
+        const canvas = await html2canvas(printRef.current, {
+          scale: 1.5,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#ffffff",
+          logging: true,
+          canvas: null,
+        });
 
-      // Download PDF
-      pdf.save(fileName);
+        console.log("Canvas captured successfully, dimensions:", canvas.width, "x", canvas.height);
 
-      console.log("PDF downloaded successfully");
-      toast.dismiss(toastId);
-      toast.success("PDF downloaded successfully!");
+        // Create PDF from canvas with proper multi-page support
+        const pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4",
+        });
+
+        const imgData = canvas.toDataURL("image/png");
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pdfWidth - 10; // 5mm margin on each side
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 5; // 5mm top margin
+
+        // Add first page
+        pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight - 10;
+
+        // Add additional pages if content is longer than one page
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
+          heightLeft -= pdfHeight - 10;
+        }
+
+        // Generate filename
+        const fileName = `${currentReport?.title || "report"}-${new Date().toLocaleDateString("en-IN")}.pdf`;
+
+        // Download PDF
+        pdf.save(fileName);
+
+        console.log("PDF downloaded successfully");
+        toast.dismiss(toastId);
+        toast.success("PDF downloaded successfully!");
+      } finally {
+        // Restore classes to original elements
+        elementsWithClasses.forEach(({ element, className }) => {
+          element.className = className;
+        });
+        if (rootClassName) {
+          printRef.current.className = rootClassName;
+        }
+      }
     } catch (error) {
       console.error("PDF generation error:", error);
       console.error("Error name:", error.name);
