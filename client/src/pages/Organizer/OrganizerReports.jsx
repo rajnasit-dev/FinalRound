@@ -63,8 +63,8 @@ const REPORT_META = {
 };
 
 const SummaryCard = ({ label, value, colorClass = "text-text-primary dark:text-text-primary-dark" }) => (
-  <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-5 text-center">
-    <p className="text-xs text-base dark:text-base-dark font-semibold uppercase tracking-wide mb-1">{label}</p>
+  <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-5">
+    <p className="text-xs text-base dark:text-base-dark font-semibold uppercase tracking-wide">{label}</p>
     <p className={`text-2xl font-bold ${colorClass}`}>{value}</p>
   </div>
 );
@@ -572,18 +572,27 @@ const PrintableReportWrapper = ({ report, children }) => {
           text-align: left !important;
           padding: 16px !important;
           background-color: #f9fafb !important;
+          flex-direction: row !important;
+          gap: 16px !important;
         }
 
         .bg-card-background p:first-child {
           text-align: left !important;
-          margin-bottom: 0 !important;
-          margin-right: 16px !important;
+          margin: 0 !important;
           flex: 1 !important;
+          font-size: 12px !important;
+          font-weight: 600 !important;
+          text-transform: uppercase !important;
+          color: #4b5563 !important;
         }
 
         .bg-card-background p:last-child {
           text-align: right !important;
           white-space: nowrap !important;
+          margin: 0 !important;
+          font-size: 20px !important;
+          font-weight: bold !important;
+          color: #1f2937 !important;
         }
 
         /* Hide section header icons only - target the specific flex container with gap-2 */
