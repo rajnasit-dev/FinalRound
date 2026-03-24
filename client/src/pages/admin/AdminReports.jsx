@@ -1030,9 +1030,26 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, orga
   );
 };
 
-const PrintableReportWrapper = ({ report, children }) => {
+const PrintableReportWrapper = ({ report, children, dateRange }) => {
   // Create a simple SVG watermark pattern
   const watermarkSVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Ctext x='300' y='300' font-size='200' font-weight='bold' text-anchor='middle' fill='%23000000' opacity='0.05' font-family='Arial'%3E%3C/text%3E%3C/svg%3E`;
+
+  // Format date range for display
+  const formatDateRangeDisplay = () => {
+    if (!dateRange || !dateRange.from || !dateRange.to) {
+      return null;
+    }
+
+    const fromDate = new Date(dateRange.from);
+    const toDate = new Date(dateRange.to);
+
+    const fromFormatted = fromDate.toLocaleDateString("en-IN");
+    const toFormatted = toDate.toLocaleDateString("en-IN");
+
+    return `${fromFormatted} to ${toFormatted}`;
+  };
+
+  const dateRangeText = formatDateRangeDisplay();
 
   return (
     <div className="pdf-wrapper" style={{
@@ -1184,9 +1201,15 @@ const PrintableReportWrapper = ({ report, children }) => {
             <p style={{ fontWeight: "600", color: "#1f2937" }}>{new Date().toLocaleDateString("en-IN")}</p>
           </div>
         </div>
+        {dateRangeText && (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px" }}>
+            <div>
+              <p style={{ fontSize: "12px", color: "#4b5563", margin: "0 0 2px 0" }}>Report Period</p>
+              <p style={{ fontWeight: "600", color: "#1f2937", fontSize: "14px", margin: 0 }}>{dateRangeText}</p>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Report Content */}
       <div style={{ position: "relative", zIndex: 10, display: "flex", flexDirection: "column", gap: "24px" }}>
         {children}
       </div>
@@ -1211,6 +1234,7 @@ const AdminReports = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState("UserPlayer");
+  const [reportDateRange, setReportDateRange] = useState(null);
 
   const handlePrint = async () => {
     try {
@@ -1472,6 +1496,12 @@ const AdminReports = () => {
   };
 
   const handleGenerate = async (reportData) => {
+    // Capture the date range from the report data
+    setReportDateRange({
+      from: reportData.from,
+      to: reportData.to,
+    });
+
     const result = await dispatch(generateReport(reportData));
     if (generateReport.fulfilled.match(result)) {
       toast.success("Report generated successfully");
@@ -1549,7 +1579,7 @@ const AdminReports = () => {
           {/* Hidden Print Component */}
           <div style={{ position: "fixed", left: "-99999px", top: 0, width: "100%", zIndex: -1 }}>
             <div ref={printRef}>
-              <PrintableReportWrapper report={currentReport}>
+              <PrintableReportWrapper report={currentReport} dateRange={reportDateRange}>
                 {currentReport.type === "UserPlayer" && <UserPlayerReportView report={currentReport} />}
                 {currentReport.type === "Tournament" && <TournamentReportView report={currentReport} />}
                 {currentReport.type === "RevenuePayment" && <RevenuePaymentReportView report={currentReport} />}
