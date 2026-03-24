@@ -498,7 +498,7 @@ const PrintableReportWrapper = ({ report, children }) => {
   const watermarkSVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Ctext x='300' y='300' font-size='200' font-weight='bold' text-anchor='middle' fill='%23000000' opacity='0.05' font-family='Arial'%3E%3C/text%3E%3C/svg%3E`;
 
   return (
-    <div style={{
+    <div className="pdf-wrapper" style={{
       backgroundColor: "white",
       color: "black",
       padding: "32px",
@@ -512,85 +512,85 @@ const PrintableReportWrapper = ({ report, children }) => {
       backgroundAttachment: "scroll, scroll"
     }}>
       <style>{`
-        * {
+        .pdf-wrapper * {
           color-adjust: exact !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
-        body { background-color: white !important; }
+        .pdf-wrapper body { background-color: white !important; }
 
         /* Text colors */
-        .text-black { color: #000000 !important; }
-        .text-white { color: #ffffff !important; }
-        .text-gray-50 { color: #f9fafb !important; }
-        .text-gray-100 { color: #f3f4f6 !important; }
-        .text-gray-200 { color: #e5e7eb !important; }
-        .text-gray-300 { color: #d1d5db !important; }
-        .text-gray-400 { color: #9ca3af !important; }
-        .text-gray-500 { color: #6b7280 !important; }
-        .text-gray-600 { color: #4b5563 !important; }
-        .text-gray-700 { color: #374151 !important; }
-        .text-gray-800 { color: #1f2937 !important; }
-        .text-gray-900 { color: #111827 !important; }
-        .text-blue-600 { color: #2563eb !important; }
-        .text-blue-700 { color: #1d4ed8 !important; }
-        .text-emerald-600 { color: #059669 !important; }
-        .text-amber-600 { color: #d97706 !important; }
-        .text-red-600 { color: #dc2626 !important; }
-        .text-green-600 { color: #16a34a !important; }
-        .text-primary { color: #1f2937 !important; }
-        .text-secondary { color: #6366f1 !important; }
-        .text-base { color: #4b5563 !important; }
-        .text-base-dark { color: #9ca3af !important; }
-        .text-text-primary { color: #1f2937 !important; }
-        .text-text-primary-dark { color: #f3f4f6 !important; }
+        .pdf-wrapper .text-black { color: #000000 !important; }
+        .pdf-wrapper .text-white { color: #ffffff !important; }
+        .pdf-wrapper .text-gray-50 { color: #f9fafb !important; }
+        .pdf-wrapper .text-gray-100 { color: #f3f4f6 !important; }
+        .pdf-wrapper .text-gray-200 { color: #e5e7eb !important; }
+        .pdf-wrapper .text-gray-300 { color: #d1d5db !important; }
+        .pdf-wrapper .text-gray-400 { color: #9ca3af !important; }
+        .pdf-wrapper .text-gray-500 { color: #6b7280 !important; }
+        .pdf-wrapper .text-gray-600 { color: #4b5563 !important; }
+        .pdf-wrapper .text-gray-700 { color: #374151 !important; }
+        .pdf-wrapper .text-gray-800 { color: #1f2937 !important; }
+        .pdf-wrapper .text-gray-900 { color: #111827 !important; }
+        .pdf-wrapper .text-blue-600 { color: #2563eb !important; }
+        .pdf-wrapper .text-blue-700 { color: #1d4ed8 !important; }
+        .pdf-wrapper .text-emerald-600 { color: #059669 !important; }
+        .pdf-wrapper .text-amber-600 { color: #d97706 !important; }
+        .pdf-wrapper .text-red-600 { color: #dc2626 !important; }
+        .pdf-wrapper .text-green-600 { color: #16a34a !important; }
+        .pdf-wrapper .text-primary { color: #1f2937 !important; }
+        .pdf-wrapper .text-secondary { color: #6366f1 !important; }
+        .pdf-wrapper .text-base { color: #4b5563 !important; }
+        .pdf-wrapper .text-base-dark { color: #9ca3af !important; }
+        .pdf-wrapper .text-text-primary { color: #1f2937 !important; }
+        .pdf-wrapper .text-text-primary-dark { color: #f3f4f6 !important; }
 
         /* Background colors */
-        .bg-white { background-color: #ffffff !important; }
-        .bg-black { background-color: #000000 !important; }
-        .bg-gray-50 { background-color: #f9fafb !important; }
-        .bg-gray-100 { background-color: #f3f4f6 !important; }
-        .bg-gray-200 { background-color: #e5e7eb !important; }
-        .bg-gray-300 { background-color: #d1d5db !important; }
-        .bg-blue-50 { background-color: #eff6ff !important; }
-        .bg-blue-100 { background-color: #dbeafe !important; }
-        .bg-blue-600 { background-color: #2563eb !important; }
-        .bg-emerald-50 { background-color: #f0fdf4 !important; }
-        .bg-emerald-100 { background-color: #d1fae5 !important; }
-        .bg-emerald-600 { background-color: #059669 !important; }
-        .bg-amber-50 { background-color: #fffbeb !important; }
-        .bg-amber-100 { background-color: #fef3c7 !important; }
-        .bg-amber-600 { background-color: #d97706 !important; }
-        .bg-amber-200 { background-color: #fcd34d !important; }
-        .bg-amber-800 { background-color: #92400e !important; }
-        .bg-red-50 { background-color: #fef2f2 !important; }
-        .bg-red-600 { background-color: #dc2626 !important; }
-        .bg-green-50 { background-color: #f0fdf4 !important; }
-        .bg-green-600 { background-color: #16a34a !important; }
-        .bg-card-background { background-color: #ffffff !important; }
-        .bg-card-background-dark { background-color: #1f2937 !important; }
+        .pdf-wrapper .bg-white { background-color: #ffffff !important; }
+        .pdf-wrapper .bg-black { background-color: #000000 !important; }
+        .pdf-wrapper .bg-gray-50 { background-color: #f9fafb !important; }
+        .pdf-wrapper .bg-gray-100 { background-color: #f3f4f6 !important; }
+        .pdf-wrapper .bg-gray-200 { background-color: #e5e7eb !important; }
+        .pdf-wrapper .bg-gray-300 { background-color: #d1d5db !important; }
+        .pdf-wrapper .bg-blue-50 { background-color: #eff6ff !important; }
+        .pdf-wrapper .bg-blue-100 { background-color: #dbeafe !important; }
+        .pdf-wrapper .bg-blue-600 { background-color: #2563eb !important; }
+        .pdf-wrapper .bg-emerald-50 { background-color: #f0fdf4 !important; }
+        .pdf-wrapper .bg-emerald-100 { background-color: #d1fae5 !important; }
+        .pdf-wrapper .bg-emerald-600 { background-color: #059669 !important; }
+        .pdf-wrapper .bg-amber-50 { background-color: #fffbeb !important; }
+        .pdf-wrapper .bg-amber-100 { background-color: #fef3c7 !important; }
+        .pdf-wrapper .bg-amber-600 { background-color: #d97706 !important; }
+        .pdf-wrapper .bg-amber-200 { background-color: #fcd34d !important; }
+        .pdf-wrapper .bg-amber-800 { background-color: #92400e !important; }
+        .pdf-wrapper .bg-red-50 { background-color: #fef2f2 !important; }
+        .pdf-wrapper .bg-red-600 { background-color: #dc2626 !important; }
+        .pdf-wrapper .bg-green-50 { background-color: #f0fdf4 !important; }
+        .pdf-wrapper .bg-green-600 { background-color: #16a34a !important; }
+        .pdf-wrapper .bg-card-background { background-color: #ffffff !important; }
+        .pdf-wrapper .bg-card-background-dark { background-color: #1f2937 !important; }
 
         /* Border colors */
-        .border-gray-200 { border-color: #e5e7eb !important; }
-        .border-gray-300 { border-color: #d1d5db !important; }
-        .border-red-200 { border-color: #fecaca !important; }
-        .border-green-200 { border-color: #bbf7d0 !important; }
-        .border-amber-200 { border-color: #fcd34d !important; }
-        .border-amber-800 { border-color: #92400e !important; }
-        .border-base { border-color: #e5e7eb !important; }
-        .border-base-dark { border-color: #374151 !important; }
+        .pdf-wrapper .border-gray-200 { border-color: #e5e7eb !important; }
+        .pdf-wrapper .border-gray-300 { border-color: #d1d5db !important; }
+        .pdf-wrapper .border-red-200 { border-color: #fecaca !important; }
+        .pdf-wrapper .border-green-200 { border-color: #bbf7d0 !important; }
+        .pdf-wrapper .border-amber-200 { border-color: #fcd34d !important; }
+        .pdf-wrapper .border-amber-800 { border-color: #92400e !important; }
+        .pdf-wrapper .border-base { border-color: #e5e7eb !important; }
+        .pdf-wrapper .border-base-dark { border-color: #374151 !important; }
 
         /* Extra coverage for dark mode that might leak */
-        .dark { display: none !important; }
-        .dark\:bg-card-background-dark { display: none !important; }
-        .dark\:text-text-primary-dark { color: #f3f4f6 !important; }
+        .pdf-wrapper .dark { display: none !important; }
+        .pdf-wrapper .dark\:bg-card-background-dark { display: none !important; }
+        .pdf-wrapper .dark\:text-text-primary-dark { color: #f3f4f6 !important; }
 
         /* Hide color functions by removing offending elements' backgrounds/colors */
-        [style*="oklab"] { background: transparent !important; color: inherit !important; }
-        [style*="oklch"] { background: transparent !important; color: inherit !important; }
+        .pdf-wrapper [style*="oklab"] { background: transparent !important; color: inherit !important; }
+        .pdf-wrapper [style*="oklch"] { background: transparent !important; color: inherit !important; }
 
         /* PDF-specific styling for summary cards */
-        .bg-card-background {
+        .pdf-wrapper .bg-card-background {
           display: flex !important;
           justify-content: space-between !important;
           align-items: center !important;
@@ -601,7 +601,7 @@ const PrintableReportWrapper = ({ report, children }) => {
           gap: 16px !important;
         }
 
-        .bg-card-background p:first-child {
+        .pdf-wrapper .bg-card-background p:first-child {
           text-align: left !important;
           margin: 0 !important;
           flex: 1 !important;
@@ -611,7 +611,7 @@ const PrintableReportWrapper = ({ report, children }) => {
           color: #4b5563 !important;
         }
 
-        .bg-card-background p:last-child {
+        .pdf-wrapper .bg-card-background p:last-child {
           text-align: right !important;
           white-space: nowrap !important;
           margin: 0 !important;
@@ -621,11 +621,11 @@ const PrintableReportWrapper = ({ report, children }) => {
         }
 
         /* Hide section header icons only - target the specific flex container with gap-2 */
-        .flex.items-center.gap-2 svg {
+        .pdf-wrapper .flex.items-center.gap-2 svg {
           display: none !important;
         }
 
-        .flex.items-center.gap-2 h3 {
+        .pdf-wrapper .flex.items-center.gap-2 h3 {
           margin-left: 0 !important;
         }
       `}</style>
