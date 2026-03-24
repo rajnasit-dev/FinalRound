@@ -1149,6 +1149,16 @@ const AdminReports = () => {
       console.log("Waiting for charts to render...");
       await new Promise(resolve => setTimeout(resolve, 500));
 
+      // Add CSS to prevent breaking inside content sections
+      const styleSheet = document.createElement("style");
+      styleSheet.innerHTML = `
+        div { break-inside: avoid; page-break-inside: avoid; }
+        canvas { break-inside: avoid; page-break-inside: avoid; }
+        svg { break-inside: avoid; page-break-inside: avoid; }
+        table { break-inside: avoid; page-break-inside: avoid; }
+      `;
+      printRef.current.appendChild(styleSheet);
+
       // Store original classes before removing them
       const elementsWithClasses = [];
       const allElements = printRef.current.querySelectorAll("*");
@@ -1178,6 +1188,9 @@ const AdminReports = () => {
           canvas: null,
         });
 
+        // Remove the style sheet after rendering
+        printRef.current.removeChild(styleSheet);
+
         console.log("Canvas captured successfully, dimensions:", canvas.width, "x", canvas.height);
 
         // Create PDF from canvas with proper multi-page support
@@ -1191,21 +1204,48 @@ const AdminReports = () => {
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
         const imgWidth = pdfWidth - 10; // 5mm margin on each side
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const usableHeight = pdfHeight - 15; // Leave 15mm margin (top + bottom)
 
-        let heightLeft = imgHeight;
-        let position = 5; // 5mm top margin
+        // Calculate total image height in mm
+        const imgHeightMM = (canvas.height * imgWidth) / canvas.width;
 
-        // Add first page
-        pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight - 10;
+        // Calculate the pixel height per PDF page
+        const pixelsPerPage = (usableHeight * canvas.width) / imgWidth;
 
-        // Add additional pages if content is longer than one page
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
-          heightLeft -= pdfHeight - 10;
+        // Calculate number of pages needed
+        const numPages = Math.ceil(canvas.height / pixelsPerPage);
+
+        console.log(`Total canvas height: ${canvas.height}px, Pages needed: ${numPages}`);
+
+        // Add each page with the appropriate portion of the canvas
+        for (let pageNum = 0; pageNum < numPages; pageNum++) {
+          if (pageNum > 0) {
+            pdf.addPage();
+          }
+
+          // Calculate which part of the canvas to show on this page
+          const sourceTop = pageNum * pixelsPerPage;
+          const sourceHeight = Math.min(pixelsPerPage, canvas.height - sourceTop);
+
+          // Calculate the height this will be on the PDF page
+          const displayHeight = (sourceHeight * imgWidth) / canvas.width;
+
+          // Create a temporary canvas for this page's content
+          const tempCanvas = document.createElement("canvas");
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = sourceHeight;
+
+          const ctx = tempCanvas.getContext("2d");
+          ctx.drawImage(
+            canvas,
+            0, sourceTop,           // source X, Y
+            canvas.width, sourceHeight,  // source width, height
+            0, 0,                   // destination X, Y
+            tempCanvas.width, tempCanvas.height  // destination width, height
+          );
+
+          const pageImgData = tempCanvas.toDataURL("image/png");
+          pdf.addImage(pageImgData, "PNG", 5, 7.5, imgWidth, displayHeight);
         }
 
         // Generate filename
