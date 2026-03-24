@@ -62,8 +62,8 @@ const Footer = memo(() => {
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <Mail className="w-4 h-4 text-secondary dark:text-secondary-dark mt-1 flex-shrink-0" />
-                <a href="mailto:support@sportshub.com" className="text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors text-sm">
-                  support@sportshub.com
+                <a href="mailto:sportshub.support@gmail.com" className="text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors text-sm">
+                  sportshub.support@gmail.com
                 </a>
               </li>
               <li className="flex items-start gap-2 font-num">

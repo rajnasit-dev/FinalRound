@@ -238,18 +238,27 @@ const PaymentReceipt = () => {
 
           {/* Amount Summary */}
           <div style={{ marginBottom: "10px", borderTop: "1px solid #000", borderBottom: "1px solid #000", paddingTop: "6px", paddingBottom: "6px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-              <span style={{ color: "#000" }}>Entry Fee:</span>
-              <span style={{ fontWeight: "600", color: "#000" }}>₹{formatINR(receipt.amount)}</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-              <span style={{ color: "#000" }}>Processing Fee:</span>
-              <span style={{ fontWeight: "600", color: "#000" }}>₹0</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", fontWeight: "bold" }}>
-              <span style={{ color: "#000" }}>Total Paid:</span>
-              <span style={{ color: "#000" }}>₹{formatINR(receipt.amount)}</span>
-            </div>
+            {(() => {
+              const totalAmount = receipt.amount;
+              const gstTax = totalAmount * 0.18;
+              const entryFee = totalAmount - gstTax;
+              return (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
+                    <span style={{ color: "#000" }}>Entry Fee:</span>
+                    <span style={{ fontWeight: "600", color: "#000" }}>₹{formatINR(entryFee)}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
+                    <span style={{ color: "#000" }}>GST Tax (18%):</span>
+                    <span style={{ fontWeight: "600", color: "#000" }}>₹{formatINR(gstTax)}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", fontWeight: "bold" }}>
+                    <span style={{ color: "#000" }}>Total Paid:</span>
+                    <span style={{ color: "#000" }}>₹{formatINR(totalAmount)}</span>
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
           {/* Footer */}
@@ -261,7 +270,7 @@ const PaymentReceipt = () => {
               This receipt is computer-generated and is valid for your records.
             </p>
             <p style={{ fontSize: "11px", color: "#000", margin: 0 }}>
-              For any queries, please contact support@sportshub.com
+              For any queries, please contact sportshub.support@gmail.com
             </p>
           </div>
         </div>

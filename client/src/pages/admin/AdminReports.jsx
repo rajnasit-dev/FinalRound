@@ -1182,6 +1182,15 @@ const PrintableReportWrapper = ({ report, children, dateRange }) => {
         .pdf-wrapper .flex.items-center.gap-2 h3 {
           margin-left: 0 !important;
         }
+
+        /* Hide data tables in PDF - show only graphs and summaries */
+        .pdf-wrapper .overflow-x-auto {
+          display: none !important;
+        }
+
+        .pdf-wrapper .overflow-x-auto ~ p {
+          display: none !important;
+        }
       `}</style>
 
       {/* Header with Logo and Title */}
@@ -1220,7 +1229,7 @@ const PrintableReportWrapper = ({ report, children, dateRange }) => {
           This report is generated automatically by SportsHub and is valid for administrative purposes.
         </p>
         <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
-          For any queries, please contact support@sportshub.com
+          For any queries, please contact sportshub.support@gmail.com
         </p>
       </div>
     </div>
