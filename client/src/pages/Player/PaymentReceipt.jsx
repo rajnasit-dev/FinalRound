@@ -52,7 +52,7 @@ const PaymentReceipt = () => {
       }
       html, body {
         margin: 0;
-        padding: 20mm;
+        padding: 10mm;
       }
       @media print {
         body {
@@ -137,7 +137,7 @@ const PaymentReceipt = () => {
         </div>
 
         {/* Receipt */}
-        <div ref={componentRef} className="bg-white p-6 relative overflow-hidden" style={{ fontSize: "13px", maxWidth: "800px" }}>
+        <div ref={componentRef} className="bg-white p-3 relative overflow-hidden" style={{ fontSize: "13px", maxWidth: "800px" }}>
           {/* Watermark Logo */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <img
@@ -148,7 +148,7 @@ const PaymentReceipt = () => {
           </div>
 
           {/* Header with Logo and Branding */}
-          <div style={{ position: "relative", zIndex: 10, borderBottom: "1px solid #000", paddingBottom: "12px", marginBottom: "16px" }}>
+          <div style={{ position: "relative", zIndex: 10, borderBottom: "1px solid #000", paddingBottom: "8px", marginBottom: "10px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <img src={logo} alt="SportsHub" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
@@ -167,12 +167,12 @@ const PaymentReceipt = () => {
           </div>
 
           {/* Receipt Title and Status */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
             <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#000", margin: 0 }}>
               PAYMENT RECEIPT
             </h2>
             <div>
-              <p style={{ fontSize: "11px", color: "#000", margin: "0 0 4px 0" }}>Status: {receipt.status}</p>
+              <p style={{ fontSize: "11px", color: "#000", margin: "0 0 3px 0" }}>Status: {receipt.status}</p>
               <p style={{ fontSize: "11px", color: "#000", margin: 0 }}>
                 Receipt #{receipt.transactionId || receipt._id.slice(-8)}
               </p>
@@ -180,69 +180,69 @@ const PaymentReceipt = () => {
           </div>
 
           {/* Payment Information */}
-          <div style={{ marginBottom: "16px" }}>
-            <h3 style={{ fontSize: "12px", fontWeight: "bold", color: "#000", margin: "0 0 8px 0" }}>Payment Information</h3>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+          <div style={{ marginBottom: "10px" }}>
+            <h3 style={{ fontSize: "12px", fontWeight: "bold", color: "#000", margin: "0 0 6px 0" }}>Payment Information</h3>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
               <span style={{ color: "#000" }}>Transaction ID:</span>
               <span style={{ fontWeight: "600", color: "#000" }}>{receipt.transactionId || receipt._id}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
               <span style={{ color: "#000" }}>Payment Date:</span>
               <span style={{ fontWeight: "600", color: "#000" }}>{`${formatDate(receipt.createdAt)} ${formatTime(receipt.createdAt)}`}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
               <span style={{ color: "#000" }}>Payment Method:</span>
               <span style={{ fontWeight: "600", color: "#000" }}>{receipt.provider || "Razorpay"}</span>
             </div>
           </div>
 
           {/* Payer Information */}
-          <div style={{ marginBottom: "16px" }}>
-            <h3 style={{ fontSize: "12px", fontWeight: "bold", color: "#000", margin: "0 0 8px 0" }}>Payer Information</h3>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+          <div style={{ marginBottom: "10px" }}>
+            <h3 style={{ fontSize: "12px", fontWeight: "bold", color: "#000", margin: "0 0 6px 0" }}>Payer Information</h3>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
               <span style={{ color: "#000" }}>Name:</span>
               <span style={{ fontWeight: "600", color: "#000" }}>{user?.fullName}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
               <span style={{ color: "#000" }}>Email:</span>
               <span style={{ fontWeight: "600", color: "#000" }}>{user?.email}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
               <span style={{ color: "#000" }}>Phone:</span>
               <span style={{ fontWeight: "600", color: "#000" }}>{user?.phone || "N/A"}</span>
             </div>
           </div>
 
           {/* Tournament Details */}
-          <div style={{ marginBottom: "16px" }}>
-            <h3 style={{ fontSize: "12px", fontWeight: "bold", color: "#000", margin: "0 0 8px 0" }}>Tournament Details</h3>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+          <div style={{ marginBottom: "10px" }}>
+            <h3 style={{ fontSize: "12px", fontWeight: "bold", color: "#000", margin: "0 0 6px 0" }}>Tournament Details</h3>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
               <span style={{ color: "#000" }}>Tournament Name:</span>
               <span style={{ fontWeight: "600", color: "#000" }}>{receipt.tournament?.name}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
               <span style={{ color: "#000" }}>Sport:</span>
               <span style={{ fontWeight: "600", color: "#000" }}>{receipt.tournament?.sport?.name}</span>
             </div>
             {receipt.team && (
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
                 <span style={{ color: "#000" }}>Team:</span>
                 <span style={{ fontWeight: "600", color: "#000" }}>{receipt.team.name}</span>
               </div>
             )}
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
               <span style={{ color: "#000" }}>Tournament Date:</span>
               <span style={{ fontWeight: "600", color: "#000" }}>{receipt.tournament?.startDate && formatDate(receipt.tournament.startDate)}</span>
             </div>
           </div>
 
           {/* Amount Summary */}
-          <div style={{ marginBottom: "16px", borderTop: "1px solid #000", borderBottom: "1px solid #000", paddingTop: "8px", paddingBottom: "8px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+          <div style={{ marginBottom: "10px", borderTop: "1px solid #000", borderBottom: "1px solid #000", paddingTop: "6px", paddingBottom: "6px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
               <span style={{ color: "#000" }}>Entry Fee:</span>
               <span style={{ fontWeight: "600", color: "#000" }}>₹{formatINR(receipt.amount)}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
               <span style={{ color: "#000" }}>Processing Fee:</span>
               <span style={{ fontWeight: "600", color: "#000" }}>₹0</span>
             </div>
@@ -253,11 +253,11 @@ const PaymentReceipt = () => {
           </div>
 
           {/* Footer */}
-          <div style={{ position: "relative", zIndex: 10, textAlign: "center", borderTop: "1px solid #000", paddingTop: "12px", marginTop: "16px" }}>
-            <p style={{ fontSize: "11px", color: "#000", margin: "0 0 4px 0" }}>
+          <div style={{ position: "relative", zIndex: 10, textAlign: "center", borderTop: "1px solid #000", paddingTop: "8px", marginTop: "10px" }}>
+            <p style={{ fontSize: "11px", color: "#000", margin: "0 0 3px 0" }}>
               Thank you for registering with SportsHub!
             </p>
-            <p style={{ fontSize: "11px", color: "#000", margin: "0 0 4px 0" }}>
+            <p style={{ fontSize: "11px", color: "#000", margin: "0 0 3px 0" }}>
               This receipt is computer-generated and is valid for your records.
             </p>
             <p style={{ fontSize: "11px", color: "#000", margin: 0 }}>
