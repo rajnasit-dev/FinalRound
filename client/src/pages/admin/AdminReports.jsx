@@ -1220,21 +1220,48 @@ const AdminReports = () => {
       console.log("Waiting for charts to render...");
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Strip inline styles containing oklab/oklch colors
-      console.log("Cleaning problematic inline styles...");
+      // Replace problematic oklab/oklch colors in computed styles
+      console.log("Replacing oklab/oklch colors in computed styles...");
       const elementsWithStyles = [];
       const allElements = printRef.current.querySelectorAll("*");
+      let replacedCount = 0;
+
       allElements.forEach((el) => {
-        if (el.style.length > 0) {
-          const currentStyle = el.getAttribute("style") || "";
-          if (currentStyle.includes("oklab") || currentStyle.includes("oklch")) {
+        const computed = window.getComputedStyle(el);
+        const currentStyle = el.getAttribute("style") || "";
+
+        // Store original style for restoration
+        if (currentStyle) {
+          elementsWithStyles.push({ element: el, originalStyle: currentStyle });
+        }
+
+        // Check all style properties for oklab/oklch
+        let newStyle = currentStyle;
+        let hasProblematic = false;
+
+        if (computed.color && (computed.color.includes("oklab") || computed.color.includes("oklch"))) {
+          hasProblematic = true;
+          newStyle += "; color: #1f2937";
+        }
+        if (computed.backgroundColor && (computed.backgroundColor.includes("oklab") || computed.backgroundColor.includes("oklch"))) {
+          hasProblematic = true;
+          newStyle += "; background-color: transparent";
+        }
+        if (computed.borderColor && (computed.borderColor.includes("oklab") || computed.borderColor.includes("oklch"))) {
+          hasProblematic = true;
+          newStyle += "; border-color: #e5e7eb";
+        }
+
+        // If we found problematic colors, add the new style
+        if (hasProblematic) {
+          if (!elementsWithStyles.find(e => e.element === el)) {
             elementsWithStyles.push({ element: el, originalStyle: currentStyle });
-            // Remove the entire style attribute - we'll rely on CSS classes instead
-            el.removeAttribute("style");
           }
+          el.setAttribute("style", newStyle);
+          replacedCount++;
         }
       });
-      console.log(`Cleaned ${elementsWithStyles.length} elements with problematic styles`);
+      console.log(`Replaced problematic colors in ${replacedCount} element computed styles`);
 
       try {
         // Capture the element as canvas with support for canvas elements
