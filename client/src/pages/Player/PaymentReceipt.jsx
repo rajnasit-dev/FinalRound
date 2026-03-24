@@ -137,7 +137,7 @@ const PaymentReceipt = () => {
         </div>
 
         {/* Receipt */}
-        <div ref={componentRef} className="bg-white rounded-lg shadow-lg p-8 relative overflow-hidden">
+        <div ref={componentRef} className="bg-white rounded-lg shadow-lg p-4 relative overflow-hidden" style={{ fontSize: "13px" }}>
           {/* Watermark Logo */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <img
@@ -148,39 +148,37 @@ const PaymentReceipt = () => {
           </div>
 
           {/* Header with Logo and Branding */}
-          <div style={{ position: "relative", zIndex: 10, borderBottom: "2px solid #e5e7eb", paddingBottom: "24px", marginBottom: "24px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <img src={logo} alt="SportsHub" style={{ width: "48px", height: "48px", objectFit: "contain" }} />
+          <div style={{ position: "relative", zIndex: 10, borderBottom: "1px solid #e5e7eb", paddingBottom: "12px", marginBottom: "12px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <img src={logo} alt="SportsHub" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
                 <div>
-                  <h1 style={{ fontSize: "30px", fontWeight: "bold", color: "#1f2937", fontFamily: "'Syne', sans-serif" }}>
+                  <h1 style={{ fontSize: "18px", fontWeight: "bold", color: "#1f2937", fontFamily: "'Syne', sans-serif", margin: 0 }}>
                     SportsHub
                   </h1>
-                  <p style={{ fontSize: "14px", color: "#4b5563" }}>www.sportshub.com</p>
+                  <p style={{ fontSize: "11px", color: "#4b5563", margin: 0 }}>www.sportshub.com</p>
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <p style={{ fontSize: "14px", color: "#4b5563" }}>Receipt Date</p>
-                <p style={{ fontWeight: "600", color: "#1f2937" }}>{new Date().toLocaleDateString("en-IN")}</p>
+                <p style={{ fontSize: "11px", color: "#4b5563", margin: 0 }}>Receipt Date</p>
+                <p style={{ fontWeight: "600", color: "#1f2937", fontSize: "12px", margin: 0 }}>{new Date().toLocaleDateString("en-IN")}</p>
               </div>
             </div>
           </div>
 
           {/* Original Header */}
-          <div className="border-b-2 border-gray-200 pb-6 mb-6">
+          <div className="border-b-2 border-gray-200 pb-3 mb-3">
             <div className="flex justify-between items-start">
               <div>
-                <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                <h2 className="text-lg font-bold text-gray-800 mb-1">
                   PAYMENT RECEIPT
                 </h2>
-
-                <p className="text-sm text-gray-500">www.sportshub.com</p>
               </div>
               <div className="text-right">
-                <div className="inline-block px-4 py-2 bg-green-100 text-green-800 rounded-lg font-semibold">
+                <div className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded font-semibold text-xs">
                   {receipt.status}
                 </div>
-                <p className="text-sm text-gray-600 mt-2">
+                <p className="text-xs text-gray-600 mt-1">
                   Receipt #{receipt.transactionId || receipt._id.slice(-8)}
                 </p>
               </div>
@@ -188,27 +186,27 @@ const PaymentReceipt = () => {
           </div>
 
           {/* Payment Details */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
-              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <FileText className="w-5 h-5" />
+              <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2 text-sm">
+                <FileText className="w-4 h-4" />
                 Payment Information
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1 text-xs">
                 <div>
-                  <p className="text-sm text-gray-600">Transaction ID</p>
+                  <p className="text-gray-600">Transaction ID</p>
                   <p className="font-medium text-gray-800">
                     {receipt.transactionId || receipt._id}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Payment Date</p>
+                  <p className="text-gray-600">Payment Date</p>
                   <p className="font-medium text-gray-800">
                     {`${formatDate(receipt.createdAt)} ${formatTime(receipt.createdAt)}`}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Payment Method</p>
+                  <p className="text-gray-600">Payment Method</p>
                   <p className="font-medium text-gray-800">
                     {receipt.provider || "Razorpay"}
                   </p>
@@ -217,21 +215,21 @@ const PaymentReceipt = () => {
             </div>
 
             <div>
-              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <CreditCard className="w-5 h-5" />
+              <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2 text-sm">
+                <CreditCard className="w-4 h-4" />
                 Payer Information
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1 text-xs">
                 <div>
-                  <p className="text-sm text-gray-600">Name</p>
+                  <p className="text-gray-600">Name</p>
                   <p className="font-medium text-gray-800">{user?.fullName}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Email</p>
+                  <p className="text-gray-600">Email</p>
                   <p className="font-medium text-gray-800">{user?.email}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Phone</p>
+                  <p className="text-gray-600">Phone</p>
                   <p className="font-medium text-gray-800">
                     {user?.phone || "N/A"}
                   </p>
@@ -241,12 +239,12 @@ const PaymentReceipt = () => {
           </div>
 
           {/* Tournament Details */}
-          <div className="bg-gray-50 rounded-lg p-6 mb-6">
-            <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
+          <div className="bg-gray-50 rounded p-3 mb-3">
+            <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2 text-sm">
+              <Calendar className="w-4 h-4" />
               Tournament Details
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-1 text-xs">
               <div className="flex justify-between">
                 <span className="text-gray-600">Tournament Name:</span>
                 <span className="font-medium text-gray-800">
@@ -277,8 +275,8 @@ const PaymentReceipt = () => {
           </div>
 
           {/* Amount Summary */}
-          <div className="bg-gray-50 rounded-lg p-6 mb-6">
-            <div className="space-y-2">
+          <div className="bg-gray-50 rounded p-3 mb-3">
+            <div className="space-y-1 text-xs">
               <div className="flex justify-between">
                 <span className="text-gray-700">Entry Fee:</span>
                 <span className="font-medium text-gray-800 font-num">
@@ -289,9 +287,9 @@ const PaymentReceipt = () => {
                 <span className="text-gray-700">Processing Fee:</span>
                 <span className="font-medium text-gray-800 font-num">₹0</span>
               </div>
-              <div className="flex justify-between text-xl">
-                <span className="font-bold text-gray-800">Total Paid:</span>
-                <span className="font-bold text-black font-num">
+              <div className="flex justify-between text-sm font-bold py-1" style={{ borderTop: "1px solid #d1d5db" }}>
+                <span className="text-gray-800">Total Paid:</span>
+                <span className="text-black font-num">
                   ₹{formatINR(receipt.amount)}
                 </span>
               </div>
@@ -299,19 +297,17 @@ const PaymentReceipt = () => {
           </div>
 
           {/* Footer */}
-          <div style={{ position: "relative", zIndex: 10, borderTop: "2px solid #e5e7eb", marginTop: "32px", paddingTop: "24px", textAlign: "center" }}>
-            <p className="text-sm text-gray-600 mb-2">
+          <div style={{ position: "relative", zIndex: 10, borderTop: "1px solid #e5e7eb", marginTop: "12px", paddingTop: "12px", textAlign: "center" }}>
+            <p className="text-xs text-gray-600 mb-1">
               Thank you for registering with SportsHub!
             </p>
             <p className="text-xs text-gray-500">
               This receipt is computer-generated and is valid for your records.
             </p>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-gray-500 mt-1">
               For any queries, please contact support@sportshub.com
             </p>
           </div>
-
-          {/* Original Footer - Removed to avoid duplication */}
         </div>
     </div>
   );
