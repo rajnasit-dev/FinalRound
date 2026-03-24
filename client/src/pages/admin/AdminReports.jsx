@@ -1145,15 +1145,43 @@ const AdminReports = () => {
       // Show loading state
       const toastId = toast.loading("Generating PDF...");
 
+      // Clone the element to avoid modifying the original
+      const clonedElement = printRef.current.cloneNode(true);
+
+      // Function to strip all Tailwind classes from all elements
+      const stripTailwindClasses = (element) => {
+        const allElements = element.querySelectorAll("*");
+        allElements.forEach((el) => {
+          el.removeAttribute("class");
+          // Keep only inline styles
+        });
+        // Also remove the root element's classes
+        element.removeAttribute("class");
+      };
+
+      stripTailwindClasses(clonedElement);
+
+      // Create a temporary container to hold the cloned element
+      const tempContainer = document.createElement("div");
+      tempContainer.appendChild(clonedElement);
+      tempContainer.style.position = "fixed";
+      tempContainer.style.left = "-99999px";
+      tempContainer.style.top = "0";
+      tempContainer.style.width = "100%";
+      document.body.appendChild(tempContainer);
+
       // Capture the element as canvas
       console.log("Capturing with html2canvas...");
-      const canvas = await html2canvas(printRef.current, {
+      const canvas = await html2canvas(clonedElement, {
         scale: 1.5,
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
         logging: true,
       });
+
+      // Remove temp container
+      document.body.removeChild(tempContainer);
 
       console.log("Canvas captured successfully, dimensions:", canvas.width, "x", canvas.height);
 
