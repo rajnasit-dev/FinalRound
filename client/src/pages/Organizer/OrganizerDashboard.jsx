@@ -28,7 +28,7 @@ import DashboardCardState from "../../components/ui/DashboardCardState";
 import GridContainer from "../../components/ui/GridContainer";
 import { fetchOrganizerTournaments } from "../../store/slices/tournamentSlice";
 import { getOrganizerAnalytics } from "../../store/slices/organizerSlice";
-import { chartThemeOptions, doughnutThemeOptions, getTournamentStatusColor, toMonthLabels } from "../../utils/chartConfig";
+import { chartThemeOptions, doughnutThemeOptions, barChartThemeOptions, getTournamentStatusColor, toMonthLabels } from "../../utils/chartConfig";
 
 ChartJS.register(
   CategoryScale,
@@ -275,7 +275,7 @@ const OrganizerDashboard = () => {
             Tournament by Sport
           </h3>
           <div style={{ height: "300px" }}>
-            <Bar data={sportDistributionData} options={chartOptions} />
+            <Bar data={sportDistributionData} options={barChartThemeOptions} />
           </div>
         </div>
       </div>

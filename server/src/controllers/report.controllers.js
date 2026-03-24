@@ -376,7 +376,7 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
 
   const revenueBySportAgg = await Payment.aggregate([
     { $match: successMatch },
-    { $lookup: { from: "tournaments", localField: "tournament", foreignField: "_id", as: "tournamentInfo  " } },
+    { $lookup: { from: "tournaments", localField: "tournament", foreignField: "_id", as: "tournamentInfo" } },
     { $unwind: "$tournamentInfo" },
     { $lookup: { from: "sports", localField: "tournamentInfo.sport", foreignField: "_id", as: "sportInfo" } },
     { $unwind: "$sportInfo" },

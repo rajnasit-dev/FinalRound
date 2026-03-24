@@ -29,7 +29,7 @@ import {
   Tooltip,
 } from "chart.js";
 import Spinner from "../../components/ui/Spinner";
-import { chartThemeOptions, doughnutThemeOptions, toMonthLabels } from "../../utils/chartConfig";
+import { chartThemeOptions, doughnutThemeOptions, barChartThemeOptions, toMonthLabels } from "../../utils/chartConfig";
 
 ChartJS.register(
   CategoryScale,
@@ -87,28 +87,7 @@ const doughnutChartOptions = {
   ...doughnutThemeOptions,
 };
 
-const barChartOptions = {
-  ...baseChartOptions,
-  plugins: {
-    ...baseChartOptions.plugins,
-    legend: {
-      display: false,
-    },
-  },
-  scales: {
-    x: {
-      grid: { display: false },
-      ticks: { font: { size: 11 } },
-      border: { display: false },
-    },
-    y: {
-      beginAtZero: true,
-      ticks: { precision: 0, font: { size: 11 } },
-      grid: { color: "rgba(148, 163, 184, 0.15)" },
-      border: { display: false },
-    },
-  },
-};
+const barChartOptions = barChartThemeOptions;
 
 const ChartCard = ({ title, icon: Icon, children, className = "" }) => (
   <div
@@ -369,25 +348,28 @@ const AdminDashboard = () => {
               </ChartCard>
             </div>
 
-            {/* Sport-wise Tournaments Bar Chart */}
-            {analytics.sportWiseTournaments.length > 0 && (
-              <ChartCard title="Sport-wise Tournaments" icon={BarChart3}>
-                <div className="h-72">
-                  <Bar data={sportWiseTournamentsData} options={barChartOptions} />
-                </div>
-              </ChartCard>
+            {/* Sport-wise Tournaments & Feedback Ratings */}
+            {(analytics.sportWiseTournaments?.length > 0 || analytics.feedbackDistribution?.length > 0) && (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {analytics.sportWiseTournaments?.length > 0 && (
+                  <ChartCard title="Sport-wise Tournaments" icon={BarChart3}>
+                    <div className="h-72">
+                      <Bar data={sportWiseTournamentsData} options={barChartOptions} />
+                    </div>
+                  </ChartCard>
+                )}
+
+                {analytics.feedbackDistribution?.length > 0 && (
+                  <ChartCard title="Feedback Ratings" icon={MessageSquare}>
+                    <div className="h-72">
+                      <Bar data={feedbackDistributionData} options={barChartOptions} />
+                    </div>
+                  </ChartCard>
+                )}
+              </div>
             )}
           </>
         )
-      )}
-
-      {/* Feedback Distribution */}
-      {analytics?.feedbackDistribution?.length > 0 && (
-        <ChartCard title="Feedback Ratings" icon={MessageSquare}>
-          <div className="h-64">
-            <Bar data={feedbackDistributionData} options={barChartOptions} />
-          </div>
-        </ChartCard>
       )}
     </div>
   );

@@ -586,14 +586,13 @@ const PrintableReportWrapper = ({ report, children }) => {
           white-space: nowrap !important;
         }
 
-        /* Hide icons in PDF */
-        svg {
+        /* Hide section header icons only - target the specific flex container with gap-2 */
+        .flex.items-center.gap-2 svg {
           display: none !important;
         }
 
-        /* Hide icon containers */
-        [class*="icon"] {
-          display: none !important;
+        .flex.items-center.gap-2 h3 {
+          margin-left: 0 !important;
         }
       `}</style>
 
@@ -662,33 +661,6 @@ const OrganizerReports = () => {
       console.log("Waiting for charts to render...");
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Add CSS to prevent breaking inside content sections
-      const styleSheet = document.createElement("style");
-      styleSheet.innerHTML = `
-        div { break-inside: avoid; page-break-inside: avoid; }
-        canvas { break-inside: avoid; page-break-inside: avoid; }
-        svg { break-inside: avoid; page-break-inside: avoid; }
-        table { break-inside: avoid; page-break-inside: avoid; }
-      `;
-      printRef.current.appendChild(styleSheet);
-
-      // Store original classes before removing them
-      const elementsWithClasses = [];
-      const allElements = printRef.current.querySelectorAll("*");
-      allElements.forEach((el) => {
-        if (el.className) {
-          elementsWithClasses.push({ element: el, className: el.className });
-          el.removeAttribute("class");
-        }
-      });
-
-      // Also store root element classes
-      let rootClassName = "";
-      if (printRef.current.className) {
-        rootClassName = printRef.current.className;
-        printRef.current.removeAttribute("class");
-      }
-
       try {
         // Capture the element as canvas with support for canvas elements
         console.log("Capturing with html2canvas...");
@@ -700,9 +672,6 @@ const OrganizerReports = () => {
           logging: true,
           canvas: null,
         });
-
-        // Remove the style sheet after rendering
-        printRef.current.removeChild(styleSheet);
 
         console.log("Canvas captured successfully, dimensions:", canvas.width, "x", canvas.height);
 
@@ -770,22 +739,9 @@ const OrganizerReports = () => {
         console.log("PDF downloaded successfully");
         toast.dismiss(toastId);
         toast.success("PDF downloaded successfully!");
-      } finally {
-        // Restore classes to original elements using setAttribute to handle SVG elements
-        elementsWithClasses.forEach(({ element, className }) => {
-          try {
-            element.setAttribute("class", className);
-          } catch (e) {
-            // Silently ignore if setAttribute fails
-          }
-        });
-        if (rootClassName) {
-          try {
-            printRef.current.setAttribute("class", rootClassName);
-          } catch (e) {
-            // Silently ignore if setAttribute fails
-          }
-        }
+      } catch (canvasError) {
+        console.error("Canvas generation error:", canvasError);
+        throw canvasError;
       }
     } catch (error) {
       console.error("PDF generation error:", error);

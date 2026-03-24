@@ -15,13 +15,13 @@ import { ArrowLeft, Users, IndianRupee, TrendingUp, Clock, Download, Trophy } fr
 import { getReportById } from "../../store/slices/adminSlice";
 import { formatINR } from "../../utils/formatINR";
 import Spinner from "../../components/ui/Spinner";
-import { chartThemeOptions, doughnutThemeOptions, getTournamentStatusColor, toMonthLabels } from "../../utils/chartConfig";
+import { chartThemeOptions, barChartThemeOptions, doughnutThemeOptions, getTournamentStatusColor, toMonthLabels } from "../../utils/chartConfig";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
 const COLORS = ["#2563eb", "#16a34a", "#f59e0b", "#dc2626", "#0ea5e9", "#7c3aed"];
 
-const chartOptions = chartThemeOptions;
+const chartOptions = barChartThemeOptions;
 
 const escapeCsvValue = (value) => {
   if (value === null || value === undefined) {
@@ -113,7 +113,7 @@ const SummaryCard = ({ label, value, colorClass = "text-text-primary dark:text-t
 );
 
 const SectionCard = ({ title, icon: Icon, children }) => (
-  <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
+  <div className="bg-white dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
     <div className="flex items-center gap-2 mb-4">
       <Icon className="w-5 h-5 text-secondary" />
       <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark">{title}</h3>

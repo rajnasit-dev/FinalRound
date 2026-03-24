@@ -1,3 +1,9 @@
+import ChartDataLabels from "chartjs-plugin-datalabels";
+import { Chart as ChartJS } from "chart.js";
+
+// Register the datalabels plugin globally
+ChartJS.register(ChartDataLabels);
+
 const MONTH_MAP = {
   jan: "Jan",
   feb: "Feb",
@@ -63,6 +69,9 @@ export const chartThemeOptions = {
       cornerRadius: 10,
       displayColors: true,
     },
+    datalabels: {
+      display: false,
+    },
   },
   scales: {
     x: {
@@ -79,10 +88,106 @@ export const chartThemeOptions = {
   },
 };
 
+// Doughnut/Pie chart options - show percentage without hover, number on hover
 export const doughnutThemeOptions = {
-  ...chartThemeOptions,
+  responsive: true,
+  maintainAspectRatio: false,
   cutout: "68%",
-  scales: undefined,
+  backgroundColor: "rgba(255, 255, 255, 1)",
+  plugins: {
+    legend: {
+      position: "bottom",
+      labels: {
+        usePointStyle: true,
+        pointStyle: "circle",
+        padding: 16,
+        font: { size: 12 },
+      },
+    },
+    tooltip: {
+      backgroundColor: "rgba(17, 24, 39, 0.92)",
+      titleColor: "#ffffff",
+      bodyColor: "#ffffff",
+      padding: 12,
+      cornerRadius: 10,
+      displayColors: true,
+      callbacks: {
+        label: (context) => {
+          const value = context.raw || 0;
+          return ` ${context.label}: ${value.toLocaleString("en-IN")}`;
+        },
+      },
+    },
+    datalabels: {
+      display: true,
+      color: "#ffffff",
+      font: {
+        weight: "bold",
+        size: 12,
+      },
+      formatter: (value, context) => {
+        const dataset = context.dataset.data;
+        const total = dataset.reduce((acc, val) => acc + val, 0);
+        if (total === 0) return "";
+        const percentage = ((value / total) * 100).toFixed(1);
+        return `${percentage}%`;
+      },
+      anchor: "center",
+      align: "center",
+    },
+  },
+};
+
+// Bar chart options - show numbers on bars without hover
+export const barChartThemeOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  layout: {
+    padding: {
+      top: 20,
+    },
+  },
+  plugins: {
+    legend: {
+      display: false,
+    },
+    tooltip: {
+      backgroundColor: "rgba(17, 24, 39, 0.92)",
+      titleColor: "#ffffff",
+      bodyColor: "#ffffff",
+      padding: 12,
+      cornerRadius: 10,
+      displayColors: true,
+    },
+    datalabels: {
+      display: true,
+      color: "#374151",
+      font: {
+        weight: "bold",
+        size: 11,
+      },
+      anchor: "end",
+      align: "end",
+      offset: 4,
+      formatter: (value) => {
+        if (value === 0) return "";
+        return value.toLocaleString("en-IN");
+      },
+    },
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { font: { size: 11 } },
+      border: { display: false },
+    },
+    y: {
+      beginAtZero: true,
+      ticks: { precision: 0, font: { size: 11 } },
+      grid: { color: "rgba(148, 163, 184, 0.15)" },
+      border: { display: false },
+    },
+  },
 };
 
 const TOURNAMENT_STATUS_COLOR_MAP = {
