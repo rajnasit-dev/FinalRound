@@ -137,7 +137,7 @@ const PaymentReceipt = () => {
         </div>
 
         {/* Receipt */}
-        <div ref={componentRef} className="bg-white rounded-lg shadow-lg p-4 relative overflow-hidden" style={{ fontSize: "13px" }}>
+        <div ref={componentRef} className="bg-white p-6 relative overflow-hidden" style={{ fontSize: "13px", maxWidth: "800px" }}>
           {/* Watermark Logo */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <img
@@ -148,163 +148,119 @@ const PaymentReceipt = () => {
           </div>
 
           {/* Header with Logo and Branding */}
-          <div style={{ position: "relative", zIndex: 10, borderBottom: "1px solid #e5e7eb", paddingBottom: "12px", marginBottom: "12px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+          <div style={{ position: "relative", zIndex: 10, borderBottom: "1px solid #000", paddingBottom: "12px", marginBottom: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <img src={logo} alt="SportsHub" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
                 <div>
-                  <h1 style={{ fontSize: "18px", fontWeight: "bold", color: "#1f2937", fontFamily: "'Syne', sans-serif", margin: 0 }}>
+                  <h1 style={{ fontSize: "18px", fontWeight: "bold", color: "#000", fontFamily: "'Syne', sans-serif", margin: 0 }}>
                     SportsHub
                   </h1>
-                  <p style={{ fontSize: "11px", color: "#4b5563", margin: 0 }}>www.sportshub.com</p>
+                  <p style={{ fontSize: "11px", color: "#000", margin: 0 }}>www.sportshub.com</p>
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <p style={{ fontSize: "11px", color: "#4b5563", margin: 0 }}>Receipt Date</p>
-                <p style={{ fontWeight: "600", color: "#1f2937", fontSize: "12px", margin: 0 }}>{new Date().toLocaleDateString("en-IN")}</p>
+                <p style={{ fontSize: "11px", color: "#000", margin: 0 }}>Receipt Date</p>
+                <p style={{ fontWeight: "600", color: "#000", fontSize: "12px", margin: 0 }}>{new Date().toLocaleDateString("en-IN")}</p>
               </div>
             </div>
           </div>
 
-          {/* Original Header */}
-          <div className="border-b-2 border-gray-200 pb-3 mb-3">
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-lg font-bold text-gray-800 mb-1">
-                  PAYMENT RECEIPT
-                </h2>
-              </div>
-              <div className="text-right">
-                <div className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded font-semibold text-xs">
-                  {receipt.status}
-                </div>
-                <p className="text-xs text-gray-600 mt-1">
-                  Receipt #{receipt.transactionId || receipt._id.slice(-8)}
-                </p>
-              </div>
+          {/* Receipt Title and Status */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+            <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#000", margin: 0 }}>
+              PAYMENT RECEIPT
+            </h2>
+            <div>
+              <p style={{ fontSize: "11px", color: "#000", margin: "0 0 4px 0" }}>Status: {receipt.status}</p>
+              <p style={{ fontSize: "11px", color: "#000", margin: 0 }}>
+                Receipt #{receipt.transactionId || receipt._id.slice(-8)}
+              </p>
             </div>
           </div>
 
-          {/* Payment Details */}
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div>
-              <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2 text-sm">
-                <FileText className="w-4 h-4" />
-                Payment Information
-              </h3>
-              <div className="space-y-1 text-xs">
-                <div>
-                  <p className="text-gray-600">Transaction ID</p>
-                  <p className="font-medium text-gray-800">
-                    {receipt.transactionId || receipt._id}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Payment Date</p>
-                  <p className="font-medium text-gray-800">
-                    {`${formatDate(receipt.createdAt)} ${formatTime(receipt.createdAt)}`}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Payment Method</p>
-                  <p className="font-medium text-gray-800">
-                    {receipt.provider || "Razorpay"}
-                  </p>
-                </div>
-              </div>
+          {/* Payment Information */}
+          <div style={{ marginBottom: "16px" }}>
+            <h3 style={{ fontSize: "12px", fontWeight: "bold", color: "#000", margin: "0 0 8px 0" }}>Payment Information</h3>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span style={{ color: "#000" }}>Transaction ID:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>{receipt.transactionId || receipt._id}</span>
             </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span style={{ color: "#000" }}>Payment Date:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>{`${formatDate(receipt.createdAt)} ${formatTime(receipt.createdAt)}`}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span style={{ color: "#000" }}>Payment Method:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>{receipt.provider || "Razorpay"}</span>
+            </div>
+          </div>
 
-            <div>
-              <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2 text-sm">
-                <CreditCard className="w-4 h-4" />
-                Payer Information
-              </h3>
-              <div className="space-y-1 text-xs">
-                <div>
-                  <p className="text-gray-600">Name</p>
-                  <p className="font-medium text-gray-800">{user?.fullName}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Email</p>
-                  <p className="font-medium text-gray-800">{user?.email}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Phone</p>
-                  <p className="font-medium text-gray-800">
-                    {user?.phone || "N/A"}
-                  </p>
-                </div>
-              </div>
+          {/* Payer Information */}
+          <div style={{ marginBottom: "16px" }}>
+            <h3 style={{ fontSize: "12px", fontWeight: "bold", color: "#000", margin: "0 0 8px 0" }}>Payer Information</h3>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span style={{ color: "#000" }}>Name:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>{user?.fullName}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span style={{ color: "#000" }}>Email:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>{user?.email}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span style={{ color: "#000" }}>Phone:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>{user?.phone || "N/A"}</span>
             </div>
           </div>
 
           {/* Tournament Details */}
-          <div className="bg-gray-50 rounded p-3 mb-3">
-            <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2 text-sm">
-              <Calendar className="w-4 h-4" />
-              Tournament Details
-            </h3>
-            <div className="space-y-1 text-xs">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tournament Name:</span>
-                <span className="font-medium text-gray-800">
-                  {receipt.tournament?.name}
-                </span>
+          <div style={{ marginBottom: "16px" }}>
+            <h3 style={{ fontSize: "12px", fontWeight: "bold", color: "#000", margin: "0 0 8px 0" }}>Tournament Details</h3>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span style={{ color: "#000" }}>Tournament Name:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>{receipt.tournament?.name}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span style={{ color: "#000" }}>Sport:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>{receipt.tournament?.sport?.name}</span>
+            </div>
+            {receipt.team && (
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                <span style={{ color: "#000" }}>Team:</span>
+                <span style={{ fontWeight: "600", color: "#000" }}>{receipt.team.name}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Sport:</span>
-                <span className="font-medium text-gray-800">
-                  {receipt.tournament?.sport?.name}
-                </span>
-              </div>
-              {receipt.team && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Team:</span>
-                  <span className="font-medium text-gray-800">
-                    {receipt.team.name}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tournament Date:</span>
-                <span className="font-medium text-gray-800">
-                  {receipt.tournament?.startDate && formatDate(receipt.tournament.startDate)}
-                </span>
-              </div>
+            )}
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span style={{ color: "#000" }}>Tournament Date:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>{receipt.tournament?.startDate && formatDate(receipt.tournament.startDate)}</span>
             </div>
           </div>
 
           {/* Amount Summary */}
-          <div className="bg-gray-50 rounded p-3 mb-3">
-            <div className="space-y-1 text-xs">
-              <div className="flex justify-between">
-                <span className="text-gray-700">Entry Fee:</span>
-                <span className="font-medium text-gray-800 font-num">
-                  ₹{formatINR(receipt.amount)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-700">Processing Fee:</span>
-                <span className="font-medium text-gray-800 font-num">₹0</span>
-              </div>
-              <div className="flex justify-between text-sm font-bold py-1" style={{ borderTop: "1px solid #d1d5db" }}>
-                <span className="text-gray-800">Total Paid:</span>
-                <span className="text-black font-num">
-                  ₹{formatINR(receipt.amount)}
-                </span>
-              </div>
+          <div style={{ marginBottom: "16px", borderTop: "1px solid #000", borderBottom: "1px solid #000", paddingTop: "8px", paddingBottom: "8px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span style={{ color: "#000" }}>Entry Fee:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>₹{formatINR(receipt.amount)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+              <span style={{ color: "#000" }}>Processing Fee:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>₹0</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", fontWeight: "bold" }}>
+              <span style={{ color: "#000" }}>Total Paid:</span>
+              <span style={{ color: "#000" }}>₹{formatINR(receipt.amount)}</span>
             </div>
           </div>
 
           {/* Footer */}
-          <div style={{ position: "relative", zIndex: 10, borderTop: "1px solid #e5e7eb", marginTop: "12px", paddingTop: "12px", textAlign: "center" }}>
-            <p className="text-xs text-gray-600 mb-1">
+          <div style={{ position: "relative", zIndex: 10, textAlign: "center", borderTop: "1px solid #000", paddingTop: "12px", marginTop: "16px" }}>
+            <p style={{ fontSize: "11px", color: "#000", margin: "0 0 4px 0" }}>
               Thank you for registering with SportsHub!
             </p>
-            <p className="text-xs text-gray-500">
+            <p style={{ fontSize: "11px", color: "#000", margin: "0 0 4px 0" }}>
               This receipt is computer-generated and is valid for your records.
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p style={{ fontSize: "11px", color: "#000", margin: 0 }}>
               For any queries, please contact support@sportshub.com
             </p>
           </div>
