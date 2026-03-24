@@ -1220,6 +1220,22 @@ const AdminReports = () => {
       console.log("Waiting for charts to render...");
       await new Promise(resolve => setTimeout(resolve, 500));
 
+      // Strip inline styles containing oklab/oklch colors
+      console.log("Cleaning problematic inline styles...");
+      const elementsWithStyles = [];
+      const allElements = printRef.current.querySelectorAll("*");
+      allElements.forEach((el) => {
+        if (el.style.length > 0) {
+          const currentStyle = el.getAttribute("style") || "";
+          if (currentStyle.includes("oklab") || currentStyle.includes("oklch")) {
+            elementsWithStyles.push({ element: el, originalStyle: currentStyle });
+            // Remove the entire style attribute - we'll rely on CSS classes instead
+            el.removeAttribute("style");
+          }
+        }
+      });
+      console.log(`Cleaned ${elementsWithStyles.length} elements with problematic styles`);
+
       try {
         // Capture the element as canvas with support for canvas elements
         console.log("Capturing with html2canvas...");
@@ -1301,6 +1317,11 @@ const AdminReports = () => {
       } catch (canvasError) {
         console.error("Canvas generation error:", canvasError);
         throw canvasError;
+      } finally {
+        // Restore original styles
+        elementsWithStyles.forEach(({ element, originalStyle }) => {
+          element.setAttribute("style", originalStyle);
+        });
       }
     } catch (error) {
       console.error("PDF generation error:", error);
