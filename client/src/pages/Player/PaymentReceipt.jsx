@@ -48,12 +48,32 @@ const PaymentReceipt = () => {
     pageStyle: `
       @page {
         size: A4;
-        margin: 20mm;
+        margin: 0;
+      }
+      html, body {
+        margin: 0;
+        padding: 20mm;
       }
       @media print {
         body {
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
+        }
+        * {
+          color-adjust: exact !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        /* Hide icons in print */
+        svg {
+          display: none !important;
+        }
+        .flex.items-center.gap-2 {
+          display: flex !important;
+          gap: 0.5rem !important;
+        }
+        .flex.items-center.gap-2 h3 {
+          margin-left: 0 !important;
         }
       }
     `,
@@ -126,14 +146,34 @@ const PaymentReceipt = () => {
               className="w-96 h-96 object-contain opacity-5"
             />
           </div>
-          {/* Header */}
+
+          {/* Header with Logo and Branding */}
+          <div style={{ position: "relative", zIndex: 10, borderBottom: "2px solid #e5e7eb", paddingBottom: "24px", marginBottom: "24px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <img src={logo} alt="SportsHub" style={{ width: "48px", height: "48px", objectFit: "contain" }} />
+                <div>
+                  <h1 style={{ fontSize: "30px", fontWeight: "bold", color: "#1f2937", fontFamily: "'Syne', sans-serif" }}>
+                    SportsHub
+                  </h1>
+                  <p style={{ fontSize: "14px", color: "#4b5563" }}>www.sportshub.com</p>
+                </div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <p style={{ fontSize: "14px", color: "#4b5563" }}>Receipt Date</p>
+                <p style={{ fontWeight: "600", color: "#1f2937" }}>{new Date().toLocaleDateString("en-IN")}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Original Header */}
           <div className="border-b-2 border-gray-200 pb-6 mb-6">
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-3xl font-bold text-gray-800 mb-2">
                   PAYMENT RECEIPT
                 </h2>
-                
+
                 <p className="text-sm text-gray-500">www.sportshub.com</p>
               </div>
               <div className="text-right">
@@ -259,18 +299,19 @@ const PaymentReceipt = () => {
           </div>
 
           {/* Footer */}
-          <div className="border-t-2 border-gray-200 pt-6 text-center">
+          <div style={{ position: "relative", zIndex: 10, borderTop: "2px solid #e5e7eb", marginTop: "32px", paddingTop: "24px", textAlign: "center" }}>
             <p className="text-sm text-gray-600 mb-2">
               Thank you for registering with SportsHub!
             </p>
             <p className="text-xs text-gray-500">
-              This is a computer-generated receipt and does not require a
-              signature.
+              This receipt is computer-generated and is valid for your records.
             </p>
             <p className="text-xs text-gray-500 mt-2">
               For any queries, please contact support@sportshub.com
             </p>
           </div>
+
+          {/* Original Footer - Removed to avoid duplication */}
         </div>
     </div>
   );

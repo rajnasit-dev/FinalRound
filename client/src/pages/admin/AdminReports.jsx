@@ -210,6 +210,7 @@ const buildCsvRows = (report) => {
 
     rows.push([sectionName]);
 
+    // Extract ALL columns from all records in this section
     const headers = Array.from(
       sectionData.reduce((set, item) => {
         if (item && typeof item === "object") {
@@ -217,7 +218,9 @@ const buildCsvRows = (report) => {
         }
         return set;
       }, new Set())
-    );
+    ).sort(); // Sort headers alphabetically for consistent column order
+
+    console.log(`[CSV Export] Section "${sectionName}" has ${headers.length} columns:`, headers);
 
     if (headers.length === 0) {
       rows.push(["value"]);
@@ -225,7 +228,14 @@ const buildCsvRows = (report) => {
     } else {
       rows.push(headers);
       sectionData.forEach((item) => {
-        rows.push(headers.map((header) => item?.[header]));
+        rows.push(headers.map((header) => {
+          const value = item?.[header];
+          // Handle nested objects and arrays - convert to JSON string
+          if (typeof value === "object" && value !== null) {
+            return JSON.stringify(value);
+          }
+          return value;
+        }));
       });
     }
 
