@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { generateReport, getAllOrganizers, getAnalyticsData } from "../../store/slices/adminSlice";
 import {
@@ -12,6 +12,7 @@ import {
   DollarSign,
   BarChart3,
   MessageSquare,
+  FileText,
 } from "lucide-react";
 import { Bar, Doughnut, Line, Pie } from "react-chartjs-2";
 import {
@@ -29,7 +30,10 @@ import {
 import Spinner from "../../components/ui/Spinner";
 import toast from "react-hot-toast";
 import { formatINR } from "../../utils/formatINR";
-import { chartThemeOptions, doughnutThemeOptions, getTournamentStatusColor, toMonthLabels } from "../../utils/chartConfig";
+import { chartThemeOptions, doughnutThemeOptions, barChartThemeOptions, getTournamentStatusColor, toMonthLabels } from "../../utils/chartConfig";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
+import logo from "../../assets/logo.png";
 
 ChartJS.register(
   CategoryScale,
@@ -53,7 +57,7 @@ const formatDateForInput = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-const chartOptions = chartThemeOptions;
+const chartOptions = barChartThemeOptions;
 
 const overviewBaseChartOptions = chartThemeOptions;
 
@@ -96,28 +100,7 @@ const overviewDoughnutChartOptions = {
   ...doughnutThemeOptions,
 };
 
-const overviewBarChartOptions = {
-  ...overviewBaseChartOptions,
-  plugins: {
-    ...overviewBaseChartOptions.plugins,
-    legend: {
-      display: false,
-    },
-  },
-  scales: {
-    x: {
-      grid: { display: false },
-      ticks: { font: { size: 11 } },
-      border: { display: false },
-    },
-    y: {
-      beginAtZero: true,
-      ticks: { precision: 0, font: { size: 11 } },
-      grid: { color: "rgba(148, 163, 184, 0.15)" },
-      border: { display: false },
-    },
-  },
-};
+const overviewBarChartOptions = barChartThemeOptions;
 
 const OverviewChartCard = ({ title, icon: Icon, children, className = "" }) => (
   <div
@@ -177,7 +160,7 @@ const SummaryCard = ({ label, value, colorClass = "text-text-primary dark:text-t
 );
 
 const SectionCard = ({ title, icon: Icon, children, className = "" }) => (
-  <div className={`bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6 ${className}`}>
+  <div className={`bg-white dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6 ${className}`}>
     <div className="flex items-center gap-2 mb-4">
       <Icon className="w-5 h-5 text-secondary" />
       <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark">{title}</h3>
@@ -331,22 +314,41 @@ const UserPlayerReportView = ({ report }) => {
         <SectionCard title="Organizer Authorization Status" icon={Users}>
           <div className="h-64">
             <Doughnut
-              data={{
-                labels: data.organizerAuthorizationStatus.map((item) => item.name),
-                datasets: [{
-                  data: data.organizerAuthorizationStatus.map((item) => item.count),
-                  backgroundColor: ["#16a34a", "#ef4444"],
-                  borderWidth: 0,
-                }],
+              data={(() => {
+                // Sort so "Authorized" comes first, then "Not Authorized"
+                const sorted = [...data.organizerAuthorizationStatus].sort((a, b) => {
+                  if (a.name?.toLowerCase() === "authorized") return -1;
+                  if (b.name?.toLowerCase() === "authorized") return 1;
+                  return 0;
+                });
+                return {
+                  labels: sorted.map((item) => item.name),
+                  datasets: [{
+                    data: sorted.map((item) => item.count),
+                    backgroundColor: sorted.map((item) =>
+                      item.name?.toLowerCase() === "authorized" ? "#16a34a" : "#ef4444"
+                    ),
+                    borderWidth: 0,
+                  }],
+                };
+              })()}
+              options={{
+                ...doughnutThemeOptions,
+                plugins: {
+                  ...doughnutThemeOptions.plugins,
+                  legend: {
+                    ...doughnutThemeOptions.plugins.legend,
+                    position: "right",
+                  },
+                },
               }}
-              options={doughnutThemeOptions}
             />
           </div>
         </SectionCard>
       )}
 
-      {(data.activeInactiveBreakdown?.length > 0 || hasGenderRatio) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {(data.activeInactiveBreakdown?.length > 0 || data.newUsersPerMonth?.length > 0) && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {data.activeInactiveBreakdown?.length > 0 && (
             <SectionCard title="Active vs Inactive Users" icon={Users}>
               <div className="h-64">
@@ -360,12 +362,12 @@ const UserPlayerReportView = ({ report }) => {
                     }],
                   }}
                   options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    ...doughnutThemeOptions,
                     plugins: {
+                      ...doughnutThemeOptions.plugins,
                       legend: {
+                        ...doughnutThemeOptions.plugins.legend,
                         position: "right",
-                        labels: { usePointStyle: true, pointStyle: "circle", padding: 16, font: { size: 12 } },
                       },
                     },
                   }}
@@ -374,6 +376,50 @@ const UserPlayerReportView = ({ report }) => {
             </SectionCard>
           )}
 
+          {data.newUsersPerMonth?.length > 0 && (
+            <SectionCard title="New Users Per Month" icon={TrendingUp}>
+              <div className="h-64">
+                <Bar
+                  data={{
+                    labels: toMonthLabels(data.newUsersPerMonth.map((item) => item.month)),
+                    datasets: hasMonthlyGenderBreakdown
+                      ? [
+                          {
+                            label: "Male",
+                            data: data.newUsersPerMonth.map((item) => item.maleCount ?? 0),
+                            backgroundColor: "#2563eb",
+                            borderRadius: 4,
+                          },
+                          {
+                            label: "Female",
+                            data: data.newUsersPerMonth.map((item) => item.femaleCount ?? 0),
+                            backgroundColor: "#ec4899",
+                            borderRadius: 4,
+                          },
+                          {
+                            label: "Total",
+                            data: data.newUsersPerMonth.map((item) => item.totalCount ?? item.count ?? 0),
+                            backgroundColor: "#14b8a6",
+                            borderRadius: 4,
+                          },
+                        ]
+                      : [{
+                          label: "New Users",
+                          data: data.newUsersPerMonth.map((item) => item.count),
+                          backgroundColor: "#2563eb",
+                          borderRadius: 4,
+                        }],
+                  }}
+                  options={chartOptions}
+                />
+              </div>
+            </SectionCard>
+          )}
+        </div>
+      )}
+
+      {(hasGenderRatio || (!isIndividualScope && data.usersByRole?.length > 0)) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {hasGenderRatio && (
             <SectionCard title="Male vs Female Ratio" icon={Users}>
               <div className="h-64">
@@ -387,14 +433,15 @@ const UserPlayerReportView = ({ report }) => {
                     }],
                   }}
                   options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    ...doughnutThemeOptions,
                     plugins: {
+                      ...doughnutThemeOptions.plugins,
                       legend: {
+                        ...doughnutThemeOptions.plugins.legend,
                         position: "right",
-                        labels: { usePointStyle: true, pointStyle: "circle", padding: 16, font: { size: 12 } },
                       },
                       tooltip: {
+                        ...doughnutThemeOptions.plugins.tooltip,
                         callbacks: {
                           label: (tooltipItem) => {
                             const ratioItem = data.genderRatio[tooltipItem.dataIndex];
@@ -408,74 +455,34 @@ const UserPlayerReportView = ({ report }) => {
               </div>
             </SectionCard>
           )}
-        </div>
-      )}
 
-      {!isIndividualScope && data.usersByRole?.length > 0 && (
-        <SectionCard title="Users by Role" icon={Users}>
-          <div className="h-64">
-            <Doughnut
-              data={{
-                labels: data.usersByRole.map((item) => item.role),
-                datasets: [{
-                  data: data.usersByRole.map((item) => item.count),
-                  backgroundColor: data.usersByRole.map((_, index) => COLORS[index % COLORS.length]),
-                  borderWidth: 0,
-                }],
-              }}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: "right",
-                    labels: { usePointStyle: true, pointStyle: "circle", padding: 16, font: { size: 12 } },
-                  },
-                },
-              }}
-            />
-          </div>
-        </SectionCard>
-      )}
-
-      {data.newUsersPerMonth?.length > 0 && (
-        <SectionCard title="New Users Per Month" icon={TrendingUp}>
-          <div className="h-72">
-            <Bar
-              data={{
-                labels: toMonthLabels(data.newUsersPerMonth.map((item) => item.month)),
-                datasets: hasMonthlyGenderBreakdown
-                  ? [
-                      {
-                        label: "Male",
-                        data: data.newUsersPerMonth.map((item) => item.maleCount ?? 0),
-                        backgroundColor: "#2563eb",
-                        borderRadius: 4,
-                      },
-                      {
-                        label: "Female",
-                        data: data.newUsersPerMonth.map((item) => item.femaleCount ?? 0),
-                        backgroundColor: "#ec4899",
-                        borderRadius: 4,
-                      },
-                      {
-                        label: "Total",
-                        data: data.newUsersPerMonth.map((item) => item.totalCount ?? item.count ?? 0),
-                        backgroundColor: "#14b8a6",
-                        borderRadius: 4,
-                      },
-                    ]
-                  : [{
-                      label: "New Users",
-                      data: data.newUsersPerMonth.map((item) => item.count),
-                      backgroundColor: "#2563eb",
-                      borderRadius: 4,
+          {!isIndividualScope && data.usersByRole?.length > 0 && (
+            <SectionCard title="Users by Role" icon={Users}>
+              <div className="h-64">
+                <Doughnut
+                  data={{
+                    labels: data.usersByRole.map((item) => item.role),
+                    datasets: [{
+                      data: data.usersByRole.map((item) => item.count),
+                      backgroundColor: data.usersByRole.map((_, index) => COLORS[index % COLORS.length]),
+                      borderWidth: 0,
                     }],
-              }}
-              options={chartOptions}
-            />
-          </div>
-        </SectionCard>
+                  }}
+                  options={{
+                    ...doughnutThemeOptions,
+                    plugins: {
+                      ...doughnutThemeOptions.plugins,
+                      legend: {
+                        position: "right",
+                        labels: { usePointStyle: true, pointStyle: "circle", padding: 16, font: { size: 12 } },
+                      },
+                    },
+                  }}
+                />
+              </div>
+            </SectionCard>
+          )}
+        </div>
       )}
 
       {data.playersBySport?.length > 0 && (
@@ -497,68 +504,21 @@ const UserPlayerReportView = ({ report }) => {
         </SectionCard>
       )}
 
-      {data.cityDistribution?.length > 0 && (
-        <SectionCard title="Top Cities" icon={Users}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-base-dark dark:border-base">
-                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">City</th>
-                  <th className="text-right py-3 px-3 text-base dark:text-base-dark font-semibold">Users</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.cityDistribution.map((item) => (
-                  <tr key={item.city} className="border-b border-base-dark/50 dark:border-base/50">
-                    <td className="py-3 px-3 font-medium text-text-primary dark:text-text-primary-dark">{item.city}</td>
-                    <td className="py-3 px-3 text-right text-text-primary dark:text-text-primary-dark">{item.count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </SectionCard>
-      )}
-
-      {hasTeamInsights && data.teamsByManager?.length > 0 && (
-        <SectionCard title={isOrganizerScope ? "Tournaments by Organizer" : `Team Distribution (${insightsLabel})`} icon={Users}>
+      {hasTeamInsights && !isOrganizerScope && data.teamsByManager?.length > 0 && (
+        <SectionCard title={`Team Distribution (${insightsLabel})`} icon={Users}>
           <div className="h-72">
-            {isOrganizerScope ? (
-              <Doughnut
-                data={{
-                  labels: data.teamsByManager.map((item) => item.manager),
-                  datasets: [{
-                    label: insightsLabel,
-                    data: data.teamsByManager.map((item) => item.count),
-                    backgroundColor: data.teamsByManager.map((_, index) => COLORS[index % COLORS.length]),
-                    borderWidth: 0,
-                  }],
-                }}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: "right",
-                      labels: { usePointStyle: true, pointStyle: "circle", padding: 16, font: { size: 12 } },
-                    },
-                  },
-                }}
-              />
-            ) : (
-              <Bar
-                data={{
-                  labels: data.teamsByManager.map((item) => item.manager),
-                  datasets: [{
-                    label: insightsLabel,
-                    data: data.teamsByManager.map((item) => item.count),
-                    backgroundColor: "#f59e0b",
-                    borderRadius: 4,
-                  }],
-                }}
-                options={chartOptions}
-              />
-            )}
+            <Bar
+              data={{
+                labels: data.teamsByManager.map((item) => item.manager),
+                datasets: [{
+                  label: insightsLabel,
+                  data: data.teamsByManager.map((item) => item.count),
+                  backgroundColor: "#f59e0b",
+                  borderRadius: 4,
+                }],
+              }}
+              options={chartOptions}
+            />
           </div>
         </SectionCard>
       )}
@@ -630,31 +590,30 @@ const RevenuePaymentReportView = ({ report }) => {
         )}
       </div>
 
-      {(data.revenuePerMonth?.length > 0 || data.revenueBySport?.length > 0) && (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {data.revenuePerMonth?.length > 0 && (
-            <SectionCard
-              title={isWebsiteScope ? "Website Revenue Per Month" : "Registration Revenue Per Month"}
-              icon={TrendingUp}
-              className={isWebsiteScope ? "xl:col-span-2" : ""}
-            >
-              <div className="h-72">
-                <Bar
-                  data={{
-                    labels: toMonthLabels(data.revenuePerMonth.map((item) => item.month)),
-                    datasets: [{
-                      label: isWebsiteScope ? "Website Revenue (INR)" : "Registration Revenue (INR)",
-                      data: data.revenuePerMonth.map((item) => item.revenue),
-                      backgroundColor: "#16a34a",
-                      borderRadius: 4,
-                    }],
-                  }}
-                  options={chartOptions}
-                />
-              </div>
-            </SectionCard>
-          )}
+      {data.revenuePerMonth?.length > 0 && (
+        <SectionCard
+          title={isWebsiteScope ? "Website Revenue Per Month" : "Registration Revenue Per Month"}
+          icon={TrendingUp}
+        >
+          <div className="h-72">
+            <Bar
+              data={{
+                labels: toMonthLabels(data.revenuePerMonth.map((item) => item.month)),
+                datasets: [{
+                  label: isWebsiteScope ? "Website Revenue (INR)" : "Registration Revenue (INR)",
+                  data: data.revenuePerMonth.map((item) => item.revenue),
+                  backgroundColor: "#16a34a",
+                  borderRadius: 4,
+                }],
+              }}
+              options={chartOptions}
+            />
+          </div>
+        </SectionCard>
+      )}
 
+      {(data.revenueBySport?.length > 0 || (isWebsiteScope && data.topOrganizerRevenue?.length > 0)) && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {data.revenueBySport?.length > 0 && (
             <SectionCard title={isWebsiteScope ? "Platform Fee Revenue by Sport" : "Revenue by Sport"} icon={IndianRupee}>
               <div className="h-72">
@@ -673,26 +632,26 @@ const RevenuePaymentReportView = ({ report }) => {
               </div>
             </SectionCard>
           )}
-        </div>
-      )}
 
-      {isWebsiteScope && data.topOrganizerRevenue?.length > 0 && (
-        <SectionCard title="Top 5 Organizations by Revenue" icon={BarChart3}>
-          <div className="h-72">
-            <Bar
-              data={{
-                labels: data.topOrganizerRevenue.map((item) => item.organizerName),
-                datasets: [{
-                  label: "Revenue (INR)",
-                  data: data.topOrganizerRevenue.map((item) => item.revenue),
-                  backgroundColor: data.topOrganizerRevenue.map((_, index) => COLORS[index % COLORS.length]),
-                  borderRadius: 4,
-                }],
-              }}
-              options={chartOptions}
-            />
-          </div>
-        </SectionCard>
+          {isWebsiteScope && data.topOrganizerRevenue?.length > 0 && (
+            <SectionCard title="Top 5 Organizations by Revenue" icon={BarChart3}>
+              <div className="h-72">
+                <Bar
+                  data={{
+                    labels: data.topOrganizerRevenue.map((item) => item.organizerName),
+                    datasets: [{
+                      label: "Revenue (INR)",
+                      data: data.topOrganizerRevenue.map((item) => item.revenue),
+                      backgroundColor: data.topOrganizerRevenue.map((_, index) => COLORS[index % COLORS.length]),
+                      borderRadius: 4,
+                    }],
+                  }}
+                  options={chartOptions}
+                />
+              </div>
+            </SectionCard>
+          )}
+        </div>
       )}
 
       <SectionCard title="Payment Records" icon={Clock}>
@@ -819,6 +778,7 @@ const TournamentReportView = ({ report }) => {
               <thead>
                 <tr className="border-b border-base-dark dark:border-base">
                   <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Tournament Name</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Sport</th>
                   <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Organizer</th>
                   <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Registration Type</th>
                   <th className="text-right py-3 px-3 text-base dark:text-base-dark font-semibold">Teams Registered</th>
@@ -829,6 +789,7 @@ const TournamentReportView = ({ report }) => {
                 {data.tournamentsTable.map((row) => (
                   <tr key={row._id} className="border-b border-base-dark/50 dark:border-base/50">
                     <td className="py-3 px-3 font-medium text-text-primary dark:text-text-primary-dark">{row.tournamentName}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.sport || "-"}</td>
                     <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.organizerName}</td>
                     <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.registrationType}</td>
                     <td className="py-3 px-3 text-right text-text-primary dark:text-text-primary-dark">{row.teamsRegistered}</td>
@@ -1059,15 +1020,141 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, orga
   );
 };
 
+const PrintableReportWrapper = ({ report, children }) => {
+  return (
+    <div className="bg-white text-black p-8 relative overflow-visible w-full" style={{ color: "black" }}>
+      {/* Watermark Logo */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <img
+          src={logo}
+          alt=""
+          className="w-96 h-96 object-contain opacity-5"
+        />
+      </div>
+
+      {/* Header with Logo and Title */}
+      <div className="relative z-10 border-b-2 border-gray-200 pb-6 mb-6">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="SportsHub" className="w-12 h-12 object-contain" />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800" style={{ fontFamily: "'Syne', sans-serif" }}>
+                SportsHub
+              </h1>
+              <p className="text-sm text-gray-600">www.sportshub.com</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-600">Report Date</p>
+            <p className="font-semibold text-gray-800">{new Date().toLocaleDateString("en-IN")}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Report Content */}
+      <div className="relative z-10 space-y-6">
+        {children}
+      </div>
+
+      {/* Footer */}
+      <div className="relative z-10 border-t-2 border-gray-200 mt-8 pt-6 text-center">
+        <p className="text-xs text-gray-600">
+          This report is generated automatically by SportsHub and is valid for administrative purposes.
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          For any queries, please contact support@sportshub.com
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const AdminReports = () => {
   const dispatch = useDispatch();
   const { currentReport, reportGenerating, organizers, analytics, analyticsLoading } = useSelector((state) => state.admin);
+  const printRef = useRef(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState("UserPlayer");
 
+  const handlePrint = async () => {
+    try {
+      if (!printRef.current) {
+        toast.error("Print content not found");
+        return;
+      }
+
+      console.log("Starting PDF generation...");
+
+      // Show loading state
+      const toastId = toast.loading("Generating PDF...");
+
+      // Capture the element as canvas
+      const canvas = await html2canvas(printRef.current, {
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      console.log("Canvas captured successfully, dimensions:", canvas.width, "x", canvas.height);
+
+      // Create PDF from canvas with proper multi-page support
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth - 10; // 5mm margin on each side
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 5; // 5mm top margin
+
+      // Add first page
+      pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight - 10;
+
+      // Add additional pages if content is longer than one page
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight - 10;
+      }
+
+      // Generate filename
+      const fileName = `${currentReport?.title || "report"}-${new Date().toLocaleDateString("en-IN")}.pdf`;
+
+      // Download PDF
+      pdf.save(fileName);
+
+      console.log("PDF downloaded successfully");
+      toast.dismiss(toastId);
+      toast.success("PDF downloaded successfully!");
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.dismiss();
+      toast.error("Failed to generate PDF. Please try again.");
+    }
+  };
+
+  const onDownloadPDF = () => {
+    console.log("Download PDF clicked");
+    if (!currentReport) {
+      toast.error("No report to download");
+      return;
+    }
+    handlePrint();
+  };
+
   useEffect(() => {
-    dispatch(getAllOrganizers());
+    dispatch(getAllOrganizers("authorized"));
     dispatch(getAnalyticsData());
   }, [dispatch]);
 
@@ -1215,15 +1302,36 @@ const AdminReports = () => {
               <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">{currentReport.title}</h2>
             </div>
 
-            <button
-              onClick={() => downloadReportCsv(currentReport)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-white text-sm font-medium hover:bg-secondary/90 transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={onDownloadPDF}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Download PDF
+              </button>
+              <button
+                onClick={() => downloadReportCsv(currentReport)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-white text-sm font-medium hover:bg-secondary/90 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </button>
+            </div>
           </div>
 
+          {/* Hidden Print Component */}
+          <div style={{ display: "none" }}>
+            <div ref={printRef}>
+              <PrintableReportWrapper report={currentReport}>
+                {currentReport.type === "UserPlayer" && <UserPlayerReportView report={currentReport} />}
+                {currentReport.type === "Tournament" && <TournamentReportView report={currentReport} />}
+                {currentReport.type === "RevenuePayment" && <RevenuePaymentReportView report={currentReport} />}
+              </PrintableReportWrapper>
+            </div>
+          </div>
+
+          {/* Display version */}
           {currentReport.type === "UserPlayer" && <UserPlayerReportView report={currentReport} />}
           {currentReport.type === "Tournament" && <TournamentReportView report={currentReport} />}
           {currentReport.type === "RevenuePayment" && <RevenuePaymentReportView report={currentReport} />}
@@ -1273,20 +1381,24 @@ const AdminReports = () => {
                   </OverviewChartCard>
                 </div>
 
-                {analytics.sportWiseTournaments?.length > 0 && (
-                  <OverviewChartCard title="Sport-wise Tournaments" icon={BarChart3}>
-                    <div className="h-72">
-                      <Bar data={sportWiseTournamentsData} options={overviewBarChartOptions} />
-                    </div>
-                  </OverviewChartCard>
-                )}
+                {(analytics.sportWiseTournaments?.length > 0 || analytics.feedbackDistribution?.length > 0) && (
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    {analytics.sportWiseTournaments?.length > 0 && (
+                      <OverviewChartCard title="Sport-wise Tournaments" icon={BarChart3}>
+                        <div className="h-72">
+                          <Bar data={sportWiseTournamentsData} options={overviewBarChartOptions} />
+                        </div>
+                      </OverviewChartCard>
+                    )}
 
-                {analytics.feedbackDistribution?.length > 0 && (
-                  <OverviewChartCard title="Feedback Ratings" icon={MessageSquare}>
-                    <div className="h-64">
-                      <Bar data={feedbackDistributionData} options={overviewBarChartOptions} />
-                    </div>
-                  </OverviewChartCard>
+                    {analytics.feedbackDistribution?.length > 0 && (
+                      <OverviewChartCard title="Feedback Ratings" icon={MessageSquare}>
+                        <div className="h-72">
+                          <Bar data={feedbackDistributionData} options={overviewBarChartOptions} />
+                        </div>
+                      </OverviewChartCard>
+                    )}
+                  </div>
                 )}
               </>
             )

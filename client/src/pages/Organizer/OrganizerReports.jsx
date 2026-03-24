@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   IndianRupee,
   Trophy,
@@ -25,14 +25,17 @@ import Spinner from "../../components/ui/Spinner";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { formatINR } from "../../utils/formatINR";
-import { chartThemeOptions, getTournamentStatusColor, toMonthLabels } from "../../utils/chartConfig";
+import { chartThemeOptions, barChartThemeOptions, doughnutThemeOptions, getTournamentStatusColor, toMonthLabels } from "../../utils/chartConfig";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
+import logo from "../../assets/logo.png";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Filler, Tooltip, Legend);
 
 const COLORS = ["#2563eb", "#16a34a", "#f59e0b", "#dc2626", "#0ea5e9", "#7c3aed"];
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
-const chartOptions = chartThemeOptions;
+const chartOptions = barChartThemeOptions;
 
 const REPORT_META = {
   Tournament: {
@@ -67,7 +70,7 @@ const SummaryCard = ({ label, value, colorClass = "text-text-primary dark:text-t
 );
 
 const SectionCard = ({ title, icon: Icon, children }) => (
-  <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
+  <div className="bg-white dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
     <div className="flex items-center gap-2 mb-4">
       <Icon className="w-5 h-5 text-secondary" />
       <h3 className="text-lg font-bold text-text-primary dark:text-text-primary-dark">{title}</h3>
@@ -490,6 +493,55 @@ const ReportModal = ({ isOpen, onClose, reportType, onGenerate, generating, tour
   );
 };
 
+const PrintableReportWrapper = ({ report, children }) => {
+  return (
+    <div className="bg-white text-black p-8 relative overflow-visible w-full" style={{ color: "black" }}>
+      {/* Watermark Logo */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <img
+          src={logo}
+          alt=""
+          className="w-96 h-96 object-contain opacity-5"
+        />
+      </div>
+
+      {/* Header with Logo and Title */}
+      <div className="relative z-10 border-b-2 border-gray-200 pb-6 mb-6">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="SportsHub" className="w-12 h-12 object-contain" />
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800" style={{ fontFamily: "'Syne', sans-serif" }}>
+                SportsHub
+              </h1>
+              <p className="text-sm text-gray-600">www.sportshub.com</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-600">Report Date</p>
+            <p className="font-semibold text-gray-800">{new Date().toLocaleDateString("en-IN")}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Report Content */}
+      <div className="relative z-10 space-y-6">
+        {children}
+      </div>
+
+      {/* Footer */}
+      <div className="relative z-10 border-t-2 border-gray-200 mt-8 pt-6 text-center">
+        <p className="text-xs text-gray-600">
+          This report is generated automatically by SportsHub and is valid for administrative purposes.
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          For any queries, please contact support@sportshub.com
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const OrganizerReports = () => {
   const [currentReport, setCurrentReport] = useState(null);
   const [reportGenerating, setReportGenerating] = useState(false);
@@ -498,6 +550,83 @@ const OrganizerReports = () => {
   const [organizerTournaments, setOrganizerTournaments] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState("Tournament");
+  const printRef = useRef(null);
+
+  const handlePrint = async () => {
+    try {
+      if (!printRef.current) {
+        toast.error("Print content not found");
+        return;
+      }
+
+      console.log("Starting PDF generation...");
+
+      // Show loading state
+      const toastId = toast.loading("Generating PDF...");
+
+      // Capture the element as canvas
+      const canvas = await html2canvas(printRef.current, {
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      console.log("Canvas captured successfully, dimensions:", canvas.width, "x", canvas.height);
+
+      // Create PDF from canvas with proper multi-page support
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth - 10; // 5mm margin on each side
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 5; // 5mm top margin
+
+      // Add first page
+      pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight - 10;
+
+      // Add additional pages if content is longer than one page
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight - 10;
+      }
+
+      // Generate filename
+      const fileName = `${currentReport?.title || "report"}-${new Date().toLocaleDateString("en-IN")}.pdf`;
+
+      // Download PDF
+      pdf.save(fileName);
+
+      console.log("PDF downloaded successfully");
+      toast.dismiss(toastId);
+      toast.success("PDF downloaded successfully!");
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.dismiss();
+      toast.error("Failed to generate PDF. Please try again.");
+    }
+  };
+
+  const onDownloadPDF = () => {
+    console.log("Download PDF clicked");
+    if (!currentReport) {
+      toast.error("No report to download");
+      return;
+    }
+    handlePrint();
+  };
 
   useEffect(() => {
     const fetchOrganizerAnalytics = async () => {
@@ -566,7 +695,7 @@ const OrganizerReports = () => {
   };
 
   const revenueLineOptions = {
-    ...chartOptions,
+    ...chartThemeOptions,
     interaction: {
       mode: "index",
       intersect: false,
@@ -659,13 +788,32 @@ const OrganizerReports = () => {
               </h2>
             </div>
 
-            <button
-              onClick={() => downloadReportCsv(currentReport)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-white text-sm font-medium hover:bg-secondary/90 transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={onDownloadPDF}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Download PDF
+              </button>
+              <button
+                onClick={() => downloadReportCsv(currentReport)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-white text-sm font-medium hover:bg-secondary/90 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </button>
+            </div>
+          </div>
+
+          {/* Hidden Print Component */}
+          <div style={{ display: "none" }}>
+            <div ref={printRef}>
+              <PrintableReportWrapper report={currentReport}>
+                {currentReport.type === "Tournament" && <TournamentReportView report={currentReport} />}
+                {currentReport.type === "RevenuePayment" && <RevenuePaymentReportView report={currentReport} />}
+              </PrintableReportWrapper>
+            </div>
           </div>
 
           {currentReport.type === "Tournament" && <TournamentReportView report={currentReport} />}
@@ -707,7 +855,7 @@ const OrganizerReports = () => {
                     Tournament Status
                   </h3>
                   <div className="h-80 flex items-center justify-center">
-                    <Doughnut data={tournamentStatusData} options={{ ...chartOptions, scales: undefined }} />
+                    <Doughnut data={tournamentStatusData} options={doughnutThemeOptions} />
                   </div>
                 </div>
               </div>
