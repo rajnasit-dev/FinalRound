@@ -555,22 +555,25 @@ const OrganizerReports = () => {
   const handlePrint = async () => {
     try {
       if (!printRef.current) {
+        console.error("Print ref not found");
         toast.error("Print content not found");
         return;
       }
 
       console.log("Starting PDF generation...");
+      console.log("Print ref element:", printRef.current);
 
       // Show loading state
       const toastId = toast.loading("Generating PDF...");
 
       // Capture the element as canvas
+      console.log("Capturing with html2canvas...");
       const canvas = await html2canvas(printRef.current, {
         scale: 1.5,
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
-        logging: false,
+        logging: true,
       });
 
       console.log("Canvas captured successfully, dimensions:", canvas.width, "x", canvas.height);
@@ -614,8 +617,11 @@ const OrganizerReports = () => {
       toast.success("PDF downloaded successfully!");
     } catch (error) {
       console.error("PDF generation error:", error);
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
       toast.dismiss();
-      toast.error("Failed to generate PDF. Please try again.");
+      toast.error(`Failed to generate PDF: ${error.message}`);
     }
   };
 
@@ -807,7 +813,7 @@ const OrganizerReports = () => {
           </div>
 
           {/* Hidden Print Component */}
-          <div style={{ display: "none" }}>
+          <div style={{ position: "fixed", left: "-99999px", top: 0, width: "100%", zIndex: -1 }}>
             <div ref={printRef}>
               <PrintableReportWrapper report={currentReport}>
                 {currentReport.type === "Tournament" && <TournamentReportView report={currentReport} />}
