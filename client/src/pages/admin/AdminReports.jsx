@@ -710,6 +710,7 @@ const RevenuePaymentReportView = ({ report }) => {
 
 const TournamentReportView = ({ report }) => {
   const { summary, data } = report;
+  const isWebsiteScope = !summary.scopeLabel || summary.scopeLabel === "All Tournaments";
 
   return (
     <div className="space-y-6">
@@ -762,7 +763,7 @@ const TournamentReportView = ({ report }) => {
         </SectionCard>
       )}
 
-      {data.organizerTournamentCounts?.length > 0 && (
+      {isWebsiteScope && data.organizerTournamentCounts?.length > 0 && (
         <SectionCard title="Tournaments by Organizer" icon={BarChart3}>
           <div className="h-72">
             <Bar
