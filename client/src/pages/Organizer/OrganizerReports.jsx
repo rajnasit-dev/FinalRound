@@ -522,18 +522,36 @@ const PrintableReportWrapper = ({ report, children }) => {
         /* Text colors */
         .text-black { color: #000000 !important; }
         .text-white { color: #ffffff !important; }
+        .text-gray-50 { color: #f9fafb !important; }
+        .text-gray-100 { color: #f3f4f6 !important; }
+        .text-gray-200 { color: #e5e7eb !important; }
+        .text-gray-300 { color: #d1d5db !important; }
+        .text-gray-400 { color: #9ca3af !important; }
+        .text-gray-500 { color: #6b7280 !important; }
         .text-gray-600 { color: #4b5563 !important; }
+        .text-gray-700 { color: #374151 !important; }
         .text-gray-800 { color: #1f2937 !important; }
+        .text-gray-900 { color: #111827 !important; }
         .text-blue-600 { color: #2563eb !important; }
         .text-blue-700 { color: #1d4ed8 !important; }
         .text-emerald-600 { color: #059669 !important; }
         .text-amber-600 { color: #d97706 !important; }
         .text-red-600 { color: #dc2626 !important; }
         .text-green-600 { color: #16a34a !important; }
+        .text-primary { color: #1f2937 !important; }
+        .text-secondary { color: #6366f1 !important; }
+        .text-base { color: #4b5563 !important; }
+        .text-base-dark { color: #9ca3af !important; }
+        .text-text-primary { color: #1f2937 !important; }
+        .text-text-primary-dark { color: #f3f4f6 !important; }
 
         /* Background colors */
         .bg-white { background-color: #ffffff !important; }
         .bg-black { background-color: #000000 !important; }
+        .bg-gray-50 { background-color: #f9fafb !important; }
+        .bg-gray-100 { background-color: #f3f4f6 !important; }
+        .bg-gray-200 { background-color: #e5e7eb !important; }
+        .bg-gray-300 { background-color: #d1d5db !important; }
         .bg-blue-50 { background-color: #eff6ff !important; }
         .bg-blue-100 { background-color: #dbeafe !important; }
         .bg-blue-600 { background-color: #2563eb !important; }
@@ -549,9 +567,8 @@ const PrintableReportWrapper = ({ report, children }) => {
         .bg-red-600 { background-color: #dc2626 !important; }
         .bg-green-50 { background-color: #f0fdf4 !important; }
         .bg-green-600 { background-color: #16a34a !important; }
-        .bg-gray-50 { background-color: #f9fafb !important; }
-        .bg-gray-100 { background-color: #f3f4f6 !important; }
-        .bg-gray-200 { background-color: #e5e7eb !important; }
+        .bg-card-background { background-color: #ffffff !important; }
+        .bg-card-background-dark { background-color: #1f2937 !important; }
 
         /* Border colors */
         .border-gray-200 { border-color: #e5e7eb !important; }
@@ -560,9 +577,17 @@ const PrintableReportWrapper = ({ report, children }) => {
         .border-green-200 { border-color: #bbf7d0 !important; }
         .border-amber-200 { border-color: #fcd34d !important; }
         .border-amber-800 { border-color: #92400e !important; }
+        .border-base { border-color: #e5e7eb !important; }
+        .border-base-dark { border-color: #374151 !important; }
 
         /* Extra coverage for dark mode that might leak */
         .dark { display: none !important; }
+        .dark\:bg-card-background-dark { display: none !important; }
+        .dark\:text-text-primary-dark { color: #f3f4f6 !important; }
+
+        /* Hide color functions by removing offending elements' backgrounds/colors */
+        [style*="oklab"] { background: transparent !important; color: inherit !important; }
+        [style*="oklch"] { background: transparent !important; color: inherit !important; }
 
         /* PDF-specific styling for summary cards */
         .bg-card-background {
