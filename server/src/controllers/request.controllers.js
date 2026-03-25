@@ -292,12 +292,6 @@ export const acceptRequest = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Player is already a member of this team");
   }
 
-  // Check if team is full
-  const teamSport = await Sport.findById(team.sport);
-  if (teamSport?.playersPerTeam && team.players.length >= teamSport.playersPerTeam) {
-    throw new ApiError(400, "Cannot accept request. The team is already full.");
-  }
-
   // Add player to team
   await Team.findByIdAndUpdate(
     request.team,
