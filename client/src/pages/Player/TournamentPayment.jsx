@@ -10,6 +10,8 @@ import Button from "../../components/ui/Button";
 import ErrorMessage from "../../components/ui/ErrorMessage";
 import BackButton from "../../components/ui/BackButton";
 
+const REGISTRATION_TAX_RATE = 0.18;
+
 const TournamentPayment = () => {
   const { id } = useParams();
   const { formatDate } = useDateFormat();
@@ -24,6 +26,9 @@ const TournamentPayment = () => {
   const { user } = useSelector((state) => state.auth);
 
   const [processingPayment, setProcessingPayment] = useState(false);
+  const entryFeeAmount = Number(tournament?.entryFee || 0);
+  const taxAmount = entryFeeAmount * REGISTRATION_TAX_RATE;
+  const totalPayableAmount = entryFeeAmount + taxAmount;
 
   useEffect(() => {
     if (!tournament || !teamId) {
@@ -75,7 +80,6 @@ const TournamentPayment = () => {
       team: teamId,
       payerType: "Team",
       organizer: tournament.organizer._id || tournament.organizer,
-      amount: tournament.entryFee,
     };
 
     try {
@@ -175,18 +179,18 @@ const TournamentPayment = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Entry Fee:</span>
                 <span className="font-medium text-gray-800 font-num">
-                  ₹{formatINR(tournament.entryFee)}
+                  ₹{formatINR(entryFeeAmount)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Processing Fee:</span>
-                <span className="font-medium text-gray-800 font-num">₹0</span>
+                <span className="text-gray-600">Tax (18%):</span>
+                <span className="font-medium text-gray-800 font-num">₹{formatINR(taxAmount)}</span>
               </div>
               <div className="border-t border-blue-300 pt-2 mt-2">
                 <div className="flex justify-between text-lg">
                   <span className="font-semibold text-gray-800">Total Amount:</span>
                   <span className="font-bold text-blue-600 font-num">
-                    ₹{formatINR(tournament.entryFee)}
+                    ₹{formatINR(totalPayableAmount)}
                   </span>
                 </div>
               </div>
@@ -205,11 +209,11 @@ const TournamentPayment = () => {
             className="text-lg"
           >
             <CreditCard className="w-5 h-5" />
-            Pay ₹{formatINR(tournament.entryFee)}
+            Pay ₹{formatINR(totalPayableAmount)}
           </Button>
 
           <p className="text-center text-sm text-gray-500 mt-4">
-            Secured by Razorpay | Your payment information is encrypted
+            Secured by Razorpay | Your payment information is encrypted | All payments are non-refundable
           </p>
         </div>
     </div>

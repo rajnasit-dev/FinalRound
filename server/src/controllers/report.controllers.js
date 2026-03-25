@@ -360,6 +360,15 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
   const revenuePayerTypes = reportScope === "website"
     ? ["Organizer"]
     : ["Player", "Team"];
+  const revenueAmountExpr = reportScope === "organizer"
+    ? {
+        $cond: [
+          { $gt: [{ $ifNull: ["$entryFeeAmount", 0] }, 0] },
+          "$entryFeeAmount",
+          "$amount",
+        ],
+      }
+    : "$amount";
   const successMatch = { ...paymentMatch, status: "Success", payerType: { $in: revenuePayerTypes } };
   const pendingMatch = { ...paymentMatch, status: "Pending", payerType: { $in: revenuePayerTypes } };
 
@@ -368,7 +377,7 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
     {
       $group: {
         _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
-        revenue: { $sum: "$amount" },
+        revenue: { $sum: revenueAmountExpr },
       },
     },
     { $sort: { "_id.year": 1, "_id.month": 1 } },
@@ -380,7 +389,7 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
     { $unwind: "$tournamentInfo" },
     { $lookup: { from: "sports", localField: "tournamentInfo.sport", foreignField: "_id", as: "sportInfo" } },
     { $unwind: "$sportInfo" },
-    { $group: { _id: "$sportInfo.name", revenue: { $sum: "$amount" }, payments: { $sum: 1 } } },
+    { $group: { _id: "$sportInfo.name", revenue: { $sum: revenueAmountExpr }, payments: { $sum: 1 } } },
     { $sort: { revenue: -1 } },
   ]);
 
@@ -392,7 +401,7 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
       $group: {
         _id: "$tournamentInfo._id",
         tournamentName: { $first: "$tournamentInfo.name" },
-        revenue: { $sum: "$amount" },
+        revenue: { $sum: revenueAmountExpr },
         payments: { $sum: 1 },
       },
     },
@@ -406,7 +415,7 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
         {
           $group: {
             _id: "$organizer",
-            revenue: { $sum: "$amount" },
+            revenue: { $sum: revenueAmountExpr },
             payments: { $sum: 1 },
           },
         },
@@ -421,24 +430,30 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
       $group: {
         _id: null,
         pendingCount: { $sum: 1 },
-        pendingAmount: { $sum: "$amount" },
+        pendingAmount: { $sum: revenueAmountExpr },
       },
     },
   ]);
 
   const pendingPayments = await Payment.find(pendingMatch)
-    .select("amount payerName payerType organizer status createdAt")
+    .select("amount entryFeeAmount payerName payerType organizer status createdAt")
     .populate("tournament", "name")
     .populate("organizer", "orgName fullName")
     .sort({ createdAt: -1 })
     .limit(50);
 
   const paymentRecords = await Payment.find({ ...paymentMatch, payerType: { $in: revenuePayerTypes } })
-    .select("amount payerName payerType organizer status createdAt")
+    .select("amount entryFeeAmount payerName payerType organizer status createdAt")
     .populate("tournament", "name")
     .populate("organizer", "orgName fullName")
     .sort({ createdAt: -1 })
     .limit(100);
+
+  const getRevenueAmountForView = (payment) => (
+    reportScope === "organizer"
+      ? ((Number(payment.entryFeeAmount) > 0 ? payment.entryFeeAmount : payment.amount) ?? 0)
+      : payment.amount
+  );
 
   const organizerIds = [
     ...new Set(
@@ -589,7 +604,7 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
         payerName: resolvePayerName(payment),
         organizationName: resolveOrganizationName(payment),
         payerType: payment.payerType,
-        amount: payment.amount,
+        amount: getRevenueAmountForView(payment),
         status: payment.status,
         createdAt: payment.createdAt,
         tournamentName: payment.tournament?.name || "N/A",
@@ -599,7 +614,7 @@ const buildRevenuePaymentReport = async ({ fromDate, toDate, filters, organizerI
         payerName: resolvePayerName(payment),
         organizationName: resolveOrganizationName(payment),
         payerType: payment.payerType,
-        amount: payment.amount,
+        amount: getRevenueAmountForView(payment),
         status: payment.status,
         createdAt: payment.createdAt,
         tournamentName: payment.tournament?.name || "N/A",
@@ -648,9 +663,13 @@ const buildTournamentReport = async ({ fromDate, toDate, organizerId = null, fil
   }
 
   const tournaments = await Tournament.find(tournamentMatch)
-    .select("name sport registrationType registeredTeams registeredPlayers organizer createdAt startDate endDate isCancelled")
+    .select("name sport registrationType registeredTeams registeredPlayers approvedTeams approvedPlayers organizer createdAt startDate endDate isCancelled")
     .populate("organizer", "fullName")
     .populate("sport", "name")
+    .populate("registeredTeams", "name")
+    .populate("registeredPlayers", "fullName")
+    .populate("approvedTeams", "name")
+    .populate("approvedPlayers", "fullName")
     .sort({ createdAt: -1 })
     .limit(200);
 
@@ -702,6 +721,8 @@ const buildTournamentReport = async ({ fromDate, toDate, organizerId = null, fil
       teamsRegistered,
       status,
       sport: sportName,
+      tournamentDate: tournament.startDate || tournament.createdAt,
+      startDate: tournament.startDate || null,
       createdAt: tournament.createdAt,
     };
   });
@@ -753,6 +774,54 @@ const buildTournamentReport = async ({ fromDate, toDate, organizerId = null, fil
   }
   const scopeLabel = scopeParts.length > 0 ? scopeParts.join(" - ") : "All Tournaments";
 
+  const participantsTable = filteredParticipationData.flatMap((item) => {
+    const tournament = tournaments.find((t) => t._id.toString() === item._id.toString());
+    if (!tournament) {
+      return [];
+    }
+
+    const participantDate = item.tournamentDate || item.startDate || item.createdAt;
+
+    if (item.registrationType === "Team") {
+      const allTeams = [...(tournament.registeredTeams || []), ...(tournament.approvedTeams || [])];
+      const seenTeams = new Set();
+      const uniqueTeams = allTeams.filter((team) => {
+        const key = String(team?._id || team?.name || "");
+        if (!key || seenTeams.has(key)) return false;
+        seenTeams.add(key);
+        return true;
+      });
+
+      return uniqueTeams.map((team) => ({
+        _id: `${item._id}-${team?._id || team?.name || Math.random().toString(36).slice(2)}`,
+        tournamentName: item.tournamentName,
+        sport: item.sport,
+        tournamentDate: participantDate,
+        participantType: "Team",
+        participantName: team?.name || "N/A",
+        tournamentStatus: item.status,
+      }));
+    }
+    const allPlayers = [...(tournament.registeredPlayers || []), ...(tournament.approvedPlayers || [])];
+    const seenPlayers = new Set();
+    const uniquePlayers = allPlayers.filter((player) => {
+      const key = String(player?._id || player?.fullName || "");
+      if (!key || seenPlayers.has(key)) return false;
+      seenPlayers.add(key);
+      return true;
+    });
+
+    return uniquePlayers.map((player) => ({
+      _id: `${item._id}-${player?._id || player?.fullName || Math.random().toString(36).slice(2)}`,
+      tournamentName: item.tournamentName,
+      sport: item.sport,
+      tournamentDate: participantDate,
+      participantType: "Player",
+      participantName: player?.fullName || "N/A",
+      tournamentStatus: item.status,
+    }));
+  });
+
   return {
     title: "Tournament Report",
     summary: {
@@ -777,11 +846,15 @@ const buildTournamentReport = async ({ fromDate, toDate, organizerId = null, fil
         _id: item._id,
         tournamentName: item.tournamentName,
         organizerName: item.organizerName,
+        sport: item.sport,
+        tournamentDate: item.tournamentDate,
+        startDate: item.startDate,
+        createdAt: item.createdAt,
         registrationType: item.registrationType,
         teamsRegistered: item.teamsRegistered,
         status: item.status,
-        sport: item.sport,
       })),
+      participantsTable,
     },
   };
 };

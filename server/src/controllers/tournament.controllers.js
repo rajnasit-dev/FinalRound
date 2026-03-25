@@ -876,6 +876,19 @@ export const updateTournamentStatus = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Only the tournament organizer can update the status.");
   }
 
+  if (isCancelled) {
+    const countValidParticipants = (list) => (Array.isArray(list) ? list.filter(Boolean).length : 0);
+    const registeredParticipantsCount =
+      countValidParticipants(tournament.registeredTeams) +
+      countValidParticipants(tournament.registeredPlayers) +
+      countValidParticipants(tournament.approvedTeams) +
+      countValidParticipants(tournament.approvedPlayers);
+
+    if (registeredParticipantsCount > 0) {
+      throw new ApiError(400, "Tournament cannot be cancelled after participants are registered.");
+    }
+  }
+
   tournament.isCancelled = isCancelled;
   await tournament.save();
 

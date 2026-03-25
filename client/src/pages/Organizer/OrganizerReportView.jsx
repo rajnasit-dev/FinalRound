@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { Bar } from "react-chartjs-2";
+import { Bar, Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,7 +15,7 @@ import { ArrowLeft, IndianRupee, TrendingUp, Clock, Download, Trophy, Users } fr
 import Spinner from "../../components/ui/Spinner";
 import { formatINR } from "../../utils/formatINR";
 import toast from "react-hot-toast";
-import { barChartThemeOptions, getTournamentStatusColor, toMonthLabels } from "../../utils/chartConfig";
+import { barChartThemeOptions, doughnutThemeOptions, getTournamentStatusColor, toMonthLabels } from "../../utils/chartConfig";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 const COLORS = ["#2563eb", "#16a34a", "#f59e0b", "#dc2626", "#0ea5e9", "#7c3aed"];
@@ -56,6 +56,7 @@ const buildCsvRows = (report) => {
     "payments",
     "pendingPayments",
     "tournamentsTable",
+    "participantsTable",
   ]);
 
   Object.entries(report.data || {}).forEach(([sectionName, sectionData]) => {
@@ -137,6 +138,7 @@ const TournamentReportView = ({ report }) => {
   const topTournamentParticipation = [...(data.tournamentParticipation || [])]
     .sort((a, b) => b.teamsRegistered - a.teamsRegistered)
     .slice(0, 10);
+  const participantsRows = data.participantsTable || [];
 
   return (
     <div className="space-y-6">
@@ -168,18 +170,19 @@ const TournamentReportView = ({ report }) => {
 
       {data.statusBreakdown?.length > 0 && (
         <SectionCard title="Tournament Status" icon={TrendingUp}>
-          <div className="h-72">
-            <Bar
+          <div className="h-72 flex items-center justify-center">
+            <Doughnut
               data={{
                 labels: data.statusBreakdown.map((item) => item.status),
                 datasets: [{
                   label: "Tournaments",
                   data: data.statusBreakdown.map((item) => item.count),
                   backgroundColor: data.statusBreakdown.map((item) => getTournamentStatusColor(item.status)),
-                  borderRadius: 4,
+                  borderColor: "#ffffff",
+                  borderWidth: 3,
                 }],
               }}
-              options={chartOptions}
+              options={doughnutThemeOptions}
             />
           </div>
         </SectionCard>
@@ -193,6 +196,8 @@ const TournamentReportView = ({ report }) => {
                 <tr className="border-b border-base-dark dark:border-base">
                   <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Tournament Name</th>
                   <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Organizer</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Sport</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Tournament Date</th>
                   <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Registration Type</th>
                   <th className="text-right py-3 px-3 text-base dark:text-base-dark font-semibold">Teams Registered</th>
                   <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Status</th>
@@ -201,11 +206,20 @@ const TournamentReportView = ({ report }) => {
               <tbody>
                 {data.tournamentsTable.map((row) => (
                   <tr key={row._id} className="border-b border-base-dark/50 dark:border-base/50">
+                    {(() => {
+                      const displayDate = row.tournamentDate || row.startDate || row.createdAt;
+                      return (
+                        <>
                     <td className="py-3 px-3 font-medium text-text-primary dark:text-text-primary-dark">{row.tournamentName}</td>
                     <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.organizerName}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.sport || "N/A"}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{displayDate ? new Date(displayDate).toLocaleDateString("en-IN") : "N/A"}</td>
                     <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.registrationType}</td>
                     <td className="py-3 px-3 text-right text-text-primary dark:text-text-primary-dark">{row.teamsRegistered}</td>
                     <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.status}</td>
+                        </>
+                      );
+                    })()}
                   </tr>
                 ))}
               </tbody>
@@ -213,6 +227,39 @@ const TournamentReportView = ({ report }) => {
           </div>
         ) : (
           <p className="text-sm text-base dark:text-base-dark">No tournament records found for this report.</p>
+        )}
+      </SectionCard>
+
+      <SectionCard title="Participants Data Table" icon={Users}>
+        {participantsRows.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-base-dark dark:border-base">
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Tournament</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Sport</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Tournament Date</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Participant Type</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Participant Name</th>
+                  <th className="text-left py-3 px-3 text-base dark:text-base-dark font-semibold">Tournament Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {participantsRows.map((row) => (
+                  <tr key={row._id} className="border-b border-base-dark/50 dark:border-base/50">
+                    <td className="py-3 px-3 font-medium text-text-primary dark:text-text-primary-dark">{row.tournamentName}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.sport || "N/A"}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.tournamentDate ? new Date(row.tournamentDate).toLocaleDateString("en-IN") : "N/A"}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.participantType}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.participantName}</td>
+                    <td className="py-3 px-3 text-text-primary dark:text-text-primary-dark">{row.tournamentStatus}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-base dark:text-base-dark">No participants found for this report period.</p>
         )}
       </SectionCard>
     </div>

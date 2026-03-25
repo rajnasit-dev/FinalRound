@@ -69,11 +69,11 @@ export const fetchUserPayments = createAsyncThunk(
 
 export const updatePaymentStatus = createAsyncThunk(
   "payment/updateStatus",
-  async ({ paymentId, status, providerPaymentId }, { rejectWithValue }) => {
+  async ({ paymentId, status, providerPaymentId, paymentMethod }, { rejectWithValue }) => {
     try {
       const response = await axios.patch(
         `${API_BASE_URL}/payments/${paymentId}/status`,
-        { status, providerPaymentId },
+        { status, providerPaymentId, paymentMethod },
         { withCredentials: true, headers: { "Content-Type": "application/json" } }
       );
 

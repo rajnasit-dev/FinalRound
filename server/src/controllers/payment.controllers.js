@@ -6,6 +6,39 @@ import { Tournament } from "../models/Tournament.model.js";
 import { Team } from "../models/Team.model.js";
 import { Player } from "../models/Player.model.js";
 
+const REGISTRATION_TAX_RATE = 0.18;
+const roundToTwo = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+const fetchRazorpayPaymentMethod = async (providerPaymentId) => {
+  if (!providerPaymentId) return null;
+
+  const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
+  const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!razorpayKeyId || !razorpayKeySecret) {
+    return null;
+  }
+
+  try {
+    const authToken = Buffer.from(`${razorpayKeyId}:${razorpayKeySecret}`).toString("base64");
+    const response = await fetch(`https://api.razorpay.com/v1/payments/${providerPaymentId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Basic ${authToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const razorpayPayment = await response.json();
+    return razorpayPayment?.method ? String(razorpayPayment.method).toLowerCase() : null;
+  } catch {
+    return null;
+  }
+};
+
 // Create a new payment
 export const createPayment = asyncHandler(async (req, res) => {
   const userId = req.user._id;
@@ -20,8 +53,8 @@ export const createPayment = asyncHandler(async (req, res) => {
     providerPaymentId
   } = req.body;
 
-  if (!tournament || !payerType || !amount) {
-    throw new ApiError(400, "Tournament, payer type, and amount are required.");
+  if (!tournament || !payerType) {
+    throw new ApiError(400, "Tournament and payer type are required.");
   }
 
   // Verify tournament exists
@@ -61,6 +94,27 @@ export const createPayment = asyncHandler(async (req, res) => {
     payerName = playerDoc.fullName;
   } else if (payerType === "Organizer") {
     payerName = req.user.orgName || req.user.fullName || "Organizer";
+  } else {
+    throw new ApiError(400, "Invalid payer type.");
+  }
+
+  let entryFeeAmount = 0;
+  let taxRate = 0;
+  let taxAmount = 0;
+  let payableAmount = 0;
+
+  if (payerType === "Team" || payerType === "Player") {
+    entryFeeAmount = roundToTwo(Number(tournamentDoc.entryFee) || 0);
+    taxRate = REGISTRATION_TAX_RATE;
+    taxAmount = roundToTwo(entryFeeAmount * taxRate);
+    payableAmount = roundToTwo(entryFeeAmount + taxAmount);
+  } else {
+    if (amount === undefined || amount === null) {
+      throw new ApiError(400, "Amount is required for organizer payments.");
+    }
+
+    payableAmount = roundToTwo(Number(amount));
+    entryFeeAmount = payableAmount;
   }
 
   const payment = await Payment.create({
@@ -70,7 +124,10 @@ export const createPayment = asyncHandler(async (req, res) => {
     payerType,
     payerName,
     organizer: tournamentDoc.organizer,
-    amount,
+    amount: payableAmount,
+    entryFeeAmount,
+    taxRate,
+    taxAmount,
     currency: currency || "INR",
     status: "Pending",
     provider,
@@ -114,7 +171,7 @@ export const getAllPayments = asyncHandler(async (req, res) => {
 export const getPaymentById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const payment = await Payment.findById(id)
+  let payment = await Payment.findById(id)
     .populate({
       path: "tournament",
       populate: {
@@ -136,6 +193,37 @@ export const getPaymentById = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Payment not found.");
   }
 
+  // Backfill payment method for legacy records when possible.
+  if (
+    payment.providerPaymentId &&
+    (!payment.paymentMethod || payment.paymentMethod === "unknown")
+  ) {
+    const fetchedMethod = await fetchRazorpayPaymentMethod(payment.providerPaymentId);
+
+    if (fetchedMethod) {
+      payment.paymentMethod = fetchedMethod;
+      await payment.save();
+
+      payment = await Payment.findById(id)
+        .populate({
+          path: "tournament",
+          populate: {
+            path: "sport organizer",
+            select: "name teamBased iconUrl fullName email avatar orgName"
+          }
+        })
+        .populate({
+          path: "team",
+          populate: {
+            path: "manager",
+            select: "fullName email avatar"
+          }
+        })
+        .populate("player", "fullName email avatar phone city")
+        .populate("organizer", "fullName email avatar orgName phone city");
+    }
+  }
+
   res
     .status(200)
     .json(new ApiResponse(200, payment, "Payment retrieved successfully."));
@@ -144,7 +232,7 @@ export const getPaymentById = asyncHandler(async (req, res) => {
 // Update payment status
 export const updatePaymentStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { status, providerPaymentId } = req.body;
+  const { status, providerPaymentId, paymentMethod } = req.body;
 
   if (!status || !["Pending", "Success", "Failed", "Refunded"].includes(status)) {
     throw new ApiError(400, "Invalid status value.");
@@ -158,6 +246,16 @@ export const updatePaymentStatus = asyncHandler(async (req, res) => {
 
   payment.status = status;
   if (providerPaymentId) payment.providerPaymentId = providerPaymentId;
+
+  const normalizedMethod = paymentMethod ? String(paymentMethod).toLowerCase() : null;
+  if (normalizedMethod && normalizedMethod !== "unknown") {
+    payment.paymentMethod = normalizedMethod;
+  } else if (status === "Success" && payment.providerPaymentId) {
+    const fetchedMethod = await fetchRazorpayPaymentMethod(payment.providerPaymentId);
+    if (fetchedMethod) {
+      payment.paymentMethod = fetchedMethod;
+    }
+  }
 
   await payment.save();
 
@@ -316,10 +414,16 @@ export const getOrganizerPaymentStats = asyncHandler(async (req, res) => {
 
   const payments = await Payment.find({ organizer: organizerId });
 
-  const totalAmount = payments.reduce((sum, p) => sum + p.amount, 0);
+  const getRevenueAmount = (payment) => (
+    payment.payerType === "Organizer"
+      ? (payment.amount || 0)
+      : ((Number(payment.entryFeeAmount) > 0 ? payment.entryFeeAmount : payment.amount) ?? 0)
+  );
+
+  const totalAmount = payments.reduce((sum, p) => sum + getRevenueAmount(p), 0);
   const successfulAmount = payments
     .filter(p => p.status === "Success")
-    .reduce((sum, p) => sum + p.amount, 0);
+    .reduce((sum, p) => sum + getRevenueAmount(p), 0);
 
   const stats = {
     totalPayments: payments.length,

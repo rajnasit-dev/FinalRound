@@ -16,6 +16,8 @@ import Container from "../../components/container/Container";
 import Spinner from "../../components/ui/Spinner";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 
+const REGISTRATION_TAX_RATE = 0.18;
+
 const TournamentRegister = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -35,6 +37,10 @@ const TournamentRegister = () => {
 
   const [processingPayment, setProcessingPayment] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState("");
+
+  const entryFeeAmount = Number(tournament?.entryFee || 0);
+  const taxAmount = entryFeeAmount * REGISTRATION_TAX_RATE;
+  const totalPayableAmount = entryFeeAmount + taxAmount;
 
   useEffect(() => {
     // Check if user is logged in
@@ -172,7 +178,6 @@ const TournamentRegister = () => {
       const paymentData = {
         tournament: tournament._id,
         payerType: tournament.registrationType,
-        amount: tournament.entryFee,
         currency: "INR",
         provider: "Razorpay",
       };
@@ -192,10 +197,10 @@ const TournamentRegister = () => {
         // Step 4: Initialize Razorpay payment
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-          amount: tournament.entryFee * 100, // Convert to paise
+          amount: payment.amount * 100, // Convert to paise
           currency: "INR",
           name: "SportsHub",
-          description: `Registration for ${tournament.name}`,
+          description: `Registration for ${tournament.name} (incl. 18% tax)`,
           image: "/logo.png",
           handler: async function (response) {
             // Payment successful - update payment and booking status
@@ -205,7 +210,8 @@ const TournamentRegister = () => {
             await dispatch(updatePaymentStatus({
               paymentId: payment._id,
               status: "Success",
-              providerPaymentId: response.razorpay_payment_id
+              providerPaymentId: response.razorpay_payment_id,
+              paymentMethod: response.method || response.razorpay_method
             }));
 
             // Update booking payment status
@@ -309,6 +315,18 @@ const TournamentRegister = () => {
                 iconColor="text-green-600"
                 label="Entry Fee"
                 value={`₹${formatINR(tournament.entryFee)}`}
+              />
+              <CardStat
+                Icon={IndianRupee}
+                iconColor="text-orange-600"
+                label="Tax (18%)"
+                value={`₹${formatINR(taxAmount)}`}
+              />
+              <CardStat
+                Icon={IndianRupee}
+                iconColor="text-indigo-600"
+                label="Total Payable"
+                value={`₹${formatINR(totalPayableAmount)}`}
               />
               <CardStat
                 Icon={Trophy}
@@ -451,12 +469,12 @@ const TournamentRegister = () => {
                   ) : (
                     <>
                       <CreditCard className="w-6 h-6" />
-                      Pay <span className="font-num">₹{formatINR(tournament.entryFee)}</span>
+                      Pay <span className="font-num">₹{formatINR(totalPayableAmount)}</span>
                     </>
                   )}
                 </Button>
 
-                <p className="text-xs text-center text-base dark:text-base-dark mt-4">\n                  Your payment is secure and encrypted. By proceeding, you agree to our terms and conditions.
+                <p className="text-xs text-center text-base dark:text-base-dark mt-4">\n                  Your payment is secure and encrypted. By proceeding, you agree to our terms and conditions. All payments are non-refundable.
                 </p>
               </>
             ) : !availableTeams || availableTeams.length === 0 ? (
@@ -523,12 +541,12 @@ const TournamentRegister = () => {
                   ) : (
                     <>
                       <CreditCard className="w-6 h-6" />
-                      Pay <span className="font-num">₹{formatINR(tournament.entryFee)}</span>
+                      Pay <span className="font-num">₹{formatINR(totalPayableAmount)}</span>
                     </>
                   )}
                 </Button>
 
-                <p className="text-xs text-center text-gray-600 dark:text-gray-400 mt-4">\n                  Your payment is secure and encrypted. By proceeding, you agree to our terms and conditions.
+                <p className="text-xs text-center text-gray-600 dark:text-gray-400 mt-4">\n                  Your payment is secure and encrypted. By proceeding, you agree to our terms and conditions. All payments are non-refundable.
                 </p>
               </>
             )}

@@ -63,7 +63,9 @@ const Tournaments = () => {
   };
 
   // Organize tournaments by status
-  const liveTournaments = filterTournaments(tournaments.filter(t => t.status === "Live"));
+  const liveTournaments = registrationOpenOnly
+    ? []
+    : filterTournaments(tournaments.filter(t => t.status === "Live"));
   const upcomingTournaments = filterTournaments(tournaments.filter(t => t.status === "Upcoming"));
 
   // Pagination logic for each section

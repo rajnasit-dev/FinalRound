@@ -32,6 +32,13 @@ const TournamentCard = memo(({
   const { formatDate } = useDateFormat();
   const isTournamentCancelled = tournament.isCancelled || tournament.status === "Cancelled";
   const isTournamentCompleted = tournament.status === "Completed";
+  const countValidParticipants = (list) => (Array.isArray(list) ? list.filter(Boolean).length : 0);
+  const registeredParticipantsCount =
+    countValidParticipants(tournament.registeredTeams) +
+    countValidParticipants(tournament.registeredPlayers) +
+    countValidParticipants(tournament.approvedTeams) +
+    countValidParticipants(tournament.approvedPlayers);
+  const hasRegisteredParticipants = registeredParticipantsCount > 0;
   const displayStatus = isTournamentCancelled ? "Cancelled" : tournament.status;
 
   // Check if registration is open
@@ -199,10 +206,16 @@ const TournamentCard = memo(({
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      if (hasRegisteredParticipants) return;
                       onCancel && onCancel(tournament._id, false);
                     }}
-                    className="flex items-center justify-center gap-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700 text-white rounded-lg transition-colors font-semibold text-sm"
-                    title="Cancel Tournament"
+                    disabled={hasRegisteredParticipants}
+                    className={`flex items-center justify-center gap-2 px-3 py-2 text-white rounded-lg font-semibold text-sm transition-colors ${
+                      hasRegisteredParticipants
+                        ? "bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-300 cursor-not-allowed"
+                        : "bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700"
+                    }`}
+                    title={hasRegisteredParticipants ? "Cannot cancel after participants are registered" : "Cancel Tournament"}
                   >
                     <Ban className="w-4 h-4" />
                     Cancel

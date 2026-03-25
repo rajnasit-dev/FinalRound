@@ -27,6 +27,44 @@ const PaymentReceipt = () => {
   const { receipt, loading } = useSelector((state) => state.payment);
   const { user } = useSelector((state) => state.auth);
   const { formatDate, formatTime } = useDateFormat();
+  const totalAmount = Number(receipt?.amount || 0);
+  const tournamentEntryFee = Number(receipt?.tournament?.entryFee || 0);
+  const hasStoredBreakdown =
+    Number.isFinite(Number(receipt?.entryFeeAmount)) &&
+    Number(receipt?.entryFeeAmount) > 0;
+
+  // Legacy payments may not have tax snapshot fields. In that case,
+  // fall back to the amount paid so downloaded receipts still show entry fee.
+  const entryFeeAmount = hasStoredBreakdown
+    ? Number(receipt.entryFeeAmount)
+    : (tournamentEntryFee > 0 ? tournamentEntryFee : totalAmount);
+
+  const inferredTaxAmount = Math.max(totalAmount - entryFeeAmount, 0);
+  const taxAmount = hasStoredBreakdown
+    ? Number(receipt?.taxAmount || 0)
+    : inferredTaxAmount;
+
+  const taxRate =
+    entryFeeAmount > 0
+      ? (taxAmount / entryFeeAmount)
+      : Number(receipt?.taxRate || 0);
+
+  const rawPaymentMethod = receipt?.paymentMethod?.toString().toLowerCase();
+  const methodKey =
+    rawPaymentMethod && rawPaymentMethod !== "unknown"
+      ? rawPaymentMethod
+      : (receipt?.provider || "razorpay").toString().toLowerCase();
+  const methodLabelMap = {
+    upi: "UPI",
+    card: "Card",
+    netbanking: "Net Banking",
+    wallet: "Wallet",
+    emi: "EMI",
+    paylater: "Pay Later",
+    razorpay: "Razorpay",
+    unknown: "Razorpay",
+  };
+  const paymentMethodLabel = methodLabelMap[methodKey] || methodKey.toUpperCase();
 
   useEffect(() => {
     if (paymentId) {
@@ -192,7 +230,7 @@ const PaymentReceipt = () => {
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
               <span style={{ color: "#000" }}>Payment Method:</span>
-              <span style={{ fontWeight: "600", color: "#000" }}>{receipt.provider || "Razorpay"}</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>{paymentMethodLabel}</span>
             </div>
           </div>
 
@@ -200,8 +238,12 @@ const PaymentReceipt = () => {
           <div style={{ marginBottom: "10px" }}>
             <h3 style={{ fontSize: "12px", fontWeight: "bold", color: "#000", margin: "0 0 6px 0" }}>Payer Information</h3>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-              <span style={{ color: "#000" }}>Name:</span>
-              <span style={{ fontWeight: "600", color: "#000" }}>{user?.fullName}</span>
+              <span style={{ color: "#000" }}>Paid By Type:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>{receipt.payerType}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
+              <span style={{ color: "#000" }}>Paid By:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>{receipt.payerName || user?.fullName || "N/A"}</span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
               <span style={{ color: "#000" }}>Email:</span>
@@ -238,27 +280,18 @@ const PaymentReceipt = () => {
 
           {/* Amount Summary */}
           <div style={{ marginBottom: "10px", borderTop: "1px solid #000", borderBottom: "1px solid #000", paddingTop: "6px", paddingBottom: "6px" }}>
-            {(() => {
-              const totalAmount = receipt.amount;
-              const gstTax = totalAmount * 0.18;
-              const entryFee = totalAmount - gstTax;
-              return (
-                <>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-                    <span style={{ color: "#000" }}>Entry Fee:</span>
-                    <span style={{ fontWeight: "600", color: "#000" }}>₹{formatINR(entryFee)}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-                    <span style={{ color: "#000" }}>GST Tax (18%):</span>
-                    <span style={{ fontWeight: "600", color: "#000" }}>₹{formatINR(gstTax)}</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", fontWeight: "bold" }}>
-                    <span style={{ color: "#000" }}>Total Paid:</span>
-                    <span style={{ color: "#000" }}>₹{formatINR(totalAmount)}</span>
-                  </div>
-                </>
-              );
-            })()}
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
+              <span style={{ color: "#000" }}>Entry Fee:</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>₹{formatINR(entryFeeAmount)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
+              <span style={{ color: "#000" }}>Tax ({Math.round(taxRate * 100)}%):</span>
+              <span style={{ fontWeight: "600", color: "#000" }}>₹{formatINR(taxAmount)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", fontWeight: "bold" }}>
+              <span style={{ color: "#000" }}>Total Paid:</span>
+              <span style={{ color: "#000" }}>₹{formatINR(totalAmount)}</span>
+            </div>
           </div>
 
           {/* Footer */}
@@ -268,6 +301,9 @@ const PaymentReceipt = () => {
             </p>
             <p style={{ fontSize: "11px", color: "#000", margin: "0 0 3px 0" }}>
               This receipt is computer-generated and is valid for your records.
+            </p>
+            <p style={{ fontSize: "11px", color: "#000", margin: "0 0 3px 0" }}>
+              Note: All payments are non-refundable.
             </p>
             <p style={{ fontSize: "11px", color: "#000", margin: 0 }}>
               For any queries, please contact sportshub.support@gmail.com

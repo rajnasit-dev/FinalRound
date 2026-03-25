@@ -382,6 +382,9 @@ export const getOrganizerAnalytics = asyncHandler(async (req, res) => {
 
   // Calculate revenue trend (monthly) - Last 12 months
   // Only include incoming tournament payments (exclude organizer platform-fee payments)
+  const getRegistrationRevenueAmount = (payment) =>
+    (Number(payment.entryFeeAmount) > 0 ? payment.entryFeeAmount : payment.amount) ?? 0;
+
   const revenueByMonth = {};
   payments.forEach((payment) => {
     if (payment.payerType === "Organizer") {
@@ -392,7 +395,7 @@ export const getOrganizerAnalytics = asyncHandler(async (req, res) => {
     if (!revenueByMonth[month]) {
       revenueByMonth[month] = 0;
     }
-    revenueByMonth[month] += payment.amount || 0;
+    revenueByMonth[month] += getRegistrationRevenueAmount(payment);
   });
 
   // Generate all 12 months (last 12 months including current month)
@@ -444,7 +447,7 @@ export const getOrganizerAnalytics = asyncHandler(async (req, res) => {
 
   const totalRevenue = payments
     .filter((p) => p.payerType !== "Organizer")
-    .reduce((sum, p) => sum + (p.amount || 0), 0);
+    .reduce((sum, p) => sum + getRegistrationRevenueAmount(p), 0);
 
   const analytics = {
     revenueTrend,

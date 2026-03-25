@@ -40,6 +40,16 @@ const OrganizerPayments = () => {
   const [yearFilter, setYearFilter] = useState("all");
   const [selectedPaymentId, setSelectedPaymentId] = useState(null);
 
+  const getDisplayAmount = (payment) => {
+    if (payment?.payerType === "Organizer") {
+      return payment?.amount || 0;
+    }
+
+    return Number(payment?.entryFeeAmount) > 0
+      ? payment.entryFeeAmount
+      : (payment?.amount ?? 0);
+  };
+
   useEffect(() => {
     fetchPayments();
   }, []);
@@ -101,10 +111,10 @@ const OrganizerPayments = () => {
     const successful = filtered.filter((p) => p.status === "Success");
     const totalReceived = successful
       .filter((p) => p.payerType !== "Organizer")
-      .reduce((sum, p) => sum + (p.amount || 0), 0);
+      .reduce((sum, p) => sum + getDisplayAmount(p), 0);
     const totalPlatformFees = successful
       .filter((p) => p.payerType === "Organizer")
-      .reduce((sum, p) => sum + (p.amount || 0), 0);
+      .reduce((sum, p) => sum + getDisplayAmount(p), 0);
     return {
       totalReceived,
       totalPlatformFees,
@@ -206,7 +216,7 @@ const OrganizerPayments = () => {
           }`}
         >
           {item.payerType === "Organizer" ? "-" : "+"}₹
-          {formatINR(item.amount)}
+          {formatINR(getDisplayAmount(item))}
         </p>
       ),
     },

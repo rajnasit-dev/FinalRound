@@ -41,6 +41,21 @@ const paymentSchema = new Schema(
       required: true,
     },
 
+    entryFeeAmount: {
+      type: Number,
+      default: 0,
+    },
+
+    taxRate: {
+      type: Number,
+      default: 0,
+    },
+
+    taxAmount: {
+      type: Number,
+      default: 0,
+    },
+
     currency: {
       type: String,
       default: "INR",
@@ -58,6 +73,11 @@ const paymentSchema = new Schema(
 
     providerPaymentId: {
       type: String,
+    },
+
+    paymentMethod: {
+      type: String,
+      trim: true,
     },
   },
   { timestamps: true }

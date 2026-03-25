@@ -261,7 +261,15 @@ export const getRevenue = asyncHandler(async (req, res) => {
       $group: {
         _id: null,
         totalPayments: { $sum: 1 },
-        totalAmount: { $sum: "$amount" }
+        totalAmount: {
+          $sum: {
+            $cond: [
+              { $gt: [{ $ifNull: ["$entryFeeAmount", 0] }, 0] },
+              "$entryFeeAmount",
+              "$amount",
+            ],
+          },
+        }
       }
     }
   ]);
@@ -353,7 +361,7 @@ export const getRevenue = asyncHandler(async (req, res) => {
     team: payment.team,
     player: payment.player,
     organizer: payment.organizer,
-    amount: payment.amount,
+    amount: (Number(payment.entryFeeAmount) > 0 ? payment.entryFeeAmount : payment.amount),
     status: payment.status,
     paymentType: "Organizer Revenue",
     createdAt: payment.createdAt
