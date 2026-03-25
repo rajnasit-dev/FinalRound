@@ -51,42 +51,8 @@ const Matches = () => {
     <section className="container mx-auto px-6 py-16">
       <div className="mb-8">
         <h1 className="text-4xl font-bold my-5 text-text-primary dark:text-text-primary-dark">
-          Live & Upcoming Matches
-        </h1>
-        
-      </div>
-
-      {/* Live Matches Section */}
-      {liveMatches && liveMatches.length > 0 && (
-        <div className="mb-12">
-          <div className="flex items-center gap-2 mb-6">
-            <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
-              🔴 Live Now
-            </h2>
-            <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full animate-pulse">
-              {liveMatches.length}
-            </span>
-          </div>
-          <FixturesTable matches={liveMatches.slice(0, 6)} />
-          <div className="border-t border-gray-200 dark:border-gray-700 my-8"></div>
-        </div>
-      )}
-
-      {/* Upcoming Matches Preview */}
-      {upcomingMatches && upcomingMatches.length > 0 && (
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6 text-text-primary dark:text-text-primary-dark">
-            ⏰ Coming Up Next
-          </h2>
-          <FixturesTable matches={upcomingMatches.slice(0, 3)} />
-          <div className="border-t border-gray-200 dark:border-gray-700 my-8"></div>
-        </div>
-      )}
-
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
           All Matches
-        </h2>
+        </h1>
       </div>
 
       {/* Search and Filters */}

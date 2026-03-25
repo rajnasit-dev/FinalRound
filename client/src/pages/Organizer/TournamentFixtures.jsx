@@ -398,7 +398,7 @@ const TournamentFixtures = () => {
 
       {/* Tournament Info Card */}
       <div className="bg-card-background dark:bg-card-background-dark rounded-xl p-6 border border-base-dark dark:border-base">
-        <div className="grid md:grid-cols-5 gap-6">
+        <div className="grid md:grid-cols-4 gap-6">
           <div className="text-center">
             <div className="text-3xl font-bold text-text-primary dark:text-text-primary-dark mb-1">
               {matches?.length || 0}
@@ -410,12 +410,6 @@ const TournamentFixtures = () => {
               {scheduledMatches.length}
             </div>
             <div className="text-sm text-base dark:text-base-dark">Scheduled</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-red-600 dark:text-red-400 mb-1">
-              {liveMatches.length}
-            </div>
-            <div className="text-sm text-base dark:text-base-dark">Live Now</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
