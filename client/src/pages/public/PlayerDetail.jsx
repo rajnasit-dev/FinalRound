@@ -31,6 +31,7 @@ import defaultCoverImage from "../../assets/defaultCoverImage.png";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import useDateFormat from "../../hooks/useDateFormat";
 import useAge from "../../hooks/useAge";
+import { formatGenderLabel } from "../../utils/formatGender";
 
 const PlayerDetail = () => {
   const { id } = useParams();
@@ -202,7 +203,7 @@ const PlayerDetail = () => {
                   Icon={User}
                   iconColor="text-purple-600"
                   label="Gender"
-                  value={player.gender || "N/A"}
+                  value={formatGenderLabel(player.gender, "N/A")}
                 />
                 {player.height && (
                   <CardStat

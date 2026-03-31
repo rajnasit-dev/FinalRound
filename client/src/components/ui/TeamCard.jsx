@@ -1,14 +1,21 @@
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { memo } from "react";
 import { Users, MapPin, Trophy, Edit, UserPlus, UserCog, Power, Users2, ShieldOff, ArrowRight } from "lucide-react";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import defaultTeamCoverImage from "../../assets/defaultTeamCoverImage.png";
 import CardStat from "./CardStat";
+import { formatGenderLabel } from "../../utils/formatGender";
 
 const TeamCard = memo(({ team, showEditButton = false, onEdit, onManagePlayers, onAddPlayer, onToggleStatus }) => {
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
 
   const handleCardClick = () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
     navigate(`/teams/${team._id}`);
   };
   return (
@@ -82,7 +89,7 @@ const TeamCard = memo(({ team, showEditButton = false, onEdit, onManagePlayers, 
               iconColor="text-purple-600 dark:text-purple-400"
               bgColor="bg-purple-50 dark:bg-purple-900/20"
               label="Gender"
-              value={team.gender || "Mixed"}
+              value={formatGenderLabel(team.gender, "All Genders")}
             />
           </div>
 

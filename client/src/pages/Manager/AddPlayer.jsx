@@ -1,13 +1,14 @@
 ﻿import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { UserPlus, Mail, Phone, MapPin, Loader } from "lucide-react";
+import { UserPlus, Mail, Phone, MapPin, Loader, Search, X } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import BackButton from "../../components/ui/BackButton";
 import DataTable from "../../components/ui/DataTable";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 import { fetchTeamById } from "../../store/slices/teamSlice";
+import { formatGenderLabel } from "../../utils/formatGender";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
@@ -18,8 +19,10 @@ const AddPlayer = () => {
   const { selectedTeam, loading: teamLoading } = useSelector((state) => state.team);
 
   const [players, setPlayers] = useState([]);
+  const [allPlayers, setAllPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [requestingPlayerId, setRequestingPlayerId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch team data when component mounts
   useEffect(() => {
@@ -63,6 +66,7 @@ const AddPlayer = () => {
         const filteredPlayers = playersRes.data.data.filter(
           (p) => !teamPlayerIds.includes(String(p._id)) && !pendingRequestPlayerIds.includes(String(p._id))
         );
+        setAllPlayers(filteredPlayers);
         setPlayers(filteredPlayers);
       }
     } catch (err) {
@@ -71,6 +75,24 @@ const AddPlayer = () => {
       setLoading(false);
     }
   }, [selectedTeam, teamId]);
+
+  const handleSearch = useCallback((query) => {
+    setSearchQuery(query);
+    
+    if (!query.trim()) {
+      setPlayers(allPlayers);
+      return;
+    }
+
+    const lowerQuery = query.toLowerCase();
+    const filtered = allPlayers.filter((player) => {
+      const matchesName = player.fullName?.toLowerCase().includes(lowerQuery);
+      const matchesEmail = player.email?.toLowerCase().includes(lowerQuery);
+      return matchesName || matchesEmail;
+    });
+
+    setPlayers(filtered);
+  }, [allPlayers]);
 
   useEffect(() => {
     fetchAvailablePlayers();
@@ -164,7 +186,7 @@ const AddPlayer = () => {
               : "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
           }`}
         >
-          {player.gender}
+          {formatGenderLabel(player.gender)}
         </span>
       ),
     },
@@ -218,7 +240,7 @@ const AddPlayer = () => {
   }
 
   return (
-    <div className="space-y-6">
+      <div className="space-y-6">
         <BackButton className="mb-6" />
 
         {/* Header */}
@@ -227,6 +249,36 @@ const AddPlayer = () => {
             Add Players - {selectedTeam.name}
           </h1>
           
+        </div>
+
+        {/* Search Bar */}
+        <div className="bg-card-background dark:bg-card-background-dark rounded-2xl p-6 shadow-md">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-base dark:text-base-dark" size={20} />
+            <input
+              type="text"
+              placeholder="Search by player name or email..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-primary dark:bg-primary-dark border border-base-dark dark:border-base rounded-lg text-text-primary dark:text-text-primary-dark placeholder-base dark:placeholder-base-dark focus:outline-none focus:ring-2 focus:ring-secondary"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setPlayers(allPlayers);
+                }}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-base dark:text-base-dark hover:text-text-primary dark:hover:text-text-primary-dark transition-colors"
+              >
+                <X size={20} />
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-base dark:text-base-dark mt-2">
+              Found {players.length} player{players.length !== 1 ? "s" : ""}
+            </p>
+          )}
         </div>
 
         {/* Players Table */}

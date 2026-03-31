@@ -50,11 +50,11 @@ const REPORT_META = {
     borderColor: "border-amber-200 dark:border-amber-800",
   },
   RevenuePayment: {
-    label: "Revenue / Payment",
-    title: "Revenue and Payment Report",
+    label: "Revenue Report",
+    title: "Revenue Report",
     description: "Registration revenue, listing cost, profit, and pending payments.",
     icon: IndianRupee,
-    btnText: "Generate Revenue and Payment Report",
+    btnText: "Generate Revenue Report",
     btnColor: "bg-emerald-600 hover:bg-emerald-700",
     iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
     iconColor: "text-emerald-600 dark:text-emerald-400",
@@ -1091,7 +1091,7 @@ const OrganizerReports = () => {
             <div>
               <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">
                 {currentReport.type === "RevenuePayment"
-                  ? "Revenue and Payment Report"
+                  ? "Revenue Report"
                   : currentReport.type === "Tournament"
                     ? "Tournament Report"
                     : currentReport.title}

@@ -44,7 +44,7 @@ const openToJoinOptions = [
 const genderOptions = [
   { value: "Male", label: "Male" },
   { value: "Female", label: "Female" },
-  { value: "Mixed", label: "Mixed" },
+  { value: "Mixed", label: "All Genders" },
 ];
 
 const medicalRoleOptions = [
@@ -198,7 +198,7 @@ const CreateTeam = () => {
       formData.append("name", data.name);
       formData.append("sport", data.sport);
       formData.append("gender", data.gender);
-      if (data.city) formData.append("city", data.city);
+      formData.append("city", data.city);
       if (data.description) formData.append("description", data.description);
       formData.append("openToJoin", data.openToJoin === "true");
 
@@ -293,12 +293,13 @@ const CreateTeam = () => {
                 />
 
                 <Input
-                  label="City (Optional)"
+                  label="City"
                   type="text"
                   placeholder="Enter city name"
                   icon={<MapPin size={18} />}
                   error={errors.city?.message}
                   {...register("city", {
+                    required: "City is required",
                     minLength: { value: 2, message: "City must be at least 2 characters" },
                     maxLength: { value: 20, message: "City must be under 20 characters" },
                     pattern: {
@@ -306,6 +307,7 @@ const CreateTeam = () => {
                       message: "City can only contain letters and spaces",
                     },
                   })}
+                  required
                 />
               </div>
 

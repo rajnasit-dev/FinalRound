@@ -244,7 +244,6 @@ export const router = createBrowserRouter([
       { path: "feedback", element: <AdminFeedback /> },
       { path: "sports", element: <AdminSports /> },
       { path: "reports", element: <AdminReports /> },
-      { path: "change-password", element: <ChangePassword /> },
     ],
   },
 ]);

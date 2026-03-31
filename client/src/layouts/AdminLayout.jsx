@@ -11,7 +11,6 @@ import {
   UserCheck,
   MessageSquare,
   Dumbbell,
-  Lock,
   Menu,
   X,
   FileText,
@@ -46,7 +45,6 @@ const AdminLayout = () => {
     { to: "/admin/payments", icon: DollarSign, label: "Payments" },
     { to: "/admin/feedback", icon: MessageSquare, label: "Feedback" },
     { to: "/admin/reports", icon: FileText, label: "Reports" },
-    { to: "/admin/change-password", icon: Lock, label: "Change Password" },
   ];
 
   const sidebarContent = (

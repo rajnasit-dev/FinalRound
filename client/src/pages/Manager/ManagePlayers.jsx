@@ -8,6 +8,7 @@ import BackButton from "../../components/ui/BackButton";
 import DataTable from "../../components/ui/DataTable";
 import defaultAvatar from "../../assets/defaultAvatar.png";
 import { fetchTeamById } from "../../store/slices/teamSlice";
+import { formatGenderLabel } from "../../utils/formatGender";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
@@ -122,7 +123,7 @@ const ManagePlayers = () => {
               : "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
           }`}
         >
-          {player.gender}
+          {formatGenderLabel(player.gender)}
         </span>
       ),
     },

@@ -31,6 +31,7 @@ import defaultTeamManagerAvatar from "../../assets/defaultTeamManagerAvatar.png"
 import AchievementCard from "../../components/ui/AchievementCard";
 import { toast } from "react-hot-toast";
 import useDateFormat from "../../hooks/useDateFormat";
+import { formatGenderLabel } from "../../utils/formatGender";
 
 const TeamDetail = () => {
   const { id } = useParams();
@@ -174,7 +175,7 @@ const TeamDetail = () => {
               : "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
             }`}
         >
-          {player.gender}
+          {formatGenderLabel(player.gender)}
         </span>
       ),
     },
@@ -316,7 +317,7 @@ const TeamDetail = () => {
                   Icon={Users2}
                   iconColor="text-purple-600"
                   label="Gender"
-                  value={team.gender || "Mixed"}
+                  value={formatGenderLabel(team.gender, "All Genders")}
                 />
                 <CardStat
                   Icon={UserPlus}

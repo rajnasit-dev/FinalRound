@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { memo } from "react";
 import {
   User,
@@ -14,8 +15,10 @@ import defaultAvatar from "../../assets/defaultAvatar.png";
 import defaultCoverImage from "../../assets/defaultCoverImage.png";
 import CardStat from "./CardStat";
 import useAge from "../../hooks/useAge";
+import { formatGenderLabel } from "../../utils/formatGender";
 
 const PlayerCard = memo(({ player }) => {
+  const { user } = useSelector((state) => state.auth);
   const firstSport = player?.sports?.[0];
   const firstSportName =
     typeof firstSport === "string"
@@ -37,7 +40,7 @@ const PlayerCard = memo(({ player }) => {
   const age = useAge(player?.dateOfBirth);
 
   return (
-    <Link to={`/players/${player._id}`} className="group">
+    <Link to={user ? `/players/${player._id}` : "/login"} className="group">
       <div className="relative bg-card-background dark:bg-card-background-dark rounded-xl overflow-hidden border border-base-dark dark:border-base transition-all duration-300 hover:shadow-2xl hover:border-secondary dark:hover:border-secondary hover:-translate-y-1">
         {/* Card Header Banner-Avatar */}
         <div className="relative h-32">
@@ -129,7 +132,7 @@ const PlayerCard = memo(({ player }) => {
                 iconColor="text-indigo-600 dark:text-indigo-400"
                 bgColor="bg-indigo-50 dark:bg-indigo-900/20"
                 label="Gender"
-                value={player.gender}
+                value={formatGenderLabel(player.gender)}
               />
             )}
           </div>

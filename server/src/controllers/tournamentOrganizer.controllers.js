@@ -60,6 +60,14 @@ export const updateTournamentOrganizerProfile = asyncHandler(async (req, res) =>
     throw new ApiError(404, "Tournament organizer not found.");
   }
 
+  // Check if orgName already exists (for a different organizer)
+  if (orgName && orgName !== organizer.orgName) {
+    const isOrgNameExist = await TournamentOrganizer.findOne({ orgName });
+    if (isOrgNameExist) {
+      throw new ApiError(409, "Organization name already exists.");
+    }
+  }
+
   // Update fields if provided
   if (fullName) organizer.fullName = fullName;
   if (phone) organizer.phone = phone;

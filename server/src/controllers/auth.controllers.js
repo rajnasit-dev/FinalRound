@@ -310,6 +310,9 @@ export const registerTournamentOrganizer = asyncHandler(async (req, res) => {
   const isUserExist = await User.findOne({ email });
   if (isUserExist) throw new ApiError(409, "User already exists.");
 
+  const isOrgNameExist = await TournamentOrganizer.findOne({ orgName });
+  if (isOrgNameExist) throw new ApiError(409, "Organization name already exists.");
+
   const { otp, verifyEmailOtpExpiry } = generateOtpAndExpiry();
 
   let avatarResponse = null;

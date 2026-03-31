@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { memo } from "react";
+import { useSelector } from "react-redux";
 import { formatINR } from "../../utils/formatINR";
 import {
   ArrowRight,
@@ -28,6 +29,7 @@ const TournamentCard = memo(({
   onManage,
   onView,
 }) => {
+  const { user } = useSelector((state) => state.auth);
   const { getStatusColor } = useStatusColor();
   const { formatDate } = useDateFormat();
   const isTournamentCancelled = tournament.isCancelled || tournament.status === "Cancelled";
@@ -55,7 +57,10 @@ const TournamentCard = memo(({
   const registrationOpen = isRegistrationOpen();
 
   return (
-    <Link to={`/tournaments/${tournament._id || tournament.id}`} className="group">
+    <Link
+      to={user ? `/tournaments/${tournament._id || tournament.id}` : "/login"}
+      className="group"
+    >
       <div className="relative bg-card-background dark:bg-card-background-dark rounded-xl overflow-hidden border border-base-dark dark:border-base transition-all duration-300 hover:shadow-2xl hover:border-secondary dark:hover:border-secondary hover:-translate-y-1">
         {/* Card Header Banner-Avatar */}
         <div className="relative h-32">

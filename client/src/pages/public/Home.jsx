@@ -180,7 +180,7 @@ const Home = () => {
                   onClick={() => navigate("/register")}
                   className="!w-auto px-8 shadow-lg"
                 >
-                  Get Started
+                  Register
                 </Button>
               </div>
             )}
@@ -355,7 +355,7 @@ const Home = () => {
                 onClick={() => navigate("/register")}
                 className="!w-auto px-10 py-4 shadow-lg text-lg"
               >
-                Get Started
+                Register
               </Button>
             </div>
           </div>

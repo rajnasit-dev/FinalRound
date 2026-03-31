@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Calendar, Trophy, DollarSign, X, Save, MapPin, Plus, Trash2, FileText } from "lucide-react";
+import { Calendar, Trophy, IndianRupee, X, Save, MapPin, Plus, Trash2, FileText } from "lucide-react";
+import toast from "react-hot-toast";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
 import Button from "../../components/ui/Button";
@@ -67,13 +68,14 @@ const EditTournament = () => {
   const [rules, setRules] = useState([""]);
   const [bannerPreview, setBannerPreview] = useState(null);
   const [bannerFile, setBannerFile] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
     handleSubmit,
     watch,
     reset,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm({
     mode: "onChange",
     defaultValues: {
@@ -84,6 +86,16 @@ const EditTournament = () => {
   const selectedSportId = watch("sport");
   const selectedSport = sports?.find((s) => s._id === selectedSportId);
   const isTeamBased = selectedSport?.teamBased ?? true;
+
+  // Check if there are any registrations
+  const hasRegistrations =
+    selectedTournament &&
+    (
+      (Array.isArray(selectedTournament?.registeredTeams) && selectedTournament.registeredTeams.length > 0) ||
+      (Array.isArray(selectedTournament?.approvedTeams) && selectedTournament.approvedTeams.length > 0) ||
+      (Array.isArray(selectedTournament?.registeredPlayers) && selectedTournament.registeredPlayers.length > 0) ||
+      (Array.isArray(selectedTournament?.approvedPlayers) && selectedTournament.approvedPlayers.length > 0)
+    );
 
   useEffect(() => {
     dispatch(fetchAllSports());
@@ -138,13 +150,14 @@ const EditTournament = () => {
   ];
 
   const genderOptions = [
-    { value: "Mixed", label: "Mixed" },
+    { value: "Mixed", label: "All Genders" },
     { value: "Male", label: "Male" },
     { value: "Female", label: "Female" },
   ];
 
   const onSubmit = async (data) => {
     try {
+      setIsSubmitting(true);
       const formData = new FormData();
       formData.append("name", data.name);
       formData.append("sport", data.sport);
@@ -172,10 +185,15 @@ const EditTournament = () => {
       const result = await dispatch(updateTournament({ id: tournamentId, data: formData })).unwrap();
 
       if (result) {
+        toast.success("Tournament updated successfully!");
         navigate("/organizer/tournaments");
       }
     } catch (error) {
+      const errorMessage = error?.message || error?.payload?.message || "Failed to update tournament";
+      toast.error(errorMessage);
       console.error("Failed to update tournament:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -228,14 +246,22 @@ const EditTournament = () => {
               })}
             />
 
-            <Select
-              label="Sport"
-              options={sportOptions}
-              error={errors.sport?.message}
-              {...register("sport", {
-                required: "Please select a sport",
-              })}
-            />
+            <div>
+              <Select
+                label="Sport"
+                options={sportOptions}
+                error={errors.sport?.message}
+                {...register("sport", {
+                  required: "Please select a sport",
+                })}
+                disabled={hasRegistrations}
+              />
+              {hasRegistrations && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                  Sport cannot be changed. Tournament has existing registrations.
+                </p>
+              )}
+            </div>
 
             <Select
               label="Format"
@@ -349,7 +375,7 @@ const EditTournament = () => {
 
         <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
           <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4 flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-secondary" />
+            <IndianRupee className="w-5 h-5 text-secondary" />
             Financial Details
           </h2>
 
@@ -358,7 +384,7 @@ const EditTournament = () => {
               label="Entry Fee"
               type="number"
               placeholder="0"
-              icon={<DollarSign className="w-5 h-5" />}
+              icon={<IndianRupee className="w-5 h-5" />}
               error={errors.entryFee?.message}
               {...register("entryFee", {
                 min: {
@@ -374,7 +400,7 @@ const EditTournament = () => {
 
             <Input
               label="Prize Pool"
-              placeholder="e.g., $10,000 or Trophies"
+              placeholder="e.g., ₹10,000 or Trophies"
               error={errors.prizePool?.message}
               {...register("prizePool", {
                 min: {
@@ -538,7 +564,7 @@ const EditTournament = () => {
         <div className="flex flex-col sm:flex-row gap-4 justify-end">
           <Button
             type="button"
-            onClick={() => navigate(`/organizer/tournaments/${tournamentId}`)}
+            onClick={() => navigate("/organizer/tournaments")}
             variant="secondary"
           >
             <X size={18} />
@@ -546,8 +572,8 @@ const EditTournament = () => {
           </Button>
           <Button
             type="submit"
-            disabled={!isValid || loading}
-            loading={loading}
+            disabled={loading || isSubmitting}
+            loading={loading || isSubmitting}
             className="bg-secondary dark:bg-secondary-dark hover:opacity-90 px-6 py-3 flex items-center justify-center gap-2"
           >
             <Save size={18} />

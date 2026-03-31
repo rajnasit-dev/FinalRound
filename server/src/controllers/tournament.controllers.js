@@ -240,6 +240,7 @@ export const updateTournament = asyncHandler(async (req, res) => {
   const organizerId = req.user._id;
   const {
     name,
+    sport,
     format,
     gender,
     description,
@@ -263,6 +264,33 @@ export const updateTournament = asyncHandler(async (req, res) => {
   // Verify user is the tournament organizer
   if (tournament.organizer.toString() !== organizerId.toString()) {
     throw new ApiError(403, "Only the tournament organizer can update this tournament.");
+  }
+
+  // Check if sport is being changed and if there are any registrations
+  if (sport) {
+    const currentSportId = tournament.sport.toString();
+    const newSportId = sport.toString ? sport.toString() : sport;
+    
+    // Only validate registration check if sport is actually being changed
+    if (currentSportId !== newSportId) {
+      const hasRegistrations = 
+        tournament.registeredTeams?.length > 0 ||
+        tournament.approvedTeams?.length > 0 ||
+        tournament.registeredPlayers?.length > 0 ||
+        tournament.approvedPlayers?.length > 0;
+
+      if (hasRegistrations) {
+        throw new ApiError(400, "Cannot change sport. Tournament has existing registrations.");
+      }
+
+      // Validate new sport exists and is active
+      const sportDoc = await Sport.findOne({ _id: sport, isActive: true });
+      if (!sportDoc) {
+        throw new ApiError(404, "Sport not found or is inactive.");
+      }
+    }
+    
+    tournament.sport = sport;
   }
 
   if (name) tournament.name = name;

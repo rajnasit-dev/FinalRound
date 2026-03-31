@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import useDateFormat from "../../hooks/useDateFormat";
 import useStatusColor from "../../hooks/useStatusColor";
+import { formatGenderLabel } from "../../utils/formatGender";
 
 const TournamentDetail = () => {
   const { id } = useParams();
@@ -317,7 +318,7 @@ const TournamentDetail = () => {
                   Icon={Users}
                   iconColor="text-pink-600"
                   label="Gender"
-                  value={tournament.gender || "Mixed"}
+                  value={formatGenderLabel(tournament.gender, "All Genders")}
                 />
                 <CardStat
                   Icon={MapPin}

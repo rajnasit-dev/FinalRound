@@ -87,16 +87,6 @@ const TournamentFixtures = () => {
     (matches?.length || 0) === 0 &&
     approvedParticipantsCount >= 2;
 
-  const getNextPowerOfTwo = (value) => {
-    let power = 1;
-
-    while (power < value) {
-      power *= 2;
-    }
-
-    return power;
-  };
-
   const fixtureFormatDescription = tournament?.format === "Knockout"
     ? "Knockout format creates opening-round elimination fixtures. If the bracket is uneven, some participants get a first-round bye."
     : "League format creates round-robin fixtures where every approved participant plays every other participant once.";
@@ -136,18 +126,19 @@ const TournamentFixtures = () => {
   };
 
   const createKnockoutPairings = (participants) => {
-    const bracketSize = getNextPowerOfTwo(participants.length);
-    const byeCount = bracketSize - participants.length;
-    const byeParticipants = participants.slice(0, byeCount);
-    const remainingParticipants = participants.slice(byeCount);
+    const shuffled = [...participants].sort(() => Math.random() - 0.5);
     const pairings = [];
+    const byeParticipants = [];
 
-    for (let i = 0; i < remainingParticipants.length; i += 2) {
-      const participantA = remainingParticipants[i];
-      const participantB = remainingParticipants[i + 1];
+    for (let i = 0; i < shuffled.length; i += 2) {
+      const participantA = shuffled[i];
+      const participantB = shuffled[i + 1];
 
       if (participantA && participantB) {
         pairings.push([participantA, participantB]);
+      } else if (participantA) {
+        // If participant count is odd, carry one participant to next round as a bye.
+        byeParticipants.push(participantA);
       }
     }
 
@@ -562,8 +553,14 @@ const TournamentFixtures = () => {
       )}
 
       {showFixtureSetupModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto">
-          <div className="w-full max-w-5xl max-h-[90vh] flex flex-col rounded-xl bg-card-background dark:bg-card-background-dark border border-base-dark dark:border-base">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto"
+          data-lenis-prevent-wheel
+        >
+          <div
+            className="w-full max-w-5xl max-h-[90vh] flex flex-col rounded-xl bg-card-background dark:bg-card-background-dark border border-base-dark dark:border-base"
+            data-lenis-prevent-wheel
+          >
             <div className="flex items-center justify-between px-6 py-4 border-b border-base-dark dark:border-base shrink-0">
               <div>
                 <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark">Auto Fixture Generator</h2>
@@ -578,7 +575,10 @@ const TournamentFixtures = () => {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto overscroll-contain flex-1 space-y-6">
+            <div
+              className="p-6 overflow-y-auto overscroll-contain flex-1 space-y-6"
+              data-lenis-prevent-wheel
+            >
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-semibold mb-1 text-text-primary dark:text-text-primary-dark">Format</label>
@@ -664,7 +664,7 @@ const TournamentFixtures = () => {
                   Clear Draft
                 </Button>
                 <Button
-                  variant="secondary"
+                  variant="primary"
                   onClick={handleGenerateDraftFixtures}
                   isLoading={isGeneratingDraft}
                   className="w-auto"

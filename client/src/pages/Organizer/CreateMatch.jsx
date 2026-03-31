@@ -9,6 +9,7 @@ import Button from "../../components/ui/Button";
 import BackButton from "../../components/ui/BackButton";
 import { createMatch } from "../../store/slices/matchSlice";
 import { fetchOrganizerTournaments } from "../../store/slices/tournamentSlice";
+import { formatGenderLabel } from "../../utils/formatGender";
 
 const CreateMatch = () => {
   const { tournamentId } = useParams();
@@ -187,7 +188,7 @@ const CreateMatch = () => {
             <p className="text-sm text-base dark:text-base-dark mb-4">
               Location: <span className="font-semibold text-text-primary dark:text-text-primary-dark">{selectedTournament.ground?.city || "Not set"}</span>
               {" | "}
-              Gender: <span className="font-semibold text-text-primary dark:text-text-primary-dark">{selectedTournament.gender || "Mixed"}</span>
+              Gender: <span className="font-semibold text-text-primary dark:text-text-primary-dark">{formatGenderLabel(selectedTournament.gender, "All Genders")}</span>
             </p>
           )}
 

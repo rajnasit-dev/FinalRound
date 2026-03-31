@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Calendar, Trophy, DollarSign, MapPin, Plus, Trash2, FileText } from "lucide-react";
+import { Calendar, Trophy, IndianRupee, MapPin, Plus, Trash2, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 import Input from "../../components/ui/Input";
 import Select from "../../components/ui/Select";
@@ -127,7 +127,7 @@ const CreateTournament = () => {
   ];
 
   const genderOptions = [
-    { value: "Mixed", label: "Mixed" },
+    { value: "Mixed", label: "All Genders" },
     { value: "Male", label: "Male" },
     { value: "Female", label: "Female" },
   ];
@@ -464,7 +464,7 @@ const CreateTournament = () => {
 
         <div className="bg-card-background dark:bg-card-background-dark rounded-xl border border-base-dark dark:border-base p-6">
           <h2 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4 flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-secondary" />
+            <IndianRupee className="w-5 h-5 text-secondary" />
             Financial Details
           </h2>
 
@@ -473,7 +473,7 @@ const CreateTournament = () => {
               label="Entry Fee"
               type="number"
               placeholder="0"
-              icon={<DollarSign className="w-5 h-5" />}
+              icon={<IndianRupee className="w-5 h-5" />}
               error={errors.entryFee?.message}
               {...register("entryFee", {
                 min: {
@@ -489,7 +489,7 @@ const CreateTournament = () => {
 
             <Input
               label="Prize Pool"
-              placeholder="e.g., $10,000 or Trophies"
+              placeholder="e.g., ₹10,000 or Trophies"
               error={errors.prizePool?.message}
               {...register("prizePool", {
                 min: {

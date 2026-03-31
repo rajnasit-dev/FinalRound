@@ -10,7 +10,7 @@ import {
   clearRegistrationSuccess,
 } from "../../store/slices/tournamentSlice";
 import { fetchPlayerTeams, fetchManagerTeams } from "../../store/slices/teamSlice";
-import { Trophy, Calendar, MapPin, Users, DollarSign, Clock, FileText, ArrowLeft, CheckCircle } from "lucide-react";
+import { Trophy, Calendar, MapPin, Users, IndianRupeeIcon, Clock, FileText, ArrowLeft, CheckCircle } from "lucide-react";
 import Spinner from "../../components/ui/Spinner";
 import Button from "../../components/ui/Button";
 import ErrorMessage from "../../components/ui/ErrorMessage";
@@ -221,7 +221,7 @@ const TournamentDetails = () => {
             </div>
 
             <div className="flex items-start gap-3">
-              <DollarSign className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
+              <IndianRupeeIcon className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
               <div>
                 <p className="text-sm text-gray-600">Entry Fee</p>
                 <p className="font-semibold text-gray-800 font-num">

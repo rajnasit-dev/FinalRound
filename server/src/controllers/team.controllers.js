@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Team } from "../models/Team.model.js";
 import { Player } from "../models/Player.model.js";
+import { User } from "../models/User.model.js";
 import { Sport } from "../models/Sport.model.js";
 import { TeamManager } from "../models/TeamManager.model.js";
 import { Request } from "../models/Request.model.js";
@@ -592,7 +593,7 @@ export const leaveTeam = asyncHandler(async (req, res) => {
   // Send email to team manager notifying them a player left
   try {
     const player = await Player.findById(playerId).select("fullName");
-    const manager = await Player.findById(team.manager).select("fullName email");
+    const manager = await User.findById(team.manager).select("fullName email");
     if (manager?.email) {
       await sendEmail({
         email: manager.email,

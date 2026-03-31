@@ -9,6 +9,7 @@ import Pagination from "../../components/ui/Pagination";
 import BackButton from "../../components/ui/BackButton";
 import { fetchAllTeams } from "../../store/slices/teamSlice";
 import { fetchAllSports } from "../../store/slices/sportSlice";
+import { formatGenderLabel } from "../../utils/formatGender";
 
 const Teams = () => {
   const dispatch = useDispatch();
@@ -108,7 +109,7 @@ const Teams = () => {
               onChange={(e) => setSelectedGender(e.target.value)}
               options={genders.map((gender) => ({
                 value: gender,
-                label: gender === "All" ? "All Genders" : gender,
+                label: gender === "All" ? "All Genders" : formatGenderLabel(gender),
               }))}
             />
 

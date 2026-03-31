@@ -13,6 +13,7 @@ import Button from "../../components/ui/Button";
 import DataTable from "../../components/ui/DataTable";
 import defaultTeamAvatar from "../../assets/defaultTeamAvatar.png";
 import axios from "axios";
+import { formatGenderLabel } from "../../utils/formatGender";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api/v1";
 
@@ -130,7 +131,7 @@ const AdminTeams = () => {
             ? "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300"
             : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
         }`}>
-          {team.gender}
+          {formatGenderLabel(team.gender)}
         </span>
       ),
     },
@@ -228,7 +229,7 @@ const AdminTeams = () => {
             { value: "", label: "All Genders" },
             { value: "Male", label: "Male" },
             { value: "Female", label: "Female" },
-            { value: "Mixed", label: "Mixed" },
+            { value: "Mixed", label: "All Genders" },
           ]}
           value={genderFilter}
           onChange={(e) => setGenderFilter(e.target.value)}
