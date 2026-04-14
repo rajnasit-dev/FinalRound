@@ -230,7 +230,7 @@ const CreateTournament = () => {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: platformFee * 100, // Convert to paise
         currency: "INR",
-        name: "SportsHub",
+        name: "FinalRound",
         description: `Platform Fee for ${tournament.name}`,
         image: "/logo.png",
         handler: async function (response) {
@@ -649,4 +649,5 @@ const CreateTournament = () => {
 };
 
 export default CreateTournament;
+
 

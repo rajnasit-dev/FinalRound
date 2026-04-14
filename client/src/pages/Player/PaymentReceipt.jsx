@@ -189,12 +189,12 @@ const PaymentReceipt = () => {
           <div style={{ position: "relative", zIndex: 10, borderBottom: "1px solid #000", paddingBottom: "8px", marginBottom: "10px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <img src={logo} alt="SportsHub" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
+                <img src={logo} alt="FinalRound" style={{ width: "32px", height: "32px", objectFit: "contain" }} />
                 <div>
                   <h1 style={{ fontSize: "18px", fontWeight: "bold", color: "#000", fontFamily: "'Syne', sans-serif", margin: 0 }}>
-                    SportsHub
+                    FinalRound
                   </h1>
-                  <p style={{ fontSize: "11px", color: "#000", margin: 0 }}>www.sportshub.com</p>
+                  <p style={{ fontSize: "11px", color: "#000", margin: 0 }}>www.finalround.com</p>
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
@@ -297,7 +297,7 @@ const PaymentReceipt = () => {
           {/* Footer */}
           <div style={{ position: "relative", zIndex: 10, textAlign: "center", borderTop: "1px solid #000", paddingTop: "8px", marginTop: "10px" }}>
             <p style={{ fontSize: "11px", color: "#000", margin: "0 0 3px 0" }}>
-              Thank you for registering with SportsHub!
+              Thank you for registering with FinalRound!
             </p>
             <p style={{ fontSize: "11px", color: "#000", margin: "0 0 3px 0" }}>
               This receipt is computer-generated and is valid for your records.
@@ -306,7 +306,7 @@ const PaymentReceipt = () => {
               Note: All payments are non-refundable.
             </p>
             <p style={{ fontSize: "11px", color: "#000", margin: 0 }}>
-              For any queries, please contact sportshub.support@gmail.com
+              For any queries, please contact finalround.support@gmail.com
             </p>
           </div>
         </div>
@@ -315,4 +315,5 @@ const PaymentReceipt = () => {
 };
 
 export default PaymentReceipt;
+
 

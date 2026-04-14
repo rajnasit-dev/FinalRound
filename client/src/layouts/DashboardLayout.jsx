@@ -78,7 +78,7 @@ const DashboardLayout = () => {
           <Sidebar
             userRole={userRole}
             userName={user?.fullName || "Guest User"}
-            userEmail={user?.email || "guest@sportshub.com"}
+            userEmail={user?.email || "guest@finalround.com"}
             userAvatar={user?.avatar}
             isMobile={true}
             onClose={() => setSidebarOpen(false)}
@@ -90,7 +90,7 @@ const DashboardLayout = () => {
           <Sidebar
             userRole={userRole}
             userName={user?.fullName || "Guest User"}
-            userEmail={user?.email || "guest@sportshub.com"}
+            userEmail={user?.email || "guest@finalround.com"}
             userAvatar={user?.avatar}
             isMobile={false}
             onClose={() => {}}
@@ -109,3 +109,4 @@ const DashboardLayout = () => {
 };
 
 export default DashboardLayout;
+

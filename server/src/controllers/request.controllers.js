@@ -77,7 +77,7 @@ export const sendTeamRequest = asyncHandler(async (req, res) => {
     if (manager?.email) {
       await sendEmail({
         email: manager.email,
-        subject: `New Join Request for ${team.name} – SportsHub`,
+        subject: `New Join Request for ${team.name} – FinalRound`,
         message: `${player.fullName} has requested to join your team ${team.name}.`,
         html: playerRequestToTeamHtml(manager.fullName, player.fullName, team.name),
       });
@@ -175,7 +175,7 @@ export const sendPlayerRequest = asyncHandler(async (req, res) => {
       const manager = await User.findById(managerId).select("fullName");
       await sendEmail({
         email: player.email,
-        subject: `Team Invitation from ${team.name} – SportsHub`,
+        subject: `Team Invitation from ${team.name} – FinalRound`,
         message: `You have been invited to join ${team.name} by ${manager?.fullName || "the team manager"}.`,
         html: teamRequestToPlayerHtml(player.fullName, team.name, manager?.fullName || "Team Manager"),
       });
@@ -319,7 +319,7 @@ export const acceptRequest = asyncHandler(async (req, res) => {
     if (senderUser?.email) {
       await sendEmail({
         email: senderUser.email,
-        subject: `Request Accepted – You're now part of ${teamName}! – SportsHub`,
+        subject: `Request Accepted – You're now part of ${teamName}! – FinalRound`,
         message: `Your request for ${teamName} has been accepted. You are now a team member!`,
         html: requestAcceptedHtml(senderUser.fullName, teamName),
       });
@@ -329,7 +329,7 @@ export const acceptRequest = asyncHandler(async (req, res) => {
     if (request.requestType === "PLAYER_TO_TEAM" && receiverUser?.email) {
       await sendEmail({
         email: receiverUser.email,
-        subject: `${senderUser?.fullName || "A player"} joined ${teamName} – SportsHub`,
+        subject: `${senderUser?.fullName || "A player"} joined ${teamName} – FinalRound`,
         message: `${senderUser?.fullName || "A player"} has joined your team ${teamName}.`,
         html: playerJoinedTeamNotifyHtml(receiverUser.fullName, senderUser?.fullName || "A player", teamName),
       });
@@ -341,7 +341,7 @@ export const acceptRequest = asyncHandler(async (req, res) => {
       if (manager?.email) {
         await sendEmail({
           email: manager.email,
-          subject: `${receiverUser?.fullName || "Player"} accepted your invitation – SportsHub`,
+          subject: `${receiverUser?.fullName || "Player"} accepted your invitation – FinalRound`,
           message: `${receiverUser?.fullName || "Player"} has accepted the invitation to join ${teamName}.`,
           html: playerJoinedTeamNotifyHtml(manager.fullName, receiverUser?.fullName || "Player", teamName),
         });
@@ -392,7 +392,7 @@ export const rejectRequest = asyncHandler(async (req, res) => {
     if (senderUser?.email) {
       await sendEmail({
         email: senderUser.email,
-        subject: `Request Declined – ${teamName} – SportsHub`,
+        subject: `Request Declined – ${teamName} – FinalRound`,
         message: `Your request for ${teamName} has been declined.`,
         html: requestRejectedHtml(senderUser.fullName, teamName),
       });
@@ -437,7 +437,7 @@ export const cancelRequest = asyncHandler(async (req, res) => {
     if (receiverUser?.email) {
       await sendEmail({
         email: receiverUser.email,
-        subject: `Request Cancelled – SportsHub`,
+        subject: `Request Cancelled – FinalRound`,
         message: `A request from ${populatedReq.sender?.fullName || "a user"} has been cancelled.`,
         html: requestCancelledHtml(
           receiverUser.fullName,
@@ -613,3 +613,4 @@ export const getAllUserRequests = asyncHandler(async (req, res) => {
       new ApiResponse(200, organizedRequests, "All requests fetched successfully")
     );
 });
+

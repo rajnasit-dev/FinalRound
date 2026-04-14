@@ -94,7 +94,7 @@ const TournamentPayment = () => {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: result.amount * 100, // Convert to paise
         currency: result.currency || "INR",
-        name: "SportsHub",
+        name: "FinalRound",
         description: `Entry fee for ${tournament.name}`,
         order_id: result.razorpayOrderId,
         handler: async function (response) {
@@ -221,4 +221,5 @@ const TournamentPayment = () => {
 };
 
 export default TournamentPayment;
+
 

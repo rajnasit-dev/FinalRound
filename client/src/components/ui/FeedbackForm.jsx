@@ -102,7 +102,7 @@ const FeedbackForm = ({ onSuccess }) => {
         <textarea
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Tell us about your experience with SportsHub..."
+          placeholder="Tell us about your experience with FinalRound..."
           rows={4}
           className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary text-text-primary dark:text-text-primary-dark placeholder:text-gray-400 dark:placeholder:text-gray-500"
         />
@@ -124,3 +124,4 @@ const FeedbackForm = ({ onSuccess }) => {
 };
 
 export default FeedbackForm;
+

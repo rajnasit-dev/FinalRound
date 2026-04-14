@@ -502,7 +502,7 @@ export const addPlayerToTeam = asyncHandler(async (req, res) => {
     if (player?.email) {
       await sendEmail({
         email: player.email,
-        subject: `You've been added to ${team.name} – SportsHub`,
+        subject: `You've been added to ${team.name} – FinalRound`,
         message: `You have been added to ${team.name} by ${manager?.fullName || "the team manager"}.`,
         html: playerAddedToTeamHtml(player.fullName, team.name, manager?.fullName || "Team Manager"),
       });
@@ -551,7 +551,7 @@ export const removePlayerFromTeam = asyncHandler(async (req, res) => {
     if (player?.email) {
       await sendEmail({
         email: player.email,
-        subject: `Removed from ${team.name} – SportsHub`,
+        subject: `Removed from ${team.name} – FinalRound`,
         message: `You have been removed from ${team.name}.`,
         html: playerRemovedFromTeamHtml(player.fullName, team.name),
       });
@@ -597,7 +597,7 @@ export const leaveTeam = asyncHandler(async (req, res) => {
     if (manager?.email) {
       await sendEmail({
         email: manager.email,
-        subject: `${player?.fullName || "A player"} left ${team.name} – SportsHub`,
+        subject: `${player?.fullName || "A player"} left ${team.name} – FinalRound`,
         message: `${player?.fullName || "A player"} has left your team ${team.name}.`,
         html: playerLeftTeamHtml(manager.fullName, player?.fullName || "A player", team.name),
       });
@@ -717,3 +717,4 @@ export const getManagerTeams = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, teams, "Manager teams retrieved successfully."));
 });
+

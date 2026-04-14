@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 
-const uploadTempDir = path.join(os.tmpdir(), 'sportshub-uploads');
+const uploadTempDir = path.join(os.tmpdir(), 'finalround-uploads');
 
 if (!fs.existsSync(uploadTempDir)) {
     fs.mkdirSync(uploadTempDir, { recursive: true });
@@ -30,3 +30,4 @@ export const upload = multer({
         fileSize: 10 * 1024 * 1024,
     },
 })
+

@@ -11,12 +11,12 @@ const Footer = memo(() => {
           {/* About Section */}
           <div>
             <h3 className="text-xl font-bold text-text-primary dark:text-text-primary-dark mb-4">
-              SportsHub
+              FinalRound
             </h3>
             <p className="text-text-primary/70 dark:text-text-primary-dark/70 text-sm leading-relaxed">
               Your ultimate platform for organizing and managing sports tournaments, teams, and matches all in one place. 
               Connect with players, create teams, participate in tournaments, and manage your sports journey seamlessly. 
-              Whether you're a player, team manager, or tournament organizer, SportsHub provides all the tools you need to excel in your sports community.
+              Whether you're a player, team manager, or tournament organizer, FinalRound provides all the tools you need to excel in your sports community.
             </p>
           </div>
 
@@ -62,8 +62,8 @@ const Footer = memo(() => {
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <Mail className="w-4 h-4 text-secondary dark:text-secondary-dark mt-1 flex-shrink-0" />
-                <a href="mailto:sportshub.support@gmail.com" className="text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors text-sm">
-                  sportshub.support@gmail.com
+                <a href="mailto:finalround.support@gmail.com" className="text-text-primary/70 dark:text-text-primary-dark/70 hover:text-secondary dark:hover:text-secondary-dark transition-colors text-sm">
+                  finalround.support@gmail.com
                 </a>
               </li>
               <li className="flex items-start gap-2 font-num">
@@ -86,7 +86,7 @@ const Footer = memo(() => {
         {/* <div className="pt-8 border-t border-gray-200 dark:border-gray-700">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-text-primary/70 dark:text-text-primary-dark/70 text-sm">
-              © 2025 SportsHub. All rights reserved.
+              © 2025 FinalRound. All rights reserved.
             </p>
             <div className="flex gap-6">
               <Link to="/privacy" className="text-text-primary/70 dark:text-text-primary-dark/70 hover:text-text-primary dark:hover:text-text-primary-dark transition-colors text-sm">
@@ -107,3 +107,4 @@ const Footer = memo(() => {
 });
 
 export default Footer;
+

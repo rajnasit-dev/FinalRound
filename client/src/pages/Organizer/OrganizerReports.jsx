@@ -713,12 +713,12 @@ const PrintableReportWrapper = ({ report, children, dateRange }) => {
       <div style={{ position: "relative", zIndex: 10, borderBottom: "2px solid #e5e7eb", paddingBottom: "24px", marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <img src={logo} alt="SportsHub" style={{ width: "48px", height: "48px", objectFit: "contain" }} />
+            <img src={logo} alt="FinalRound" style={{ width: "48px", height: "48px", objectFit: "contain" }} />
             <div>
               <h1 style={{ fontSize: "30px", fontWeight: "bold", color: "#1f2937", fontFamily: "'Syne', sans-serif" }}>
-                SportsHub
+                FinalRound
               </h1>
-              <p style={{ fontSize: "14px", color: "#4b5563" }}>www.sportshub.com</p>
+              <p style={{ fontSize: "14px", color: "#4b5563" }}>www.finalround.com</p>
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
@@ -744,10 +744,10 @@ const PrintableReportWrapper = ({ report, children, dateRange }) => {
       {/* Footer */}
       <div style={{ position: "relative", zIndex: 10, borderTop: "2px solid #e5e7eb", marginTop: "32px", paddingTop: "24px", textAlign: "center" }}>
         <p style={{ fontSize: "12px", color: "#4b5563" }}>
-          This report is generated automatically by SportsHub and is valid for administrative purposes.
+          This report is generated automatically by FinalRound and is valid for administrative purposes.
         </p>
         <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
-          For any queries, please contact sportshub.support@gmail.com
+          For any queries, please contact finalround.support@gmail.com
         </p>
       </div>
     </div>
@@ -1204,4 +1204,5 @@ const OrganizerReports = () => {
 };
 
 export default OrganizerReports;
+
 

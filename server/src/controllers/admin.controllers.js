@@ -82,8 +82,8 @@ export const authorizeOrganizer = asyncHandler(async (req, res) => {
   try {
     await sendEmail({
       email: organizer.email,
-      subject: "Your SportsHub Organizer Account Has Been Authorized!",
-      message: `Hello ${organizer.fullName}, your organizer account has been authorized. You can now create and manage tournaments on SportsHub.`,
+      subject: "Your FinalRound Organizer Account Has Been Authorized!",
+      message: `Hello ${organizer.fullName}, your organizer account has been authorized. You can now create and manage tournaments on FinalRound.`,
       html: organizerAuthorizedHtml(organizer.fullName),
     });
   } catch (err) {
@@ -974,3 +974,4 @@ export const getAnalyticsData = asyncHandler(async (req, res) => {
     )
   );
 });
+

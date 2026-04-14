@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { generateReport, getAllOrganizers, getAnalyticsData } from "../../store/slices/adminSlice";
 import {
@@ -1421,12 +1421,12 @@ const PrintableReportWrapper = ({ report, children, dateRange }) => {
       <div style={{ position: "relative", zIndex: 10, borderBottom: "2px solid #e5e7eb", paddingBottom: "12px", marginBottom: "12px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <img src={logo} alt="SportsHub" style={{ width: "36px", height: "36px", objectFit: "contain" }} />
+            <img src={logo} alt="FinalRound" style={{ width: "36px", height: "36px", objectFit: "contain" }} />
             <div>
               <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#1f2937", fontFamily: "'Syne', sans-serif", margin: 0 }}>
-                SportsHub
+                FinalRound
               </h1>
-              <p style={{ fontSize: "12px", color: "#4b5563", margin: 0 }}>www.sportshub.com</p>
+              <p style={{ fontSize: "12px", color: "#4b5563", margin: 0 }}>www.finalround.com</p>
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
@@ -1448,10 +1448,10 @@ const PrintableReportWrapper = ({ report, children, dateRange }) => {
       {/* Footer */}
       <div style={{ position: "relative", zIndex: 10, borderTop: "2px solid #e5e7eb", marginTop: "12px", paddingTop: "12px", textAlign: "center" }}>
         <p style={{ fontSize: "11px", color: "#4b5563", margin: 0 }}>
-          This report is generated automatically by SportsHub and is valid for administrative purposes.
+          This report is generated automatically by FinalRound and is valid for administrative purposes.
         </p>
         <p style={{ fontSize: "11px", color: "#6b7280", marginTop: "2px", margin: "2px 0 0 0" }}>
-          For any queries, please contact sportshub.support@gmail.com
+          For any queries, please contact finalround.support@gmail.com
         </p>
       </div>
     </div>
@@ -1911,4 +1911,5 @@ const AdminReports = () => {
 };
 
 export default AdminReports;
+
 

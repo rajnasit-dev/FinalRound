@@ -27,6 +27,12 @@ const USER_ROLE_SCOPE_MAP = {
 
 const normalizeReportType = (type) => LEGACY_TYPE_MAP[type] || type;
 const normalizeUserScope = (scope) => (scope === "teamManager" ? "manager" : scope);
+const formatUserRoleLabel = (role) => {
+  if (role === "TeamManager") return "Team Manager";
+  if (role === "TournamentOrganizer") return "Tournament Organizer";
+  if (role === "Player") return "Player";
+  return role || "-";
+};
 
 const getDateRange = (from, to) => {
   const fromDate = new Date(from);
@@ -170,7 +176,7 @@ const buildUserPlayerReport = async ({ fromDate, toDate, filters }) => {
     : 0;
 
   const userTableData = await User.find(userMatch)
-    .select("fullName email city isActive isBlocked createdAt")
+    .select("fullName email role city isActive isBlocked createdAt")
     .sort({ createdAt: -1 })
     .limit(100);
 
@@ -292,6 +298,7 @@ const buildUserPlayerReport = async ({ fromDate, toDate, filters }) => {
         _id: user._id,
         fullName: user.fullName,
         email: user.email,
+        userType: formatUserRoleLabel(user.role),
         city: user.city || "-",
         status: user.isActive && !user.isBlocked ? "Active" : "Inactive",
         joinedAt: user.createdAt,

@@ -1,4 +1,4 @@
-﻿import { useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Mail, Lock, Trophy } from "lucide-react";
@@ -95,7 +95,7 @@ const Login = () => {
               <div className="w-10 h-10 bg-secondary rounded-xl flex items-center justify-center">
                 <Trophy className="w-5 h-5 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">SportsHub</h2>
+              <h2 className="text-2xl font-bold text-text-primary dark:text-text-primary-dark">FinalRound</h2>
             </div>
 
             {/* Header */}
@@ -198,3 +198,4 @@ const Login = () => {
 };
 
 export default Login;
+

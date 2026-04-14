@@ -199,7 +199,7 @@ const TournamentRegister = () => {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: payment.amount * 100, // Convert to paise
           currency: "INR",
-          name: "SportsHub",
+          name: "FinalRound",
           description: `Registration for ${tournament.name} (incl. 18% tax)`,
           image: "/logo.png",
           handler: async function (response) {
@@ -558,4 +558,5 @@ const TournamentRegister = () => {
 };
 
 export default TournamentRegister;
+
 

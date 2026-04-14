@@ -1,17 +1,17 @@
 // ──────────────────────────────────────────────
-// SportsHub Email Templates with Branding
+// FinalRound Email Templates with Branding
 // ──────────────────────────────────────────────
 
 const LOGO_URL = `${process.env.FRONTEND_URL || "http://localhost:5173"}/logo.png`;
 
-// Shared wrapper that includes the SportsHub logo header and footer
+// Shared wrapper that includes the FinalRound logo header and footer
 const emailWrapper = (bodyContent) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SportsHub</title>
+  <title>FinalRound</title>
   <style>
     body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #1d2132; margin: 0; padding: 0; }
     .wrapper { max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.18); overflow: hidden; }
@@ -33,14 +33,14 @@ const emailWrapper = (bodyContent) => `
 <body>
   <div class="wrapper">
     <div class="logo-header">
-      <img src="${LOGO_URL}" alt="SportsHub Logo" />
-      <h2>SPORTSHUB</h2>
+      <img src="${LOGO_URL}" alt="FinalRound Logo" />
+      <h2>FINALROUND</h2>
     </div>
     <div class="body-content">
       ${bodyContent}
     </div>
     <div class="email-footer">
-      <p>&copy; ${new Date().getFullYear()} SportsHub. All rights reserved.</p>
+      <p>&copy; ${new Date().getFullYear()} FinalRound. All rights reserved.</p>
       <p>This is an automated notification. Please do not reply to this email.</p>
     </div>
   </div>
@@ -59,7 +59,7 @@ export const playerRequestToTeamHtml = (managerName, playerName, teamName) =>
       <p class="info-label">Team</p>
       <p class="info-value">${teamName}</p>
     </div>
-    <p>Please log in to your SportsHub dashboard to review and respond to this request.</p>
+    <p>Please log in to your FinalRound dashboard to review and respond to this request.</p>
     <p style="color: #888; font-size: 13px;">You can accept or decline the request from the Team Requests section.</p>
   `);
 
@@ -67,14 +67,14 @@ export const playerRequestToTeamHtml = (managerName, playerName, teamName) =>
 export const teamRequestToPlayerHtml = (playerName, teamName, managerName) =>
   emailWrapper(`
     <p>Hello, <strong>${playerName}</strong></p>
-    <p>Great news! You have received an invitation to join a team on SportsHub.</p>
+    <p>Great news! You have received an invitation to join a team on FinalRound.</p>
     <div class="highlight-box">
       <p class="info-label">Team</p>
       <p class="info-value">${teamName}</p>
       <p class="info-label">Invited by</p>
       <p class="info-value">${managerName}</p>
     </div>
-    <p>Log in to your SportsHub account to accept or decline this invitation.</p>
+    <p>Log in to your FinalRound account to accept or decline this invitation.</p>
     <p style="color: #888; font-size: 13px;">This invitation will remain pending until you take action.</p>
   `);
 
@@ -105,7 +105,7 @@ export const playerJoinedTeamNotifyHtml = (managerName, playerName, teamName) =>
       <p class="info-label">Status</p>
       <p class="info-value" style="color: #16a34a;">✅ Now a team member</p>
     </div>
-    <p>You can manage your team roster from the SportsHub dashboard.</p>
+    <p>You can manage your team roster from the FinalRound dashboard.</p>
   `);
 
 // ── Request rejected → Notify sender ──
@@ -119,14 +119,14 @@ export const requestRejectedHtml = (recipientName, teamName) =>
       <p class="info-label">Status</p>
       <p class="info-value" style="color: #dc2626;">❌ Request Declined</p>
     </div>
-    <p>Don't worry — there are many other teams on SportsHub. Keep exploring and you'll find the right fit!</p>
+    <p>Don't worry — there are many other teams on FinalRound. Keep exploring and you'll find the right fit!</p>
   `);
 
 // ── Player directly added to team → Notify Player ──
 export const playerAddedToTeamHtml = (playerName, teamName, managerName) =>
   emailWrapper(`
     <p>Hello, <strong>${playerName}</strong></p>
-    <p>🎉 You have been added to a team on SportsHub!</p>
+    <p>🎉 You have been added to a team on FinalRound!</p>
     <div class="highlight-box">
       <p class="info-label">Team</p>
       <p class="info-value">${teamName}</p>
@@ -147,7 +147,7 @@ export const playerRemovedFromTeamHtml = (playerName, teamName) =>
       <p class="info-label">Status</p>
       <p class="info-value" style="color: #dc2626;">Removed from team</p>
     </div>
-    <p>If you believe this was a mistake, please contact the team manager. You can also explore and join other teams on SportsHub.</p>
+    <p>If you believe this was a mistake, please contact the team manager. You can also explore and join other teams on FinalRound.</p>
   `);
 
 // ── Player left team → Notify Manager ──
@@ -163,7 +163,7 @@ export const playerLeftTeamHtml = (managerName, playerName, teamName) =>
       <p class="info-label">Status</p>
       <p class="info-value" style="color: #f59e0b;">Left the team</p>
     </div>
-    <p>You can find and invite new players from the SportsHub player directory.</p>
+    <p>You can find and invite new players from the FinalRound player directory.</p>
   `);
 
 // ── OTP Verification (with logo) ──
@@ -177,14 +177,14 @@ export const verificationEmailWithLogoHtml = (name, otp) =>
       <p class="info-label">Valid for 5 minutes</p>
     </div>
     <p>Enter this code on the verification page to complete your registration.</p>
-    <p style="color: #888; font-size: 13px;">If you did not create an account on SportsHub, please ignore this email.</p>
+    <p style="color: #888; font-size: 13px;">If you did not create an account on FinalRound, please ignore this email.</p>
   `);
 
 // ── Forgot Password (with logo) ──
 export const forgotPasswordWithLogoHtml = (name, url) =>
   emailWrapper(`
     <p>Hello, <strong>${name}</strong></p>
-    <p>We received a request to reset the password for your SportsHub account.</p>
+    <p>We received a request to reset the password for your FinalRound account.</p>
     <div class="highlight-box">
       <p class="info-label">Action Required</p>
       <p class="info-value">Password Reset</p>
@@ -215,11 +215,12 @@ export const requestCancelledHtml = (recipientName, senderName, teamName, reques
 export const organizerAuthorizedHtml = (organizerName) =>
   emailWrapper(`
     <p>Hello, <strong>${organizerName}</strong></p>
-    <p>🎉 Great news! Your organizer account on SportsHub has been <span style="color: #16a34a; font-weight: 700;">authorized</span> by our admin team.</p>
+    <p>🎉 Great news! Your organizer account on FinalRound has been <span style="color: #16a34a; font-weight: 700;">authorized</span> by our admin team.</p>
     <div class="highlight-box">
       <p class="info-label">Account Status</p>
       <p class="info-value" style="color: #16a34a;">✅ Authorized</p>
     </div>
-    <p>You can now create and manage tournaments on SportsHub. Head over to your dashboard to get started!</p>
-    <p style="color: #888; font-size: 13px;">Thank you for being part of SportsHub.</p>
+    <p>You can now create and manage tournaments on FinalRound. Head over to your dashboard to get started!</p>
+    <p style="color: #888; font-size: 13px;">Thank you for being part of FinalRound.</p>
   `);
+

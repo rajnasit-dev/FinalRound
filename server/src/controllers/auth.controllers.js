@@ -183,7 +183,7 @@ export const registerPlayer = asyncHandler(async (req, res) => {
 
   const emailData = {
     email: createdPlayer.email,
-    subject: "Email Verification – SportsHub",
+    subject: "Email Verification – FinalRound",
     message: ` Please use the following OTP to verify your email : ${otp}`,
     html: verificationEmailHtml(createdPlayer.fullName, otp),
     critical: true,
@@ -277,7 +277,7 @@ export const registerTeamManager = asyncHandler(async (req, res) => {
 
   const emailData = {
     email: createdManager.email,
-    subject: "Email Verification – SportsHub",
+    subject: "Email Verification – FinalRound",
     message: ` Please use the following OTP to verify your email : ${otp}`,
     html: verificationEmailHtml(createdManager.fullName, otp),
     critical: true,
@@ -382,7 +382,7 @@ export const registerTournamentOrganizer = asyncHandler(async (req, res) => {
 
   const emailData = {
     email: createdOrganizer.email,
-    subject: "Email Verification – SportsHub",
+    subject: "Email Verification – FinalRound",
     message: ` Please use the following OTP to verify your email : ${otp}`,
     html: verificationEmailHtml(createdOrganizer.fullName, otp),
     critical: true,
@@ -490,7 +490,7 @@ export const resendOtp = asyncHandler(async (req, res) => {
   // Send email
   const emailData = {
     email: user.email,
-    subject: "Email Verification – SportsHub",
+    subject: "Email Verification – FinalRound",
     message: `Please use the following OTP to verify your email: ${otp}`,
     html: verificationEmailHtml(user.fullName, otp),
     critical: true,
@@ -598,7 +598,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
   const emailData = {
     email: user.email,
-    subject: "Password Reset - SportsHub",
+    subject: "Password Reset - FinalRound",
     message: `Please use the following link to reset password : ${resetPasswordUrl}`,
     html: forgotPasswordEmailHtml(user.fullName, resetPasswordUrl),
     critical: true,
@@ -726,3 +726,4 @@ export const getOtpVerificationStatus = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, { otpVerificationRequired: otpRequired }, "OTP setting fetched"));
 });
+

@@ -8,7 +8,7 @@ const CHUNK_LOAD_ERROR_PATTERN =
   /Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk [\w-]+ failed/i;
 
 const loadWithRetry = async (importFn) => {
-  const refreshKey = "sportshub:chunk-reload-attempted";
+  const refreshKey = "finalround:chunk-reload-attempted";
 
   try {
     const module = await importFn();
@@ -247,4 +247,5 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+
 

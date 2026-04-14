@@ -466,26 +466,26 @@ async function seedTeams(manager, player, allPlayers, sports) {
       coach: {
         name: `Coach ${template.name.split(' ')[1] || template.name.split(' ')[0]}`,
         phone: `+91 ${9800000000 + i * 11}`,
-        email: `coach.${template.name.toLowerCase().replace(/\s+/g, '')}@sportshub.com`,
+        email: `coach.${template.name.toLowerCase().replace(/\s+/g, '')}@finalround.com`,
         experience: `${5 + (i % 10)} years of professional coaching in ${sports[template.sport].name}`,
       },
       medicalTeam: [
         {
           name: `Dr. ${['Rajesh Patel', 'Priya Shah', 'Amit Desai', 'Neha Joshi', 'Vikram Singh', 'Meera Trivedi', 'Karan Mehta', 'Sonal Bhatt', 'Harsh Raval', 'Disha Pandya'][i % 10]}`,
           phone: `+91 ${9700000000 + i * 7}`,
-          email: `doctor.team${i + 1}@sportshub.com`,
+          email: `doctor.team${i + 1}@finalround.com`,
           role: 'Doctor',
         },
         {
           name: `${['Ravi Kumar', 'Sneha Rao', 'Arjun Nair', 'Pooja Sharma', 'Deepak Verma', 'Kavita Iyer', 'Nikhil Gupta', 'Anita Reddy', 'Suresh Pillai', 'Megha Kulkarni'][i % 10]}`,
           phone: `+91 ${9600000000 + i * 13}`,
-          email: `physio.team${i + 1}@sportshub.com`,
+          email: `physio.team${i + 1}@finalround.com`,
           role: 'Physiotherapist',
         },
         {
           name: `${['Aakash Mishra', 'Swati Jain', 'Manish Tiwari', 'Ritika Saxena', 'Gaurav Chauhan', 'Nisha Agarwal', 'Pranav Sinha', 'Divya Kapoor', 'Rohan Malhotra', 'Ishita Banerjee'][i % 10]}`,
           phone: `+91 ${9500000000 + i * 17}`,
-          email: `nutrition.team${i + 1}@sportshub.com`,
+          email: `nutrition.team${i + 1}@finalround.com`,
           role: 'Nutritionist',
         },
       ],
@@ -936,7 +936,7 @@ async function seedFeedbacks(player, manager, organizer, additionalPlayers) {
     { user: additionalPlayers[1]._id, rating: 3, comment: 'Decent platform. Sometimes the search could be more responsive, but overall it gets the job done.' },
     { user: additionalPlayers[2]._id, rating: 5, comment: 'Love how easy it is to browse tournaments by sport. Joined a football league and had a fantastic experience!' },
     { user: additionalPlayers[3]._id, rating: 4, comment: 'Good platform for connecting with local sports communities. The team detail pages are very informative.' },
-    { user: additionalPlayers[4]._id, rating: 5, comment: 'SportsHub is a game changer for amateur players like me. Finally a proper platform to find competitive matches!' },
+    { user: additionalPlayers[4]._id, rating: 5, comment: 'FinalRound is a game changer for amateur players like me. Finally a proper platform to find competitive matches!' },
     { user: additionalPlayers[5]._id, rating: 4, comment: 'Really enjoying the platform. The notification system keeps me updated about my team requests and match schedules.' },
     { user: additionalPlayers[6]._id, rating: 3, comment: 'Nice concept and execution. A mobile app would make it even better for on-the-go access.' },
     { user: additionalPlayers[7]._id, rating: 5, comment: 'Excellent platform for sports enthusiasts in Gujarat. The tournament bracket system is very well designed.' },
@@ -999,3 +999,4 @@ async function seed() {
 }
 
 seed();
+

@@ -9,7 +9,7 @@ console.log('🔧 MongoDB URI:', process.env.MONGODB_URI ? 'Set' : 'NOT SET');
 console.log('🔧 DB Name:', process.env.DB_NAME);
 
 // Ensure temp directory exists
-const tempDir = path.join(os.tmpdir(), 'sportshub-uploads');
+const tempDir = path.join(os.tmpdir(), 'finalround-uploads');
 if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir, { recursive: true });
     console.log('✅ Created temp directory:', tempDir);

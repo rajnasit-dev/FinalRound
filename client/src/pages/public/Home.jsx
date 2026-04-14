@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "axios";
@@ -171,7 +171,7 @@ const Home = () => {
               variants={fadeInUp}
               transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
             >
-              SportsHub helps players, team managers, and organizers manage
+              FinalRound helps players, team managers, and organizers manage
               tournaments, teams, and matches in one place.
             </motion.p>
             {!user && (
@@ -348,7 +348,7 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
             >
               Whether you're a player, team manager, or tournament organizer,
-              SportsHub has everything you need to succeed.
+              FinalRound has everything you need to succeed.
             </motion.p>
             <div className="flex justify-center">
               <Button
@@ -366,3 +366,4 @@ const Home = () => {
 };
 
 export default Home;
+

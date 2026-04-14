@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/SportsHub-Tournament%20Management-0ea5e9?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTYgOWE2IDYgMCAwIDEgMTIgMEE2IDYgMCAwIDEgNiA5Ii8+PHBhdGggZD0iTTEyIDE1YTYgNiAwIDAgMS02IDZBOCA2IDAgMCAxIDEyIDE1WiIvPjwvc3ZnPg==&logoColor=white" alt="SportsHub" />
+  <img src="https://img.shields.io/badge/FinalRound-Tournament%20Management-0ea5e9?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTYgOWE2IDYgMCAwIDEgMTIgMEE2IDYgMCAwIDEgNiA5Ii8+PHBhdGggZD0iTTEyIDE1YTYgNiAwIDAgMS02IDZBOCA2IDAgMCAxIDEyIDE1WiIvPjwvc3ZnPg==&logoColor=white" alt="FinalRound" />
 </p>
 
-<h1 align="center">🏆 SportsHub</h1>
+<h1 align="center">🏆 FinalRound</h1>
 
 <p align="center">
   <strong>A full-stack sports tournament management platform built with the MERN stack</strong>
@@ -46,9 +46,9 @@
 
 ## 🌟 Overview
 
-**SportsHub** is a production-grade, full-stack web application for managing sports tournaments end-to-end. It connects **Players**, **Team Managers**, **Tournament Organizers**, and **Admins** on a single platform — handling everything from team formation and tournament registration to live match scheduling, payment processing, and PDF receipt generation.
+**FinalRound** is a production-grade, full-stack web application for managing sports tournaments end-to-end. It connects **Players**, **Team Managers**, **Tournament Organizers**, and **Admins** on a single platform — handling everything from team formation and tournament registration to live match scheduling, payment processing, and PDF receipt generation.
 
-Built as a solo full-stack project, SportsHub demonstrates proficiency in:
+Built as a solo full-stack project, FinalRound demonstrates proficiency in:
 
 - **System Design** — 14 interconnected MongoDB models with discriminator inheritance
 - **API Architecture** — 100+ RESTful endpoints with role-based access control
@@ -190,7 +190,7 @@ Built as a solo full-stack project, SportsHub demonstrates proficiency in:
 
 ## 👥 User Roles & Dashboards
 
-SportsHub implements a **role-based multi-dashboard** architecture. Each role has its own dedicated dashboard with tailored navigation:
+FinalRound implements a **role-based multi-dashboard** architecture. Each role has its own dedicated dashboard with tailored navigation:
 
 ### 🏃 Player
 | Feature | Description |
@@ -318,8 +318,8 @@ Uncomment and add your screenshots:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/sportshub.git
-cd sportshub
+git clone https://github.com/yourusername/finalround.git
+cd finalround
 
 # 2. Install server dependencies
 cd server
@@ -366,7 +366,7 @@ npm run seed         # Populates sample data for testing
 ```env
 # Database
 MONGODB_URI=mongodb+srv://your-connection-string
-DB_NAME=sportshub
+DB_NAME=finalround
 
 # Server
 PORT=3000
@@ -401,7 +401,7 @@ VITE_API_URL=http://localhost:3000/api/v1
 ## 📁 Project Structure
 
 ```
-sportshub/
+finalround/
 ├── client/                          # React Frontend
 │   ├── src/
 │   │   ├── components/
@@ -518,3 +518,4 @@ I'm actively looking for **Full-Stack Developer** opportunities. If this project
 <p align="center">
   Built with ❤️ and a lot of ☕
 </p>
+

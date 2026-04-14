@@ -430,7 +430,7 @@ const Register = () => {
             {role === "organizer" && (
               <Input
                 label="Organization Name"
-                placeholder="SportsHub Organization"
+                placeholder="FinalRound Organization"
                 icon={<Building2 size={20} />}
                 error={errors.orgName?.message}
                 required={true}
@@ -477,4 +477,5 @@ const Register = () => {
 };
 
 export default Register;
+
 
